@@ -14,11 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { categories } from '@/data/mockData';
+import { useCart } from '@/contexts/CartContext';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const cartItemCount = 3;
+  const { getItemCount } = useCart();
+  const cartItemCount = getItemCount();
 
   return (
     <header className="sticky top-0 z-50">
