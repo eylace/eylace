@@ -28,6 +28,7 @@ import { ProductCard } from '@/components/products/ProductCard';
 import { featuredProducts } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useCart } from '@/contexts/CartContext';
 
 // Extended mock product for demo
 const mockProduct = {
@@ -78,6 +79,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const { addItem } = useCart();
 
   const product = mockProduct; // In real app, fetch by slug
   const hasDiscount = product.discount && product.discount > 0;
@@ -87,15 +89,19 @@ const ProductDetail = () => {
     : 0;
 
   const handleAddToCart = () => {
+    addItem(product, quantity, selectedVariations);
     toast.success('Added to cart!', {
       description: `${quantity}x ${product.name}`,
     });
   };
 
   const handleBuyNow = () => {
+    addItem(product, quantity, selectedVariations);
     toast.success('Redirecting to checkout...', {
       description: 'Your order is being prepared',
     });
+    // In real app, navigate to checkout
+    window.location.href = '/checkout';
   };
 
   const handleBookNow = () => {
