@@ -14,13 +14,176 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          price: number
+          product_id: string
+          product_image: string | null
+          product_name: string
+          quantity: number
+          variations: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          price: number
+          product_id: string
+          product_image?: string | null
+          product_name: string
+          quantity: number
+          variations?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          price?: number
+          product_id?: string
+          product_image?: string | null
+          product_name?: string
+          quantity?: number
+          variations?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          discount: number
+          id: string
+          order_number: string
+          payment_method: string
+          shipping: number
+          shipping_address: Json | null
+          status: string
+          subtotal: number
+          tax: number
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount?: number
+          id?: string
+          order_number: string
+          payment_method: string
+          shipping?: number
+          shipping_address?: Json | null
+          status?: string
+          subtotal: number
+          tax?: number
+          total: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discount?: number
+          id?: string
+          order_number?: string
+          payment_method?: string
+          shipping?: number
+          shipping_address?: Json | null
+          status?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          apartment: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          apartment?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          apartment?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      saved_cart: {
+        Row: {
+          id: string
+          items: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          items?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          items?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_owner_of_order: { Args: { order_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
