@@ -8,19 +8,37 @@ import {
   X, 
   ChevronDown,
   MapPin,
-  Heart
+  Heart,
+  LogOut,
+  Package,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { categories } from '@/data/mockData';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const { getItemCount } = useCart();
+  const { user, profile, signOut, loading } = useAuth();
   const cartItemCount = getItemCount();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User';
 
   return (
     <header className="sticky top-0 z-50">
@@ -96,12 +114,56 @@ export const Header = () => {
               </div>
 
               {/* Account */}
-              <Link to="/account" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
-                <span className="text-xs text-primary-foreground/70">Hello, Sign in</span>
-                <span className="text-sm font-medium flex items-center gap-1">
-                  Account <ChevronDown className="h-3 w-3" />
-                </span>
-              </Link>
+              {loading ? (
+                <div className="hidden md:block h-5 w-20 bg-primary-foreground/20 rounded animate-pulse" />
+              ) : user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="hidden md:flex flex-col items-start hover:text-accent transition-colors outline-none">
+                    <span className="text-xs text-primary-foreground/70">Hello, {displayName}</span>
+                    <span className="text-sm font-medium flex items-center gap-1">
+                      Account <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem asChild>
+                      <Link to="/account" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        My Account
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/orders" className="flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        My Orders
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/wishlist" className="flex items-center gap-2">
+                        <Heart className="h-4 w-4" />
+                        Wishlist
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/auth" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
+                  <span className="text-xs text-primary-foreground/70">Hello, Sign in</span>
+                  <span className="text-sm font-medium flex items-center gap-1">
+                    Account <ChevronDown className="h-3 w-3" />
+                  </span>
+                </Link>
+              )}
 
               {/* Orders */}
               <Link to="/orders" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
@@ -194,10 +256,24 @@ export const Header = () => {
               <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg">
                 <User className="h-8 w-8 text-muted-foreground" />
                 <div>
-                  <p className="font-medium">Hello, Sign in</p>
-                  <Link to="/login" className="text-sm text-accent">
-                    Sign in or Create Account
-                  </Link>
+                  {user ? (
+                    <>
+                      <p className="font-medium">Hello, {displayName}</p>
+                      <button 
+                        onClick={handleSignOut}
+                        className="text-sm text-destructive"
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium">Hello, Sign in</p>
+                      <Link to="/auth" className="text-sm text-accent" onClick={() => setIsMenuOpen(false)}>
+                        Sign in or Create Account
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
               
