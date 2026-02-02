@@ -9,6 +9,8 @@ import { ShippingForm } from '@/components/checkout/ShippingForm';
 import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface CheckoutFormData {
@@ -34,7 +36,8 @@ interface CheckoutFormData {
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, clearCart, getTotal } = useCart();
+  const { items, clearCart, getSubtotal, getShipping, getTax, getTotal } = useCart();
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -53,21 +56,112 @@ const Checkout = () => {
   const onSubmit = async (data: CheckoutFormData) => {
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Generate order ID
-    const newOrderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-    setOrderId(newOrderId);
-    
-    // Clear cart and show success
-    clearCart();
-    setOrderComplete(true);
-    setIsProcessing(false);
-    
-    toast.success('Order placed successfully!', {
-      description: `Order ID: ${newOrderId}`,
-    });
+    try {
+      // Generate order number
+      const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      
+      // Calculate totals
+      const subtotal = getSubtotal();
+      const shipping = getShipping();
+      const tax = getTax();
+      const total = getTotal() + codFee;
+
+      // Save order to database if user is authenticated
+      if (user) {
+        const shippingAddress = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          apartment: data.apartment,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          country: data.country,
+        };
+
+        // Create order
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            user_id: user.id,
+            order_number: orderNumber,
+            status: 'pending',
+            subtotal,
+            shipping,
+            tax,
+            discount: 0,
+            total,
+            payment_method: data.paymentMethod,
+            shipping_address: shippingAddress,
+          })
+          .select()
+          .single();
+
+        if (orderError) {
+          console.error('Error creating order:', orderError);
+          toast.error('Failed to create order. Please try again.');
+          setIsProcessing(false);
+          return;
+        }
+
+        // Create order items
+        const orderItems = items.map(item => ({
+          order_id: orderData.id,
+          product_id: item.product.id,
+          product_name: item.product.name,
+          product_image: item.product.images[0] || null,
+          price: item.product.price,
+          quantity: item.quantity,
+          variations: item.selectedVariations || null,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+
+        if (itemsError) {
+          console.error('Error creating order items:', itemsError);
+        }
+
+        // Update user profile with shipping address if they opted to save it
+        if (data.saveAddress) {
+          await supabase
+            .from('profiles')
+            .update({
+              first_name: data.firstName,
+              last_name: data.lastName,
+              phone: data.phone,
+              address: data.address,
+              apartment: data.apartment,
+              city: data.city,
+              state: data.state,
+              zip_code: data.zipCode,
+              country: data.country,
+            })
+            .eq('user_id', user.id);
+        }
+      }
+
+      // Simulate payment processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setOrderId(orderNumber);
+      
+      // Clear cart and show success
+      clearCart();
+      setOrderComplete(true);
+      
+      toast.success('Order placed successfully!', {
+        description: `Order ID: ${orderNumber}`,
+      });
+    } catch (err) {
+      console.error('Checkout error:', err);
+      toast.error('An error occurred during checkout. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Redirect to cart if empty
