@@ -26,10 +26,12 @@ import {
 import { categories } from '@/data/mockData';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { SearchModal } from '@/components/search/SearchModal';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { getItemCount } = useCart();
   const { user, profile, signOut, loading } = useAuth();
   const cartItemCount = getItemCount();
@@ -75,7 +77,7 @@ export const Header = () => {
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   {isCategoriesOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-56 bg-card rounded-lg shadow-lg border border-border py-2 animate-slide-down">
+                    <div className="absolute top-full left-0 mt-1 w-56 bg-card rounded-lg shadow-lg border border-border py-2 animate-slide-down z-50">
                       {categories.map((cat) => (
                         <Link
                           key={cat.id}
@@ -90,19 +92,24 @@ export const Header = () => {
                     </div>
                   )}
                 </div>
-                <Input
-                  type="text"
-                  placeholder="Search for products, brands and more..."
-                  className="flex-1 h-11 rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="flex-1 h-11 px-4 bg-background text-left text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Search for products, brands and more...
+                </button>
                 <Button 
                   variant="accent"
                   className="h-11 px-6 rounded-l-none rounded-r-lg"
+                  onClick={() => setIsSearchOpen(true)}
                 >
                   <Search className="h-5 w-5" />
                 </Button>
               </div>
             </div>
+
+            {/* Search Modal */}
+            <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
 
             {/* Right Actions */}
             <div className="flex items-center gap-4">
@@ -203,16 +210,13 @@ export const Header = () => {
 
           {/* Mobile Search */}
           <div className="lg:hidden pb-3">
-            <div className="relative flex">
-              <Input
-                type="text"
-                placeholder="Search products..."
-                className="flex-1 h-10 rounded-r-none"
-              />
-              <Button variant="accent" className="h-10 px-4 rounded-l-none">
-                <Search className="h-5 w-5" />
-              </Button>
-            </div>
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="w-full flex items-center gap-2 h-10 px-4 bg-background rounded-lg text-muted-foreground text-left"
+            >
+              <Search className="h-5 w-5" />
+              <span>Search products...</span>
+            </button>
           </div>
         </div>
       </div>
