@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, ChevronRight, ShoppingBag, Loader2 } from 'lucide-react';
+import { Package, ChevronRight, ShoppingBag, Loader2, Truck } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
 
 interface OrderItem {
   id: string;
@@ -19,6 +20,14 @@ interface OrderItem {
   price: number;
   quantity: number;
   variations: Json | null;
+}
+
+interface TrackingEvent {
+  id: string;
+  status: string;
+  location: string | null;
+  description: string;
+  created_at: string;
 }
 
 interface Order {
@@ -32,8 +41,14 @@ interface Order {
   total: number;
   payment_method: string;
   shipping_address: Json | null;
+  tracking_number: string | null;
+  carrier: string | null;
+  estimated_delivery: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
   created_at: string;
   order_items: OrderItem[];
+  tracking_events: TrackingEvent[];
 }
 
 const statusColors: Record<string, string> = {
@@ -50,6 +65,7 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [showTracking, setShowTracking] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -75,22 +91,30 @@ const Orders = () => {
       return;
     }
 
-    // Fetch order items for each order
-    const ordersWithItems = await Promise.all(
+    // Fetch order items and tracking events for each order
+    const ordersWithDetails = await Promise.all(
       (ordersData || []).map(async (order) => {
-        const { data: items } = await supabase
-          .from('order_items')
-          .select('*')
-          .eq('order_id', order.id);
+        const [itemsResult, eventsResult] = await Promise.all([
+          supabase
+            .from('order_items')
+            .select('*')
+            .eq('order_id', order.id),
+          supabase
+            .from('order_tracking_events')
+            .select('*')
+            .eq('order_id', order.id)
+            .order('created_at', { ascending: false }),
+        ]);
         
         return {
           ...order,
-          order_items: items || [],
+          order_items: itemsResult.data || [],
+          tracking_events: eventsResult.data || [],
         };
       })
     );
 
-    setOrders(ordersWithItems);
+    setOrders(ordersWithDetails);
     setLoading(false);
   };
 
@@ -191,6 +215,35 @@ const Orders = () => {
                   {/* Expanded Content */}
                   {expandedOrder === order.id && (
                     <div className="border-t border-border">
+                      {/* Track Order Button */}
+                      {(order.status === 'shipped' || order.status === 'processing' || order.status === 'delivered') && (
+                        <div className="p-4 border-b border-border">
+                          <Button
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => setShowTracking(showTracking === order.id ? null : order.id)}
+                          >
+                            <Truck className="h-4 w-4" />
+                            {showTracking === order.id ? 'Hide Tracking' : 'Track Order'}
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Tracking Timeline */}
+                      {showTracking === order.id && (
+                        <div className="p-4 border-b border-border bg-secondary/30">
+                          <OrderTrackingTimeline
+                            status={order.status}
+                            trackingNumber={order.tracking_number}
+                            carrier={order.carrier}
+                            estimatedDelivery={order.estimated_delivery}
+                            shippedAt={order.shipped_at}
+                            deliveredAt={order.delivered_at}
+                            events={order.tracking_events}
+                          />
+                        </div>
+                      )}
+
                       {/* Order Items */}
                       <div className="p-4 space-y-3">
                         {order.order_items.map((item) => (

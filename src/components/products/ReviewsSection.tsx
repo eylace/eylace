@@ -3,87 +3,33 @@ import { Star, ThumbsUp, ThumbsDown, ChevronDown, Image, CheckCircle } from 'luc
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-
-interface Review {
-  id: string;
-  user: string;
-  avatar?: string;
-  rating: number;
-  title: string;
-  content: string;
-  date: string;
-  verified: boolean;
-  helpful: number;
-  images?: string[];
-  variation?: string;
-}
+import { useProductReviews } from '@/hooks/useProductReviews';
+import { WriteReviewModal } from './WriteReviewModal';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
 
 interface ReviewsSectionProps {
   productId: string;
+  productName?: string;
   rating: number;
   reviewCount: number;
 }
 
-const mockReviews: Review[] = [
-  {
-    id: '1',
-    user: 'Sarah M.',
-    rating: 5,
-    title: 'Exceeded my expectations!',
-    content: 'Absolutely love this product! The quality is outstanding and it arrived earlier than expected. Would definitely recommend to anyone looking for a premium option.',
-    date: '2024-01-15',
-    verified: true,
-    helpful: 124,
-    variation: 'Black, Size M',
-  },
-  {
-    id: '2',
-    user: 'John D.',
-    rating: 4,
-    title: 'Great value for money',
-    content: 'Very happy with my purchase. The product works exactly as described. Only reason for 4 stars is the packaging could be better.',
-    date: '2024-01-12',
-    verified: true,
-    helpful: 67,
-  },
-  {
-    id: '3',
-    user: 'Emily R.',
-    rating: 5,
-    title: 'Perfect gift!',
-    content: 'Bought this as a gift and the recipient loved it. Fast shipping and great customer service. Will definitely shop here again.',
-    date: '2024-01-10',
-    verified: true,
-    helpful: 45,
-    images: ['/placeholder.svg'],
-  },
-  {
-    id: '4',
-    user: 'Michael T.',
-    rating: 3,
-    title: 'Good but could be better',
-    content: 'The product itself is fine but I had some issues with the sizing. Make sure to check the size guide before ordering.',
-    date: '2024-01-08',
-    verified: false,
-    helpful: 23,
-  },
-];
-
-const ratingBreakdown = [
-  { stars: 5, percentage: 72 },
-  { stars: 4, percentage: 18 },
-  { stars: 3, percentage: 6 },
-  { stars: 2, percentage: 2 },
-  { stars: 1, percentage: 2 },
-];
-
-export const ReviewsSection = ({ productId, rating, reviewCount }: ReviewsSectionProps) => {
+export const ReviewsSection = ({ productId, productName = 'Product', rating, reviewCount }: ReviewsSectionProps) => {
+  const { user } = useAuth();
   const [sortBy, setSortBy] = useState<'helpful' | 'recent'>('helpful');
   const [filterRating, setFilterRating] = useState<number | null>(null);
+  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
 
-  const filteredReviews = mockReviews.filter((review) => 
-    filterRating ? review.rating === filterRating : true
-  );
+  const { reviews, isLoading, stats, voteReview, refetch } = useProductReviews({
+    productId,
+    sortBy,
+    filterRating,
+  });
+
+  // Use stats from database or fallback to props
+  const displayRating = stats.totalReviews > 0 ? stats.averageRating : rating;
+  const displayReviewCount = stats.totalReviews > 0 ? stats.totalReviews : reviewCount;
 
   return (
     <div className="space-y-8">
@@ -92,14 +38,14 @@ export const ReviewsSection = ({ productId, rating, reviewCount }: ReviewsSectio
         {/* Overall Rating */}
         <div className="flex items-start gap-6">
           <div className="text-center">
-            <div className="text-5xl font-bold text-foreground">{rating.toFixed(1)}</div>
+            <div className="text-5xl font-bold text-foreground">{displayRating.toFixed(1)}</div>
             <div className="flex items-center justify-center mt-2">
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i}
                   className={cn(
                     "h-5 w-5",
-                    i < Math.floor(rating) 
+                    i < Math.floor(displayRating) 
                       ? "fill-rating text-rating" 
                       : "fill-muted text-muted"
                   )}
@@ -107,13 +53,13 @@ export const ReviewsSection = ({ productId, rating, reviewCount }: ReviewsSectio
               ))}
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              {reviewCount.toLocaleString()} reviews
+              {displayReviewCount.toLocaleString()} reviews
             </p>
           </div>
 
           {/* Rating Breakdown */}
           <div className="space-y-2 min-w-[200px]">
-            {ratingBreakdown.map((item) => (
+            {stats.ratingBreakdown.map((item) => (
               <button
                 key={item.stars}
                 onClick={() => setFilterRating(filterRating === item.stars ? null : item.stars)}
@@ -136,10 +82,29 @@ export const ReviewsSection = ({ productId, rating, reviewCount }: ReviewsSectio
         </div>
 
         {/* Write Review Button */}
-        <Button variant="accent" size="lg">
+        <Button 
+          variant="accent" 
+          size="lg"
+          onClick={() => {
+            if (!user) {
+              window.location.href = '/auth';
+              return;
+            }
+            setIsWriteModalOpen(true);
+          }}
+        >
           Write a Review
         </Button>
       </div>
+
+      {/* Write Review Modal */}
+      <WriteReviewModal
+        open={isWriteModalOpen}
+        onOpenChange={setIsWriteModalOpen}
+        productId={productId}
+        productName={productName}
+        onReviewSubmitted={refetch}
+      />
 
       {/* Filters & Sort */}
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-border">
@@ -171,7 +136,12 @@ export const ReviewsSection = ({ productId, rating, reviewCount }: ReviewsSectio
         
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Sort by:</span>
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+            onClick={() => setSortBy(sortBy === 'helpful' ? 'recent' : 'helpful')}
+          >
             {sortBy === 'helpful' ? 'Most Helpful' : 'Most Recent'}
             <ChevronDown className="h-4 w-4" />
           </Button>
@@ -179,105 +149,131 @@ export const ReviewsSection = ({ productId, rating, reviewCount }: ReviewsSectio
       </div>
 
       {/* Reviews List */}
-      <div className="space-y-6">
-        {filteredReviews.map((review) => (
-          <div key={review.id} className="pb-6 border-b border-border last:border-0">
-            <div className="flex items-start gap-4">
-              {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                <span className="font-semibold text-foreground">
-                  {review.user.charAt(0)}
-                </span>
+      {isLoading ? (
+        <div className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="pb-6 border-b border-border animate-pulse">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-secondary" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-secondary rounded w-1/4" />
+                  <div className="h-4 bg-secondary rounded w-1/2" />
+                  <div className="h-16 bg-secondary rounded w-full" />
+                </div>
               </div>
-
-              <div className="flex-1 min-w-0">
-                {/* User Info & Rating */}
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="font-medium text-foreground">{review.user}</span>
-                  {review.verified && (
-                    <span className="flex items-center gap-1 text-xs text-success">
-                      <CheckCircle className="h-3 w-3" />
-                      Verified Purchase
-                    </span>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(review.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+            </div>
+          ))}
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No reviews yet. Be the first to review this product!</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {reviews.map((review) => (
+            <div key={review.id} className="pb-6 border-b border-border last:border-0">
+              <div className="flex items-start gap-4">
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                  <span className="font-semibold text-foreground">
+                    {review.user_email?.charAt(0).toUpperCase() || 'U'}
                   </span>
                 </div>
 
-                {/* Stars */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i}
-                        className={cn(
-                          "h-4 w-4",
-                          i < review.rating 
-                            ? "fill-rating text-rating" 
-                            : "fill-muted text-muted"
-                        )}
-                      />
-                    ))}
-                  </div>
-                  {review.variation && (
+                <div className="flex-1 min-w-0">
+                  {/* User Info & Rating */}
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className="font-medium text-foreground">
+                      {review.user_email?.split('@')[0] || 'Anonymous'}
+                    </span>
+                    {review.verified_purchase && (
+                      <span className="flex items-center gap-1 text-xs text-success">
+                        <CheckCircle className="h-3 w-3" />
+                        Verified Purchase
+                      </span>
+                    )}
                     <span className="text-xs text-muted-foreground">
-                      {review.variation}
+                      {format(new Date(review.created_at), 'MMMM d, yyyy')}
                     </span>
-                  )}
-                </div>
-
-                {/* Title & Content */}
-                <h4 className="font-semibold text-foreground mb-1">{review.title}</h4>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {review.content}
-                </p>
-
-                {/* Review Images */}
-                {review.images && review.images.length > 0 && (
-                  <div className="flex gap-2 mt-3">
-                    {review.images.map((img, i) => (
-                      <div 
-                        key={i}
-                        className="w-16 h-16 rounded-lg bg-secondary overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                      >
-                        <img src={img} alt="Review" className="w-full h-full object-cover" />
-                      </div>
-                    ))}
                   </div>
-                )}
 
-                {/* Helpful */}
-                <div className="flex items-center gap-4 mt-4">
-                  <span className="text-sm text-muted-foreground">
-                    {review.helpful} people found this helpful
-                  </span>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                      <ThumbsUp className="h-4 w-4" />
-                      Helpful
-                    </Button>
-                    <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-                      <ThumbsDown className="h-4 w-4" />
-                    </Button>
+                  {/* Stars */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex">
+                      {[...Array(5)].map((_, i) => (
+                        <Star 
+                          key={i}
+                          className={cn(
+                            "h-4 w-4",
+                            i < review.rating 
+                              ? "fill-rating text-rating" 
+                              : "fill-muted text-muted"
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Title & Content */}
+                  <h4 className="font-semibold text-foreground mb-1">{review.title}</h4>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {review.content}
+                  </p>
+
+                  {/* Review Images */}
+                  {review.images && review.images.length > 0 && (
+                    <div className="flex gap-2 mt-3">
+                      {review.images.map((img, i) => (
+                        <div 
+                          key={i}
+                          className="w-16 h-16 rounded-lg bg-secondary overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          <img src={img} alt="Review" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Helpful */}
+                  <div className="flex items-center gap-4 mt-4">
+                    <span className="text-sm text-muted-foreground">
+                      {review.helpful_count} people found this helpful
+                    </span>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="gap-1 text-muted-foreground"
+                        onClick={() => voteReview(review.id, true)}
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                        Helpful
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="gap-1 text-muted-foreground"
+                        onClick={() => voteReview(review.id, false)}
+                      >
+                        <ThumbsDown className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Load More */}
-      <div className="text-center">
-        <Button variant="outline" size="lg">
-          Load More Reviews
-        </Button>
-      </div>
+      {reviews.length > 0 && (
+        <div className="text-center">
+          <Button variant="outline" size="lg">
+            Load More Reviews
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
