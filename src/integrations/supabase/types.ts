@@ -58,51 +58,143 @@ export type Database = {
           },
         ]
       }
-      orders: {
+      order_tracking_events: {
         Row: {
           created_at: string
+          description: string
+          id: string
+          location: string | null
+          order_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          location?: string | null
+          order_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string | null
+          order_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_tracking_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          carrier: string | null
+          created_at: string
+          delivered_at: string | null
           discount: number
+          estimated_delivery: string | null
           id: string
           order_number: string
           payment_method: string
+          shipped_at: string | null
           shipping: number
           shipping_address: Json | null
           status: string
           subtotal: number
           tax: number
           total: number
+          tracking_number: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          carrier?: string | null
           created_at?: string
+          delivered_at?: string | null
           discount?: number
+          estimated_delivery?: string | null
           id?: string
           order_number: string
           payment_method: string
+          shipped_at?: string | null
           shipping?: number
           shipping_address?: Json | null
           status?: string
           subtotal: number
           tax?: number
           total: number
+          tracking_number?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          carrier?: string | null
           created_at?: string
+          delivered_at?: string | null
           discount?: number
+          estimated_delivery?: string | null
           id?: string
           order_number?: string
           payment_method?: string
+          shipped_at?: string | null
           shipping?: number
           shipping_address?: Json | null
           status?: string
           subtotal?: number
           tax?: number
           total?: number
+          tracking_number?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      product_reviews: {
+        Row: {
+          content: string
+          created_at: string
+          helpful_count: number | null
+          id: string
+          images: string[] | null
+          product_id: string
+          rating: number
+          title: string
+          updated_at: string
+          user_id: string
+          verified_purchase: boolean | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          images?: string[] | null
+          product_id: string
+          rating: number
+          title: string
+          updated_at?: string
+          user_id: string
+          verified_purchase?: boolean | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          images?: string[] | null
+          product_id?: string
+          rating?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+          verified_purchase?: boolean | null
         }
         Relationships: []
       }
@@ -157,6 +249,38 @@ export type Database = {
         }
         Relationships: []
       }
+      review_votes: {
+        Row: {
+          created_at: string
+          id: string
+          is_helpful: boolean
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_helpful: boolean
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_helpful?: boolean
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_votes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "product_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_cart: {
         Row: {
           id: string
@@ -178,12 +302,40 @@ export type Database = {
         }
         Relationships: []
       }
+      wishlist: {
+        Row: {
+          created_at: string
+          id: string
+          product_data: Json
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_data: Json
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_data?: Json
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       is_owner_of_order: { Args: { order_id: string }; Returns: boolean }
+      is_owner_of_order_tracking: {
+        Args: { tracking_order_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

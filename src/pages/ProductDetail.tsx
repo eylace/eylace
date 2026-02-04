@@ -29,6 +29,8 @@ import { featuredProducts } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Extended mock product for demo
 const mockProduct = {
@@ -78,15 +80,25 @@ const ProductDetail = () => {
   const { slug } = useParams();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
 
   const product = mockProduct; // In real app, fetch by slug
+  const isWishlisted = isInWishlist(product.id);
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
   const savings = product.originalPrice 
     ? (product.originalPrice - product.price) * quantity 
     : 0;
+
+  const handleWishlistToggle = () => {
+    if (isWishlisted) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
+  };
 
   const handleAddToCart = () => {
     addItem(product, quantity, selectedVariations);
@@ -286,7 +298,7 @@ const ProductDetail = () => {
                 <Button 
                   variant="ghost" 
                   className="flex-1"
-                  onClick={() => setIsWishlisted(!isWishlisted)}
+                  onClick={handleWishlistToggle}
                 >
                   <Heart className={cn(
                     "h-5 w-5 mr-2",
@@ -419,6 +431,7 @@ const ProductDetail = () => {
           <TabsContent value="reviews" id="reviews" className="pt-6">
             <ReviewsSection 
               productId={product.id}
+              productName={product.name}
               rating={product.rating}
               reviewCount={product.reviewCount}
             />

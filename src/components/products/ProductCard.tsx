@@ -4,15 +4,31 @@ import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useWishlist } from '@/contexts/WishlistContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProductCardProps {
   product: Product;
   variant?: 'default' | 'compact' | 'horizontal';
+  showWishlistButton?: boolean;
 }
 
-export const ProductCard = ({ product, variant = 'default' }: ProductCardProps) => {
+export const ProductCard = ({ product, variant = 'default', showWishlistButton = false }: ProductCardProps) => {
+  const { user } = useAuth();
+  const { addItem, removeItem, isInWishlist } = useWishlist();
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
+  const isWishlisted = isInWishlist(product.id);
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isWishlisted) {
+      removeItem(product.id);
+    } else {
+      addItem(product);
+    }
+  };
 
   if (variant === 'horizontal') {
     return (
@@ -59,8 +75,16 @@ export const ProductCard = ({ product, variant = 'default' }: ProductCardProps) 
       variant === 'compact' ? 'p-3' : 'p-4'
     )}>
       {/* Wishlist Button */}
-      <button className="absolute top-3 right-3 z-10 p-2 bg-card/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-card hover:text-destructive">
-        <Heart className="h-4 w-4" />
+      <button 
+        onClick={handleWishlistToggle}
+        className={cn(
+          "absolute top-3 right-3 z-10 p-2 bg-card/80 backdrop-blur-sm rounded-full transition-all hover:bg-card",
+          isWishlisted 
+            ? "text-destructive opacity-100" 
+            : "opacity-0 group-hover:opacity-100 hover:text-destructive"
+        )}
+      >
+        <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
       </button>
 
       {/* Image */}
