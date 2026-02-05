@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Star, Loader2, X } from 'lucide-react';
+ import { useState, useRef } from 'react';
+ import { Star, Loader2, X, ImagePlus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +15,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
+ 
+ const MAX_IMAGES = 5;
+ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const reviewSchema = z.object({
   title: z.string().trim().min(3, 'Title must be at least 3 characters').max(100, 'Title must be less than 100 characters'),
@@ -43,6 +46,10 @@ export const WriteReviewModal = ({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+   const [images, setImages] = useState<File[]>([]);
+   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+   const [uploadingImages, setUploadingImages] = useState(false);
+   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async () => {
     if (!user) {
@@ -59,6 +66,34 @@ export const WriteReviewModal = ({
     setIsSubmitting(true);
 
     try {
+       // Upload images first
+       let imageUrls: string[] = [];
+       if (images.length > 0) {
+         setUploadingImages(true);
+         for (const image of images) {
+           const fileExt = image.name.split('.').pop();
+           const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+           
+           const { error: uploadError, data } = await supabase.storage
+             .from('review-images')
+             .upload(fileName, image);
+           
+           if (uploadError) {
+             console.error('Error uploading image:', uploadError);
+             continue;
+           }
+           
+           const { data: urlData } = supabase.storage
+             .from('review-images')
+             .getPublicUrl(fileName);
+           
+           if (urlData) {
+             imageUrls.push(urlData.publicUrl);
+           }
+         }
+         setUploadingImages(false);
+       }
+ 
       const { error } = await supabase
         .from('product_reviews')
         .insert({
@@ -67,6 +102,7 @@ export const WriteReviewModal = ({
           rating,
           title: title.trim(),
           content: content.trim(),
+           images: imageUrls,
         });
 
       if (error) {
@@ -82,6 +118,8 @@ export const WriteReviewModal = ({
       setRating(0);
       setTitle('');
       setContent('');
+       setImages([]);
+       setImagePreviews([]);
       onOpenChange(false);
       onReviewSubmitted?.();
     } catch (err) {
@@ -93,6 +131,43 @@ export const WriteReviewModal = ({
   };
 
   const displayRating = hoverRating || rating;
+ 
+   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+     const files = Array.from(e.target.files || []);
+     const validFiles: File[] = [];
+     const previews: string[] = [];
+ 
+     for (const file of files) {
+       if (images.length + validFiles.length >= MAX_IMAGES) {
+         toast.error(`Maximum ${MAX_IMAGES} images allowed`);
+         break;
+       }
+       if (file.size > MAX_FILE_SIZE) {
+         toast.error(`${file.name} is too large. Max size is 5MB`);
+         continue;
+       }
+       if (!file.type.startsWith('image/')) {
+         toast.error(`${file.name} is not an image`);
+         continue;
+       }
+       validFiles.push(file);
+       previews.push(URL.createObjectURL(file));
+     }
+ 
+     setImages(prev => [...prev, ...validFiles]);
+     setImagePreviews(prev => [...prev, ...previews]);
+     
+     // Reset input
+     if (fileInputRef.current) {
+       fileInputRef.current.value = '';
+     }
+   };
+ 
+   const removeImage = (index: number) => {
+     URL.revokeObjectURL(imagePreviews[index]);
+     setImages(prev => prev.filter((_, i) => i !== index));
+     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -168,6 +243,44 @@ export const WriteReviewModal = ({
               {content.length}/1000
             </p>
           </div>
+           
+           {/* Image Upload */}
+           <div className="space-y-2">
+             <Label>Add Photos (Optional)</Label>
+             <div className="flex flex-wrap gap-2">
+               {imagePreviews.map((preview, index) => (
+                 <div key={index} className="relative w-20 h-20 rounded-lg overflow-hidden group">
+                   <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                   <button
+                     type="button"
+                     onClick={() => removeImage(index)}
+                     className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                   >
+                     <Trash2 className="h-5 w-5 text-white" />
+                   </button>
+                 </div>
+               ))}
+               {images.length < MAX_IMAGES && (
+                 <button
+                   type="button"
+                   onClick={() => fileInputRef.current?.click()}
+                   className="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center gap-1 hover:border-accent transition-colors"
+                 >
+                   <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                   <span className="text-xs text-muted-foreground">Add</span>
+                 </button>
+               )}
+             </div>
+             <input
+               ref={fileInputRef}
+               type="file"
+               accept="image/*"
+               multiple
+               onChange={handleImageSelect}
+               className="hidden"
+             />
+             <p className="text-xs text-muted-foreground">Up to {MAX_IMAGES} images, max 5MB each</p>
+           </div>
         </div>
 
         <div className="flex gap-3">
@@ -180,11 +293,11 @@ export const WriteReviewModal = ({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || rating === 0}
+             disabled={isSubmitting || uploadingImages || rating === 0}
             className="flex-1 gap-2"
           >
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Submit Review
+             {(isSubmitting || uploadingImages) && <Loader2 className="h-4 w-4 animate-spin" />}
+             {uploadingImages ? 'Uploading Images...' : 'Submit Review'}
           </Button>
         </div>
       </DialogContent>

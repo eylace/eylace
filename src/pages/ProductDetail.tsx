@@ -16,7 +16,7 @@ import {
   Store
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
+ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,56 +25,14 @@ import { VariationSelector } from '@/components/products/VariationSelector';
 import { QuantitySelector } from '@/components/products/QuantitySelector';
 import { ReviewsSection } from '@/components/products/ReviewsSection';
 import { ProductCard } from '@/components/products/ProductCard';
-import { featuredProducts } from '@/data/mockData';
+ import { useProduct, useProducts } from '@/hooks/useProducts';
+ import { adaptDBProduct, adaptDBProducts } from '@/lib/productAdapter';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
-
-// Extended mock product for demo
-const mockProduct = {
-  ...featuredProducts[0],
-  images: [
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-    '/placeholder.svg',
-  ],
-  description: `Experience premium audio with our Wireless Noise Cancelling Headphones Pro. Featuring advanced active noise cancellation technology, these headphones deliver crystal-clear sound quality while blocking out unwanted ambient noise.
-
-• 40mm custom drivers for rich, detailed audio
-• Up to 30 hours of battery life
-• Quick charge: 10 minutes = 3 hours playback
-• Comfortable memory foam ear cushions
-• Foldable design for easy portability
-• Multipoint connection for seamless device switching`,
-  specifications: [
-    { name: 'Brand', value: 'AudioPro' },
-    { name: 'Model', value: 'ANC-Pro X1' },
-    { name: 'Driver Size', value: '40mm' },
-    { name: 'Frequency Response', value: '20Hz - 20kHz' },
-    { name: 'Battery Life', value: 'Up to 30 hours' },
-    { name: 'Charging Time', value: '2 hours' },
-    { name: 'Weight', value: '250g' },
-    { name: 'Connectivity', value: 'Bluetooth 5.2' },
-    { name: 'Warranty', value: '2 Years' },
-  ],
-  variations: [
-    {
-      id: 'color',
-      name: 'Color',
-      type: 'color' as const,
-      options: [
-        { id: 'c1', value: 'Black', stock: 25 },
-        { id: 'c2', value: 'White', stock: 15 },
-        { id: 'c3', value: 'Navy', stock: 10 },
-        { id: 'c4', value: 'Red', stock: 0 },
-      ],
-    },
-  ],
-};
+ import { Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -83,8 +41,36 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const { user } = useAuth();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
-
-  const product = mockProduct; // In real app, fetch by slug
+   
+   const { product: dbProduct, isLoading, error } = useProduct(slug || '');
+   const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
+   
+   const product = dbProduct ? adaptDBProduct(dbProduct) : null;
+   const relatedProducts = adaptDBProducts(relatedDbProducts);
+ 
+   if (isLoading) {
+     return (
+       <Layout>
+         <div className="container-main py-16 flex items-center justify-center">
+           <Loader2 className="h-8 w-8 animate-spin text-accent" />
+         </div>
+       </Layout>
+     );
+   }
+ 
+   if (!product) {
+     return (
+       <Layout>
+         <div className="container-main py-16 text-center">
+           <h1 className="text-2xl font-bold mb-4">Product not found</h1>
+           <Button variant="accent" onClick={() => window.location.href = '/'}>
+             Back to Home
+           </Button>
+         </div>
+       </Layout>
+     );
+   }
+ 
   const isWishlisted = isInWishlist(product.id);
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
@@ -413,7 +399,7 @@ const ProductDetail = () => {
 
           <TabsContent value="specifications" className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {product.specifications.map((spec, i) => (
+               {(product.attributes || []).map((attr, i) => (
                 <div 
                   key={i}
                   className={cn(
@@ -421,8 +407,8 @@ const ProductDetail = () => {
                     i % 2 === 0 ? "bg-secondary/50" : "bg-transparent"
                   )}
                 >
-                  <span className="text-muted-foreground">{spec.name}</span>
-                  <span className="font-medium text-foreground">{spec.value}</span>
+                   <span className="text-muted-foreground">{attr.name}</span>
+                   <span className="font-medium text-foreground">{attr.value}</span>
                 </div>
               ))}
             </div>
@@ -444,8 +430,8 @@ const ProductDetail = () => {
             Related Products
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {featuredProducts.slice(0, 5).map((product) => (
-              <ProductCard key={product.id} product={product} />
+             {relatedProducts.slice(0, 5).map((p) => (
+               <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </section>
@@ -456,8 +442,8 @@ const ProductDetail = () => {
             Recently Viewed
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {featuredProducts.slice(3, 8).map((product) => (
-              <ProductCard key={product.id} product={product} />
+             {relatedProducts.slice(0, 5).map((p) => (
+               <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </section>

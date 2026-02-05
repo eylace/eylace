@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
+ import { Filter, Grid, List, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { ProductCard } from '@/components/products/ProductCard';
 import { SearchFiltersPanel } from '@/components/search/SearchFilters';
@@ -18,7 +18,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { useProductSearch, SearchFilters } from '@/hooks/useProductSearch';
-import { categories, featuredProducts } from '@/data/mockData';
+ import { useProducts, useCategories } from '@/hooks/useProducts';
+ import { adaptDBProducts } from '@/lib/productAdapter';
 import { cn } from '@/lib/utils';
 import {
   Breadcrumb,
@@ -32,10 +33,10 @@ import { Link } from 'react-router-dom';
 
 const Category = () => {
   const { slug } = useParams<{ slug: string }>();
-  const category = useMemo(() => 
-    categories.find((c) => c.slug === slug),
-    [slug]
-  );
+   const { categories, isLoading: categoriesLoading } = useCategories();
+   const { products: dbProducts, isLoading: productsLoading } = useProducts({ categorySlug: slug });
+   
+   const category = useMemo(() => categories.find((c) => c.slug === slug), [categories, slug]);
 
   const {
     filters,
@@ -47,61 +48,71 @@ const Category = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<SearchFilters['sortBy']>('relevance');
 
-  // Filter products by category
+   // Convert DB products and apply additional filters
   const categoryProducts = useMemo(() => {
-    let products = featuredProducts.filter((p) => p.category.slug === slug);
+     let adapted = adaptDBProducts(dbProducts);
 
     // Apply additional filters
     if (filters.minPrice !== null) {
-      products = products.filter((p) => p.price >= filters.minPrice!);
+       adapted = adapted.filter((p) => p.price >= filters.minPrice!);
     }
     if (filters.maxPrice !== null) {
-      products = products.filter((p) => p.price <= filters.maxPrice!);
+       adapted = adapted.filter((p) => p.price <= filters.maxPrice!);
     }
     if (filters.rating !== null) {
-      products = products.filter((p) => p.rating >= filters.rating!);
+       adapted = adapted.filter((p) => p.rating >= filters.rating!);
     }
     if (filters.inStock) {
-      products = products.filter((p) => p.stock > 0);
+       adapted = adapted.filter((p) => p.stock > 0);
     }
     if (filters.freeShipping) {
-      products = products.filter((p) => p.isFreeShipping);
+       adapted = adapted.filter((p) => p.isFreeShipping);
     }
     if (filters.isPrime) {
-      products = products.filter((p) => p.isPrime);
+       adapted = adapted.filter((p) => p.isPrime);
     }
 
     // Sorting
     switch (sortBy) {
       case 'price-asc':
-        products.sort((a, b) => a.price - b.price);
+         adapted.sort((a, b) => a.price - b.price);
         break;
       case 'price-desc':
-        products.sort((a, b) => b.price - a.price);
+         adapted.sort((a, b) => b.price - a.price);
         break;
       case 'rating':
-        products.sort((a, b) => b.rating - a.rating);
+         adapted.sort((a, b) => b.rating - a.rating);
         break;
       case 'newest':
-        products.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+         adapted.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         break;
     }
 
-    return products;
-  }, [slug, filters, sortBy]);
+     return adapted;
+   }, [dbProducts, filters, sortBy]);
 
-  if (!category) {
+   if (categoriesLoading || productsLoading) {
     return (
       <Layout>
-        <div className="container-main py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Category not found</h1>
-          <Link to="/">
-            <Button variant="accent">Back to Home</Button>
-          </Link>
+         <div className="container-main py-16 flex items-center justify-center">
+           <Loader2 className="h-8 w-8 animate-spin text-accent" />
         </div>
       </Layout>
     );
   }
+ 
+   if (!category) {
+     return (
+       <Layout>
+         <div className="container-main py-16 text-center">
+           <h1 className="text-2xl font-bold mb-4">Category not found</h1>
+           <Link to="/">
+             <Button variant="accent">Back to Home</Button>
+           </Link>
+         </div>
+       </Layout>
+     );
+   }
 
   return (
     <Layout>

@@ -5,7 +5,6 @@ import { FlashSaleSection } from '@/components/home/FlashSaleSection';
 import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { DealsSection } from '@/components/home/DealsSection';
 import { PromoBanners } from '@/components/home/PromoBanners';
-import { featuredProducts } from '@/data/mockData';
 
 const Index = () => {
   return (
@@ -30,6 +29,7 @@ const Index = () => {
         title="Featured Products"
         subtitle="Handpicked items just for you"
         icon="star"
+           limit={5}
       />
 
       {/* Trending Now */}
@@ -37,7 +37,7 @@ const Index = () => {
         title="Trending Now"
         subtitle="What everyone is buying"
         icon="trending"
-        products={[...featuredProducts].reverse()}
+           limit={5}
       />
 
       {/* New Arrivals */}
@@ -46,6 +46,7 @@ const Index = () => {
         subtitle="Fresh additions to our collection"
         icon="sparkles"
         link="/new-arrivals"
+           limit={5}
       />
 
       {/* Recently Viewed - placeholder */}

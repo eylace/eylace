@@ -1,7 +1,20 @@
 import { Link } from 'react-router-dom';
-import { categories } from '@/data/mockData';
+ import { useCategories } from '@/hooks/useProducts';
+ import { Loader2 } from 'lucide-react';
 
 export const CategoriesSection = () => {
+   const { categories, isLoading } = useCategories();
+ 
+   if (isLoading) {
+     return (
+       <section className="container-main py-8">
+         <div className="flex items-center justify-center py-12">
+           <Loader2 className="h-8 w-8 animate-spin text-accent" />
+         </div>
+       </section>
+     );
+   }
+ 
   return (
     <section className="container-main py-8">
       <div className="flex items-center justify-between mb-6">
