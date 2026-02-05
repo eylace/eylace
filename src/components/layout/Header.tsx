@@ -1,4 +1,4 @@
-import { useState } from 'react';
+ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, 
@@ -23,10 +23,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { categories } from '@/data/mockData';
+ import { useCategories } from '@/hooks/useProducts';
+ import { useAdminCheck } from '@/hooks/useAdminData';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { SearchModal } from '@/components/search/SearchModal';
+ import { ShieldCheck } from 'lucide-react';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,6 +37,8 @@ export const Header = () => {
   const { getItemCount } = useCart();
   const { user, profile, signOut, loading } = useAuth();
   const cartItemCount = getItemCount();
+   const { categories, isLoading: categoriesLoading } = useCategories();
+   const { isAdmin } = useAdminCheck();
 
   const handleSignOut = async () => {
     await signOut();
@@ -156,6 +160,14 @@ export const Header = () => {
                         Settings
                       </Link>
                     </DropdownMenuItem>
+                         {isAdmin && (
+                           <DropdownMenuItem asChild>
+                             <Link to="/admin" className="flex items-center gap-2">
+                               <ShieldCheck className="h-4 w-4" />
+                               Admin Dashboard
+                             </Link>
+                           </DropdownMenuItem>
+                         )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                       <LogOut className="h-4 w-4 mr-2" />

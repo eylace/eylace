@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, ChevronRight } from 'lucide-react';
+ import { Zap, ChevronRight, Loader2 } from 'lucide-react';
 import { ProductCard } from '@/components/products/ProductCard';
-import { flashSaleProducts } from '@/data/mockData';
+ import { useProducts } from '@/hooks/useProducts';
+ import { adaptDBProducts } from '@/lib/productAdapter';
 
 export const FlashSaleSection = () => {
+   const { products: dbProducts, isLoading } = useProducts({ flashSaleOnly: true, limit: 4 });
+   const flashSaleProducts = adaptDBProducts(dbProducts);
+ 
   const [timeLeft, setTimeLeft] = useState({
     hours: 5,
     minutes: 32,
@@ -84,11 +88,19 @@ export const FlashSaleSection = () => {
 
         {/* Products */}
         <div className="bg-card p-4 md:p-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {flashSaleProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+           {isLoading ? (
+             <div className="flex items-center justify-center py-12">
+               <Loader2 className="h-8 w-8 animate-spin text-accent" />
+             </div>
+           ) : flashSaleProducts.length === 0 ? (
+             <p className="text-center text-muted-foreground py-8">No flash sale items available right now.</p>
+           ) : (
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+               {flashSaleProducts.map((product) => (
+                 <ProductCard key={product.id} product={product} />
+               ))}
+             </div>
+           )}
         </div>
       </div>
     </section>

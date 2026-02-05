@@ -1,14 +1,17 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, TrendingUp, Star, Sparkles } from 'lucide-react';
+ import { ChevronRight, TrendingUp, Star, Sparkles, Loader2 } from 'lucide-react';
 import { ProductCard } from '@/components/products/ProductCard';
-import { featuredProducts } from '@/data/mockData';
+ import { useProducts } from '@/hooks/useProducts';
+ import { adaptDBProducts } from '@/lib/productAdapter';
+ import { Product } from '@/types';
 
 interface FeaturedProductsProps {
   title: string;
   subtitle?: string;
   icon?: 'trending' | 'star' | 'sparkles';
   link?: string;
-  products?: typeof featuredProducts;
+   products?: Product[];
+   limit?: number;
 }
 
 export const FeaturedProducts = ({
@@ -16,8 +19,12 @@ export const FeaturedProducts = ({
   subtitle,
   icon = 'star',
   link = '/products',
-  products = featuredProducts,
+   products: propProducts,
+   limit = 5,
 }: FeaturedProductsProps) => {
+   const { products: dbProducts, isLoading } = useProducts({ limit });
+   const products = propProducts || adaptDBProducts(dbProducts);
+ 
   const IconComponent = {
     trending: TrendingUp,
     star: Star,
@@ -48,11 +55,17 @@ export const FeaturedProducts = ({
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {products.slice(0, 5).map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+       {isLoading ? (
+         <div className="flex items-center justify-center py-12">
+           <Loader2 className="h-8 w-8 animate-spin text-accent" />
+         </div>
+       ) : (
+         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+           {products.slice(0, limit).map((product) => (
+             <ProductCard key={product.id} product={product} />
+           ))}
+         </div>
+       )}
     </section>
   );
 };
