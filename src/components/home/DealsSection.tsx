@@ -1,9 +1,22 @@
 import { Link } from 'react-router-dom';
-import { Percent, ChevronRight } from 'lucide-react';
-import { featuredProducts } from '@/data/mockData';
+import { Percent, ChevronRight, Loader2 } from 'lucide-react';
+import { useProducts } from '@/hooks/useProducts';
+import { adaptDBProducts } from '@/lib/productAdapter';
 
 export const DealsSection = () => {
-  const dealsProducts = featuredProducts.filter(p => p.discount && p.discount >= 20).slice(0, 4);
+  const { products: dbProducts, isLoading } = useProducts({ limit: 8 });
+  const allProducts = adaptDBProducts(dbProducts);
+  const dealsProducts = allProducts.filter(p => p.discount && p.discount >= 20).slice(0, 4);
+
+  if (isLoading) {
+    return (
+      <section className="container-main py-8">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="container-main py-8">
