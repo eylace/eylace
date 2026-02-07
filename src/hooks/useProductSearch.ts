@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Product, Category } from '@/types';
-import { featuredProducts, categories } from '@/data/mockData';
+import { Product } from '@/types';
+import { useProducts, useCategories } from '@/hooks/useProducts';
+import { adaptDBProducts } from '@/lib/productAdapter';
 
 export interface SearchFilters {
   query: string;
@@ -28,6 +29,8 @@ const defaultFilters: SearchFilters = {
 
 export const useProductSearch = () => {
   const [filters, setFilters] = useState<SearchFilters>(defaultFilters);
+  const { categories: dbCategories, isLoading: categoriesLoading } = useCategories();
+  const { products: dbProducts, isLoading: productsLoading } = useProducts({});
 
   const updateFilter = useCallback(<K extends keyof SearchFilters>(
     key: K,
@@ -40,13 +43,21 @@ export const useProductSearch = () => {
     setFilters(defaultFilters);
   }, []);
 
-  const allProducts = featuredProducts;
-  const allCategories = categories;
+  const allProducts = useMemo(() => adaptDBProducts(dbProducts), [dbProducts]);
+
+  const categories = useMemo(() => {
+    return dbCategories.map(c => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      icon: c.icon || undefined,
+      image: c.image || undefined,
+    }));
+  }, [dbCategories]);
 
   const searchResults = useMemo(() => {
     let results = [...allProducts];
 
-    // Text search
     if (filters.query) {
       const query = filters.query.toLowerCase();
       results = results.filter(
@@ -57,12 +68,10 @@ export const useProductSearch = () => {
       );
     }
 
-    // Category filter
     if (filters.category) {
       results = results.filter((p) => p.category.slug === filters.category);
     }
 
-    // Price range
     if (filters.minPrice !== null) {
       results = results.filter((p) => p.price >= filters.minPrice!);
     }
@@ -70,27 +79,22 @@ export const useProductSearch = () => {
       results = results.filter((p) => p.price <= filters.maxPrice!);
     }
 
-    // Rating filter
     if (filters.rating !== null) {
       results = results.filter((p) => p.rating >= filters.rating!);
     }
 
-    // Stock filter
     if (filters.inStock) {
       results = results.filter((p) => p.stock > 0);
     }
 
-    // Free shipping filter
     if (filters.freeShipping) {
       results = results.filter((p) => p.isFreeShipping);
     }
 
-    // Prime filter
     if (filters.isPrime) {
       results = results.filter((p) => p.isPrime);
     }
 
-    // Sorting
     switch (filters.sortBy) {
       case 'price-asc':
         results.sort((a, b) => a.price - b.price);
@@ -105,7 +109,6 @@ export const useProductSearch = () => {
         results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         break;
       default:
-        // relevance - already sorted by search match
         break;
     }
 
@@ -114,7 +117,6 @@ export const useProductSearch = () => {
 
   const autocompleteResults = useMemo(() => {
     if (!filters.query || filters.query.length < 2) return [];
-    
     const query = filters.query.toLowerCase();
     return allProducts
       .filter(
@@ -126,6 +128,7 @@ export const useProductSearch = () => {
   }, [filters.query, allProducts]);
 
   const priceRange = useMemo(() => {
+    if (allProducts.length === 0) return { min: 0, max: 1000 };
     const prices = allProducts.map((p) => p.price);
     return {
       min: Math.floor(Math.min(...prices)),
@@ -139,7 +142,8 @@ export const useProductSearch = () => {
     resetFilters,
     searchResults,
     autocompleteResults,
-    categories: allCategories,
+    categories,
     priceRange,
+    isLoading: productsLoading || categoriesLoading,
   };
 };

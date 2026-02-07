@@ -4,7 +4,8 @@ import { Search, X, TrendingUp, Clock, ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { categories, featuredProducts } from '@/data/mockData';
+import { useCategories, useProducts } from '@/hooks/useProducts';
+import { adaptDBProducts } from '@/lib/productAdapter';
 
 interface SearchModalProps {
   open: boolean;
@@ -16,6 +17,9 @@ export const SearchModal = ({ open, onOpenChange }: SearchModalProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [recentSearches] = useState(['Wireless Headphones', 'Laptop', 'Smart Watch']);
+  const { categories } = useCategories();
+  const { products: dbProducts } = useProducts({});
+  const allProducts = useMemo(() => adaptDBProducts(dbProducts), [dbProducts]);
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -46,13 +50,13 @@ export const SearchModal = ({ open, onOpenChange }: SearchModalProps) => {
   const filteredProducts = useMemo(() => {
     if (query.length < 2) return [];
     const lowerQuery = query.toLowerCase();
-    return featuredProducts
+    return allProducts
       .filter(p => 
         p.name.toLowerCase().includes(lowerQuery) ||
         p.category.name.toLowerCase().includes(lowerQuery)
       )
       .slice(0, 6);
-  }, [query]);
+  }, [query, allProducts]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
