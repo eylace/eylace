@@ -33,6 +33,7 @@ const Search = () => {
     searchResults,
     categories,
     priceRange,
+    isLoading,
   } = useProductSearch();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -146,7 +147,11 @@ const Search = () => {
             </div>
 
             {/* Results */}
-            {searchResults.length === 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="h-8 w-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : searchResults.length === 0 ? (
               <div className="text-center py-16">
                 <div className="w-20 h-20 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
                   <Filter className="h-10 w-10 text-muted-foreground" />
