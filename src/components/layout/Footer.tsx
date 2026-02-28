@@ -64,8 +64,8 @@ export const Footer = () => {
           <div className="col-span-2 lg:col-span-1">
             <Link to="/" className="inline-block mb-4">
               <div className="text-2xl font-bold">
-                <span className="text-accent">Shop</span>
-                <span>Hub</span>
+                <span className="text-accent">Ey</span>
+                <span>lace</span>
               </div>
             </Link>
             <p className="text-sm text-primary-foreground/70 mb-4">
@@ -111,9 +111,9 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Sell on ShopHub */}
+          {/* Sell on Eylace */}
           <div>
-            <h3 className="font-semibold mb-4">Sell on ShopHub</h3>
+            <h3 className="font-semibold mb-4">Sell on Eylace</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/70">
               <li><Link to="/sell" className="hover:text-accent transition-colors">Start Selling</Link></li>
               <li><Link to="/seller-center" className="hover:text-accent transition-colors">Seller Center</Link></li>
@@ -168,7 +168,7 @@ export const Footer = () => {
       <div className="bg-primary/50 border-t border-primary-foreground/10">
         <div className="container-main py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-primary-foreground/70">
-            <p>© 2024 ShopHub. All rights reserved.</p>
+            <p>© 2024 Eylace. All rights reserved.</p>
             <div className="flex gap-4">
               <Link to="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link>
               <Link to="/terms" className="hover:text-accent transition-colors">Terms of Service</Link>

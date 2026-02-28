@@ -55,8 +55,8 @@ export const Header = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <div className="text-2xl font-bold tracking-tight">
-                <span className="text-accent">Shop</span>
-                <span>Hub</span>
+                <span className="text-accent">Ey</span>
+                <span>lace</span>
               </div>
             </Link>
 
@@ -255,7 +255,7 @@ export const Header = () => {
               Best Sellers
             </Link>
             <Link to="/sell" className="text-sm hover:text-accent transition-colors whitespace-nowrap">
-              Sell on ShopHub
+              Sell on Eylace
             </Link>
             <Link to="/help" className="text-sm hover:text-accent transition-colors whitespace-nowrap">
               Help & Support

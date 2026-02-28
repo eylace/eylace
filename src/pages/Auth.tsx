@@ -110,7 +110,7 @@ const Auth = () => {
             <div className="w-16 h-16 mx-auto bg-accent/10 rounded-full flex items-center justify-center mb-4">
               <ShoppingBag className="h-8 w-8 text-accent" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Welcome to Grand Mall</h1>
+            <h1 className="text-2xl font-bold text-foreground">Welcome to Eylace</h1>
             <p className="text-muted-foreground mt-2">
               Sign in to your account or create a new one
             </p>
