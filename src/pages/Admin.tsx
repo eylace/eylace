@@ -3,8 +3,7 @@
  import { 
    Package, 
    MessageSquare, 
-   Users, 
-   Settings,
+   Store,
    Loader2,
    ShieldAlert
  } from 'lucide-react';
@@ -14,6 +13,7 @@
  import { useAuth } from '@/contexts/AuthContext';
  import { AdminOrdersTab } from '@/components/admin/AdminOrdersTab';
  import { AdminReviewsTab } from '@/components/admin/AdminReviewsTab';
+ import { AdminSellersTab } from '@/components/admin/AdminSellersTab';
  
  const Admin = () => {
    const { user, loading: authLoading } = useAuth();
@@ -60,25 +60,33 @@
            <p className="text-muted-foreground">Manage orders, reviews, and more</p>
          </div>
  
-         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-           <TabsList className="grid w-full max-w-md grid-cols-2">
-             <TabsTrigger value="orders" className="gap-2">
-               <Package className="h-4 w-4" />
-               Orders
-             </TabsTrigger>
-             <TabsTrigger value="reviews" className="gap-2">
-               <MessageSquare className="h-4 w-4" />
-               Reviews
-             </TabsTrigger>
-           </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full max-w-lg grid-cols-3">
+              <TabsTrigger value="orders" className="gap-2">
+                <Package className="h-4 w-4" />
+                Orders
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Reviews
+              </TabsTrigger>
+              <TabsTrigger value="sellers" className="gap-2">
+                <Store className="h-4 w-4" />
+                Sellers
+              </TabsTrigger>
+            </TabsList>
  
-           <TabsContent value="orders">
-             <AdminOrdersTab />
-           </TabsContent>
+            <TabsContent value="orders">
+              <AdminOrdersTab />
+            </TabsContent>
  
-           <TabsContent value="reviews">
-             <AdminReviewsTab />
-           </TabsContent>
+            <TabsContent value="reviews">
+              <AdminReviewsTab />
+            </TabsContent>
+
+            <TabsContent value="sellers">
+              <AdminSellersTab />
+            </TabsContent>
          </Tabs>
        </div>
      </Layout>

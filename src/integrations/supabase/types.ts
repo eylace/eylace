@@ -436,6 +436,45 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_applications: {
+        Row: {
+          admin_notes: string | null
+          business_type: string | null
+          created_at: string
+          id: string
+          phone: string | null
+          status: string
+          store_description: string | null
+          store_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          business_type?: string | null
+          created_at?: string
+          id?: string
+          phone?: string | null
+          status?: string
+          store_description?: string | null
+          store_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          business_type?: string | null
+          created_at?: string
+          id?: string
+          phone?: string | null
+          status?: string
+          store_description?: string | null
+          store_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sellers: {
         Row: {
           created_at: string
@@ -469,6 +508,27 @@ export type Database = {
           slug?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
         }
         Relationships: []
       }

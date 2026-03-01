@@ -21,6 +21,7 @@ import Admin from "./pages/Admin";
 import Deals from "./pages/Deals";
 import FlashSale from "./pages/FlashSale";
 import SellerDashboard from "./pages/SellerDashboard";
+import SellerRegistration from "./pages/SellerRegistration";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/deals" element={<Deals />} />
                 <Route path="/flash-sale" element={<FlashSale />} />
                 <Route path="/seller" element={<SellerDashboard />} />
+                <Route path="/sell" element={<SellerRegistration />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
