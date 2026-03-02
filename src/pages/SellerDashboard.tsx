@@ -12,6 +12,9 @@ import {
   TrendingUp,
   DollarSign,
   BoxIcon,
+  Plus,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,7 +24,19 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSellerCheck, useSellerProducts, useSellerOrders } from '@/hooks/useSellerData';
+import { ProductFormModal } from '@/components/seller/ProductFormModal';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
@@ -35,10 +50,13 @@ const statusColors: Record<string, string> = {
 const SellerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { seller, isLoading: sellerLoading } = useSellerCheck();
-  const { products, isLoading: productsLoading, toggleProductActive } = useSellerProducts(seller?.id);
+  const { products, isLoading: productsLoading, toggleProductActive, refetch } = useSellerProducts(seller?.id);
   const { orders, isLoading: ordersLoading } = useSellerOrders(seller?.id);
   const [activeTab, setActiveTab] = useState('overview');
-
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   if (authLoading || sellerLoading) {
     return (
       <Layout>
@@ -80,6 +98,35 @@ const SellerDashboard = () => {
     } else {
       toast.success(current ? 'Product deactivated' : 'Product activated');
     }
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct({
+      id: product.id,
+      name: product.name,
+      description: product.description || '',
+      price: Number(product.price),
+      original_price: product.original_price ? Number(product.original_price) : null,
+      stock: product.stock ?? 0,
+      category_id: product.category_id || null,
+      is_active: product.is_active ?? true,
+      images: product.images || [],
+    });
+    setProductModalOpen(true);
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProductId) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from('products').delete().eq('id', deletingProductId);
+    if (error) {
+      toast.error('Failed to delete product');
+    } else {
+      toast.success('Product deleted');
+      refetch();
+    }
+    setIsDeleting(false);
+    setDeletingProductId(null);
   };
 
   return (
@@ -196,8 +243,11 @@ const SellerDashboard = () => {
           {/* Products Tab */}
           <TabsContent value="products">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Your Products ({products.length})</CardTitle>
+                <Button onClick={() => { setEditingProduct(null); setProductModalOpen(true); }} className="gap-2">
+                  <Plus className="h-4 w-4" /> Add Product
+                </Button>
               </CardHeader>
               <CardContent>
                 {productsLoading ? (
@@ -252,17 +302,30 @@ const SellerDashboard = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleToggleActive(product.id, !!product.is_active)}
-                            >
-                              {product.is_active ? (
-                                <EyeOff className="h-4 w-4" />
-                              ) : (
-                                <Eye className="h-4 w-4" />
-                              )}
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleToggleActive(product.id, !!product.is_active)}
+                              >
+                                {product.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditProduct(product)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeletingProductId(product.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -324,6 +387,31 @@ const SellerDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ProductFormModal
+        open={productModalOpen}
+        onOpenChange={setProductModalOpen}
+        sellerId={seller.id}
+        product={editingProduct}
+        onSuccess={refetch}
+      />
+
+      <AlertDialog open={!!deletingProductId} onOpenChange={(open) => !open && setDeletingProductId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Product?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The product will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProduct} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isDeleting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Deleting...</> : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

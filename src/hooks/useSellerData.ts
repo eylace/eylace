@@ -83,7 +83,7 @@ export const useSellerProducts = (sellerId: string | undefined) => {
 
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, slug, price, original_price, stock, images, is_active, rating, review_count, created_at, category:categories(name)')
+      .select('id, name, slug, price, original_price, stock, images, is_active, rating, review_count, created_at, description, category_id, category:categories(name)')
       .eq('seller_id', sellerId)
       .order('created_at', { ascending: false });
 
