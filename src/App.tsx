@@ -22,6 +22,7 @@ import Deals from "./pages/Deals";
 import FlashSale from "./pages/FlashSale";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerRegistration from "./pages/SellerRegistration";
+import Account from "./pages/Account";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/account" element={<Account />} />
                 <Route path="/product/:slug" element={<ProductDetail />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
