@@ -141,8 +141,8 @@
  
          const emailContent = statusMessages[status];
          if (emailContent) {
-           await resend.emails.send({
-             from: 'ShopHub <noreply@resend.dev>',
+            await resend.emails.send({
+              from: 'Eylace <noreply@resend.dev>',
              to: [profile.email],
              subject: emailContent.subject,
              text: emailContent.body,

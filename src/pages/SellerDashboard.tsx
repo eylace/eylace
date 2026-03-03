@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { SellerAnalytics } from '@/components/seller/SellerAnalytics';
 import {
   Package,
   ShoppingCart,
@@ -154,7 +155,7 @@ const SellerDashboard = () => {
           <TabsList className="grid w-full max-w-lg grid-cols-3">
             <TabsTrigger value="overview" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              Overview
+              Analytics
             </TabsTrigger>
             <TabsTrigger value="products" className="gap-2">
               <Package className="h-4 w-4" />
@@ -168,76 +169,7 @@ const SellerDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Orders</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalOrders}</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Products</CardTitle>
-                  <BoxIcon className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{activeProducts} / {products.length}</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Orders */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {ordersLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-accent" />
-                  </div>
-                ) : orders.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No orders yet</p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order</TableHead>
-                        <TableHead>Items</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.slice(0, 5).map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">#{order.order_number}</TableCell>
-                          <TableCell>{order.items.map(i => i.product_name).join(', ')}</TableCell>
-                          <TableCell>
-                            <Badge className={statusColors[order.status] || 'bg-muted text-muted-foreground'}>
-                              {order.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{format(new Date(order.created_at), 'MMM d, yyyy')}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
+            <SellerAnalytics orders={orders} products={products} />
           </TabsContent>
 
           {/* Products Tab */}
