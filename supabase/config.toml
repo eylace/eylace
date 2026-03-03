@@ -11,3 +11,9 @@ project_id = "jmowninkqcfgwldyjeqo"
 
  [functions.send-order-email]
  verify_jwt = false
+
+ [functions.apply-coupon]
+ verify_jwt = false
+
+ [functions.admin-manage-sellers]
+ verify_jwt = false
