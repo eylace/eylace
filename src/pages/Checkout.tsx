@@ -298,7 +298,7 @@ const Checkout = () => {
                   ) : (
                     <>
                       <Lock className="h-5 w-5 mr-2" />
-                      Place Order - ${(getTotal() + codFee).toFixed(2)}
+                      Place Order - ${(getTotal() + codFee - promoDiscount).toFixed(2)}
                     </>
                   )}
                 </Button>
@@ -310,7 +310,17 @@ const Checkout = () => {
 
             {/* Order Summary */}
             <div className="space-y-4">
-              <OrderSummary codFee={codFee} />
+              <OrderSummary codFee={codFee} promoDiscount={promoDiscount} />
+              
+              {/* Promo Code */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <PromoCodeInput
+                  onApply={(d, c, cid) => { setPromoDiscount(d); setAppliedCode(c); setAppliedCouponId(cid); }}
+                  onRemove={() => { setPromoDiscount(0); setAppliedCode(null); setAppliedCouponId(null); }}
+                  appliedCode={appliedCode}
+                  discount={promoDiscount}
+                />
+              </div>
               
               {/* Place Order Button - Desktop */}
               <div className="hidden lg:block space-y-3">
