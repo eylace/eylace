@@ -129,17 +129,11 @@ const Checkout = () => {
           console.error('Error creating order items:', itemsError);
         }
 
-        // Record coupon usage
+        // Record coupon usage via edge function
         if (appliedCouponId && orderData) {
-          await supabase.from('coupon_usage').insert({
-            coupon_id: appliedCouponId,
-            user_id: user.id,
-            order_id: orderData.id,
-            discount_amount: promoDiscount,
+          await supabase.functions.invoke('apply-coupon', {
+            body: { coupon_id: appliedCouponId, order_id: orderData.id, discount_amount: promoDiscount },
           });
-          // Increment used_count
-          await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }); // dummy - we'll update directly
-          await supabase.from('coupons').update({ used_count: (await supabase.from('coupons').select('used_count').eq('id', appliedCouponId).single()).data?.used_count + 1 || 1 }).eq('id', appliedCouponId);
         }
 
         // Update user profile with shipping address if they opted to save it
