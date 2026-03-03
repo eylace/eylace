@@ -11,7 +11,8 @@ import {
   Heart,
   LogOut,
   Package,
-  Settings
+  Settings,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { SearchModal } from '@/components/search/SearchModal';
  import { ShieldCheck } from 'lucide-react';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -189,6 +191,11 @@ export const Header = () => {
                 <span className="text-xs text-primary-foreground/70">Returns</span>
                 <span className="text-sm font-medium">& Orders</span>
               </Link>
+
+              {/* Notifications */}
+              <div className="hidden md:block">
+                <NotificationBell />
+              </div>
 
               {/* Wishlist */}
               <Link to="/wishlist" className="hidden md:block relative hover:text-accent transition-colors">

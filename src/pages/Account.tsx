@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   User, MapPin, Package, Heart, Settings, Shield, CreditCard,
   Bell, ChevronRight, Loader2, Save, Camera, Mail, Phone,
-  Calendar, Star, ShoppingBag, Clock, LogOut, Edit2, Check, X
+  Calendar, Star, ShoppingBag, Clock, LogOut, Edit2, Check, X, Upload
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -164,9 +164,55 @@ const Account = () => {
     navigate('/');
   };
 
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const initials = `${(profile?.first_name || '')[0] || ''}${(profile?.last_name || '')[0] || ''}`.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Customer';
   const memberSince = user?.created_at ? format(new Date(user.created_at), 'MMMM yyyy') : '';
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be under 2MB');
+      return;
+    }
+
+    setAvatarUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${user.id}/avatar.${fileExt}`;
+
+    // Delete old avatar if exists
+    await supabase.storage.from('avatars').remove([filePath]);
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      toast.error('Failed to upload avatar');
+      setAvatarUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    const { error: updateError } = await updateProfile({ avatar_url: avatarUrl } as any);
+    setAvatarUploading(false);
+
+    if (updateError) {
+      toast.error('Failed to update profile');
+    } else {
+      toast.success('Avatar updated!');
+    }
+  };
 
   const statusColors: Record<string, string> = {
     pending: 'bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]',
@@ -197,12 +243,28 @@ const Account = () => {
             <div className="h-32 bg-gradient-to-r from-primary to-primary/70" />
             <div className="px-6 pb-6 -mt-12">
               <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-                <Avatar className="h-24 w-24 border-4 border-card shadow-lg">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="text-2xl font-bold bg-accent text-accent-foreground">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="h-24 w-24 border-4 border-card shadow-lg">
+                    <AvatarImage src={(profile as any)?.avatar_url || ''} />
+                    <AvatarFallback className="text-2xl font-bold bg-accent text-accent-foreground">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={avatarUploading}
+                    className="absolute bottom-0 right-0 bg-accent text-accent-foreground rounded-full p-1.5 shadow-md hover:bg-accent/90 transition-colors"
+                  >
+                    {avatarUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
                 <div className="flex-1 pt-2">
                   <h1 className="text-2xl font-bold">{fullName}</h1>
                   <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
