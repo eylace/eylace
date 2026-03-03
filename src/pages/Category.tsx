@@ -160,7 +160,7 @@ const Category = () => {
           {/* Main Content */}
           <div className="flex-1">
             {/* Toolbar */}
-            <div className="flex items-center justify-between gap-4 mb-6 p-4 bg-card rounded-lg border border-border">
+            <div className="flex items-center justify-between gap-4 mb-6 p-4 bg-card rounded-lg border border-border py-[5px]">
               {/* Mobile Filter Button */}
               <Sheet>
                 <SheetTrigger asChild>
