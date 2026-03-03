@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { ShippingForm } from '@/components/checkout/ShippingForm';
 import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
+import { PromoCodeInput } from '@/components/checkout/PromoCodeInput';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +42,9 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
 
   const form = useForm<CheckoutFormData>({
     defaultValues: {
@@ -64,7 +68,7 @@ const Checkout = () => {
       const subtotal = getSubtotal();
       const shipping = getShipping();
       const tax = getTax();
-      const total = getTotal() + codFee;
+      const total = getTotal() + codFee - promoDiscount;
 
       // Save order to database if user is authenticated
       if (user) {
@@ -91,7 +95,7 @@ const Checkout = () => {
             subtotal,
             shipping,
             tax,
-            discount: 0,
+            discount: promoDiscount,
             total,
             payment_method: data.paymentMethod,
             shipping_address: shippingAddress,
@@ -123,6 +127,13 @@ const Checkout = () => {
 
         if (itemsError) {
           console.error('Error creating order items:', itemsError);
+        }
+
+        // Record coupon usage via edge function
+        if (appliedCouponId && orderData) {
+          await supabase.functions.invoke('apply-coupon', {
+            body: { coupon_id: appliedCouponId, order_id: orderData.id, discount_amount: promoDiscount },
+          });
         }
 
         // Update user profile with shipping address if they opted to save it
@@ -281,7 +292,7 @@ const Checkout = () => {
                   ) : (
                     <>
                       <Lock className="h-5 w-5 mr-2" />
-                      Place Order - ${(getTotal() + codFee).toFixed(2)}
+                      Place Order - ${(getTotal() + codFee - promoDiscount).toFixed(2)}
                     </>
                   )}
                 </Button>
@@ -293,7 +304,17 @@ const Checkout = () => {
 
             {/* Order Summary */}
             <div className="space-y-4">
-              <OrderSummary codFee={codFee} />
+              <OrderSummary codFee={codFee} promoDiscount={promoDiscount} />
+              
+              {/* Promo Code */}
+              <div className="bg-card border border-border rounded-lg p-4">
+                <PromoCodeInput
+                  onApply={(d, c, cid) => { setPromoDiscount(d); setAppliedCode(c); setAppliedCouponId(cid); }}
+                  onRemove={() => { setPromoDiscount(0); setAppliedCode(null); setAppliedCouponId(null); }}
+                  appliedCode={appliedCode}
+                  discount={promoDiscount}
+                />
+              </div>
               
               {/* Place Order Button - Desktop */}
               <div className="hidden lg:block space-y-3">
