@@ -15,6 +15,7 @@ interface Profile {
   state: string | null;
   zip_code: string | null;
   country: string | null;
+  avatar_url: string | null;
 }
 
 interface AuthContextType {
