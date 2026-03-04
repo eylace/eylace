@@ -293,7 +293,15 @@ const ProductDetail = () => {
                     "h-5 w-5 mr-2",
                     isWishlisted && "fill-destructive text-destructive"
                   )} />
-                  {isWishlisted ? 'Saved' : 'Add to Wishlist'}
+                  {isWishlisted ? 'Saved' : 'Wishlist'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={cn("flex-1", isInCompare(product.id) && "text-accent")}
+                  onClick={() => isInCompare(product.id) ? removeFromCompare(product.id) : addToCompare(product)}
+                >
+                  <GitCompareArrows className="h-5 w-5 mr-2" />
+                  {isInCompare(product.id) ? 'Comparing' : 'Compare'}
                 </Button>
                 <Button variant="ghost" className="flex-1">
                   <Share2 className="h-5 w-5 mr-2" />
