@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
+import { CompareProvider } from "@/contexts/CompareContext";
+import { CompareBar } from "@/components/compare/CompareBar";
+import { CompareModal } from "@/components/compare/CompareModal";
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
@@ -31,9 +34,12 @@ const App = () => (
     <AuthProvider>
       <CartProvider>
         <WishlistProvider>
+          <CompareProvider>
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <CompareBar />
+            <CompareModal />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -57,6 +63,7 @@ const App = () => (
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
+          </CompareProvider>
         </WishlistProvider>
       </CartProvider>
     </AuthProvider>

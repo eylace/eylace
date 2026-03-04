@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { Star, Heart, ShoppingCart, Zap } from 'lucide-react';
+import { Star, Heart, ShoppingCart, Zap, GitCompareArrows } from 'lucide-react';
 import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompare } from '@/contexts/CompareContext';
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +17,8 @@ interface ProductCardProps {
 export const ProductCard = ({ product, variant = 'default', showWishlistButton = false }: ProductCardProps) => {
   const { user } = useAuth();
   const { addItem, removeItem, isInWishlist } = useWishlist();
+  const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
+  const inCompare = isInCompare(product.id);
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
   const isWishlisted = isInWishlist(product.id);
@@ -85,6 +88,19 @@ export const ProductCard = ({ product, variant = 'default', showWishlistButton =
         )}
       >
         <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
+      </button>
+
+      {/* Compare Button */}
+      <button
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); inCompare ? removeFromCompare(product.id) : addToCompare(product); }}
+        className={cn(
+          "absolute top-12 right-3 z-10 p-2 bg-card/80 backdrop-blur-sm rounded-full transition-all hover:bg-card",
+          inCompare
+            ? "text-accent opacity-100"
+            : "opacity-0 group-hover:opacity-100 hover:text-accent"
+        )}
+      >
+        <GitCompareArrows className={cn("h-4 w-4")} />
       </button>
 
       {/* Image */}
