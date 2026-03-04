@@ -13,7 +13,8 @@ import {
   MessageCircle,
   ChevronRight,
   Package,
-  Store
+  Store,
+  GitCompareArrows
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
  import { Button } from '@/components/ui/button';
@@ -32,6 +33,8 @@ import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompare } from '@/contexts/CompareContext';
+import { useAuth } from '@/contexts/AuthContext';
  import { Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
@@ -41,6 +44,7 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const { user } = useAuth();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
+  const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
    
    const { product: dbProduct, isLoading, error } = useProduct(slug || '');
    const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
