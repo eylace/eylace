@@ -13,7 +13,8 @@ import {
   MessageCircle,
   ChevronRight,
   Package,
-  Store
+  Store,
+  GitCompareArrows
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
  import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompare } from '@/contexts/CompareContext';
  import { Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
@@ -41,6 +43,7 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const { user } = useAuth();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
+  const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
    
    const { product: dbProduct, isLoading, error } = useProduct(slug || '');
    const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
@@ -290,7 +293,15 @@ const ProductDetail = () => {
                     "h-5 w-5 mr-2",
                     isWishlisted && "fill-destructive text-destructive"
                   )} />
-                  {isWishlisted ? 'Saved' : 'Add to Wishlist'}
+                  {isWishlisted ? 'Saved' : 'Wishlist'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={cn("flex-1", isInCompare(product.id) && "text-accent")}
+                  onClick={() => isInCompare(product.id) ? removeFromCompare(product.id) : addToCompare(product)}
+                >
+                  <GitCompareArrows className="h-5 w-5 mr-2" />
+                  {isInCompare(product.id) ? 'Comparing' : 'Compare'}
                 </Button>
                 <Button variant="ghost" className="flex-1">
                   <Share2 className="h-5 w-5 mr-2" />
