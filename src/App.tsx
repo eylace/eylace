@@ -28,7 +28,6 @@ import AdminSellers from "./pages/AdminSellers";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminCustomers from "./pages/AdminCustomers";
 import {
-  AdminCategories,
   AdminFraud,
   AdminTransactions,
   AdminMarketing,
@@ -40,6 +39,7 @@ import {
   AdminSEO,
 } from "./pages/AdminComingSoon";
 import AdminCouriers from "./pages/AdminCouriers";
+import AdminCategories from "./pages/AdminCategories";
 import Deals from "./pages/Deals";
 import FlashSale from "./pages/FlashSale";
 import SellerDashboard from "./pages/SellerDashboard";

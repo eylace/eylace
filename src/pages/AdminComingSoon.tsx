@@ -20,12 +20,7 @@ const ComingSoonContent = ({ title, description }: ComingSoonPageProps) => (
   </Card>
 );
 
-// Categories Management
-export const AdminCategories = () => (
-  <AdminLayout title="Categories" description="Organize your product catalog">
-    <ComingSoonContent title="Category Management" description="Full category tree management with drag & drop ordering coming soon." />
-  </AdminLayout>
-);
+// Categories Management - moved to AdminCategories.tsx
 
 // Courier Management - moved to AdminCouriers.tsx
 
