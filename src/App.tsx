@@ -73,6 +73,23 @@ const App = () => (
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/orders" element={<AdminOrders />} />
+                <Route path="/admin/products" element={<AdminProducts />} />
+                <Route path="/admin/categories" element={<AdminCategories />} />
+                <Route path="/admin/customers" element={<AdminCustomers />} />
+                <Route path="/admin/sellers" element={<AdminSellers />} />
+                <Route path="/admin/reviews" element={<AdminReviews />} />
+                <Route path="/admin/coupons" element={<AdminCoupons />} />
+                <Route path="/admin/couriers" element={<AdminCouriers />} />
+                <Route path="/admin/fraud" element={<AdminFraud />} />
+                <Route path="/admin/transactions" element={<AdminTransactions />} />
+                <Route path="/admin/marketing" element={<AdminMarketing />} />
+                <Route path="/admin/reports" element={<AdminReports />} />
+                <Route path="/admin/media" element={<AdminMedia />} />
+                <Route path="/admin/notifications" element={<AdminNotifications />} />
+                <Route path="/admin/settings" element={<AdminSettingsPage />} />
+                <Route path="/admin/pages" element={<AdminPages />} />
+                <Route path="/admin/seo" element={<AdminSEO />} />
                 <Route path="/deals" element={<Deals />} />
                 <Route path="/flash-sale" element={<FlashSale />} />
                 <Route path="/seller" element={<SellerDashboard />} />
