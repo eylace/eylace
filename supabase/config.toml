@@ -17,3 +17,6 @@ project_id = "jmowninkqcfgwldyjeqo"
 
  [functions.admin-manage-sellers]
  verify_jwt = false
+
+ [functions.fraud-check]
+ verify_jwt = false

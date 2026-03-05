@@ -151,6 +151,51 @@ export type Database = {
         }
         Relationships: []
       }
+      couriers: {
+        Row: {
+          base_cost: number | null
+          code: string
+          created_at: string
+          delivery_zones: Json | null
+          estimated_days_max: number | null
+          estimated_days_min: number | null
+          id: string
+          is_active: boolean | null
+          logo: string | null
+          name: string
+          tracking_url_template: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_cost?: number | null
+          code: string
+          created_at?: string
+          delivery_zones?: Json | null
+          estimated_days_max?: number | null
+          estimated_days_min?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo?: string | null
+          name: string
+          tracking_url_template?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_cost?: number | null
+          code?: string
+          created_at?: string
+          delivery_zones?: Json | null
+          estimated_days_max?: number | null
+          estimated_days_min?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo?: string | null
+          name?: string
+          tracking_url_template?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string

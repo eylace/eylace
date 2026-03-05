@@ -27,12 +27,7 @@ export const AdminCategories = () => (
   </AdminLayout>
 );
 
-// Courier Management
-export const AdminCouriers = () => (
-  <AdminLayout title="Courier Management" description="Manage shipping carriers and tracking">
-    <ComingSoonContent title="Courier Management" description="Manage shipping carriers, tracking integrations, and delivery zones coming soon." />
-  </AdminLayout>
-);
+// Courier Management - moved to AdminCouriers.tsx
 
 // Fraud Detection
 export const AdminFraud = () => (
