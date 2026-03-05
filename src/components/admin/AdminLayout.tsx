@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
+import { AdminNotificationBell } from './AdminNotificationBell';
 import { useAdminCheck } from '@/hooks/useAdminData';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -57,6 +58,9 @@ export const AdminLayout = ({ children, title, description }: AdminLayoutProps) 
                 {description && <p className="text-xs text-muted-foreground">{description}</p>}
               </div>
             )}
+            <div className="ml-auto">
+              <AdminNotificationBell />
+            </div>
           </header>
 
           {/* Content */}
