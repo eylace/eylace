@@ -48,9 +48,11 @@ export const CartItemComponent = ({ item }: CartItemProps) => {
             </Link>
             
             {/* Seller */}
-            <p className="text-sm text-muted-foreground">
-              Sold by: {product.seller.name}
-            </p>
+            {product.seller?.name && (
+              <p className="text-sm text-muted-foreground">
+                Sold by: {product.seller.name}
+              </p>
+            )}
 
             {/* Variations */}
             {selectedVariations && Object.keys(selectedVariations).length > 0 && (
