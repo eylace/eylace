@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { CompareProvider } from "@/contexts/CompareContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CompareBar } from "@/components/compare/CompareBar";
 import { CompareModal } from "@/components/compare/CompareModal";
 import Index from "./pages/Index";
@@ -50,6 +51,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
     <AuthProvider>
       <CartProvider>
         <WishlistProvider>
@@ -103,6 +105,7 @@ const App = () => (
         </WishlistProvider>
       </CartProvider>
     </AuthProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 
