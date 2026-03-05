@@ -33,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import {
   Truck,
@@ -42,7 +43,6 @@ import {
   Loader2,
   Globe,
   Clock,
-  DollarSign,
 } from 'lucide-react';
 
 interface Courier {
