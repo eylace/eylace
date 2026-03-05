@@ -1,14 +1,16 @@
- import { useState } from 'react';
- import { 
-   Package, 
-   Truck, 
-   CheckCircle, 
-   Clock,
-   ChevronDown,
-   ChevronUp,
-   Loader2,
-   Send
- } from 'lucide-react';
+import { useState } from 'react';
+import { 
+  Package, 
+  Truck, 
+  CheckCircle, 
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Send,
+  ShieldAlert,
+} from 'lucide-react';
+import { FraudDetectionModal } from '@/components/admin/FraudDetectionModal';
  import { Button } from '@/components/ui/button';
  import { Badge } from '@/components/ui/badge';
  import { Input } from '@/components/ui/input';
@@ -50,9 +52,10 @@
  
  export const AdminOrdersTab = () => {
    const { orders, isLoading, updateOrderStatus } = useAdminOrders();
-   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-   const [updating, setUpdating] = useState<string | null>(null);
-   const [trackingInfo, setTrackingInfo] = useState<Record<string, { carrier: string; tracking_number: string }>>({});
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [trackingInfo, setTrackingInfo] = useState<Record<string, { carrier: string; tracking_number: string }>>({});
+  const [fraudOrder, setFraudOrder] = useState<any>(null);
  
    const handleStatusUpdate = async (orderId: string, newStatus: string) => {
      setUpdating(orderId);
@@ -87,8 +90,9 @@
      );
    }
  
-   return (
-     <Card>
+  return (
+    <>
+      <Card>
        <CardHeader>
          <CardTitle className="flex items-center gap-2">
            <Package className="h-5 w-5" />
@@ -117,17 +121,26 @@
                      </div>
                    </div>
                    
-                   <div className="flex items-center gap-4">
-                     <Badge className={cn('gap-1', status.color)}>
-                       <StatusIcon className="h-3 w-3" />
-                       {status.label}
-                     </Badge>
-                     <span className="font-bold">${order.total.toFixed(2)}</span>
-                     <span className="text-sm text-muted-foreground">
-                       {format(new Date(order.created_at), 'MMM d, yyyy')}
-                     </span>
-                     {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                   </div>
+                    <div className="flex items-center gap-4">
+                      <Badge className={cn('gap-1', status.color)}>
+                        <StatusIcon className="h-3 w-3" />
+                        {status.label}
+                      </Badge>
+                      <span className="font-bold">${order.total.toFixed(2)}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {format(new Date(order.created_at), 'MMM d, yyyy')}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setFraudOrder(order); }}
+                        title="Fraud Detection"
+                      >
+                        <ShieldAlert className="h-4 w-4" />
+                      </Button>
+                      {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                    </div>
                  </div>
  
                  {isExpanded && (
@@ -230,8 +243,14 @@
                </div>
              );
            })}
-         </div>
-       </CardContent>
-     </Card>
-   );
- };
+          </div>
+        </CardContent>
+      </Card>
+      <FraudDetectionModal
+        open={!!fraudOrder}
+        onOpenChange={(open) => !open && setFraudOrder(null)}
+        order={fraudOrder}
+      />
+    </>
+  );
+};

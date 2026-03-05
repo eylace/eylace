@@ -29,7 +29,6 @@ import AdminCoupons from "./pages/AdminCoupons";
 import AdminCustomers from "./pages/AdminCustomers";
 import {
   AdminCategories,
-  AdminCouriers,
   AdminFraud,
   AdminTransactions,
   AdminMarketing,
@@ -40,6 +39,7 @@ import {
   AdminPages,
   AdminSEO,
 } from "./pages/AdminComingSoon";
+import AdminCouriers from "./pages/AdminCouriers";
 import Deals from "./pages/Deals";
 import FlashSale from "./pages/FlashSale";
 import SellerDashboard from "./pages/SellerDashboard";
