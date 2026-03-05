@@ -5,59 +5,49 @@ import { FlashSaleSection } from '@/components/home/FlashSaleSection';
 import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { DealsSection } from '@/components/home/DealsSection';
 import { PromoBanners } from '@/components/home/PromoBanners';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
+  const { t } = useLanguage();
+
   return (
     <Layout>
-      {/* Hero Section with Categories & Slider */}
       <HeroSection />
-
-      {/* Categories Grid */}
       <CategoriesSection />
-
-      {/* Flash Sale */}
       <FlashSaleSection />
-
-      {/* Promotional Banners */}
       <PromoBanners />
-
-      {/* Today's Best Deals */}
       <DealsSection />
 
-      {/* Featured Products */}
       <FeaturedProducts 
         title="Featured Products"
         subtitle="Handpicked items just for you"
+        titleKey="featured.title"
+        subtitleKey="featured.subtitle"
         icon="star"
-           limit={5}
+        limit={5}
       />
-
-      {/* Trending Now */}
       <FeaturedProducts 
         title="Trending Now"
         subtitle="What everyone is buying"
+        titleKey="featured.trending"
+        subtitleKey="featured.trendingSub"
         icon="trending"
-           limit={5}
+        limit={5}
       />
-
-      {/* New Arrivals */}
       <FeaturedProducts 
         title="New Arrivals"
         subtitle="Fresh additions to our collection"
+        titleKey="featured.newArrivals"
+        subtitleKey="featured.newArrivalsSub"
         icon="sparkles"
         link="/new-arrivals"
-           limit={5}
+        limit={5}
       />
 
-      {/* Recently Viewed - placeholder */}
       <section className="container-main py-8 mb-8">
         <div className="bg-secondary/50 rounded-xl p-8 text-center">
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Your Recently Viewed Products
-          </h3>
-          <p className="text-muted-foreground text-sm">
-            Sign in to see your browsing history and get personalized recommendations
-          </p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{t('recent.title')}</h3>
+          <p className="text-muted-foreground text-sm">{t('recent.signIn')}</p>
         </div>
       </section>
     </Layout>
