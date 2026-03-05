@@ -6,11 +6,9 @@ import {
   Package,
   TrendingUp,
   TrendingDown,
-  ArrowUpRight,
-  Eye,
+  BarChart3,
   Star,
   Truck,
-  AlertTriangle,
   Clock,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
