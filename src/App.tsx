@@ -21,6 +21,25 @@ import Settings from "./pages/Settings";
 import Wishlist from "./pages/Wishlist";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import AdminOrders from "./pages/AdminOrders";
+import AdminProducts from "./pages/AdminProducts";
+import AdminReviews from "./pages/AdminReviews";
+import AdminSellers from "./pages/AdminSellers";
+import AdminCoupons from "./pages/AdminCoupons";
+import AdminCustomers from "./pages/AdminCustomers";
+import {
+  AdminCategories,
+  AdminCouriers,
+  AdminFraud,
+  AdminTransactions,
+  AdminMarketing,
+  AdminReports,
+  AdminMedia,
+  AdminNotifications,
+  AdminSettings as AdminSettingsPage,
+  AdminPages,
+  AdminSEO,
+} from "./pages/AdminComingSoon";
 import Deals from "./pages/Deals";
 import FlashSale from "./pages/FlashSale";
 import SellerDashboard from "./pages/SellerDashboard";
