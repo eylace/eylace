@@ -74,7 +74,7 @@ const AdminCouriers = () => {
 
   const fetchCouriers = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('couriers')
       .select('*')
       .order('name');
@@ -130,9 +130,9 @@ const AdminCouriers = () => {
 
     let error;
     if (editCourier) {
-      ({ error } = await supabase.from('couriers').update(payload).eq('id', editCourier.id));
+      ({ error } = await (supabase as any).from('couriers').update(payload).eq('id', editCourier.id));
     } else {
-      ({ error } = await supabase.from('couriers').insert(payload));
+      ({ error } = await (supabase as any).from('couriers').insert(payload));
     }
 
     if (error) {
@@ -146,7 +146,7 @@ const AdminCouriers = () => {
   };
 
   const deleteCourier = async (id: string) => {
-    const { error } = await supabase.from('couriers').delete().eq('id', id);
+    const { error } = await (supabase as any).from('couriers').delete().eq('id', id);
     if (!error) {
       toast.success('Courier deleted');
       fetchCouriers();
