@@ -49,11 +49,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           id: item.product.id,
           name: item.product.name,
           slug: item.product.slug,
+          description: item.product.description,
           price: item.product.price,
           originalPrice: item.product.originalPrice,
+          discount: item.product.discount,
           images: item.product.images,
+          category: item.product.category,
+          seller: item.product.seller,
+          rating: item.product.rating,
+          reviewCount: item.product.reviewCount,
           stock: item.product.stock,
+          variations: item.product.variations,
           isFreeShipping: item.product.isFreeShipping,
+          isPrime: item.product.isPrime,
         },
         quantity: item.quantity,
         selectedVariations: item.selectedVariations,
@@ -64,7 +72,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         .from('saved_cart')
         .upsert({
           user_id: user.id,
-          items: itemsJson,
+          items: itemsJson as unknown as import('@/integrations/supabase/types').Json,
         }, {
           onConflict: 'user_id',
         });
