@@ -16,6 +16,7 @@ import {
   Loader2,
   Image as ImageIcon,
 } from 'lucide-react';
+import { AdminProductFormModal } from '@/components/admin/ProductFormModal';
 import { toast } from 'sonner';
 import {
   Table,
@@ -41,7 +42,8 @@ const AdminProducts = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-
+  const [formOpen, setFormOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<any>(null);
   const fetchProducts = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -99,6 +101,9 @@ const AdminProducts = () => {
                 className="pl-9 w-64"
               />
             </div>
+            <Button size="sm" className="gap-1" onClick={() => { setEditProduct(null); setFormOpen(true); }}>
+              <Plus className="h-4 w-4" /> Add Product
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -159,6 +164,9 @@ const AdminProducts = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditProduct(product); setFormOpen(true); }}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleActive(product.id, product.is_active)}>
                           {product.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -199,8 +207,13 @@ const AdminProducts = () => {
           )}
         </CardContent>
       </Card>
+      <AdminProductFormModal
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        product={editProduct}
+        onSaved={fetchProducts}
+      />
     </AdminLayout>
-  );
 };
 
 export default AdminProducts;
