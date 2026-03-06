@@ -25,18 +25,17 @@
        { global: { headers: { Authorization: authHeader } } }
      );
  
-     // Verify user is admin
-     const token = authHeader.replace('Bearer ', '');
-     const { data: claims, error: claimsError } = await supabaseClient.auth.getClaims(token);
-     
-     if (claimsError || !claims?.claims?.sub) {
-       return new Response(
-         JSON.stringify({ error: 'Unauthorized' }),
-         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-       );
-     }
- 
-     const userId = claims.claims.sub;
+      // Verify user is admin
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      
+      if (userError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const userId = user.id;
  
      // Check if user is admin
      const { data: roleData, error: roleError } = await supabaseClient
