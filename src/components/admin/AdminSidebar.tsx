@@ -18,9 +18,12 @@ import {
   Bell,
   CreditCard,
   ArrowLeft,
+  LogOut,
+  Shield,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -63,6 +66,7 @@ const contentItems = [
 ];
 
 const systemItems = [
+  { title: 'User Roles', url: '/admin/user-roles', icon: Shield },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
   { title: 'Pages', url: '/admin/pages', icon: FileText },
   { title: 'SEO & Analytics', url: '/admin/seo', icon: Globe },
@@ -70,6 +74,8 @@ const systemItems = [
 
 export function AdminSidebar() {
   const { state } = useSidebar();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const currentPath = location.pathname;
@@ -140,12 +146,22 @@ export function AdminSidebar() {
         {renderGroup('System', systemItems)}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-3">
+      <SidebarFooter className="border-t border-sidebar-border p-3 space-y-1">
         <SidebarMenuButton asChild>
           <Link to="/" className="flex items-center gap-2 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground">
             <ArrowLeft className="h-4 w-4" />
             {!collapsed && <span>Back to Store</span>}
           </Link>
+        </SidebarMenuButton>
+        <SidebarMenuButton
+          onClick={async () => {
+            await signOut();
+            navigate('/admin/login');
+          }}
+          className="flex items-center gap-2 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+        >
+          <LogOut className="h-4 w-4" />
+          {!collapsed && <span>Logout</span>}
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>

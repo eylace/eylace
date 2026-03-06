@@ -25,7 +25,7 @@ export const AdminLayout = ({ children, title, description }: AdminLayoutProps) 
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   if (!isAdmin) {

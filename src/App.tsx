@@ -22,6 +22,8 @@ import Settings from "./pages/Settings";
 import Wishlist from "./pages/Wishlist";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
+import AdminUserRoles from "./pages/AdminUserRoles";
 import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
 import AdminReviews from "./pages/AdminReviews";
@@ -74,6 +76,7 @@ const App = () => (
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
@@ -92,6 +95,7 @@ const App = () => (
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />
                 <Route path="/admin/pages" element={<AdminPages />} />
                 <Route path="/admin/seo" element={<AdminSEO />} />
+                <Route path="/admin/user-roles" element={<AdminUserRoles />} />
                 <Route path="/deals" element={<Deals />} />
                 <Route path="/flash-sale" element={<FlashSale />} />
                 <Route path="/seller" element={<SellerDashboard />} />

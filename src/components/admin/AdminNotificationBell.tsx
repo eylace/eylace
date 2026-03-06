@@ -27,11 +27,52 @@ export const AdminNotificationBell = () => {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [open, setOpen] = useState(false);
 
+  // Sound effect for notifications
+  const playNotificationSound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      // Audio not available
+    }
+  }, []);
+
+  // Request push notification permission
+  const requestPushPermission = useCallback(async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    requestPushPermission();
+  }, [requestPushPermission]);
+
+  // Show browser push notification
+  const showPushNotification = useCallback((title: string, body: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/favicon.png',
+        badge: '/favicon.png',
+      });
+    }
+  }, []);
+
   const addNotification = useCallback((notif: AdminNotification) => {
     setNotifications((prev) => [notif, ...prev.slice(0, 49)]);
-    // Also show a toast
     toast(notif.title, { description: notif.message });
-  }, []);
+    playNotificationSound();
+    showPushNotification(notif.title, notif.message);
+  }, [playNotificationSound, showPushNotification]);
 
   useEffect(() => {
     // Subscribe to new orders (INSERT)
