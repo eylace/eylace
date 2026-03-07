@@ -30,19 +30,17 @@ import AdminReviews from "./pages/AdminReviews";
 import AdminSellers from "./pages/AdminSellers";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminCustomers from "./pages/AdminCustomers";
-import {
-  AdminFraud,
-  AdminTransactions,
-  AdminMarketing,
-  AdminReports,
-  AdminMedia,
-  AdminNotifications,
-  AdminSettings as AdminSettingsPage,
-  AdminPages,
-  AdminSEO,
-} from "./pages/AdminComingSoon";
 import AdminCouriers from "./pages/AdminCouriers";
 import AdminCategories from "./pages/AdminCategories";
+import AdminReportsPage from "./pages/AdminReportsPage";
+import AdminTransactionsPage from "./pages/AdminTransactionsPage";
+import AdminMarketingPage from "./pages/AdminMarketingPage";
+import AdminFraudPage from "./pages/AdminFraudPage";
+import AdminSettingsPage from "./pages/AdminSettingsPage";
+import AdminPagesPage from "./pages/AdminPagesPage";
+import AdminSEOPage from "./pages/AdminSEOPage";
+import AdminMediaPage from "./pages/AdminMediaPage";
+import AdminNotificationsPage from "./pages/AdminNotificationsPage";
 import Deals from "./pages/Deals";
 import FlashSale from "./pages/FlashSale";
 import SellerDashboard from "./pages/SellerDashboard";
@@ -86,15 +84,15 @@ const App = () => (
                 <Route path="/admin/reviews" element={<AdminReviews />} />
                 <Route path="/admin/coupons" element={<AdminCoupons />} />
                 <Route path="/admin/couriers" element={<AdminCouriers />} />
-                <Route path="/admin/fraud" element={<AdminFraud />} />
-                <Route path="/admin/transactions" element={<AdminTransactions />} />
-                <Route path="/admin/marketing" element={<AdminMarketing />} />
-                <Route path="/admin/reports" element={<AdminReports />} />
-                <Route path="/admin/media" element={<AdminMedia />} />
-                <Route path="/admin/notifications" element={<AdminNotifications />} />
+                <Route path="/admin/fraud" element={<AdminFraudPage />} />
+                <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
+                <Route path="/admin/marketing" element={<AdminMarketingPage />} />
+                <Route path="/admin/reports" element={<AdminReportsPage />} />
+                <Route path="/admin/media" element={<AdminMediaPage />} />
+                <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />
-                <Route path="/admin/pages" element={<AdminPages />} />
-                <Route path="/admin/seo" element={<AdminSEO />} />
+                <Route path="/admin/pages" element={<AdminPagesPage />} />
+                <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
                 <Route path="/deals" element={<Deals />} />
                 <Route path="/flash-sale" element={<FlashSale />} />
