@@ -4,18 +4,27 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminNotificationBell } from './AdminNotificationBell';
 import { ThemeToggle } from './ThemeToggle';
+import { AdminLanguageSwitcher } from './AdminLanguageSwitcher';
 import { useAdminCheck } from '@/hooks/useAdminData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { TranslationKey } from '@/i18n/translations';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+  titleKey?: TranslationKey;
+  descriptionKey?: TranslationKey;
   title?: string;
   description?: string;
 }
 
-export const AdminLayout = ({ children, title, description }: AdminLayoutProps) => {
+export const AdminLayout = ({ children, titleKey, descriptionKey, title, description }: AdminLayoutProps) => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminCheck();
+  const { t } = useLanguage();
+
+  const displayTitle = titleKey ? t(titleKey) : title;
+  const displayDesc = descriptionKey ? t(descriptionKey) : description;
 
   if (authLoading || adminLoading) {
     return (
@@ -50,22 +59,20 @@ export const AdminLayout = ({ children, title, description }: AdminLayoutProps) 
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top Header */}
           <header className="h-14 flex items-center gap-4 border-b border-border bg-card px-4 sticky top-0 z-30">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-            {title && (
+            {displayTitle && (
               <div className="flex-1">
-                <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-                {description && <p className="text-xs text-muted-foreground">{description}</p>}
+                <h1 className="text-lg font-semibold text-foreground">{displayTitle}</h1>
+                {displayDesc && <p className="text-xs text-muted-foreground">{displayDesc}</p>}
               </div>
             )}
             <div className="ml-auto flex items-center gap-2">
+              <AdminLanguageSwitcher />
               <ThemeToggle />
               <AdminNotificationBell />
             </div>
           </header>
-
-          {/* Content */}
           <main className="flex-1 p-4 md:p-6 overflow-auto">
             {children}
           </main>
