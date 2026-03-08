@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Heart, ShoppingCart, Zap, GitCompareArrows } from 'lucide-react';
 import { Product } from '@/types';
@@ -14,7 +15,7 @@ interface ProductCardProps {
   showWishlistButton?: boolean;
 }
 
-export const ProductCard = ({ product, variant = 'default', showWishlistButton = false }: ProductCardProps) => {
+export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ product, variant = 'default', showWishlistButton = false }, ref) => {
   const { user } = useAuth();
   const { addItem, removeItem, isInWishlist } = useWishlist();
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
@@ -237,4 +238,6 @@ export const ProductCard = ({ product, variant = 'default', showWishlistButton =
       </div>
     </div>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
