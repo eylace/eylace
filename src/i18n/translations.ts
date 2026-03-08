@@ -581,6 +581,7 @@ export const translations = {
   'admin.colors': { en: 'Colors', bn: 'রং' },
   'admin.sizeGuide': { en: 'Size Guide', bn: 'সাইজ গাইড' },
   'admin.warranty': { en: 'Warranty', bn: 'ওয়ারেন্টি' },
+  'admin.smartBar': { en: 'Smart Bar', bn: 'স্মার্ট বার' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
