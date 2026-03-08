@@ -54,7 +54,10 @@ export const AdminOrdersTab = () => {
   const [fraudOrder, setFraudOrder] = useState<any>(null);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const { t } = useLanguage();
+
+  const filteredOrders = statusFilter === 'all' ? orders : orders.filter(o => o.status === statusFilter);
 
   const toggleSelect = (id: string) => {
     setSelectedOrders(prev => {
@@ -65,10 +68,10 @@ export const AdminOrdersTab = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedOrders.size === orders.length) {
+    if (selectedOrders.size === filteredOrders.length) {
       setSelectedOrders(new Set());
     } else {
-      setSelectedOrders(new Set(orders.map(o => o.id)));
+      setSelectedOrders(new Set(filteredOrders.map(o => o.id)));
     }
   };
 
