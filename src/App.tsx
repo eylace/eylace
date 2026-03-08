@@ -27,7 +27,16 @@ import AdminUserRoles from "./pages/AdminUserRoles";
 import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
 import AdminReviews from "./pages/AdminReviews";
-import AdminSellers from "./pages/AdminSellers";
+import AdminAllSellers from "./pages/AdminAllSellers";
+import AdminAppliedSellers from "./pages/AdminAppliedSellers";
+import AdminSellerRatings from "./pages/AdminSellerRatings";
+import AdminSellerPayouts from "./pages/AdminSellerPayouts";
+import AdminSellerPayoutRequests from "./pages/AdminSellerPayoutRequests";
+import AdminSellerCommission from "./pages/AdminSellerCommission";
+import AdminSellerBasedCommission from "./pages/AdminSellerBasedCommission";
+import AdminCategoryBasedCommission from "./pages/AdminCategoryBasedCommission";
+import AdminSellerPackages from "./pages/AdminSellerPackages";
+import AdminSellerVerification from "./pages/AdminSellerVerification";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminCustomers from "./pages/AdminCustomers";
 import AdminCouriers from "./pages/AdminCouriers";
@@ -122,7 +131,16 @@ const App = () => (
                 <Route path="/admin/products/smart-bar" element={<AdminSmartBar />} />
                 <Route path="/admin/categories" element={<AdminCategories />} />
                 <Route path="/admin/customers" element={<AdminCustomers />} />
-                <Route path="/admin/sellers" element={<AdminSellers />} />
+                <Route path="/admin/sellers" element={<AdminAllSellers />} />
+                <Route path="/admin/sellers/applied" element={<AdminAppliedSellers />} />
+                <Route path="/admin/sellers/ratings" element={<AdminSellerRatings />} />
+                <Route path="/admin/sellers/payouts" element={<AdminSellerPayouts />} />
+                <Route path="/admin/sellers/payout-requests" element={<AdminSellerPayoutRequests />} />
+                <Route path="/admin/sellers/commission" element={<AdminSellerCommission />} />
+                <Route path="/admin/sellers/seller-commission" element={<AdminSellerBasedCommission />} />
+                <Route path="/admin/sellers/category-commission" element={<AdminCategoryBasedCommission />} />
+                <Route path="/admin/sellers/packages" element={<AdminSellerPackages />} />
+                <Route path="/admin/sellers/verification" element={<AdminSellerVerification />} />
                 <Route path="/admin/reviews" element={<AdminReviews />} />
                 <Route path="/admin/coupons" element={<AdminCoupons />} />
                 <Route path="/admin/couriers" element={<AdminCouriers />} />

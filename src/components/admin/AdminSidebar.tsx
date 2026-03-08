@@ -5,7 +5,7 @@ import {
   CreditCard, ArrowLeft, LogOut, Shield, ChevronDown, ChevronRight,
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
-  MessagesSquare, HelpCircle, BellRing,
+  MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -69,9 +69,21 @@ export function AdminSidebar() {
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
   ];
 
+  const sellerItems: NavItem[] = [
+    { titleKey: 'admin.sellers.all', url: '/admin/sellers', icon: Store },
+    { titleKey: 'admin.sellers.applied', url: '/admin/sellers/applied', icon: ClipboardList },
+    { titleKey: 'admin.sellers.ratings', url: '/admin/sellers/ratings', icon: Star },
+    { titleKey: 'admin.sellers.payouts', url: '/admin/sellers/payouts', icon: DollarSign },
+    { titleKey: 'admin.sellers.payoutRequests', url: '/admin/sellers/payout-requests', icon: Wallet },
+    { titleKey: 'admin.sellers.commission', url: '/admin/sellers/commission', icon: Percent },
+    { titleKey: 'admin.sellers.sellerCommission', url: '/admin/sellers/seller-commission', icon: Store },
+    { titleKey: 'admin.sellers.categoryCommission', url: '/admin/sellers/category-commission', icon: Layers },
+    { titleKey: 'admin.sellers.packages', url: '/admin/sellers/packages', icon: Package },
+    { titleKey: 'admin.sellers.verification', url: '/admin/sellers/verification', icon: UserCheck },
+  ];
+
   const managementItems = [
     { titleKey: 'admin.customers' as TranslationKey, url: '/admin/customers', icon: Users },
-    { titleKey: 'admin.sellers' as TranslationKey, url: '/admin/sellers', icon: Store },
     { titleKey: 'admin.coupons' as TranslationKey, url: '/admin/coupons', icon: Tag },
   ];
 
@@ -212,6 +224,45 @@ export function AdminSidebar() {
                           <NavLink
                             to={item.url}
                             end={item.url === '/admin/products'}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* Sellers Section */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('sellers')} onOpenChange={() => toggleSection('sellers')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <Store className="h-3.5 w-3.5" />
+                  {t('admin.sellers.section' as TranslationKey)}
+                </span>
+                {openSections.has('sellers') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {sellerItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
+                            end={item.url === '/admin/sellers'}
                             className="hover:bg-sidebar-accent/50 text-xs pl-2"
                             activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
                           >

@@ -1163,6 +1163,226 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_commission_config: {
+        Row: {
+          category_id: string | null
+          commission_rate: number
+          commission_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          seller_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          commission_rate?: number
+          commission_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          seller_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          commission_rate?: number
+          commission_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          seller_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_commission_config_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_commission_config_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_packages: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          description: string | null
+          duration_days: number
+          features: Json
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          product_limit: number
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          product_limit?: number
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          product_limit?: number
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      seller_payout_requests: {
+        Row: {
+          account_details: Json | null
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_method: string
+          seller_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_details?: Json | null
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          seller_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_details?: Json | null
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          seller_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_payout_requests_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          notes: string | null
+          paid_at: string
+          payment_method: string
+          reference_number: string | null
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          payment_method?: string
+          reference_number?: string | null
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          payment_method?: string
+          reference_number?: string | null
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_payouts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_verification_fields: {
+        Row: {
+          created_at: string
+          field_name: string
+          field_type: string
+          id: string
+          is_active: boolean
+          is_required: boolean
+          options: Json | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          field_name: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          options?: Json | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          field_name?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          options?: Json | null
+          sort_order?: number
+        }
+        Relationships: []
+      }
       sellers: {
         Row: {
           created_at: string

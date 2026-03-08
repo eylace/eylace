@@ -620,6 +620,29 @@ export const translations = {
   'admin.sizeGuide': { en: 'Size Guide', bn: 'সাইজ গাইড' },
   'admin.warranty': { en: 'Warranty', bn: 'ওয়ারেন্টি' },
   'admin.smartBar': { en: 'Smart Bar', bn: 'স্মার্ট বার' },
+
+  // Sellers Section
+  'admin.sellers.section': { en: 'Sellers', bn: 'বিক্রেতা' },
+  'admin.sellers.all': { en: 'All Sellers', bn: 'সব বিক্রেতা' },
+  'admin.sellers.allDesc': { en: 'Manage all registered sellers', bn: 'সব নিবন্ধিত বিক্রেতা পরিচালনা' },
+  'admin.sellers.applied': { en: 'Applied Sellers', bn: 'আবেদিত বিক্রেতা' },
+  'admin.sellers.appliedDesc': { en: 'Manage seller applications', bn: 'বিক্রেতার আবেদন পরিচালনা' },
+  'admin.sellers.ratings': { en: 'Rating & Followers', bn: 'রেটিং ও ফলোয়ার্স' },
+  'admin.sellers.ratingsDesc': { en: 'Manage seller ratings', bn: 'বিক্রেতার রেটিং পরিচালনা' },
+  'admin.sellers.payouts': { en: 'Payouts', bn: 'পেআউট' },
+  'admin.sellers.payoutsDesc': { en: 'Record and manage seller payouts', bn: 'বিক্রেতার পেআউট পরিচালনা' },
+  'admin.sellers.payoutRequests': { en: 'Payout Requests', bn: 'পেআউট রিকোয়েস্ট' },
+  'admin.sellers.payoutRequestsDesc': { en: 'Manage payout requests from sellers', bn: 'বিক্রেতাদের পেআউট রিকোয়েস্ট' },
+  'admin.sellers.commission': { en: 'Seller Commission', bn: 'বিক্রেতা কমিশন' },
+  'admin.sellers.commissionDesc': { en: 'Set default commission rate', bn: 'ডিফল্ট কমিশন রেট সেট করুন' },
+  'admin.sellers.sellerCommission': { en: 'Seller Based Commission', bn: 'বিক্রেতা ভিত্তিক কমিশন' },
+  'admin.sellers.sellerCommissionDesc': { en: 'Override commission per seller', bn: 'বিক্রেতা প্রতি কমিশন ওভাররাইড' },
+  'admin.sellers.categoryCommission': { en: 'Category Based Commission', bn: 'ক্যাটেগরি ভিত্তিক কমিশন' },
+  'admin.sellers.categoryCommissionDesc': { en: 'Override commission per category', bn: 'ক্যাটেগরি প্রতি কমিশন ওভাররাইড' },
+  'admin.sellers.packages': { en: 'Seller Packages', bn: 'বিক্রেতা প্যাকেজ' },
+  'admin.sellers.packagesDesc': { en: 'Manage seller subscription packages', bn: 'বিক্রেতা সাবস্ক্রিপশন প্যাকেজ' },
+  'admin.sellers.verification': { en: 'Verification Form', bn: 'ভেরিফিকেশন ফর্ম' },
+  'admin.sellers.verificationDesc': { en: 'Configure seller verification fields', bn: 'বিক্রেতা ভেরিফিকেশন ফিল্ড কনফিগার' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
