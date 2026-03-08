@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SearchModal } from '@/components/search/SearchModal';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,12 +29,13 @@ export const Header = () => {
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { isAdmin } = useAdminCheck();
   const { language, setLanguage, t } = useLanguage();
+  const setup = useWebsiteSetup();
 
   const handleSignOut = async () => { await signOut(); };
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User';
 
   return (
-    <header className="sticky top-0 z-50">
+    <header className={setup.headerStickyEnabled ? "sticky top-0 z-50" : "relative z-50"}>
       <div className="bg-primary text-primary-foreground">
         <div className="container-main">
           <div className="flex items-center justify-between h-16">
@@ -51,6 +53,7 @@ export const Header = () => {
               </div>
             </div>
 
+            {setup.headerSearchEnabled && (
             <div className="hidden lg:flex flex-1 max-w-2xl mx-6">
               <div className="relative w-full flex">
                 <div className="relative">
@@ -83,11 +86,13 @@ export const Header = () => {
                 </Button>
               </div>
             </div>
+            )}
 
             <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
 
             <div className="flex items-center gap-4">
               {/* Language Switcher */}
+              {setup.headerLanguageSwitcher && (
               <div className="hidden lg:flex items-center gap-1">
                 <button
                   onClick={() => setLanguage(language === 'en' ? 'bn' : 'en')}
@@ -97,6 +102,7 @@ export const Header = () => {
                   <span className="text-sm font-medium">{language === 'bn' ? 'বাংলা' : 'EN'}</span>
                 </button>
               </div>
+              )}
 
               {loading ? (
                 <div className="hidden md:block h-5 w-20 bg-primary-foreground/20 rounded animate-pulse" />
@@ -148,9 +154,13 @@ export const Header = () => {
 
               <div className="hidden md:block"><NotificationBell /></div>
 
+              {setup.headerWishlistIconEnabled && (
               <Link to="/wishlist" className="hidden md:block relative hover:text-accent transition-colors">
                 <Heart className="h-6 w-6" />
               </Link>
+              )}
+
+              {setup.headerCartIconEnabled && (
 
               <Link to="/cart" className="relative flex items-center gap-1 hover:text-accent transition-colors">
                 <div className="relative">
@@ -163,6 +173,7 @@ export const Header = () => {
                 </div>
                 <span className="hidden sm:inline text-sm font-medium">{t('header.cart')}</span>
               </Link>
+              )}
 
               <button className="lg:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
