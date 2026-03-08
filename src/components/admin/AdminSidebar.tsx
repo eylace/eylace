@@ -6,6 +6,7 @@ import {
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
+  Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -93,8 +94,20 @@ export function AdminSidebar() {
     { titleKey: 'admin.transactions' as TranslationKey, url: '/admin/transactions', icon: CreditCard },
   ];
 
+  const marketingItems: NavItem[] = [
+    { titleKey: 'admin.marketing.flashDeals', url: '/admin/marketing/flash-deals', icon: Zap },
+    { titleKey: 'admin.marketing.popup', url: '/admin/marketing/popup', icon: MousePointerClick },
+    { titleKey: 'admin.marketing.customAlert', url: '/admin/marketing/custom-alert', icon: AlertTriangle },
+    { titleKey: 'admin.marketing.sellAlert', url: '/admin/marketing/sell-alert', icon: ShoppingBag },
+    { titleKey: 'admin.marketing.emailTemplates', url: '/admin/marketing/email-templates', icon: Mail },
+    { titleKey: 'admin.marketing.newsletters', url: '/admin/marketing/newsletters', icon: Newspaper },
+    { titleKey: 'admin.marketing.notification', url: '/admin/marketing/notification', icon: Bell },
+    { titleKey: 'admin.marketing.bulkSMS', url: '/admin/marketing/bulk-sms', icon: MessageSquare },
+    { titleKey: 'admin.marketing.subscribers', url: '/admin/marketing/subscribers', icon: UsersRound },
+    { titleKey: 'admin.marketing.visitors', url: '/admin/marketing/visitors', icon: Eye },
+  ];
+
   const contentItems = [
-    { titleKey: 'admin.marketing' as TranslationKey, url: '/admin/marketing', icon: Megaphone },
     { titleKey: 'admin.reports' as TranslationKey, url: '/admin/reports', icon: BarChart3 },
     { titleKey: 'admin.mediaGallery' as TranslationKey, url: '/admin/media', icon: Image },
     { titleKey: 'admin.notifications' as TranslationKey, url: '/admin/notifications', icon: Bell },
