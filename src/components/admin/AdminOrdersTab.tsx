@@ -101,37 +101,35 @@ export const AdminOrdersTab = () => {
               return (
                 <div key={order.id} className="border rounded-lg overflow-hidden">
                   <div 
-                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-secondary/50 transition-colors"
+                    className="p-3 md:p-4 flex flex-col sm:flex-row sm:items-center justify-between cursor-pointer hover:bg-secondary/50 transition-colors gap-2"
                     onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
                   >
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <p className="font-medium">{t('admin.order' as any)} #{order.order_number}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {order.profile?.first_name} {order.profile?.last_name} • {order.profile?.email}
-                        </p>
-                      </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm md:text-base">{t('admin.order' as any)} #{order.order_number}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground truncate">
+                        {order.profile?.first_name} {order.profile?.last_name} • {order.profile?.email}
+                      </p>
                     </div>
                     
-                    <div className="flex items-center gap-4">
-                      <Badge className={cn('gap-1', status.color)}>
+                    <div className="flex items-center gap-2 md:gap-4 flex-wrap">
+                      <Badge className={cn('gap-1 text-xs', status.color)}>
                         <StatusIcon className="h-3 w-3" />
                         {t(status.labelKey as any)}
                       </Badge>
-                      <span className="font-bold">${order.total.toFixed(2)}</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="font-bold text-sm">${order.total.toFixed(2)}</span>
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
                         {format(new Date(order.created_at), 'MMM d, yyyy')}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive"
                         onClick={(e) => { e.stopPropagation(); setFraudOrder(order); }}
                         title={t('admin.fraudDetection' as any)}
                       >
                         <ShieldAlert className="h-4 w-4" />
                       </Button>
-                      {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                      {isExpanded ? <ChevronUp className="h-4 w-4 md:h-5 md:w-5" /> : <ChevronDown className="h-4 w-4 md:h-5 md:w-5" />}
                     </div>
                   </div>
 

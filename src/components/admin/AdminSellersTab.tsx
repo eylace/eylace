@@ -92,26 +92,26 @@ export const AdminSellersTab = () => {
           ) : (
             <div className="space-y-4">
               {applications.map((app) => (
-                <div key={app.id} className="flex items-start justify-between p-4 border border-border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground">{app.store_name}</h3>
+                <div key={app.id} className="flex flex-col sm:flex-row sm:items-start justify-between p-3 md:p-4 border border-border rounded-lg gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-foreground text-sm md:text-base">{app.store_name}</h3>
                       {statusBadge(app.status)}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       {app.business_type && <span className="capitalize">{app.business_type.replace('_', ' ')}</span>}
                       {app.phone && <span> • {app.phone}</span>}
                     </p>
-                    {app.store_description && <p className="text-sm text-muted-foreground line-clamp-2">{app.store_description}</p>}
+                    {app.store_description && <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{app.store_description}</p>}
                     <p className="text-xs text-muted-foreground">{t('admin.applied' as any)} {new Date(app.created_at).toLocaleDateString()}</p>
                   </div>
                   {app.status === 'pending' && (
-                    <div className="flex gap-2 ml-4 shrink-0">
-                      <Button size="sm" variant="outline" className="text-green-600 border-green-500/30 hover:bg-green-500/10" onClick={() => { setActionDialog({ app, action: 'approve' }); setAdminNotes(''); }}>
-                        <CheckCircle className="h-4 w-4 mr-1" />{t('admin.approve' as any)}
+                    <div className="flex gap-2 shrink-0">
+                      <Button size="sm" variant="outline" className="text-green-600 border-green-500/30 hover:bg-green-500/10 text-xs md:text-sm" onClick={() => { setActionDialog({ app, action: 'approve' }); setAdminNotes(''); }}>
+                        <CheckCircle className="h-3.5 w-3.5 mr-1" />{t('admin.approve' as any)}
                       </Button>
-                      <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { setActionDialog({ app, action: 'reject' }); setAdminNotes(''); }}>
-                        <XCircle className="h-4 w-4 mr-1" />{t('admin.reject' as any)}
+                      <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs md:text-sm" onClick={() => { setActionDialog({ app, action: 'reject' }); setAdminNotes(''); }}>
+                        <XCircle className="h-3.5 w-3.5 mr-1" />{t('admin.reject' as any)}
                       </Button>
                     </div>
                   )}

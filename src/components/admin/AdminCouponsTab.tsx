@@ -134,27 +134,27 @@ export const AdminCouponsTab = () => {
       ) : (
         <div className="space-y-3">
           {coupons.map((c) => (
-            <div key={c.id} className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg">
+            <div key={c.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 md:p-4 bg-card border border-border rounded-lg">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button onClick={() => copyCode(c.id, c.code)} className="font-mono font-bold text-foreground bg-secondary px-2 py-0.5 rounded flex items-center gap-1 hover:bg-accent/10 transition-colors">
+                  <button onClick={() => copyCode(c.id, c.code)} className="font-mono font-bold text-foreground bg-secondary px-2 py-0.5 rounded flex items-center gap-1 hover:bg-accent/10 transition-colors text-sm">
                     {c.code}
                     {copiedId === c.id ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                   </button>
-                  <Badge variant={c.is_active ? 'default' : 'secondary'}>{c.is_active ? t('admin.active' as any) : t('admin.inactive' as any)}</Badge>
-                  <Badge variant="outline">{c.discount_type === 'percentage' ? `${c.discount_value}%` : `$${c.discount_value}`} {t('admin.off' as any)}</Badge>
+                  <Badge variant={c.is_active ? 'default' : 'secondary'} className="text-xs">{c.is_active ? t('admin.active' as any) : t('admin.inactive' as any)}</Badge>
+                  <Badge variant="outline" className="text-xs">{c.discount_type === 'percentage' ? `${c.discount_value}%` : `$${c.discount_value}`} {t('admin.off' as any)}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
                   {c.description || t('admin.noDescription' as any)}
                   {c.min_order_amount && c.min_order_amount > 0 ? ` • ${t('admin.min' as any)} $${c.min_order_amount}` : ''}
                   {c.usage_limit ? ` • ${c.used_count}/${c.usage_limit} ${t('admin.used' as any)}` : ` • ${c.used_count} ${t('admin.used' as any)}`}
                   {c.expires_at ? ` • ${t('admin.expires' as any)} ${format(new Date(c.expires_at), 'MMM d, yyyy')}` : ''}
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                 <Switch checked={c.is_active} onCheckedChange={(v) => toggleActive(c.id, v)} />
-                <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Edit2 className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteCoupon(c.id)}><Trash2 className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}><Edit2 className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteCoupon(c.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
           ))}
