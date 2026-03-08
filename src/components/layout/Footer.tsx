@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, CreditCard, Shield, Truck, Headphones } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
 export const Footer = () => {
   const { t } = useLanguage();
+  const setup = useWebsiteSetup();
 
   return (
     <footer className="bg-primary text-primary-foreground">
@@ -34,14 +36,16 @@ export const Footer = () => {
             <Link to="/" className="inline-block mb-4">
               <div className="text-2xl font-bold"><span className="text-accent">Ey</span><span>lace</span></div>
             </Link>
-            <p className="text-sm text-primary-foreground/70 mb-4">{t('footer.aboutText')}</p>
+            <p className="text-sm text-primary-foreground/70 mb-4">{setup.footerAboutText || t('footer.aboutText')}</p>
+            {setup.footerShowSocialLinks && (
             <div className="flex gap-3">
               {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
-                <a key={i} href="#" className="p-2 bg-primary-foreground/10 rounded-lg hover:bg-accent transition-colors">
+                <a key={i} href={setup.footerSocialLinks?.[i]?.url || '#'} target="_blank" rel="noopener noreferrer" className="p-2 bg-primary-foreground/10 rounded-lg hover:bg-accent transition-colors">
                   <Icon className="h-5 w-5" />
                 </a>
               ))}
             </div>
+            )}
           </div>
 
           <div>
@@ -110,7 +114,7 @@ export const Footer = () => {
       <div className="bg-primary/50 border-t border-primary-foreground/10">
         <div className="container-main py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-primary-foreground/70">
-            <p>{t('footer.copyright')}</p>
+            <p>{setup.footerCopyright || t('footer.copyright')}</p>
             <div className="flex gap-4">
               <Link to="/privacy" className="hover:text-accent transition-colors">{t('footer.privacy')}</Link>
               <Link to="/terms" className="hover:text-accent transition-colors">{t('footer.terms')}</Link>
