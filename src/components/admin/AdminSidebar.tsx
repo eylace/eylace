@@ -4,6 +4,7 @@ import {
   BarChart3, Truck, ShieldAlert, Megaphone, FileText, Globe, Layers, Image, Bell,
   CreditCard, ArrowLeft, LogOut, Shield, ChevronDown, ChevronRight,
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
+  Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -90,6 +91,19 @@ export function AdminSidebar() {
     { titleKey: 'admin.userRoles' as TranslationKey, url: '/admin/user-roles', icon: Shield },
     { titleKey: 'admin.pages' as TranslationKey, url: '/admin/pages', icon: FileText },
     { titleKey: 'admin.seoAnalytics' as TranslationKey, url: '/admin/seo', icon: Globe },
+  ];
+
+  const websiteSetupItems: NavItem[] = [
+    { titleKey: 'admin.websiteSetup.homepage' as TranslationKey, url: '/admin/website-setup?tab=homepage', icon: Home },
+    { titleKey: 'admin.websiteSetup.homepageSettings' as TranslationKey, url: '/admin/website-setup?tab=homepage-settings', icon: LayoutTemplate },
+    { titleKey: 'admin.websiteSetup.font' as TranslationKey, url: '/admin/website-setup?tab=font', icon: Type },
+    { titleKey: 'admin.websiteSetup.auth' as TranslationKey, url: '/admin/website-setup?tab=auth', icon: Lock },
+    { titleKey: 'admin.websiteSetup.header' as TranslationKey, url: '/admin/website-setup?tab=header', icon: PanelTop },
+    { titleKey: 'admin.websiteSetup.headerSettings' as TranslationKey, url: '/admin/website-setup?tab=header-settings', icon: Settings },
+    { titleKey: 'admin.websiteSetup.topbar' as TranslationKey, url: '/admin/website-setup?tab=topbar', icon: Monitor },
+    { titleKey: 'admin.websiteSetup.footer' as TranslationKey, url: '/admin/website-setup?tab=footer', icon: Layers },
+    { titleKey: 'admin.websiteSetup.pages' as TranslationKey, url: '/admin/website-setup?tab=pages', icon: FileText },
+    { titleKey: 'admin.websiteSetup.appearance' as TranslationKey, url: '/admin/website-setup?tab=appearance', icon: Paintbrush },
   ];
 
   const settingsItems: NavItem[] = [
@@ -203,6 +217,44 @@ export function AdminSidebar() {
         {renderGroup('admin.group.operations', operationsItems)}
         {renderGroup('admin.group.content', contentItems)}
         {renderGroup('admin.group.system', systemItems)}
+
+        {/* Website Setup Section */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('websiteSetup')} onOpenChange={() => toggleSection('websiteSetup')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <Monitor className="h-3.5 w-3.5" />
+                  {t('admin.websiteSetup' as TranslationKey)}
+                </span>
+                {openSections.has('websiteSetup') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {websiteSetupItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
 
         {/* Settings Section with Collapsible Sub-menu */}
         <SidebarGroup>

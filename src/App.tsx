@@ -61,6 +61,7 @@ import AdminWarranties from "./pages/AdminWarranties";
 import AdminSizeGuides from "./pages/AdminSizeGuides";
 import AdminCategoryDiscount from "./pages/AdminCategoryDiscount";
 import AdminSmartBar from "./pages/AdminSmartBar";
+import AdminWebsiteSetupPage from "./pages/AdminWebsiteSetupPage";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -120,6 +121,7 @@ const App = () => (
                 <Route path="/admin/media" element={<AdminMediaPage />} />
                 <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />
+                <Route path="/admin/website-setup" element={<AdminWebsiteSetupPage />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
