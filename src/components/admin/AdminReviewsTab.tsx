@@ -177,7 +177,7 @@ export const AdminReviewsTab = () => {
         {/* Select All */}
         <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
           <Checkbox
-            checked={selectedReviews.size === reviews.length && reviews.length > 0}
+            checked={selectedReviews.size === filteredReviews.length && filteredReviews.length > 0}
             onCheckedChange={toggleSelectAll}
             className="h-4 w-4"
           />
@@ -187,7 +187,7 @@ export const AdminReviewsTab = () => {
         </div>
 
         <div className="space-y-4">
-          {reviews.map((review) => {
+          {filteredReviews.map((review) => {
             const isSelected = selectedReviews.has(review.id);
             return (
               <div key={review.id} className={cn("border rounded-lg p-4 transition-colors", isSelected && "border-accent/50 bg-accent/5")}>
