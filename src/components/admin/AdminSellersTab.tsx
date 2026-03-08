@@ -2,13 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { Loader2, CheckCircle, XCircle, Clock, Store, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { exportToCSV } from '@/lib/csvExport';
 
@@ -25,7 +31,13 @@ export const AdminSellersTab = () => {
   const [actionDialog, setActionDialog] = useState<{ app: SellerApplication; action: 'approve' | 'reject' } | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [bulkNotes, setBulkNotes] = useState('');
   const { t } = useLanguage();
+
+  const pendingApps = applications.filter(a => a.status === 'pending');
+  const selectedPendingCount = [...selectedApps].filter(id => pendingApps.some(a => a.id === id)).length;
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -37,6 +49,40 @@ export const AdminSellersTab = () => {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedApps(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllPending = () => {
+    if (selectedPendingCount === pendingApps.length && pendingApps.length > 0) {
+      setSelectedApps(new Set());
+    } else {
+      setSelectedApps(new Set(pendingApps.map(a => a.id)));
+    }
+  };
+
+  const handleBulkAction = async (action: 'bulk-approve' | 'bulk-reject') => {
+    const pendingIds = [...selectedApps].filter(id => pendingApps.some(a => a.id === id));
+    if (pendingIds.length === 0) return;
+    setBulkProcessing(true);
+    const { data, error } = await supabase.functions.invoke('admin-manage-sellers', {
+      body: { action, applicationIds: pendingIds, adminNotes: bulkNotes || null },
+    });
+    if (error) {
+      toast.error(`Failed to ${action.replace('bulk-', '')}`);
+    } else {
+      toast.success(`${data?.count || pendingIds.length} ${action === 'bulk-approve' ? 'approved' : 'rejected'}`);
+      setSelectedApps(new Set());
+      setBulkNotes('');
+      await fetchData();
+    }
+    setBulkProcessing(false);
+  };
 
   const toggleRegistration = async () => {
     setTogglingRegistration(true);
@@ -115,38 +161,135 @@ export const AdminSellersTab = () => {
             </Button>
           </div>
         </CardHeader>
+
+        {/* Bulk Actions Bar */}
+        {selectedPendingCount > 0 && (
+          <div className="mx-4 mb-3 p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <span className="text-sm font-medium text-foreground">
+              {selectedPendingCount} {t('admin.selected' as any) || 'selected'}
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Textarea
+                value={bulkNotes}
+                onChange={(e) => setBulkNotes(e.target.value)}
+                placeholder={t('admin.adminNotes' as any) || 'Admin notes (optional)'}
+                className="h-8 min-h-[32px] text-xs w-48"
+                maxLength={500}
+              />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" className="text-xs gap-1 bg-green-600 hover:bg-green-700 text-white" disabled={bulkProcessing}>
+                    {bulkProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
+                    {t('admin.approve' as any) || 'Approve'} ({selectedPendingCount})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('admin.approveApplication' as any) || 'Approve Applications'}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {`Are you sure you want to approve ${selectedPendingCount} seller applications? Seller profiles will be created for each.`}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('admin.cancel' as any)}</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleBulkAction('bulk-approve')} className="bg-green-600 hover:bg-green-700 text-white">
+                      {t('admin.approve' as any)}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="text-xs gap-1" disabled={bulkProcessing}>
+                    {bulkProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <XCircle className="h-3 w-3" />}
+                    {t('admin.reject' as any) || 'Reject'} ({selectedPendingCount})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('admin.rejectApplication' as any) || 'Reject Applications'}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {`Are you sure you want to reject ${selectedPendingCount} seller applications? This cannot be undone.`}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('admin.cancel' as any)}</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleBulkAction('bulk-reject')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      {t('admin.reject' as any)}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedApps(new Set())}>
+                {t('admin.cancel' as any) || 'Cancel'}
+              </Button>
+            </div>
+          </div>
+        )}
+
         <CardContent>
           {applications.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">{t('admin.noApplications' as any)}</p>
           ) : (
-            <div className="space-y-4">
-              {applications.map((app) => (
-                <div key={app.id} className="flex flex-col sm:flex-row sm:items-start justify-between p-3 md:p-4 border border-border rounded-lg gap-3">
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-foreground text-sm md:text-base">{app.store_name}</h3>
-                      {statusBadge(app.status)}
-                    </div>
-                    <p className="text-xs md:text-sm text-muted-foreground">
-                      {app.business_type && <span className="capitalize">{app.business_type.replace('_', ' ')}</span>}
-                      {app.phone && <span> • {app.phone}</span>}
-                    </p>
-                    {app.store_description && <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{app.store_description}</p>}
-                    <p className="text-xs text-muted-foreground">{t('admin.applied' as any)} {new Date(app.created_at).toLocaleDateString()}</p>
-                  </div>
-                  {app.status === 'pending' && (
-                    <div className="flex gap-2 shrink-0">
-                      <Button size="sm" variant="outline" className="text-green-600 border-green-500/30 hover:bg-green-500/10 text-xs md:text-sm" onClick={() => { setActionDialog({ app, action: 'approve' }); setAdminNotes(''); }}>
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" />{t('admin.approve' as any)}
-                      </Button>
-                      <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs md:text-sm" onClick={() => { setActionDialog({ app, action: 'reject' }); setAdminNotes(''); }}>
-                        <XCircle className="h-3.5 w-3.5 mr-1" />{t('admin.reject' as any)}
-                      </Button>
-                    </div>
-                  )}
+            <>
+              {/* Select All Pending */}
+              {pendingApps.length > 0 && (
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
+                  <Checkbox
+                    checked={selectedPendingCount === pendingApps.length && pendingApps.length > 0}
+                    onCheckedChange={toggleSelectAllPending}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {t('admin.selectAll' as any) || 'Select all'} pending ({pendingApps.length})
+                  </span>
                 </div>
-              ))}
-            </div>
+              )}
+              <div className="space-y-4">
+                {applications.map((app) => {
+                  const isPending = app.status === 'pending';
+                  const isSelected = selectedApps.has(app.id);
+                  return (
+                    <div key={app.id} className={cn(
+                      "flex flex-col sm:flex-row sm:items-start justify-between p-3 md:p-4 border rounded-lg gap-3 transition-colors",
+                      isSelected && "border-accent/50 bg-accent/5"
+                    )}>
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        {isPending && (
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelect(app.id)}
+                            className="h-4 w-4 mt-1 shrink-0"
+                          />
+                        )}
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-foreground text-sm md:text-base">{app.store_name}</h3>
+                            {statusBadge(app.status)}
+                          </div>
+                          <p className="text-xs md:text-sm text-muted-foreground">
+                            {app.business_type && <span className="capitalize">{app.business_type.replace('_', ' ')}</span>}
+                            {app.phone && <span> • {app.phone}</span>}
+                          </p>
+                          {app.store_description && <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{app.store_description}</p>}
+                          <p className="text-xs text-muted-foreground">{t('admin.applied' as any)} {new Date(app.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      {isPending && (
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" variant="outline" className="text-green-600 border-green-500/30 hover:bg-green-500/10 text-xs md:text-sm" onClick={() => { setActionDialog({ app, action: 'approve' }); setAdminNotes(''); }}>
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />{t('admin.approve' as any)}
+                          </Button>
+                          <Button size="sm" variant="outline" className="text-destructive border-destructive/30 hover:bg-destructive/10 text-xs md:text-sm" onClick={() => { setActionDialog({ app, action: 'reject' }); setAdminNotes(''); }}>
+                            <XCircle className="h-3.5 w-3.5 mr-1" />{t('admin.reject' as any)}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
