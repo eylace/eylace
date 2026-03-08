@@ -16,7 +16,7 @@ export const SmartBar = () => {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    supabase.from('system_settings').select('value').eq('key', 'smart_bar').single().then(({ data }) => {
+    supabase.from('system_settings').select('value').eq('key', 'smart_bar').maybeSingle().then(({ data }) => {
       if (data?.value) {
         const val = data.value as unknown as SmartBarConfig;
         if (val.enabled && val.text) setConfig(val);
