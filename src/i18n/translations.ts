@@ -568,6 +568,19 @@ export const translations = {
   'admin.off': { en: 'off', bn: 'ছাড়' },
   'admin.min': { en: 'Min', bn: 'সর্বনিম্ন' },
 
+  // Website Setup
+  'admin.websiteSetup': { en: 'Website Setup', bn: 'ওয়েবসাইট সেটআপ' },
+  'admin.websiteSetup.homepage': { en: 'Select Homepage', bn: 'হোমপেজ নির্বাচন' },
+  'admin.websiteSetup.homepageSettings': { en: 'Homepage Settings', bn: 'হোমপেজ সেটিংস' },
+  'admin.websiteSetup.font': { en: 'Font Family', bn: 'ফন্ট ফ্যামিলি' },
+  'admin.websiteSetup.auth': { en: 'Auth Layout & Settings', bn: 'অথ লেআউট ও সেটিংস' },
+  'admin.websiteSetup.header': { en: 'Select Header', bn: 'হেডার নির্বাচন' },
+  'admin.websiteSetup.headerSettings': { en: 'Header Settings', bn: 'হেডার সেটিংস' },
+  'admin.websiteSetup.topbar': { en: 'Top Bar', bn: 'টপ বার' },
+  'admin.websiteSetup.footer': { en: 'Footer Settings', bn: 'ফুটার সেটিংস' },
+  'admin.websiteSetup.pages': { en: 'Pages', bn: 'পেজ' },
+  'admin.websiteSetup.appearance': { en: 'Appearance', bn: 'অ্যাপিয়ারেন্স' },
+
   // Bulk actions
   'admin.selectAll': { en: 'Select all', bn: 'সব নির্বাচন করুন' },
   'admin.selected': { en: 'selected', bn: 'নির্বাচিত' },
