@@ -694,6 +694,39 @@ export type Database = {
         }
         Relationships: []
       }
+      otp_sms_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          message: string
+          name: string
+          template_key: string
+          updated_at: string
+          variables: string[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message: string
+          name: string
+          template_key: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string
+          name?: string
+          template_key?: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Relationships: []
+      }
       preorder_commissions: {
         Row: {
           commission_amount: number
