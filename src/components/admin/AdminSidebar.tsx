@@ -83,6 +83,12 @@ export function AdminSidebar() {
     { titleKey: 'admin.sellers.verification', url: '/admin/sellers/verification', icon: UserCheck },
   ];
 
+  const otpItems: NavItem[] = [
+    { titleKey: 'admin.otp.loginConfig', url: '/admin/otp/login-config', icon: Smartphone },
+    { titleKey: 'admin.otp.configurations', url: '/admin/otp/configurations', icon: Settings },
+    { titleKey: 'admin.otp.smsTemplates', url: '/admin/otp/sms-templates', icon: MessageSquare },
+  ];
+
   const managementItems = [
     { titleKey: 'admin.customers' as TranslationKey, url: '/admin/customers', icon: Users },
     { titleKey: 'admin.coupons' as TranslationKey, url: '/admin/coupons', icon: Tag },
@@ -317,6 +323,44 @@ export function AdminSidebar() {
                           <NavLink
                             to={item.url}
                             end={item.url === '/admin/preorder'}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* OTP System Section */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('otp')} onOpenChange={() => toggleSection('otp')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <Smartphone className="h-3.5 w-3.5" />
+                  {t('admin.otp.section' as TranslationKey)}
+                </span>
+                {openSections.has('otp') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {otpItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
                             className="hover:bg-sidebar-accent/50 text-xs pl-2"
                             activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
                           >

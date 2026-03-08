@@ -93,6 +93,9 @@ import AdminPreorderQueries from "./pages/AdminPreorderQueries";
 import AdminPreorderReviews from "./pages/AdminPreorderReviews";
 import AdminPreorderFaqs from "./pages/AdminPreorderFaqs";
 import AdminPreorderNotificationTypes from "./pages/AdminPreorderNotificationTypes";
+import AdminOtpLoginConfig from "./pages/AdminOtpLoginConfig";
+import AdminOtpConfigurations from "./pages/AdminOtpConfigurations";
+import AdminOtpSmsTemplates from "./pages/AdminOtpSmsTemplates";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -183,6 +186,9 @@ const App = () => (
                 <Route path="/admin/preorder/reviews" element={<AdminPreorderReviews />} />
                 <Route path="/admin/preorder/faqs" element={<AdminPreorderFaqs />} />
                 <Route path="/admin/preorder/notifications" element={<AdminPreorderNotificationTypes />} />
+                <Route path="/admin/otp/login-config" element={<AdminOtpLoginConfig />} />
+                <Route path="/admin/otp/configurations" element={<AdminOtpConfigurations />} />
+                <Route path="/admin/otp/sms-templates" element={<AdminOtpSmsTemplates />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
