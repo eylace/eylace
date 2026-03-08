@@ -84,7 +84,7 @@ const AdminProducts = () => {
                     <TableCell><Badge className={product.is_active ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-muted text-muted-foreground'}>{product.is_active ? t('admin.active') : t('admin.inactive')}</Badge></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditProduct(product); setFormOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { window.location.href = `/admin/products/edit/${product.id}`; }}><Edit className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleActive(product.id, product.is_active)}>{product.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>

@@ -60,7 +60,7 @@ import AdminLabels from "./pages/AdminLabels";
 import AdminWarranties from "./pages/AdminWarranties";
 import AdminSizeGuides from "./pages/AdminSizeGuides";
 import AdminCategoryDiscount from "./pages/AdminCategoryDiscount";
-
+import AdminSmartBar from "./pages/AdminSmartBar";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -93,6 +93,7 @@ const App = () => (
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/products/add" element={<AdminAddProduct />} />
+                <Route path="/admin/products/edit/:id" element={<AdminAddProduct />} />
                 <Route path="/admin/products/in-house" element={<AdminInHouseProducts />} />
                 <Route path="/admin/products/seller" element={<AdminSellerProducts />} />
                 <Route path="/admin/products/digital/add" element={<AdminAddDigitalProduct />} />
@@ -105,6 +106,7 @@ const App = () => (
                 <Route path="/admin/products/warranties" element={<AdminWarranties />} />
                 <Route path="/admin/products/size-guides" element={<AdminSizeGuides />} />
                 <Route path="/admin/products/category-discount" element={<AdminCategoryDiscount />} />
+                <Route path="/admin/products/smart-bar" element={<AdminSmartBar />} />
                 <Route path="/admin/categories" element={<AdminCategories />} />
                 <Route path="/admin/customers" element={<AdminCustomers />} />
                 <Route path="/admin/sellers" element={<AdminSellers />} />

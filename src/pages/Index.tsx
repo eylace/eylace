@@ -5,6 +5,7 @@ import { FlashSaleSection } from '@/components/home/FlashSaleSection';
 import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { DealsSection } from '@/components/home/DealsSection';
 import { PromoBanners } from '@/components/home/PromoBanners';
+import { SmartBar } from '@/components/home/SmartBar';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
@@ -12,6 +13,7 @@ const Index = () => {
 
   return (
     <Layout>
+      <SmartBar />
       <HeroSection />
       <CategoriesSection />
       <FlashSaleSection />
