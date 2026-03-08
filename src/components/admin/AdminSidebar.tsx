@@ -58,6 +58,7 @@ export function AdminSidebar() {
     { titleKey: 'admin.colors', url: '/admin/products/colors', icon: Palette },
     { titleKey: 'admin.sizeGuide', url: '/admin/products/size-guides', icon: Ruler },
     { titleKey: 'admin.warranty', url: '/admin/products/warranties', icon: ShieldCheck },
+    { titleKey: 'admin.smartBar', url: '/admin/products/smart-bar', icon: Megaphone },
     { titleKey: 'admin.reviews', url: '/admin/reviews', icon: MessageSquare },
   ];
 
