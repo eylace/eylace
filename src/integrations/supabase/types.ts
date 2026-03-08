@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bulk_sms_campaigns: {
+        Row: {
+          audience: string
+          created_at: string
+          id: string
+          message: string | null
+          recipients: number
+          sent_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          recipients?: number
+          sent_at?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          recipients?: number
+          sent_at?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -290,6 +323,231 @@ export type Database = {
           logo?: string | null
           name?: string
           tracking_url_template?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          message: string | null
+          placement: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string | null
+          placement?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message?: string | null
+          placement?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_sell_alerts: {
+        Row: {
+          created_at: string
+          discount_code: string | null
+          id: string
+          is_active: boolean
+          message: string | null
+          min_amount: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_code?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string | null
+          min_amount?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_code?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string | null
+          min_amount?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dynamic_popups: {
+        Row: {
+          content: string | null
+          created_at: string
+          delay_seconds: number
+          id: string
+          is_active: boolean
+          title: string
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          delay_seconds?: number
+          id?: string
+          is_active?: boolean
+          title: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          delay_seconds?: number
+          id?: string
+          is_active?: boolean
+          title?: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      flash_deals: {
+        Row: {
+          created_at: string
+          discount: number
+          end_date: string | null
+          id: string
+          is_active: boolean
+          products: number
+          start_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount?: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          products?: number
+          start_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount?: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          products?: number
+          start_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_email_templates: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          name: string
+          subject: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          subject: string
+          template_type?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          email: string
+          id: string
+          name: string | null
+          source: string | null
+          status: string
+          subscribed_at: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          name?: string | null
+          source?: string | null
+          status?: string
+          subscribed_at?: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          name?: string | null
+          source?: string | null
+          status?: string
+          subscribed_at?: string
+        }
+        Relationships: []
+      }
+      newsletters: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          recipients: number
+          sent_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          recipients?: number
+          sent_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          recipients?: number
+          sent_at?: string | null
+          status?: string
+          subject?: string
           updated_at?: string
         }
         Relationships: []
@@ -1068,6 +1326,36 @@ export type Database = {
           updated_at?: string
           user_id?: string
           zip_code?: string | null
+        }
+        Relationships: []
+      }
+      push_notifications: {
+        Row: {
+          audience: string
+          created_at: string
+          id: string
+          message: string | null
+          sent_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          sent_at?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string
         }
         Relationships: []
       }
