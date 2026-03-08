@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      brands: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          logo: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          logo?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          logo?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -57,6 +87,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      category_discounts: {
+        Row: {
+          category_id: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_discounts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colors: {
+        Row: {
+          created_at: string
+          hex_code: string
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          hex_code?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          hex_code?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
       }
       coupon_usage: {
         Row: {
@@ -338,6 +436,54 @@ export type Database = {
         }
         Relationships: []
       }
+      product_attributes: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          values: string[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          values?: string[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          values?: string[]
+        }
+        Relationships: []
+      }
+      product_labels: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       product_reviews: {
         Row: {
           content: string
@@ -383,17 +529,21 @@ export type Database = {
       products: {
         Row: {
           attributes: Json | null
+          brand_id: string | null
           category_id: string | null
           created_at: string
           description: string | null
+          digital_file_url: string | null
           discount: number | null
           flash_sale_ends: string | null
           id: string
           images: string[] | null
           is_active: boolean | null
+          is_digital: boolean | null
           is_flash_sale: boolean | null
           is_free_shipping: boolean | null
           is_prime: boolean | null
+          label_id: string | null
           name: string
           original_price: number | null
           price: number
@@ -404,20 +554,25 @@ export type Database = {
           stock: number | null
           updated_at: string
           variations: Json | null
+          warranty_id: string | null
         }
         Insert: {
           attributes?: Json | null
+          brand_id?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
+          digital_file_url?: string | null
           discount?: number | null
           flash_sale_ends?: string | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
+          is_digital?: boolean | null
           is_flash_sale?: boolean | null
           is_free_shipping?: boolean | null
           is_prime?: boolean | null
+          label_id?: string | null
           name: string
           original_price?: number | null
           price: number
@@ -428,20 +583,25 @@ export type Database = {
           stock?: number | null
           updated_at?: string
           variations?: Json | null
+          warranty_id?: string | null
         }
         Update: {
           attributes?: Json | null
+          brand_id?: string | null
           category_id?: string | null
           created_at?: string
           description?: string | null
+          digital_file_url?: string | null
           discount?: number | null
           flash_sale_ends?: string | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
+          is_digital?: boolean | null
           is_flash_sale?: boolean | null
           is_free_shipping?: boolean | null
           is_prime?: boolean | null
+          label_id?: string | null
           name?: string
           original_price?: number | null
           price?: number
@@ -452,8 +612,16 @@ export type Database = {
           stock?: number | null
           updated_at?: string
           variations?: Json | null
+          warranty_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_category_id_fkey"
             columns: ["category_id"]
@@ -462,10 +630,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "products_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "product_labels"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "products_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_warranty_id_fkey"
+            columns: ["warranty_id"]
+            isOneToOne: false
+            referencedRelation: "warranties"
             referencedColumns: ["id"]
           },
         ]
@@ -652,6 +834,44 @@ export type Database = {
         }
         Relationships: []
       }
+      size_guides: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          sizes: Json
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sizes?: Json
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sizes?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "size_guides_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_settings: {
         Row: {
           id: string
@@ -691,6 +911,36 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      warranties: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: string
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
