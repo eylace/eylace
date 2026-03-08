@@ -25,7 +25,10 @@ export const AdminCouponsTab = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
   const { t } = useLanguage();
+
+  const filteredCoupons = activeFilter === 'all' ? coupons : coupons.filter(c => activeFilter === 'active' ? c.is_active : !c.is_active);
 
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
