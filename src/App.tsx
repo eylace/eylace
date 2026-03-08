@@ -157,6 +157,16 @@ const App = () => (
                 <Route path="/admin/fraud" element={<AdminFraudPage />} />
                 <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
                 <Route path="/admin/marketing" element={<AdminMarketingPage />} />
+                <Route path="/admin/marketing/flash-deals" element={<AdminMarketingFlashDeals />} />
+                <Route path="/admin/marketing/popup" element={<AdminMarketingPopup />} />
+                <Route path="/admin/marketing/custom-alert" element={<AdminMarketingCustomAlert />} />
+                <Route path="/admin/marketing/sell-alert" element={<AdminMarketingSellAlert />} />
+                <Route path="/admin/marketing/email-templates" element={<AdminMarketingEmailTemplates />} />
+                <Route path="/admin/marketing/newsletters" element={<AdminMarketingNewsletters />} />
+                <Route path="/admin/marketing/notification" element={<AdminMarketingNotification />} />
+                <Route path="/admin/marketing/bulk-sms" element={<AdminMarketingBulkSMS />} />
+                <Route path="/admin/marketing/subscribers" element={<AdminMarketingSubscribers />} />
+                <Route path="/admin/marketing/visitors" element={<AdminMarketingVisitors />} />
                 <Route path="/admin/reports" element={<AdminReportsPage />} />
                 <Route path="/admin/media" element={<AdminMediaPage />} />
                 <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
