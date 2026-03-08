@@ -110,10 +110,10 @@ const notifyListeners = (s: WebsiteSetup) => {
 };
 
 let loaded = false;
+let loading = false;
 
-const loadSetup = async () => {
-  if (loaded) return;
-  loaded = true;
+const fetchSetup = async () => {
+  loading = true;
   const { data } = await supabase
     .from('system_settings')
     .select('value')
@@ -124,6 +124,21 @@ const loadSetup = async () => {
   } else {
     notifyListeners(defaults);
   }
+  loaded = true;
+  loading = false;
+};
+
+const loadSetup = () => {
+  if (loaded || loading) return;
+  fetchSetup();
+};
+
+/** Call this after saving website setup to force all components to re-read from DB */
+export const invalidateSetupCache = () => {
+  loaded = false;
+  loading = false;
+  cachedSetup = null;
+  fetchSetup();
 };
 
 export function useWebsiteSetup(): WebsiteSetup {
