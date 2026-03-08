@@ -569,7 +569,6 @@ export const translations = {
   // Filters
   'admin.filterByStatus': { en: 'Filter by status', bn: 'স্ট্যাটাস অনুযায়ী ফিল্টার' },
   'admin.allStatuses': { en: 'All statuses', bn: 'সব স্ট্যাটাস' },
-  'admin.all': { en: 'All', bn: 'সব' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
