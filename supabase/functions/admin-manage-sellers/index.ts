@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const { action, applicationId, adminNotes } = await req.json();
+    const { action, applicationId, applicationIds, adminNotes } = await req.json();
 
     if (action === 'list') {
       const { data: applications, error } = await supabaseAdmin
@@ -47,8 +47,55 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Bulk approve
+    if (action === 'bulk-approve' && applicationIds?.length) {
+      let successCount = 0;
+      for (const appId of applicationIds) {
+        const { data: app } = await supabaseAdmin
+          .from('seller_applications')
+          .select('*')
+          .eq('id', appId)
+          .eq('status', 'pending')
+          .single();
+
+        if (!app) continue;
+
+        const slug = app.store_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const { error: sellerError } = await supabaseAdmin
+          .from('sellers')
+          .insert({
+            user_id: app.user_id,
+            name: app.store_name,
+            slug: slug + '-' + Date.now().toString(36),
+            is_verified: true,
+          });
+
+        if (!sellerError) {
+          await supabaseAdmin
+            .from('seller_applications')
+            .update({ status: 'approved', admin_notes: adminNotes, updated_at: new Date().toISOString() })
+            .eq('id', appId);
+          successCount++;
+        }
+      }
+      return new Response(JSON.stringify({ success: true, count: successCount }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Bulk reject
+    if (action === 'bulk-reject' && applicationIds?.length) {
+      const { error } = await supabaseAdmin
+        .from('seller_applications')
+        .update({ status: 'rejected', admin_notes: adminNotes, updated_at: new Date().toISOString() })
+        .in('id', applicationIds);
+
+      return new Response(JSON.stringify({ success: true, count: error ? 0 : applicationIds.length }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (action === 'approve' && applicationId) {
-      // Get the application
       const { data: app } = await supabaseAdmin
         .from('seller_applications')
         .select('*')
@@ -59,7 +106,6 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Application not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      // Create seller profile
       const slug = app.store_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const { error: sellerError } = await supabaseAdmin
         .from('sellers')
@@ -74,7 +120,6 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Failed to create seller: ' + sellerError.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      // Update application status
       await supabaseAdmin
         .from('seller_applications')
         .update({ status: 'approved', admin_notes: adminNotes, updated_at: new Date().toISOString() })
