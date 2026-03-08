@@ -158,6 +158,7 @@ export const AdminCouponsTab = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {coupons.length === 0 ? (
