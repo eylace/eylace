@@ -565,6 +565,10 @@ export const translations = {
   'admin.reviewsDeleted': { en: 'reviews deleted', bn: 'রিভিউ মুছে ফেলা হয়েছে' },
   'admin.deleteSelected': { en: 'Delete selected', bn: 'নির্বাচিত মুছুন' },
   'admin.bulkDeleteConfirm': { en: 'Are you sure you want to delete the selected items? This cannot be undone.', bn: 'আপনি কি নিশ্চিত যে নির্বাচিত আইটেমগুলো মুছতে চান? এটি পূর্বাবস্থায় ফেরানো যাবে না।' },
+
+  // Filters
+  'admin.filterByStatus': { en: 'Filter by status', bn: 'স্ট্যাটাস অনুযায়ী ফিল্টার' },
+  'admin.allStatuses': { en: 'All statuses', bn: 'সব স্ট্যাটাস' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

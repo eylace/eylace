@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, Star, Trash2, Loader2, Download } from 'lucide-react';
+import { MessageSquare, Star, Trash2, Loader2, Download, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,7 +20,10 @@ export const AdminReviewsTab = () => {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedReviews, setSelectedReviews] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const { t } = useLanguage();
+
+  const filteredReviews = ratingFilter === null ? reviews : reviews.filter(r => r.rating === ratingFilter);
 
   const toggleSelect = (id: string) => {
     setSelectedReviews(prev => {
@@ -31,10 +34,10 @@ export const AdminReviewsTab = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedReviews.size === reviews.length) {
+    if (selectedReviews.size === filteredReviews.length) {
       setSelectedReviews(new Set());
     } else {
-      setSelectedReviews(new Set(reviews.map(r => r.id)));
+      setSelectedReviews(new Set(filteredReviews.map(r => r.id)));
     }
   };
 
@@ -75,8 +78,33 @@ export const AdminReviewsTab = () => {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            {t('admin.allReviews' as any)} ({reviews.length})
+            {t('admin.allReviews' as any)} ({filteredReviews.length}{ratingFilter !== null ? `/${reviews.length}` : ''})
           </CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map(star => (
+                <button
+                  key={star}
+                  onClick={() => setRatingFilter(ratingFilter === star ? null : star)}
+                  className={cn(
+                    "h-7 w-7 rounded flex items-center justify-center text-xs font-medium transition-colors",
+                    ratingFilter === star
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                  )}
+                >
+                  {star}★
+                </button>
+              ))}
+              {ratingFilter !== null && (
+                <button
+                  onClick={() => { setRatingFilter(null); setSelectedReviews(new Set()); }}
+                  className="text-xs text-muted-foreground hover:text-foreground ml-1"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           <Button
             variant="outline"
             size="sm"
@@ -105,6 +133,7 @@ export const AdminReviewsTab = () => {
             <Download className="h-4 w-4 mr-1" />
             CSV
           </Button>
+          </div>
         </div>
       </CardHeader>
 
@@ -148,7 +177,7 @@ export const AdminReviewsTab = () => {
         {/* Select All */}
         <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
           <Checkbox
-            checked={selectedReviews.size === reviews.length && reviews.length > 0}
+            checked={selectedReviews.size === filteredReviews.length && filteredReviews.length > 0}
             onCheckedChange={toggleSelectAll}
             className="h-4 w-4"
           />
@@ -158,7 +187,7 @@ export const AdminReviewsTab = () => {
         </div>
 
         <div className="space-y-4">
-          {reviews.map((review) => {
+          {filteredReviews.map((review) => {
             const isSelected = selectedReviews.has(review.id);
             return (
               <div key={review.id} className={cn("border rounded-lg p-4 transition-colors", isSelected && "border-accent/50 bg-accent/5")}>

@@ -54,7 +54,10 @@ export const AdminOrdersTab = () => {
   const [fraudOrder, setFraudOrder] = useState<any>(null);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const { t } = useLanguage();
+
+  const filteredOrders = statusFilter === 'all' ? orders : orders.filter(o => o.status === statusFilter);
 
   const toggleSelect = (id: string) => {
     setSelectedOrders(prev => {
@@ -65,10 +68,10 @@ export const AdminOrdersTab = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedOrders.size === orders.length) {
+    if (selectedOrders.size === filteredOrders.length) {
       setSelectedOrders(new Set());
     } else {
-      setSelectedOrders(new Set(orders.map(o => o.id)));
+      setSelectedOrders(new Set(filteredOrders.map(o => o.id)));
     }
   };
 
@@ -123,8 +126,23 @@ export const AdminOrdersTab = () => {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              {t('admin.allOrders' as any)} ({orders.length})
+              {t('admin.allOrders' as any)} ({filteredOrders.length}{statusFilter !== 'all' ? `/${orders.length}` : ''})
             </CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setSelectedOrders(new Set()); }}>
+                <SelectTrigger className="w-[150px] h-8 text-xs">
+                  <SelectValue placeholder={t('admin.filterByStatus' as any) || 'Filter by status'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('admin.allStatuses' as any) || 'All statuses'}</SelectItem>
+                  <SelectItem value="pending">{t('admin.statusPending' as any)}</SelectItem>
+                  <SelectItem value="processing">{t('admin.statusProcessing' as any)}</SelectItem>
+                  <SelectItem value="shipped">{t('admin.statusShipped' as any)}</SelectItem>
+                  <SelectItem value="out_for_delivery">{t('admin.statusOutForDelivery' as any)}</SelectItem>
+                  <SelectItem value="delivered">{t('admin.statusDelivered' as any)}</SelectItem>
+                  <SelectItem value="cancelled">{t('admin.statusCancelled' as any)}</SelectItem>
+                </SelectContent>
+              </Select>
             <Button
               variant="outline"
               size="sm"
@@ -155,6 +173,7 @@ export const AdminOrdersTab = () => {
               <Download className="h-4 w-4 mr-1" />
               CSV
             </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -190,7 +209,7 @@ export const AdminOrdersTab = () => {
           {/* Select All */}
           <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
             <Checkbox
-              checked={selectedOrders.size === orders.length && orders.length > 0}
+              checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
               onCheckedChange={toggleSelectAll}
               className="h-4 w-4"
             />
@@ -200,7 +219,7 @@ export const AdminOrdersTab = () => {
           </div>
 
           <div className="space-y-4">
-            {orders.map((order) => {
+            {filteredOrders.map((order) => {
               const status = statusConfig[order.status] || statusConfig.pending;
               const StatusIcon = status.icon;
               const isExpanded = expandedOrder === order.id;
