@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,36 +6,57 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { AlertTriangle, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CustomAlert {
   id: string;
   title: string;
-  message: string;
-  type: 'info' | 'warning' | 'success' | 'error';
-  placement: 'top' | 'bottom' | 'modal';
-  isActive: boolean;
+  message: string | null;
+  alert_type: string;
+  placement: string;
+  is_active: boolean;
 }
 
 const AdminMarketingCustomAlert = () => {
-  const [alerts, setAlerts] = useState<CustomAlert[]>([
-    { id: '1', title: 'Maintenance Notice', message: 'Scheduled maintenance on March 15', type: 'warning', placement: 'top', isActive: true },
-    { id: '2', title: 'Free Shipping', message: 'Free shipping on all orders today!', type: 'success', placement: 'top', isActive: false },
-  ]);
+  const [alerts, setAlerts] = useState<CustomAlert[]>([]);
+  const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', message: '', type: 'info' as CustomAlert['type'], placement: 'top' as CustomAlert['placement'] });
+  const [form, setForm] = useState({ title: '', message: '', alert_type: 'info', placement: 'top' });
 
-  const handleCreate = () => {
+  const fetchAlerts = async () => {
+    const { data, error } = await supabase.from('custom_alerts').select('*').order('created_at', { ascending: false });
+    if (error) console.error(error);
+    else setAlerts(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchAlerts(); }, []);
+
+  const handleCreate = async () => {
     if (!form.title.trim()) return;
-    setAlerts(prev => [{ id: Date.now().toString(), ...form, isActive: false }, ...prev]);
-    setForm({ title: '', message: '', type: 'info', placement: 'top' });
-    setAddOpen(false);
+    const { error } = await supabase.from('custom_alerts').insert(form);
+    if (error) { toast.error('Failed to create'); console.error(error); return; }
     toast.success('Alert created');
+    setForm({ title: '', message: '', alert_type: 'info', placement: 'top' });
+    setAddOpen(false);
+    fetchAlerts();
+  };
+
+  const toggleActive = async (id: string, current: boolean) => {
+    await supabase.from('custom_alerts').update({ is_active: !current }).eq('id', id);
+    fetchAlerts();
+  };
+
+  const deleteAlert = async (id: string) => {
+    await supabase.from('custom_alerts').delete().eq('id', id);
+    toast.success('Deleted');
+    fetchAlerts();
   };
 
   const typeColors: Record<string, string> = { info: 'bg-blue-500/10 text-blue-600', warning: 'bg-orange-500/10 text-orange-600', success: 'bg-green-500/10 text-green-600', error: 'bg-red-500/10 text-red-600' };
@@ -55,14 +76,14 @@ const AdminMarketingCustomAlert = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Type</Label>
-                    <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v as CustomAlert['type'] }))}>
+                    <Select value={form.alert_type} onValueChange={v => setForm(p => ({ ...p, alert_type: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent><SelectItem value="info">Info</SelectItem><SelectItem value="warning">Warning</SelectItem><SelectItem value="success">Success</SelectItem><SelectItem value="error">Error</SelectItem></SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Placement</Label>
-                    <Select value={form.placement} onValueChange={v => setForm(p => ({ ...p, placement: v as CustomAlert['placement'] }))}>
+                    <Select value={form.placement} onValueChange={v => setForm(p => ({ ...p, placement: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent><SelectItem value="top">Top Bar</SelectItem><SelectItem value="bottom">Bottom Bar</SelectItem><SelectItem value="modal">Modal</SelectItem></SelectContent>
                     </Select>
@@ -77,20 +98,26 @@ const AdminMarketingCustomAlert = () => {
           </Dialog>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Placement</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {alerts.map(a => (
-                <TableRow key={a.id}>
-                  <TableCell className="font-medium">{a.title}</TableCell>
-                  <TableCell><Badge className={`capitalize ${typeColors[a.type]}`}>{a.type}</Badge></TableCell>
-                  <TableCell className="capitalize text-sm text-muted-foreground">{a.placement}</TableCell>
-                  <TableCell><Switch checked={a.isActive} onCheckedChange={() => setAlerts(prev => prev.map(x => x.id === a.id ? { ...x, isActive: !x.isActive } : x))} /></TableCell>
-                  <TableCell className="text-right"><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setAlerts(prev => prev.filter(x => x.id !== a.id)); toast.success('Deleted'); }}><Trash2 className="h-4 w-4" /></Button></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {loading ? (
+            <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <Table>
+              <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Placement</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {alerts.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No alerts yet</TableCell></TableRow>
+                ) : alerts.map(a => (
+                  <TableRow key={a.id}>
+                    <TableCell className="font-medium">{a.title}</TableCell>
+                    <TableCell><Badge className={`capitalize ${typeColors[a.alert_type] || ''}`}>{a.alert_type}</Badge></TableCell>
+                    <TableCell className="capitalize text-sm text-muted-foreground">{a.placement}</TableCell>
+                    <TableCell><Switch checked={a.is_active} onCheckedChange={() => toggleActive(a.id, a.is_active)} /></TableCell>
+                    <TableCell className="text-right"><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteAlert(a.id)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </AdminLayout>

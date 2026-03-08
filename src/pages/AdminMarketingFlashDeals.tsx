@@ -1,49 +1,69 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Zap, Plus, Trash2, Clock } from 'lucide-react';
+import { Zap, Plus, Trash2, Clock, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FlashDeal {
   id: string;
   title: string;
   discount: number;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  is_active: boolean;
   products: number;
 }
 
 const AdminMarketingFlashDeals = () => {
-  const [deals, setDeals] = useState<FlashDeal[]>([
-    { id: '1', title: 'Weekend Flash Sale', discount: 30, startDate: '2026-03-08', endDate: '2026-03-10', isActive: true, products: 25 },
-    { id: '2', title: 'Monday Madness', discount: 50, startDate: '2026-03-11', endDate: '2026-03-11', isActive: false, products: 10 },
-  ]);
+  const [deals, setDeals] = useState<FlashDeal[]>([]);
+  const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ title: '', discount: 20, startDate: '', endDate: '' });
 
-  const handleCreate = () => {
+  const fetchDeals = async () => {
+    const { data, error } = await supabase.from('flash_deals').select('*').order('created_at', { ascending: false });
+    if (error) { toast.error('Failed to load flash deals'); console.error(error); }
+    else setDeals(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchDeals(); }, []);
+
+  const handleCreate = async () => {
     if (!form.title.trim()) return;
-    setDeals(prev => [{ id: Date.now().toString(), ...form, isActive: false, products: 0 }, ...prev]);
+    const { error } = await supabase.from('flash_deals').insert({
+      title: form.title,
+      discount: form.discount,
+      start_date: form.startDate || null,
+      end_date: form.endDate || null,
+    });
+    if (error) { toast.error('Failed to create'); console.error(error); return; }
+    toast.success('Flash deal created');
     setForm({ title: '', discount: 20, startDate: '', endDate: '' });
     setAddOpen(false);
-    toast.success('Flash deal created');
+    fetchDeals();
   };
 
-  const toggleActive = (id: string) => {
-    setDeals(prev => prev.map(d => d.id === id ? { ...d, isActive: !d.isActive } : d));
+  const toggleActive = async (id: string, current: boolean) => {
+    const { error } = await supabase.from('flash_deals').update({ is_active: !current }).eq('id', id);
+    if (error) { toast.error('Failed to update'); return; }
+    toast.success('Status updated');
+    fetchDeals();
   };
 
-  const deleteDeal = (id: string) => {
-    setDeals(prev => prev.filter(d => d.id !== id));
+  const deleteDeal = async (id: string) => {
+    const { error } = await supabase.from('flash_deals').delete().eq('id', id);
+    if (error) { toast.error('Failed to delete'); return; }
     toast.success('Flash deal deleted');
+    fetchDeals();
   };
 
   return (
@@ -71,32 +91,38 @@ const AdminMarketingFlashDeals = () => {
           </Dialog>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Discount</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Products</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {deals.map(d => (
-                <TableRow key={d.id}>
-                  <TableCell className="font-medium">{d.title}</TableCell>
-                  <TableCell><Badge variant="secondary">{d.discount}% OFF</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" />{d.startDate} → {d.endDate}</TableCell>
-                  <TableCell>{d.products}</TableCell>
-                  <TableCell><Switch checked={d.isActive} onCheckedChange={() => toggleActive(d.id)} /></TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteDeal(d.id)}><Trash2 className="h-4 w-4" /></Button>
-                  </TableCell>
+          {loading ? (
+            <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Discount</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Products</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {deals.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No flash deals yet</TableCell></TableRow>
+                ) : deals.map(d => (
+                  <TableRow key={d.id}>
+                    <TableCell className="font-medium">{d.title}</TableCell>
+                    <TableCell><Badge variant="secondary">{d.discount}% OFF</Badge></TableCell>
+                    <TableCell className="text-sm text-muted-foreground"><span className="flex items-center gap-1"><Clock className="h-3 w-3" />{d.start_date?.split('T')[0] || '—'} → {d.end_date?.split('T')[0] || '—'}</span></TableCell>
+                    <TableCell>{d.products}</TableCell>
+                    <TableCell><Switch checked={d.is_active} onCheckedChange={() => toggleActive(d.id, d.is_active)} /></TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteDeal(d.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </AdminLayout>

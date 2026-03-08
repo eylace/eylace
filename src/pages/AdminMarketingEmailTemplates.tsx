@@ -1,41 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Mail, Plus, Edit, Trash2, Eye, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EmailTemplate {
   id: string;
   name: string;
   subject: string;
-  type: string;
-  body: string;
-  lastEdited: string;
+  template_type: string;
+  body: string | null;
+  updated_at: string;
 }
 
 const AdminMarketingEmailTemplates = () => {
-  const [templates, setTemplates] = useState<EmailTemplate[]>([
-    { id: '1', name: 'Welcome Email', subject: 'Welcome to Eylace!', type: 'Transactional', body: '<h1>Welcome!</h1>', lastEdited: '2026-03-01' },
-    { id: '2', name: 'Order Confirmation', subject: 'Your order has been placed', type: 'Transactional', body: '<h1>Order Confirmed</h1>', lastEdited: '2026-03-05' },
-    { id: '3', name: 'Abandoned Cart', subject: 'You left something behind!', type: 'Marketing', body: '<h1>Come back!</h1>', lastEdited: '2026-02-20' },
-    { id: '4', name: 'Password Reset', subject: 'Reset your password', type: 'Transactional', body: '<h1>Reset Password</h1>', lastEdited: '2026-01-15' },
-  ]);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ name: '', subject: '', body: '' });
 
-  const handleCreate = () => {
+  const fetchTemplates = async () => {
+    const { data, error } = await supabase.from('marketing_email_templates').select('*').order('created_at', { ascending: false });
+    if (error) console.error(error);
+    else setTemplates(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchTemplates(); }, []);
+
+  const handleCreate = async () => {
     if (!form.name.trim()) return;
-    setTemplates(prev => [{ id: Date.now().toString(), ...form, type: 'Custom', lastEdited: new Date().toISOString().split('T')[0] }, ...prev]);
+    const { error } = await supabase.from('marketing_email_templates').insert({ name: form.name, subject: form.subject, body: form.body });
+    if (error) { toast.error('Failed to create'); console.error(error); return; }
+    toast.success('Template created');
     setForm({ name: '', subject: '', body: '' });
     setAddOpen(false);
-    toast.success('Template created');
+    fetchTemplates();
+  };
+
+  const deleteTemplate = async (id: string) => {
+    await supabase.from('marketing_email_templates').delete().eq('id', id);
+    toast.success('Deleted');
+    fetchTemplates();
   };
 
   return (
@@ -60,24 +74,28 @@ const AdminMarketingEmailTemplates = () => {
           </Dialog>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Subject</TableHead><TableHead>Type</TableHead><TableHead>Last Edited</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {templates.map(t => (
-                <TableRow key={t.id}>
-                  <TableCell className="font-medium">{t.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{t.subject}</TableCell>
-                  <TableCell><Badge variant="outline">{t.type}</Badge></TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{t.lastEdited}</TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setTemplates(prev => prev.filter(x => x.id !== t.id)); toast.success('Deleted'); }}><Trash2 className="h-4 w-4" /></Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {loading ? (
+            <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <Table>
+              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Subject</TableHead><TableHead>Type</TableHead><TableHead>Last Edited</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {templates.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No templates yet</TableCell></TableRow>
+                ) : templates.map(t => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">{t.name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{t.subject}</TableCell>
+                    <TableCell><Badge variant="outline">{t.template_type}</Badge></TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{t.updated_at?.split('T')[0]}</TableCell>
+                    <TableCell className="text-right space-x-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteTemplate(t.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </AdminLayout>
