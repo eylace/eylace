@@ -69,8 +69,8 @@ export const AdminReviewsTab = () => {
                       ))}
                     </div>
                   )}
-                  <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                    <span>{t('admin.productId' as any)}: {review.product_id}</span>
+                  <div className="flex items-center gap-2 md:gap-4 mt-3 text-[10px] md:text-xs text-muted-foreground flex-wrap">
+                    <span className="truncate max-w-[120px] md:max-w-none">{t('admin.productId' as any)}: {review.product_id}</span>
                     <span>{format(new Date(review.created_at), 'MMM d, yyyy')}</span>
                     <span>{review.helpful_count || 0} {t('admin.helpfulVotes' as any)}</span>
                   </div>

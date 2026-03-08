@@ -201,18 +201,18 @@ export const AdminDashboardOverview = () => {
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between px-6 py-3 hover:bg-muted/50 transition-colors">
+                <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between px-3 md:px-6 py-3 hover:bg-muted/50 transition-colors gap-1 sm:gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">#{order.order_number}</p>
                     <p className="text-xs text-muted-foreground truncate">{order.profile?.first_name} {order.profile?.last_name} • {format(new Date(order.created_at), 'MMM d, h:mm a')}</p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 md:gap-3">
                     <Badge className={`text-xs ${statusConfig[order.status] || ''}`}>{order.status}</Badge>
                     <span className="text-sm font-bold">${order.total?.toFixed(2)}</span>
                   </div>
                 </div>
               ))}
-              {recentOrders.length === 0 && (<div className="px-6 py-8 text-center text-muted-foreground text-sm">{t('admin.noOrders')}</div>)}
+              {recentOrders.length === 0 && (<div className="px-3 md:px-6 py-8 text-center text-muted-foreground text-sm">{t('admin.noOrders')}</div>)}
             </div>
           </CardContent>
         </Card>
@@ -222,14 +222,14 @@ export const AdminDashboardOverview = () => {
           <CardContent className="p-0">
             <div className="divide-y divide-border">
               {topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center gap-3 px-6 py-3 hover:bg-muted/50 transition-colors">
-                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground">{index + 1}</div>
-                  {product.image && (<img src={product.image} alt={product.name} className="h-10 w-10 rounded-lg object-cover" />)}
-                  <div className="flex-1 min-w-0"><p className="text-sm font-medium truncate">{product.name}</p><p className="text-xs text-muted-foreground">{product.sales} {t('admin.sold')}</p></div>
-                  <span className="text-sm font-bold text-accent">${product.revenue.toFixed(2)}</span>
+                <div key={product.name} className="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-3 hover:bg-muted/50 transition-colors">
+                  <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-muted flex items-center justify-center text-xs md:text-sm font-bold text-muted-foreground shrink-0">{index + 1}</div>
+                  {product.image && (<img src={product.image} alt={product.name} className="h-8 w-8 md:h-10 md:w-10 rounded-lg object-cover shrink-0" />)}
+                  <div className="flex-1 min-w-0"><p className="text-xs md:text-sm font-medium truncate">{product.name}</p><p className="text-xs text-muted-foreground">{product.sales} {t('admin.sold')}</p></div>
+                  <span className="text-xs md:text-sm font-bold text-accent shrink-0">${product.revenue.toFixed(2)}</span>
                 </div>
               ))}
-              {topProducts.length === 0 && (<div className="px-6 py-8 text-center text-muted-foreground text-sm">{t('admin.noData')}</div>)}
+              {topProducts.length === 0 && (<div className="px-3 md:px-6 py-8 text-center text-muted-foreground text-sm">{t('admin.noData')}</div>)}
             </div>
           </CardContent>
         </Card>
