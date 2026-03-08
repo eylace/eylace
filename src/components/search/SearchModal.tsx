@@ -30,10 +30,18 @@ export const SearchModal = ({ open, onOpenChange }: SearchModalProps) => {
     }
   }, [open]);
 
+  const sanitizeQuery = (input: string): string => {
+    return input
+      .replace(/[<>'"&]/g, '') // Strip HTML/script chars
+      .trim()
+      .slice(0, 200); // Max 200 chars
+  };
+
   const handleSearch = (searchQuery: string) => {
-    if (searchQuery.trim()) {
+    const sanitized = sanitizeQuery(searchQuery);
+    if (sanitized) {
       onOpenChange(false);
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/search?q=${encodeURIComponent(sanitized)}`);
     }
   };
 
@@ -69,6 +77,7 @@ export const SearchModal = ({ open, onOpenChange }: SearchModalProps) => {
             type="text"
             placeholder="Search for products, brands and more..."
             value={query}
+            maxLength={200}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSearch(query);
