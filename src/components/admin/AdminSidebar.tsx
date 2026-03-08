@@ -6,6 +6,7 @@ import {
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
+  Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -93,8 +94,20 @@ export function AdminSidebar() {
     { titleKey: 'admin.transactions' as TranslationKey, url: '/admin/transactions', icon: CreditCard },
   ];
 
+  const marketingItems: NavItem[] = [
+    { titleKey: 'admin.marketing.flashDeals', url: '/admin/marketing/flash-deals', icon: Zap },
+    { titleKey: 'admin.marketing.popup', url: '/admin/marketing/popup', icon: MousePointerClick },
+    { titleKey: 'admin.marketing.customAlert', url: '/admin/marketing/custom-alert', icon: AlertTriangle },
+    { titleKey: 'admin.marketing.sellAlert', url: '/admin/marketing/sell-alert', icon: ShoppingBag },
+    { titleKey: 'admin.marketing.emailTemplates', url: '/admin/marketing/email-templates', icon: Mail },
+    { titleKey: 'admin.marketing.newsletters', url: '/admin/marketing/newsletters', icon: Newspaper },
+    { titleKey: 'admin.marketing.notification', url: '/admin/marketing/notification', icon: Bell },
+    { titleKey: 'admin.marketing.bulkSMS', url: '/admin/marketing/bulk-sms', icon: MessageSquare },
+    { titleKey: 'admin.marketing.subscribers', url: '/admin/marketing/subscribers', icon: UsersRound },
+    { titleKey: 'admin.marketing.visitors', url: '/admin/marketing/visitors', icon: Eye },
+  ];
+
   const contentItems = [
-    { titleKey: 'admin.marketing' as TranslationKey, url: '/admin/marketing', icon: Megaphone },
     { titleKey: 'admin.reports' as TranslationKey, url: '/admin/reports', icon: BarChart3 },
     { titleKey: 'admin.mediaGallery' as TranslationKey, url: '/admin/media', icon: Image },
     { titleKey: 'admin.notifications' as TranslationKey, url: '/admin/notifications', icon: Bell },
@@ -321,6 +334,45 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         {renderGroup('admin.group.operations', operationsItems)}
+
+        {/* Marketing Section */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('marketing')} onOpenChange={() => toggleSection('marketing')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <Megaphone className="h-3.5 w-3.5" />
+                  {t('admin.marketing.section' as TranslationKey)}
+                </span>
+                {openSections.has('marketing') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {marketingItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
         {renderGroup('admin.group.content', contentItems)}
         {renderGroup('admin.group.system', systemItems)}
 

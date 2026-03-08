@@ -643,6 +643,18 @@ export const translations = {
   'admin.sellers.packagesDesc': { en: 'Manage seller subscription packages', bn: 'বিক্রেতা সাবস্ক্রিপশন প্যাকেজ' },
   'admin.sellers.verification': { en: 'Verification Form', bn: 'ভেরিফিকেশন ফর্ম' },
   'admin.sellers.verificationDesc': { en: 'Configure seller verification fields', bn: 'বিক্রেতা ভেরিফিকেশন ফিল্ড কনফিগার' },
+  // Marketing sub-pages
+  'admin.marketing.section': { en: 'Marketing', bn: 'মার্কেটিং' },
+  'admin.marketing.flashDeals': { en: 'Flash Deals', bn: 'ফ্ল্যাশ ডিলস' },
+  'admin.marketing.popup': { en: 'Dynamic Pop-up', bn: 'ডায়নামিক পপ-আপ' },
+  'admin.marketing.customAlert': { en: 'Custom Alert', bn: 'কাস্টম অ্যালার্ট' },
+  'admin.marketing.sellAlert': { en: 'Custom Sell Alert', bn: 'কাস্টম সেল অ্যালার্ট' },
+  'admin.marketing.emailTemplates': { en: 'Email Templates', bn: 'ইমেইল টেমপ্লেট' },
+  'admin.marketing.newsletters': { en: 'Newsletters', bn: 'নিউজলেটার' },
+  'admin.marketing.notification': { en: 'Notification', bn: 'নোটিফিকেশন' },
+  'admin.marketing.bulkSMS': { en: 'Bulk SMS', bn: 'বাল্ক এসএমএস' },
+  'admin.marketing.subscribers': { en: 'Subscribers', bn: 'সাবস্ক্রাইবার' },
+  'admin.marketing.visitors': { en: 'Custom Visitors', bn: 'কাস্টম ভিজিটর' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
