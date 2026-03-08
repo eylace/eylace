@@ -6,7 +6,7 @@ import {
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
-  Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye,
+  Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -81,6 +81,12 @@ export function AdminSidebar() {
     { titleKey: 'admin.sellers.categoryCommission', url: '/admin/sellers/category-commission', icon: Layers },
     { titleKey: 'admin.sellers.packages', url: '/admin/sellers/packages', icon: Package },
     { titleKey: 'admin.sellers.verification', url: '/admin/sellers/verification', icon: UserCheck },
+  ];
+
+  const otpItems: NavItem[] = [
+    { titleKey: 'admin.otp.loginConfig', url: '/admin/otp/login-config', icon: Smartphone },
+    { titleKey: 'admin.otp.configurations', url: '/admin/otp/configurations', icon: Settings },
+    { titleKey: 'admin.otp.smsTemplates', url: '/admin/otp/sms-templates', icon: MessageSquare },
   ];
 
   const managementItems = [
@@ -317,6 +323,44 @@ export function AdminSidebar() {
                           <NavLink
                             to={item.url}
                             end={item.url === '/admin/preorder'}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* OTP System Section */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('otp')} onOpenChange={() => toggleSection('otp')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <Smartphone className="h-3.5 w-3.5" />
+                  {t('admin.otp.section' as TranslationKey)}
+                </span>
+                {openSections.has('otp') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {otpItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
                             className="hover:bg-sidebar-accent/50 text-xs pl-2"
                             activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
                           >
