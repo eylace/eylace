@@ -3,6 +3,7 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminNotificationBell } from './AdminNotificationBell';
+import { ThemeToggle } from './ThemeToggle';
 import { useAdminCheck } from '@/hooks/useAdminData';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -58,7 +59,8 @@ export const AdminLayout = ({ children, title, description }: AdminLayoutProps) 
                 {description && <p className="text-xs text-muted-foreground">{description}</p>}
               </div>
             )}
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <ThemeToggle />
               <AdminNotificationBell />
             </div>
           </header>
