@@ -60,7 +60,7 @@ import AdminLabels from "./pages/AdminLabels";
 import AdminWarranties from "./pages/AdminWarranties";
 import AdminSizeGuides from "./pages/AdminSizeGuides";
 import AdminCategoryDiscount from "./pages/AdminCategoryDiscount";
-
+import AdminSmartBar from "./pages/AdminSmartBar";
 const queryClient = new QueryClient();
 
 const App = () => (
