@@ -28,7 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useAdminOrders, AdminOrder } from '@/hooks/useAdminData';
+import { useAdminOrders } from '@/hooks/useAdminData';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
