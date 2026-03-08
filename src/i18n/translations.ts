@@ -581,6 +581,20 @@ export const translations = {
   'admin.websiteSetup.pages': { en: 'Pages', bn: 'পেজ' },
   'admin.websiteSetup.appearance': { en: 'Appearance', bn: 'অ্যাপিয়ারেন্স' },
 
+  // Preorder
+  'admin.preorder': { en: 'Preorder', bn: 'প্রিঅর্ডার' },
+  'admin.preorder.dashboard': { en: 'Dashboard', bn: 'ড্যাশবোর্ড' },
+  'admin.preorder.addProduct': { en: 'Add New Preorder Product', bn: 'নতুন প্রিঅর্ডার পণ্য যোগ' },
+  'admin.preorder.products': { en: 'Preorder Products', bn: 'প্রিঅর্ডার পণ্য' },
+  'admin.preorder.orders': { en: 'Orders (Preorder)', bn: 'অর্ডার (প্রিঅর্ডার)' },
+  'admin.preorder.commissions': { en: 'Commission History', bn: 'কমিশন ইতিহাস' },
+  'admin.preorder.settings': { en: 'Settings', bn: 'সেটিংস' },
+  'admin.preorder.conversations': { en: 'Product Conversations', bn: 'পণ্য কথোপকথন' },
+  'admin.preorder.queries': { en: 'Product Queries', bn: 'পণ্য প্রশ্ন' },
+  'admin.preorder.reviews': { en: 'Product Reviews', bn: 'পণ্য রিভিউ' },
+  'admin.preorder.faqs': { en: 'FAQs', bn: 'প্রশ্নোত্তর' },
+  'admin.preorder.notifications': { en: 'Notification Types', bn: 'নোটিফিকেশন টাইপ' },
+
   // Bulk actions
   'admin.selectAll': { en: 'Select all', bn: 'সব নির্বাচন করুন' },
   'admin.selected': { en: 'selected', bn: 'নির্বাচিত' },

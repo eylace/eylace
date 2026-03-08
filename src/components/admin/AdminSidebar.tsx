@@ -4,7 +4,8 @@ import {
   BarChart3, Truck, ShieldAlert, Megaphone, FileText, Globe, Layers, Image, Bell,
   CreditCard, ArrowLeft, LogOut, Shield, ChevronDown, ChevronRight,
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
-  Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate,
+  Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
+  MessagesSquare, HelpCircle, BellRing,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -104,6 +105,20 @@ export function AdminSidebar() {
     { titleKey: 'admin.websiteSetup.footer' as TranslationKey, url: '/admin/website-setup?tab=footer', icon: Layers },
     { titleKey: 'admin.websiteSetup.pages' as TranslationKey, url: '/admin/website-setup?tab=pages', icon: FileText },
     { titleKey: 'admin.websiteSetup.appearance' as TranslationKey, url: '/admin/website-setup?tab=appearance', icon: Paintbrush },
+  ];
+
+  const preorderItems: NavItem[] = [
+    { titleKey: 'admin.preorder.dashboard', url: '/admin/preorder', icon: LayoutDashboard },
+    { titleKey: 'admin.preorder.addProduct', url: '/admin/preorder/add', icon: Package },
+    { titleKey: 'admin.preorder.products', url: '/admin/preorder/products', icon: Box },
+    { titleKey: 'admin.preorder.orders', url: '/admin/preorder/orders', icon: ShoppingCart },
+    { titleKey: 'admin.preorder.commissions', url: '/admin/preorder/commissions', icon: CreditCard },
+    { titleKey: 'admin.preorder.settings', url: '/admin/preorder/settings', icon: Settings },
+    { titleKey: 'admin.preorder.conversations', url: '/admin/preorder/conversations', icon: MessagesSquare },
+    { titleKey: 'admin.preorder.queries', url: '/admin/preorder/queries', icon: ClipboardList },
+    { titleKey: 'admin.preorder.reviews', url: '/admin/preorder/reviews', icon: MessageSquare },
+    { titleKey: 'admin.preorder.faqs', url: '/admin/preorder/faqs', icon: HelpCircle },
+    { titleKey: 'admin.preorder.notifications', url: '/admin/preorder/notifications', icon: BellRing },
   ];
 
   const settingsItems: NavItem[] = [
@@ -214,6 +229,46 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         {renderGroup('admin.group.management', managementItems)}
+
+        {/* Preorder Section */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('preorder')} onOpenChange={() => toggleSection('preorder')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  {t('admin.preorder' as TranslationKey)}
+                </span>
+                {openSections.has('preorder') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {preorderItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
+                            end={item.url === '/admin/preorder'}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
         {renderGroup('admin.group.operations', operationsItems)}
         {renderGroup('admin.group.content', contentItems)}
         {renderGroup('admin.group.system', systemItems)}

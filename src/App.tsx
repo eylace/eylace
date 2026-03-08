@@ -62,6 +62,18 @@ import AdminSizeGuides from "./pages/AdminSizeGuides";
 import AdminCategoryDiscount from "./pages/AdminCategoryDiscount";
 import AdminSmartBar from "./pages/AdminSmartBar";
 import AdminWebsiteSetupPage from "./pages/AdminWebsiteSetupPage";
+// Preorder pages
+import AdminPreorderDashboard from "./pages/AdminPreorderDashboard";
+import AdminPreorderAddProduct from "./pages/AdminPreorderAddProduct";
+import AdminPreorderProducts from "./pages/AdminPreorderProducts";
+import AdminPreorderOrders from "./pages/AdminPreorderOrders";
+import AdminPreorderCommissions from "./pages/AdminPreorderCommissions";
+import AdminPreorderSettings from "./pages/AdminPreorderSettings";
+import AdminPreorderConversations from "./pages/AdminPreorderConversations";
+import AdminPreorderQueries from "./pages/AdminPreorderQueries";
+import AdminPreorderReviews from "./pages/AdminPreorderReviews";
+import AdminPreorderFaqs from "./pages/AdminPreorderFaqs";
+import AdminPreorderNotificationTypes from "./pages/AdminPreorderNotificationTypes";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -122,6 +134,17 @@ const App = () => (
                 <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />
                 <Route path="/admin/website-setup" element={<AdminWebsiteSetupPage />} />
+                <Route path="/admin/preorder" element={<AdminPreorderDashboard />} />
+                <Route path="/admin/preorder/add" element={<AdminPreorderAddProduct />} />
+                <Route path="/admin/preorder/products" element={<AdminPreorderProducts />} />
+                <Route path="/admin/preorder/orders" element={<AdminPreorderOrders />} />
+                <Route path="/admin/preorder/commissions" element={<AdminPreorderCommissions />} />
+                <Route path="/admin/preorder/settings" element={<AdminPreorderSettings />} />
+                <Route path="/admin/preorder/conversations" element={<AdminPreorderConversations />} />
+                <Route path="/admin/preorder/queries" element={<AdminPreorderQueries />} />
+                <Route path="/admin/preorder/reviews" element={<AdminPreorderReviews />} />
+                <Route path="/admin/preorder/faqs" element={<AdminPreorderFaqs />} />
+                <Route path="/admin/preorder/notifications" element={<AdminPreorderNotificationTypes />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />

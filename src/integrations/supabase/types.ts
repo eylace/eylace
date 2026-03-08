@@ -436,6 +436,371 @@ export type Database = {
         }
         Relationships: []
       }
+      preorder_commissions: {
+        Row: {
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          preorder_order_id: string
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          preorder_order_id: string
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          preorder_order_id?: string
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preorder_commissions_preorder_order_id_fkey"
+            columns: ["preorder_order_id"]
+            isOneToOne: false
+            referencedRelation: "preorder_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preorder_commissions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preorder_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          preorder_product_id: string
+          seller_id: string
+          sender_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          preorder_product_id: string
+          seller_id: string
+          sender_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          preorder_product_id?: string
+          seller_id?: string
+          sender_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preorder_conversations_preorder_product_id_fkey"
+            columns: ["preorder_product_id"]
+            isOneToOne: false
+            referencedRelation: "preorder_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preorder_conversations_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preorder_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          is_active: boolean
+          question: string
+          sort_order: number
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          question: string
+          sort_order?: number
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          question?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      preorder_notification_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          email_enabled: boolean
+          id: string
+          is_active: boolean
+          name: string
+          push_enabled: boolean
+          slug: string
+          sms_enabled: boolean
+          template: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          email_enabled?: boolean
+          id?: string
+          is_active?: boolean
+          name: string
+          push_enabled?: boolean
+          slug: string
+          sms_enabled?: boolean
+          template?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          email_enabled?: boolean
+          id?: string
+          is_active?: boolean
+          name?: string
+          push_enabled?: boolean
+          slug?: string
+          sms_enabled?: boolean
+          template?: string | null
+        }
+        Relationships: []
+      }
+      preorder_orders: {
+        Row: {
+          advance_paid: number
+          created_at: string
+          id: string
+          order_number: string
+          payment_method: string
+          preorder_product_id: string
+          quantity: number
+          remaining_amount: number
+          shipping_address: Json | null
+          status: string
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          advance_paid?: number
+          created_at?: string
+          id?: string
+          order_number: string
+          payment_method?: string
+          preorder_product_id: string
+          quantity?: number
+          remaining_amount?: number
+          shipping_address?: Json | null
+          status?: string
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          advance_paid?: number
+          created_at?: string
+          id?: string
+          order_number?: string
+          payment_method?: string
+          preorder_product_id?: string
+          quantity?: number
+          remaining_amount?: number
+          shipping_address?: Json | null
+          status?: string
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preorder_orders_preorder_product_id_fkey"
+            columns: ["preorder_product_id"]
+            isOneToOne: false
+            referencedRelation: "preorder_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preorder_products: {
+        Row: {
+          advance_amount: number
+          advance_type: string
+          created_at: string
+          estimated_delivery: string | null
+          id: string
+          max_quantity: number
+          preorder_price: number
+          product_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          advance_amount?: number
+          advance_type?: string
+          created_at?: string
+          estimated_delivery?: string | null
+          id?: string
+          max_quantity?: number
+          preorder_price?: number
+          product_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          advance_amount?: number
+          advance_type?: string
+          created_at?: string
+          estimated_delivery?: string | null
+          id?: string
+          max_quantity?: number
+          preorder_price?: number
+          product_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preorder_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preorder_queries: {
+        Row: {
+          answer: string | null
+          answered_at: string | null
+          created_at: string
+          id: string
+          preorder_product_id: string
+          question: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          answered_at?: string | null
+          created_at?: string
+          id?: string
+          preorder_product_id: string
+          question: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          answered_at?: string | null
+          created_at?: string
+          id?: string
+          preorder_product_id?: string
+          question?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preorder_queries_preorder_product_id_fkey"
+            columns: ["preorder_product_id"]
+            isOneToOne: false
+            referencedRelation: "preorder_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preorder_reviews: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          images: string[] | null
+          preorder_product_id: string
+          rating: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          preorder_product_id: string
+          rating?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          preorder_product_id?: string
+          rating?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preorder_reviews_preorder_product_id_fkey"
+            columns: ["preorder_product_id"]
+            isOneToOne: false
+            referencedRelation: "preorder_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preorder_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       product_attributes: {
         Row: {
           created_at: string
