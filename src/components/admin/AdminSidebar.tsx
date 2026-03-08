@@ -1,44 +1,27 @@
+import { useState } from 'react';
 import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Users,
-  MessageSquare,
-  Store,
-  Tag,
-  Settings,
-  BarChart3,
-  Truck,
-  ShieldAlert,
-  Megaphone,
-  FileText,
-  Globe,
-  Layers,
-  Image,
-  Bell,
-  CreditCard,
-  ArrowLeft,
-  LogOut,
-  Shield,
+  LayoutDashboard, Package, ShoppingCart, Users, MessageSquare, Store, Tag, Settings,
+  BarChart3, Truck, ShieldAlert, Megaphone, FileText, Globe, Layers, Image, Bell,
+  CreditCard, ArrowLeft, LogOut, Shield, ChevronDown, ChevronRight,
+  Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { TranslationKey } from '@/i18n/translations';
+
+interface NavItem {
+  titleKey: string;
+  url: string;
+  icon: React.ElementType;
+  children?: NavItem[];
+}
 
 export function AdminSidebar() {
   const { state } = useSidebar();
@@ -49,17 +32,43 @@ export function AdminSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
 
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['products']));
+
+  const toggleSection = (key: string) => {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
+
+  const productItems: NavItem[] = [
+    { titleKey: 'admin.addProduct', url: '/admin/products/add', icon: Package },
+    { titleKey: 'admin.allProducts', url: '/admin/products', icon: Box },
+    { titleKey: 'admin.inHouseProducts', url: '/admin/products/in-house', icon: Home },
+    { titleKey: 'admin.addDigitalProduct', url: '/admin/products/digital/add', icon: Upload },
+    { titleKey: 'admin.sellerProducts', url: '/admin/products/seller', icon: Store },
+    { titleKey: 'admin.bulkImport', url: '/admin/products/bulk-import', icon: Upload },
+    { titleKey: 'admin.bulkExport', url: '/admin/products/bulk-export', icon: Download },
+    { titleKey: 'admin.categories', url: '/admin/categories', icon: Layers },
+    { titleKey: 'admin.categoryDiscount', url: '/admin/products/category-discount', icon: Percent },
+    { titleKey: 'admin.brands', url: '/admin/products/brands', icon: Sparkles },
+    { titleKey: 'admin.customLabels', url: '/admin/products/labels', icon: Type },
+    { titleKey: 'admin.attributes', url: '/admin/products/attributes', icon: Tag },
+    { titleKey: 'admin.colors', url: '/admin/products/colors', icon: Palette },
+    { titleKey: 'admin.sizeGuide', url: '/admin/products/size-guides', icon: Ruler },
+    { titleKey: 'admin.warranty', url: '/admin/products/warranties', icon: ShieldCheck },
+    { titleKey: 'admin.reviews', url: '/admin/reviews', icon: MessageSquare },
+  ];
+
   const mainItems = [
     { titleKey: 'admin.dashboard' as TranslationKey, url: '/admin', icon: LayoutDashboard },
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
-    { titleKey: 'admin.products' as TranslationKey, url: '/admin/products', icon: Package },
-    { titleKey: 'admin.categories' as TranslationKey, url: '/admin/categories', icon: Layers },
   ];
 
   const managementItems = [
     { titleKey: 'admin.customers' as TranslationKey, url: '/admin/customers', icon: Users },
     { titleKey: 'admin.sellers' as TranslationKey, url: '/admin/sellers', icon: Store },
-    { titleKey: 'admin.reviews' as TranslationKey, url: '/admin/reviews', icon: MessageSquare },
     { titleKey: 'admin.coupons' as TranslationKey, url: '/admin/coupons', icon: Tag },
   ];
 
@@ -85,33 +94,27 @@ export function AdminSidebar() {
 
   const isActive = (path: string) => {
     if (path === '/admin') return currentPath === '/admin';
+    if (path === '/admin/products') return currentPath === '/admin/products';
     return currentPath.startsWith(path);
   };
+
+  const isProductSectionActive = productItems.some(i => isActive(i.url));
 
   const renderGroup = (labelKey: TranslationKey, items: typeof mainItems) => (
     <SidebarGroup>
       <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold">
-        {!collapsed && t(labelKey)}
+        {t(labelKey)}
       </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => {
-            const title = t(item.titleKey);
+            const title = t(item.titleKey as TranslationKey);
             return (
               <SidebarMenuItem key={item.titleKey}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive(item.url)}
-                  tooltip={title}
-                >
-                  <NavLink
-                    to={item.url}
-                    end={item.url === '/admin'}
-                    className="hover:bg-sidebar-accent/50"
-                    activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
-                  >
+                <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                  <NavLink to={item.url} end={item.url === '/admin'} className="hover:bg-sidebar-accent/50" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
                     <item.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span>{title}</span>}
+                    <span>{title}</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -126,26 +129,58 @@ export function AdminSidebar() {
     <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
         <Link to="/admin" className="flex items-center gap-2">
-          {!collapsed ? (
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
-                <LayoutDashboard className="h-4 w-4 text-accent-foreground" />
-              </div>
-              <div>
-                <h2 className="font-bold text-sm text-sidebar-foreground">Eylace Admin</h2>
-                <p className="text-[10px] text-sidebar-foreground/50">{t('admin.managementPanel')}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center mx-auto">
-              <LayoutDashboard className="h-4 w-4 text-accent-foreground" />
-            </div>
-          )}
+          <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
+            <LayoutDashboard className="h-4 w-4 text-accent-foreground" />
+          </div>
+          <div>
+            <h2 className="font-bold text-sm text-sidebar-foreground">Eylace Admin</h2>
+            <p className="text-[10px] text-sidebar-foreground/50">{t('admin.managementPanel')}</p>
+          </div>
         </Link>
       </SidebarHeader>
 
       <SidebarContent className="overflow-y-auto">
         {renderGroup('admin.group.main', mainItems)}
+
+        {/* Products Section with Collapsible Sub-menu */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('products')} onOpenChange={() => toggleSection('products')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" />
+                  {t('admin.products' as TranslationKey)}
+                </span>
+                {openSections.has('products') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {productItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
+                            end={item.url === '/admin/products'}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
         {renderGroup('admin.group.management', managementItems)}
         {renderGroup('admin.group.operations', operationsItems)}
         {renderGroup('admin.group.content', contentItems)}
@@ -156,18 +191,15 @@ export function AdminSidebar() {
         <SidebarMenuButton asChild>
           <Link to="/" className="flex items-center gap-2 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground min-h-[40px]">
             <ArrowLeft className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>{t('admin.backToStore')}</span>}
+            <span>{t('admin.backToStore')}</span>
           </Link>
         </SidebarMenuButton>
         <SidebarMenuButton
-          onClick={async () => {
-            await signOut();
-            navigate('/admin/login');
-          }}
+          onClick={async () => { await signOut(); navigate('/admin/login'); }}
           className="flex items-center gap-2 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer min-h-[40px]"
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>{t('admin.logout')}</span>}
+          <span>{t('admin.logout')}</span>
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>
