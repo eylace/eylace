@@ -11,70 +11,89 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart, Video, FileText } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+
+interface ProductFormState {
+  name: string;
+  slug: string;
+  description: string;
+  price: string;
+  original_price: string;
+  discount: string;
+  discount_type: string;
+  stock: string;
+  category_id: string;
+  brand_id: string;
+  warranty_id: string;
+  label_id: string;
+  images: string[];
+  thumbnail: string;
+  videos: string[];
+  video_thumbnails: string[];
+  youtube_link: string;
+  pdf_url: string;
+  is_active: boolean;
+  is_flash_sale: boolean;
+  is_free_shipping: boolean;
+  is_prime: boolean;
+  is_digital: boolean;
+  variations: { name: string; options: string[] }[];
+  unit: string;
+  weight: string;
+  min_qty: string;
+  barcode: string;
+  meta_title: string;
+  meta_description: string;
+  meta_keywords: string;
+  shipping_type: string;
+  shipping_cost: string;
+  is_product_quantity_multiply: boolean;
+  estimated_shipping_days: string;
+  is_refundable: boolean;
+  is_featured: boolean;
+  is_todays_deal: boolean;
+  flash_deal_title: string;
+  hsn_code: string;
+  gst_rate: string;
+  frequently_bought_ids: string[];
+  note: string;
+}
+
+const defaultForm: ProductFormState = {
+  name: '', slug: '', description: '', price: '', original_price: '', discount: '', discount_type: 'flat',
+  stock: '', category_id: '', brand_id: '', warranty_id: '', label_id: '',
+  images: [], thumbnail: '', videos: [], video_thumbnails: [], youtube_link: '', pdf_url: '',
+  is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
+  variations: [], unit: '', weight: '', min_qty: '1', barcode: '',
+  meta_title: '', meta_description: '', meta_keywords: '',
+  shipping_type: 'free', shipping_cost: '', is_product_quantity_multiply: false, estimated_shipping_days: '',
+  is_refundable: true, is_featured: false, is_todays_deal: false, flash_deal_title: '',
+  hsn_code: '', gst_rate: '', frequently_bought_ids: [], note: '',
+};
 
 const AdminAddProduct = () => {
   const navigate = useNavigate();
+  const { id: editId } = useParams<{ id: string }>();
+  const isEdit = !!editId;
+
   const [loading, setLoading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
   const [warranties, setWarranties] = useState<any[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoThumbUploading, setVideoThumbUploading] = useState(false);
+  const [pdfUploading, setPdfUploading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const flashDeals = ['Flash Sale', 'Flash Deal', 'Electronic', 'Winter Sale', 'End of Season'];
 
-  const [form, setForm] = useState({
-    name: '',
-    slug: '',
-    description: '',
-    price: '',
-    original_price: '',
-    discount: '',
-    discount_type: 'flat',
-    stock: '',
-    category_id: '',
-    brand_id: '',
-    warranty_id: '',
-    label_id: '',
-    images: [] as string[],
-    is_active: true,
-    is_flash_sale: false,
-    is_free_shipping: false,
-    is_prime: false,
-    is_digital: false,
-    variations: [] as { name: string; options: string[] }[],
-    // General
-    unit: '',
-    weight: '',
-    min_qty: '1',
-    barcode: '',
-    // SEO
-    meta_title: '',
-    meta_description: '',
-    meta_keywords: '',
-    // Shipping
-    shipping_type: 'free',
-    shipping_cost: '',
-    is_product_quantity_multiply: false,
-    estimated_shipping_days: '',
-    // Refund
-    is_refundable: true,
-    // Featured
-    is_featured: false,
-    is_todays_deal: false,
-    flash_deal_title: '',
-    // HSN & GST
-    hsn_code: '',
-    gst_rate: '',
-    // Frequently bought together
-    frequently_bought_ids: [] as string[],
-    // Note
-    note: '',
-  });
+  const [form, setForm] = useState<ProductFormState>({ ...defaultForm });
 
   useEffect(() => {
     Promise.all([
@@ -88,66 +107,161 @@ const AdminAddProduct = () => {
       if (brandRes.data) setBrands(brandRes.data);
       if (warrantyRes.data) setWarranties(warrantyRes.data);
       if (labelRes.data) setLabels(labelRes.data);
-      if (prodRes.data) setProducts(prodRes.data);
+      if (prodRes.data) setAllProducts(prodRes.data);
     });
   }, []);
 
-  const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  // Load product for editing
+  useEffect(() => {
+    if (!editId) return;
+    setLoadingProduct(true);
+    supabase.from('products').select('*').eq('id', editId).single().then(({ data, error }) => {
+      if (error || !data) { toast.error('Product not found'); navigate('/admin/products'); return; }
+      const attrs = (data.attributes as any) || {};
+      setForm({
+        name: data.name || '',
+        slug: data.slug || '',
+        description: data.description || '',
+        price: String(data.price || ''),
+        original_price: String(data.original_price || ''),
+        discount: String(data.discount || ''),
+        discount_type: attrs.discount_type || 'flat',
+        stock: String(data.stock || ''),
+        category_id: data.category_id || '',
+        brand_id: data.brand_id || '',
+        warranty_id: data.warranty_id || '',
+        label_id: data.label_id || '',
+        images: data.images || [],
+        thumbnail: attrs.thumbnail || '',
+        videos: attrs.videos || [],
+        video_thumbnails: attrs.video_thumbnails || [],
+        youtube_link: attrs.youtube_link || '',
+        pdf_url: attrs.pdf_url || '',
+        is_active: data.is_active ?? true,
+        is_flash_sale: data.is_flash_sale ?? false,
+        is_free_shipping: data.is_free_shipping ?? false,
+        is_prime: data.is_prime ?? false,
+        is_digital: data.is_digital ?? false,
+        variations: (data.variations as any) || [],
+        unit: attrs.unit || '',
+        weight: attrs.weight || '',
+        min_qty: attrs.min_qty || '1',
+        barcode: attrs.barcode || '',
+        meta_title: attrs.meta_title || '',
+        meta_description: attrs.meta_description || '',
+        meta_keywords: attrs.meta_keywords || '',
+        shipping_type: attrs.shipping_type || 'free',
+        shipping_cost: attrs.shipping_cost || '',
+        is_product_quantity_multiply: attrs.is_product_quantity_multiply || false,
+        estimated_shipping_days: attrs.estimated_shipping_days || '',
+        is_refundable: attrs.is_refundable ?? true,
+        is_featured: attrs.is_featured || false,
+        is_todays_deal: attrs.is_todays_deal || false,
+        flash_deal_title: attrs.flash_deal_title || '',
+        hsn_code: attrs.hsn_code || '',
+        gst_rate: attrs.gst_rate || '',
+        frequently_bought_ids: attrs.frequently_bought_ids || [],
+        note: attrs.note || '',
+      });
+      setTags(attrs.tags || []);
+      setLoadingProduct(false);
+    });
+  }, [editId, navigate]);
 
+  const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   const handleNameChange = (name: string) => {
-    setForm(f => ({ ...f, name, slug: generateSlug(name) }));
+    setForm(f => ({ ...f, name, slug: isEdit ? f.slug : generateSlug(name) }));
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadFile = async (file: File, bucket: string, folder: string) => {
+    const ext = file.name.split('.').pop();
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from(bucket).upload(path, file);
+    if (error) throw error;
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
     setImageUploading(true);
     try {
-      const newImages: string[] = [];
+      const urls: string[] = [];
       for (const file of Array.from(files)) {
-        const ext = file.name.split('.').pop();
-        const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage.from('product-images').upload(path, file);
-        if (error) throw error;
-        const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-        newImages.push(urlData.publicUrl);
+        urls.push(await uploadFile(file, 'product-images', 'gallery'));
       }
-      setForm(f => ({ ...f, images: [...f.images, ...newImages] }));
-      toast.success(`${newImages.length} image(s) uploaded`);
-    } catch (err: any) {
-      toast.error('Upload failed: ' + err.message);
-    } finally {
-      setImageUploading(false);
-    }
+      setForm(f => ({ ...f, images: [...f.images, ...urls] }));
+      toast.success(`${urls.length} gallery image(s) uploaded`);
+    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
+    finally { setImageUploading(false); }
   };
 
-  const removeImage = (index: number) => {
-    setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setThumbnailUploading(true);
+    try {
+      const url = await uploadFile(file, 'product-images', 'thumbnails');
+      setForm(f => ({ ...f, thumbnail: url }));
+      toast.success('Thumbnail uploaded');
+    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
+    finally { setThumbnailUploading(false); }
   };
 
-  const addTag = () => {
-    const t = tagInput.trim();
-    if (t && !tags.includes(t)) {
-      setTags(prev => [...prev, t]);
-      setTagInput('');
-    }
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setVideoUploading(true);
+    try {
+      const urls: string[] = [];
+      for (const file of Array.from(files)) {
+        urls.push(await uploadFile(file, 'product-images', 'videos'));
+      }
+      setForm(f => ({ ...f, videos: [...f.videos, ...urls] }));
+      toast.success(`${urls.length} video(s) uploaded`);
+    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
+    finally { setVideoUploading(false); }
   };
 
+  const handleVideoThumbUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setVideoThumbUploading(true);
+    try {
+      const urls: string[] = [];
+      for (const file of Array.from(files)) {
+        urls.push(await uploadFile(file, 'product-images', 'video-thumbs'));
+      }
+      setForm(f => ({ ...f, video_thumbnails: [...f.video_thumbnails, ...urls] }));
+      toast.success('Video thumbnail(s) uploaded');
+    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
+    finally { setVideoThumbUploading(false); }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPdfUploading(true);
+    try {
+      const url = await uploadFile(file, 'product-images', 'pdfs');
+      setForm(f => ({ ...f, pdf_url: url }));
+      toast.success('PDF uploaded');
+    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
+    finally { setPdfUploading(false); }
+  };
+
+  const removeImage = (index: number) => setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
+  const removeVideo = (index: number) => setForm(f => ({ ...f, videos: f.videos.filter((_, i) => i !== index) }));
+  const removeVideoThumb = (index: number) => setForm(f => ({ ...f, video_thumbnails: f.video_thumbnails.filter((_, i) => i !== index) }));
+
+  const addTag = () => { const t = tagInput.trim(); if (t && !tags.includes(t)) { setTags(prev => [...prev, t]); setTagInput(''); } };
   const removeTag = (tag: string) => setTags(prev => prev.filter(t => t !== tag));
 
-  const addVariation = () => {
-    setForm(f => ({ ...f, variations: [...f.variations, { name: '', options: [''] }] }));
-  };
-
-  const removeVariation = (index: number) => {
-    setForm(f => ({ ...f, variations: f.variations.filter((_, i) => i !== index) }));
-  };
-
+  const addVariation = () => setForm(f => ({ ...f, variations: [...f.variations, { name: '', options: [''] }] }));
+  const removeVariation = (index: number) => setForm(f => ({ ...f, variations: f.variations.filter((_, i) => i !== index) }));
   const updateVariation = (index: number, field: string, value: any) => {
-    setForm(f => ({
-      ...f,
-      variations: f.variations.map((v, i) => i === index ? { ...v, [field]: value } : v),
-    }));
+    setForm(f => ({ ...f, variations: f.variations.map((v, i) => i === index ? { ...v, [field]: value } : v) }));
   };
 
   const toggleFrequentlyBought = (productId: string) => {
@@ -160,76 +274,63 @@ const AdminAddProduct = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.slug || !form.price) {
-      toast.error('Name, slug and price are required');
-      return;
-    }
-
+    if (!form.name || !form.slug || !form.price) { toast.error('Name, slug and price are required'); return; }
     setLoading(true);
     const payload = {
-      name: form.name,
-      slug: form.slug,
-      description: form.description || null,
+      name: form.name, slug: form.slug, description: form.description || null,
       price: parseFloat(form.price),
       original_price: form.original_price ? parseFloat(form.original_price) : null,
       discount: form.discount ? parseInt(form.discount) : 0,
       stock: form.stock ? parseInt(form.stock) : 0,
-      category_id: form.category_id || null,
-      brand_id: form.brand_id || null,
-      warranty_id: form.warranty_id || null,
-      label_id: form.label_id || null,
-      images: form.images,
-      is_active: form.is_active,
-      is_flash_sale: form.is_flash_sale,
+      category_id: form.category_id || null, brand_id: form.brand_id || null,
+      warranty_id: form.warranty_id || null, label_id: form.label_id || null,
+      images: form.images, is_active: form.is_active, is_flash_sale: form.is_flash_sale,
       is_free_shipping: form.shipping_type === 'free' || form.is_free_shipping,
-      is_prime: form.is_prime,
-      is_digital: form.is_digital,
+      is_prime: form.is_prime, is_digital: form.is_digital,
       variations: form.variations.length > 0 ? form.variations : [],
       attributes: {
-        unit: form.unit,
-        weight: form.weight,
-        min_qty: form.min_qty,
-        barcode: form.barcode,
-        tags,
-        meta_title: form.meta_title,
-        meta_description: form.meta_description,
-        meta_keywords: form.meta_keywords,
-        shipping_type: form.shipping_type,
-        shipping_cost: form.shipping_cost,
+        unit: form.unit, weight: form.weight, min_qty: form.min_qty, barcode: form.barcode, tags,
+        thumbnail: form.thumbnail, videos: form.videos, video_thumbnails: form.video_thumbnails,
+        youtube_link: form.youtube_link, pdf_url: form.pdf_url,
+        meta_title: form.meta_title, meta_description: form.meta_description, meta_keywords: form.meta_keywords,
+        shipping_type: form.shipping_type, shipping_cost: form.shipping_cost,
         is_product_quantity_multiply: form.is_product_quantity_multiply,
-        estimated_shipping_days: form.estimated_shipping_days,
-        is_refundable: form.is_refundable,
-        is_featured: form.is_featured,
-        is_todays_deal: form.is_todays_deal,
-        flash_deal_title: form.flash_deal_title,
-        hsn_code: form.hsn_code,
-        gst_rate: form.gst_rate,
-        frequently_bought_ids: form.frequently_bought_ids,
-        note: form.note,
-        discount_type: form.discount_type,
+        estimated_shipping_days: form.estimated_shipping_days, is_refundable: form.is_refundable,
+        is_featured: form.is_featured, is_todays_deal: form.is_todays_deal, flash_deal_title: form.flash_deal_title,
+        hsn_code: form.hsn_code, gst_rate: form.gst_rate, frequently_bought_ids: form.frequently_bought_ids,
+        note: form.note, discount_type: form.discount_type,
       },
     };
 
-    const { error } = await supabase.from('products').insert(payload);
-    if (error) {
-      toast.error('Failed to save product: ' + error.message);
+    let error;
+    if (isEdit) {
+      ({ error } = await supabase.from('products').update(payload).eq('id', editId));
     } else {
-      toast.success('Product created!');
-      navigate('/admin/products');
+      ({ error } = await supabase.from('products').insert(payload));
     }
+    if (error) { toast.error('Failed to save: ' + error.message); }
+    else { toast.success(isEdit ? 'Product updated!' : 'Product created!'); navigate('/admin/products'); }
     setLoading(false);
   };
 
   const parentCategories = categories.filter(c => !c.parent_id);
   const getChildren = (parentId: string) => categories.filter(c => c.parent_id === parentId);
 
+  if (loadingProduct) {
+    return (
+      <AdminLayout title="Loading..." description="">
+        <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+      </AdminLayout>
+    );
+  }
+
   return (
-    <AdminLayout title="Add New Product" description="Create a new physical product">
+    <AdminLayout title={isEdit ? 'Edit Product' : 'Add New Product'} description={isEdit ? 'Update product details' : 'Create a new physical product'}>
       <div className="mb-4 flex items-center gap-3">
         <Button variant="outline" size="sm" onClick={() => navigate('/admin/products')} className="gap-1">
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
-        <h2 className="text-lg font-semibold">Add New Product</h2>
+        <h2 className="text-lg font-semibold">{isEdit ? 'Edit Product' : 'Add New Product'}</h2>
       </div>
 
       <Tabs defaultValue="general" className="w-full">
@@ -372,17 +473,14 @@ const AdminAddProduct = () => {
                 <Switch checked={form.is_refundable} onCheckedChange={v => setForm(f => ({ ...f, is_refundable: v }))} />
                 <Label>Refundable?</Label>
               </div>
-
               <div>
                 <Label>Note (Add from preset)</Label>
                 <Textarea value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} placeholder="Add note..." rows={2} />
               </div>
-
               <div className="flex items-center gap-3">
                 <Switch checked={form.is_active} onCheckedChange={v => setForm(f => ({ ...f, is_active: v }))} />
                 <Label>Status (Active)</Label>
               </div>
-
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
                   <Switch checked={form.is_featured} onCheckedChange={v => setForm(f => ({ ...f, is_featured: v }))} />
@@ -390,7 +488,6 @@ const AdminAddProduct = () => {
                 </div>
                 <p className="text-xs text-muted-foreground ml-12">If you enable this, this product will be granted as a featured product.</p>
               </div>
-
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
                   <Switch checked={form.is_todays_deal} onCheckedChange={v => setForm(f => ({ ...f, is_todays_deal: v }))} />
@@ -398,7 +495,6 @@ const AdminAddProduct = () => {
                 </div>
                 <p className="text-xs text-muted-foreground ml-12">If you enable this, this product will be granted as a today's deal product.</p>
               </div>
-
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <Switch checked={form.is_flash_sale} onCheckedChange={v => setForm(f => ({ ...f, is_flash_sale: v }))} />
@@ -436,73 +532,128 @@ const AdminAddProduct = () => {
         </TabsContent>
 
         {/* ======== FILES & MEDIA TAB ======== */}
-        <TabsContent value="media" className="mt-4">
+        <TabsContent value="media" className="mt-4 space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Product Images & Gallery</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="mb-2 block">Thumbnail Image</Label>
-                <p className="text-xs text-muted-foreground mb-3">The first image will be used as the product thumbnail.</p>
-                <div className="flex flex-wrap gap-3">
-                  {form.images.map((img, i) => (
-                    <div key={i} className="relative h-24 w-24 rounded-lg border border-border overflow-hidden group">
-                      <img src={img} alt="" className="h-full w-full object-cover" />
-                      {i === 0 && <Badge className="absolute top-1 left-1 text-[9px] h-4 bg-primary text-primary-foreground">Thumb</Badge>}
-                      <button onClick={() => removeImage(i)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                  <label className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
-                    {imageUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
-                      <>
-                        <Upload className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-[10px] text-muted-foreground mt-1">Upload</span>
-                      </>
-                    )}
-                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={imageUploading} />
-                  </label>
-                </div>
+            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Gallery Images</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">These images are visible in product details page gallery. Minimum dimensions required: 900px width X 900px height.</p>
+              <div className="flex flex-wrap gap-3">
+                {form.images.map((img, i) => (
+                  <div key={i} className="relative h-24 w-24 rounded-lg border border-border overflow-hidden group">
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <button onClick={() => removeImage(i)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
+                  </div>
+                ))}
+                <label className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
+                  {imageUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+                    <><Upload className="h-5 w-5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground mt-1">Browse</span></>
+                  )}
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} disabled={imageUploading} />
+                </label>
               </div>
+            </CardContent>
+          </Card>
 
-              <div>
-                <Label>Video URL (Optional)</Label>
-                <Input placeholder="https://youtube.com/watch?v=..." />
-                <p className="text-xs text-muted-foreground mt-1">Add a YouTube or Vimeo video URL for the product gallery.</p>
+          <Card>
+            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Thumbnail Image</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">This image is visible in all product box. Minimum dimensions required: 195px width X 195px height. Keep some blank space around main object of your image as we had to crop some edge in different devices to make it responsive. If no thumbnail is uploaded, the product's first gallery image will be used as the thumbnail image.</p>
+              <div className="flex items-center gap-3">
+                {form.thumbnail && (
+                  <div className="relative h-24 w-24 rounded-lg border border-border overflow-hidden group">
+                    <img src={form.thumbnail} alt="Thumbnail" className="h-full w-full object-cover" />
+                    <button onClick={() => setForm(f => ({ ...f, thumbnail: '' }))} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
+                  </div>
+                )}
+                <label className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
+                  {thumbnailUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+                    <><Upload className="h-5 w-5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground mt-1">Browse</span></>
+                  )}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleThumbnailUpload} disabled={thumbnailUploading} />
+                </label>
               </div>
+            </CardContent>
+          </Card>
 
-              <div>
-                <Label>PDF Specification (Optional)</Label>
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 px-4 py-2 border border-dashed border-border rounded-lg cursor-pointer hover:border-accent transition-colors">
-                    <Upload className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Upload PDF</span>
-                    <input type="file" accept=".pdf" className="hidden" />
-                  </label>
-                </div>
+          <Card>
+            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Video className="h-4 w-4" /> Videos</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">Try to upload videos under 30 seconds for better performance.</p>
+              <div className="flex flex-wrap gap-3">
+                {form.videos.map((vid, i) => (
+                  <div key={i} className="relative h-20 w-32 rounded-lg border border-border overflow-hidden group bg-muted flex items-center justify-center">
+                    <Video className="h-6 w-6 text-muted-foreground" />
+                    <span className="absolute bottom-1 left-1 text-[9px] text-muted-foreground truncate max-w-[100px]">Video {i + 1}</span>
+                    <button onClick={() => removeVideo(i)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
+                  </div>
+                ))}
+                <label className="h-20 w-32 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
+                  {videoUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+                    <><Upload className="h-5 w-5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground mt-1">Browse</span></>
+                  )}
+                  <input type="file" accept="video/*" multiple className="hidden" onChange={handleVideoUpload} disabled={videoUploading} />
+                </label>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Video Thumbnails</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">Add thumbnails in the same order as your videos. If you upload only one image, it will be used for all videos.</p>
+              <div className="flex flex-wrap gap-3">
+                {form.video_thumbnails.map((img, i) => (
+                  <div key={i} className="relative h-20 w-20 rounded-lg border border-border overflow-hidden group">
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <button onClick={() => removeVideoThumb(i)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
+                  </div>
+                ))}
+                <label className="h-20 w-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
+                  {videoThumbUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+                    <><Upload className="h-4 w-4 text-muted-foreground" /><span className="text-[9px] text-muted-foreground mt-1">Browse</span></>
+                  )}
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleVideoThumbUpload} disabled={videoThumbUploading} />
+                </label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Video className="h-4 w-4" /> Youtube video / shorts link</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              <Input value={form.youtube_link} onChange={e => setForm(f => ({ ...f, youtube_link: e.target.value }))} placeholder="https://www.youtube.com/watch?v=..." />
+              <p className="text-xs text-muted-foreground">Use proper link without extra parameter. Don't use short share link/embedded iframe code.</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> PDF Specification</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {form.pdf_url && (
+                <div className="flex items-center gap-3 p-2 border border-border rounded-lg">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <a href={form.pdf_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline truncate flex-1">View PDF</a>
+                  <button onClick={() => setForm(f => ({ ...f, pdf_url: '' }))} className="text-destructive"><X className="h-4 w-4" /></button>
+                </div>
+              )}
+              <label className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-accent transition-colors w-fit">
+                {pdfUploading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Upload className="h-4 w-4 text-muted-foreground" />}
+                <span className="text-sm text-muted-foreground">Browse</span>
+                <input type="file" accept=".pdf" className="hidden" onChange={handlePdfUpload} disabled={pdfUploading} />
+              </label>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* ======== PRICE & STOCK TAB ======== */}
-        <TabsContent value="price" className="mt-4">
+        <TabsContent value="price" className="mt-4 space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-sm">Pricing</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <Label>Unit Price *</Label>
-                  <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0.00" />
-                </div>
-                <div>
-                  <Label>Original Price</Label>
-                  <Input type="number" value={form.original_price} onChange={e => setForm(f => ({ ...f, original_price: e.target.value }))} placeholder="0.00" />
-                </div>
-                <div>
-                  <Label>Discount</Label>
-                  <Input type="number" value={form.discount} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" />
-                </div>
+                <div><Label>Unit Price *</Label><Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0.00" /></div>
+                <div><Label>Original Price</Label><Input type="number" value={form.original_price} onChange={e => setForm(f => ({ ...f, original_price: e.target.value }))} placeholder="0.00" /></div>
+                <div><Label>Discount</Label><Input type="number" value={form.discount} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" /></div>
                 <div>
                   <Label>Discount Type</Label>
                   <Select value={form.discount_type} onValueChange={v => setForm(f => ({ ...f, discount_type: v }))}>
@@ -516,30 +667,16 @@ const AdminAddProduct = () => {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="mt-4">
+          <Card>
             <CardHeader><CardTitle className="text-sm">Stock Management</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label>Current Stock *</Label>
-                  <Input type="number" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} placeholder="0" />
-                </div>
-                <div>
-                  <Label>SKU</Label>
-                  <Input placeholder="Auto-generated or custom SKU" value={form.slug} readOnly className="bg-muted/50" />
-                </div>
+                <div><Label>Current Stock *</Label><Input type="number" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} placeholder="0" /></div>
+                <div><Label>SKU</Label><Input placeholder="Auto-generated or custom SKU" value={form.slug} readOnly className="bg-muted/50" /></div>
               </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[
-                  { key: 'is_prime', label: 'Prime' },
-                ].map(t => (
-                  <div key={t.key} className="flex items-center gap-2">
-                    <Switch checked={(form as any)[t.key]} onCheckedChange={v => setForm(f => ({ ...f, [t.key]: v }))} />
-                    <Label className="text-sm">{t.label}</Label>
-                  </div>
-                ))}
+              <div className="flex items-center gap-2">
+                <Switch checked={form.is_prime} onCheckedChange={v => setForm(f => ({ ...f, is_prime: v }))} />
+                <Label className="text-sm">Prime</Label>
               </div>
             </CardContent>
           </Card>
@@ -550,30 +687,14 @@ const AdminAddProduct = () => {
           <Card>
             <CardHeader><CardTitle className="text-sm">Search Engine Optimization</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label>Meta Title</Label>
-                <Input value={form.meta_title} onChange={e => setForm(f => ({ ...f, meta_title: e.target.value }))} placeholder="Product meta title" maxLength={60} />
-                <p className="text-xs text-muted-foreground mt-1">{form.meta_title.length}/60 characters</p>
-              </div>
-              <div>
-                <Label>Meta Description</Label>
-                <Textarea value={form.meta_description} onChange={e => setForm(f => ({ ...f, meta_description: e.target.value }))} placeholder="Product meta description" rows={3} maxLength={160} />
-                <p className="text-xs text-muted-foreground mt-1">{form.meta_description.length}/160 characters</p>
-              </div>
-              <div>
-                <Label>Meta Keywords</Label>
-                <Input value={form.meta_keywords} onChange={e => setForm(f => ({ ...f, meta_keywords: e.target.value }))} placeholder="keyword1, keyword2, keyword3" />
-              </div>
-              <div>
-                <Label>Slug</Label>
-                <Input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="product-slug" />
-              </div>
-
-              {/* Preview */}
+              <div><Label>Meta Title</Label><Input value={form.meta_title} onChange={e => setForm(f => ({ ...f, meta_title: e.target.value }))} placeholder="Product meta title" maxLength={60} /><p className="text-xs text-muted-foreground mt-1">{form.meta_title.length}/60 characters</p></div>
+              <div><Label>Meta Description</Label><Textarea value={form.meta_description} onChange={e => setForm(f => ({ ...f, meta_description: e.target.value }))} placeholder="Product meta description" rows={3} maxLength={160} /><p className="text-xs text-muted-foreground mt-1">{form.meta_description.length}/160 characters</p></div>
+              <div><Label>Meta Keywords</Label><Input value={form.meta_keywords} onChange={e => setForm(f => ({ ...f, meta_keywords: e.target.value }))} placeholder="keyword1, keyword2, keyword3" /></div>
+              <div><Label>Slug</Label><Input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="product-slug" /></div>
               <div className="p-4 border border-border rounded-lg bg-muted/30">
                 <p className="text-sm font-medium text-primary mb-1">Google Search Preview</p>
-                <p className="text-blue-600 text-base font-medium truncate">{form.meta_title || form.name || 'Product Title'}</p>
-                <p className="text-green-700 text-xs truncate">https://yourstore.com/products/{form.slug || 'product-slug'}</p>
+                <p className="text-base font-medium text-primary truncate">{form.meta_title || form.name || 'Product Title'}</p>
+                <p className="text-xs text-muted-foreground truncate">https://yourstore.com/products/{form.slug || 'product-slug'}</p>
                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{form.meta_description || form.description || 'Product description will appear here...'}</p>
               </div>
             </CardContent>
@@ -596,25 +717,16 @@ const AdminAddProduct = () => {
                   </SelectContent>
                 </Select>
               </div>
-
               {form.shipping_type !== 'free' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Shipping Cost</Label>
-                    <Input type="number" value={form.shipping_cost} onChange={e => setForm(f => ({ ...f, shipping_cost: e.target.value }))} placeholder="0.00" />
-                  </div>
+                  <div><Label>Shipping Cost</Label><Input type="number" value={form.shipping_cost} onChange={e => setForm(f => ({ ...f, shipping_cost: e.target.value }))} placeholder="0.00" /></div>
                   <div className="flex items-center gap-3 pt-6">
                     <Switch checked={form.is_product_quantity_multiply} onCheckedChange={v => setForm(f => ({ ...f, is_product_quantity_multiply: v }))} />
                     <Label className="text-sm">Multiply with quantity</Label>
                   </div>
                 </div>
               )}
-
-              <div>
-                <Label>Estimated Shipping Days</Label>
-                <Input type="number" value={form.estimated_shipping_days} onChange={e => setForm(f => ({ ...f, estimated_shipping_days: e.target.value }))} placeholder="e.g. 3-5" />
-              </div>
-
+              <div><Label>Estimated Shipping Days</Label><Input type="number" value={form.estimated_shipping_days} onChange={e => setForm(f => ({ ...f, estimated_shipping_days: e.target.value }))} placeholder="e.g. 3-5" /></div>
               <div className="flex items-center gap-3">
                 <Switch checked={form.is_free_shipping} onCheckedChange={v => setForm(f => ({ ...f, is_free_shipping: v }))} />
                 <Label>Free Shipping Badge</Label>
@@ -639,16 +751,15 @@ const AdminAddProduct = () => {
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">Choose a warranty policy to attach to this product.</p>
               </div>
-
-              {form.warranty_id && (
-                <div className="p-3 border border-border rounded-lg bg-muted/30">
-                  <p className="text-sm font-medium">Selected Warranty</p>
-                  {(() => {
-                    const w = warranties.find(w => w.id === form.warranty_id);
-                    return w ? <p className="text-xs text-muted-foreground">{w.name} — {w.duration}</p> : null;
-                  })()}
-                </div>
-              )}
+              {form.warranty_id && (() => {
+                const w = warranties.find(w => w.id === form.warranty_id);
+                return w ? (
+                  <div className="p-3 border border-border rounded-lg bg-muted/30">
+                    <p className="text-sm font-medium">Selected Warranty</p>
+                    <p className="text-xs text-muted-foreground">{w.name} — {w.duration}</p>
+                  </div>
+                ) : null;
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -662,28 +773,18 @@ const AdminAddProduct = () => {
               {form.frequently_bought_ids.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {form.frequently_bought_ids.map(id => {
-                    const p = products.find(pr => pr.id === id);
+                    const p = allProducts.find(pr => pr.id === id);
                     return p ? (
-                      <Badge key={id} variant="secondary" className="gap-1">
-                        {p.name}
-                        <button onClick={() => toggleFrequentlyBought(id)}><X className="h-3 w-3" /></button>
-                      </Badge>
+                      <Badge key={id} variant="secondary" className="gap-1">{p.name}<button onClick={() => toggleFrequentlyBought(id)}><X className="h-3 w-3" /></button></Badge>
                     ) : null;
                   })}
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto">
-                {products.map(p => (
-                  <div
-                    key={p.id}
-                    onClick={() => toggleFrequentlyBought(p.id)}
-                    className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${form.frequently_bought_ids.includes(p.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-accent'}`}
-                  >
-                    {p.images?.[0] ? (
-                      <img src={p.images[0]} alt="" className="h-8 w-8 rounded object-cover" />
-                    ) : (
-                      <div className="h-8 w-8 rounded bg-muted flex items-center justify-center"><Package className="h-3 w-3" /></div>
-                    )}
+                {allProducts.filter(p => p.id !== editId).map(p => (
+                  <div key={p.id} onClick={() => toggleFrequentlyBought(p.id)}
+                    className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${form.frequently_bought_ids.includes(p.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-accent'}`}>
+                    {p.images?.[0] ? <img src={p.images[0]} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-muted flex items-center justify-center"><Package className="h-3 w-3" /></div>}
                     <span className="text-xs truncate flex-1">{p.name}</span>
                     {form.frequently_bought_ids.includes(p.id) && <Badge className="text-[9px] h-4 bg-primary text-primary-foreground">✓</Badge>}
                   </div>
@@ -699,7 +800,7 @@ const AdminAddProduct = () => {
         <Button variant="outline" onClick={() => navigate('/admin/products')}>Cancel</Button>
         <Button onClick={handleSubmit} disabled={loading} className="gap-2">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save Product
+          {isEdit ? 'Update Product' : 'Save Product'}
         </Button>
       </div>
     </AdminLayout>
