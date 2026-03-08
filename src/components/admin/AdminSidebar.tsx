@@ -88,14 +88,31 @@ export function AdminSidebar() {
 
   const systemItems = [
     { titleKey: 'admin.userRoles' as TranslationKey, url: '/admin/user-roles', icon: Shield },
-    { titleKey: 'admin.settings' as TranslationKey, url: '/admin/settings', icon: Settings },
     { titleKey: 'admin.pages' as TranslationKey, url: '/admin/pages', icon: FileText },
     { titleKey: 'admin.seoAnalytics' as TranslationKey, url: '/admin/seo', icon: Globe },
+  ];
+
+  const settingsItems: NavItem[] = [
+    { titleKey: 'admin.settings.business' as TranslationKey, url: '/admin/settings?tab=business', icon: Home },
+    { titleKey: 'admin.settings.features' as TranslationKey, url: '/admin/settings?tab=features', icon: Sparkles },
+    { titleKey: 'admin.settings.languages' as TranslationKey, url: '/admin/settings?tab=languages', icon: Globe },
+    { titleKey: 'admin.settings.currency' as TranslationKey, url: '/admin/settings?tab=currency', icon: CreditCard },
+    { titleKey: 'admin.settings.vat' as TranslationKey, url: '/admin/settings?tab=vat', icon: Percent },
+    { titleKey: 'admin.settings.pickup' as TranslationKey, url: '/admin/settings?tab=pickup', icon: Store },
+    { titleKey: 'admin.settings.smtp' as TranslationKey, url: '/admin/settings?tab=smtp', icon: FileText },
+    { titleKey: 'admin.settings.order' as TranslationKey, url: '/admin/settings?tab=order', icon: ShoppingCart },
+    { titleKey: 'admin.settings.filesystem' as TranslationKey, url: '/admin/settings?tab=filesystem', icon: Layers },
+    { titleKey: 'admin.settings.social' as TranslationKey, url: '/admin/settings?tab=social', icon: Users },
+    { titleKey: 'admin.settings.shipping' as TranslationKey, url: '/admin/settings?tab=shipping', icon: Truck },
   ];
 
   const isActive = (path: string) => {
     if (path === '/admin') return currentPath === '/admin';
     if (path === '/admin/products') return currentPath === '/admin/products';
+    if (path.includes('?')) {
+      const [basePath, query] = path.split('?');
+      return currentPath === basePath && location.search === `?${query}`;
+    }
     return currentPath.startsWith(path);
   };
 
@@ -186,6 +203,44 @@ export function AdminSidebar() {
         {renderGroup('admin.group.operations', operationsItems)}
         {renderGroup('admin.group.content', contentItems)}
         {renderGroup('admin.group.system', systemItems)}
+
+        {/* Settings Section with Collapsible Sub-menu */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('settings')} onOpenChange={() => toggleSection('settings')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <Settings className="h-3.5 w-3.5" />
+                  {t('admin.settings' as TranslationKey)}
+                </span>
+                {openSections.has('settings') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {settingsItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 md:p-3 space-y-1">

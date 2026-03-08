@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -220,9 +221,11 @@ const defaultSettings: SettingsState = {
 };
 
 const AdminSettingsPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState<SettingsState>(defaultSettings);
-  const [activeTab, setActiveTab] = useState('business');
+  const activeTab = searchParams.get('tab') || 'business';
+  const setActiveTab = (tab: string) => setSearchParams({ tab });
 
   const update = (key: string, value: any) => setSettings(prev => ({ ...prev, [key]: value }));
 
