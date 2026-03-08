@@ -130,8 +130,8 @@ export const AdminOrdersTab = () => {
             </CardTitle>
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setSelectedOrders(new Set()); }}>
-                <SelectTrigger className="w-[150px] h-8 text-xs">
-                  <SelectValue placeholder={t('admin.filterByStatus' as any) || 'Filter by status'} />
+                <SelectTrigger className="w-[120px] md:w-[150px] h-8 text-[10px] md:text-xs">
+                  <SelectValue placeholder={t('admin.filterByStatus' as any) || 'Filter'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('admin.allStatuses' as any) || 'All statuses'}</SelectItem>
@@ -179,14 +179,14 @@ export const AdminOrdersTab = () => {
 
         {/* Bulk Actions Bar */}
         {selectedOrders.size > 0 && (
-          <div className="mx-4 mb-3 p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-            <span className="text-sm font-medium text-foreground">
+          <div className="mx-2 md:mx-4 mb-3 p-2 md:p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+            <span className="text-xs md:text-sm font-medium text-foreground">
               {selectedOrders.size} {t('admin.selected' as any) || 'selected'}
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               <Select onValueChange={handleBulkStatusUpdate} disabled={bulkUpdating}>
-                <SelectTrigger className="w-[180px] h-8 text-xs">
-                  <SelectValue placeholder={t('admin.bulkChangeStatus' as any) || 'Change status to...'} />
+                <SelectTrigger className="w-[140px] md:w-[180px] h-8 text-[10px] md:text-xs">
+                  <SelectValue placeholder={t('admin.bulkChangeStatus' as any) || 'Change status...'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">{t('admin.statusPending' as any)}</SelectItem>
@@ -245,25 +245,25 @@ export const AdminOrdersTab = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 md:gap-4 flex-wrap" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
-                      <Badge className={cn('gap-1 text-xs', status.color)}>
+                    <div className="flex items-center gap-1.5 md:gap-4 flex-wrap" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
+                      <Badge className={cn('gap-1 text-[10px] md:text-xs px-1.5 md:px-2', status.color)}>
                         <StatusIcon className="h-3 w-3" />
-                        {t(status.labelKey as any)}
+                        <span className="hidden xs:inline">{t(status.labelKey as any)}</span>
                       </Badge>
-                      <span className="font-bold text-sm">${order.total.toFixed(2)}</span>
-                      <span className="text-xs text-muted-foreground hidden sm:inline">
+                      <span className="font-bold text-xs md:text-sm">${order.total.toFixed(2)}</span>
+                      <span className="text-[10px] md:text-xs text-muted-foreground hidden sm:inline">
                         {format(new Date(order.created_at), 'MMM d, yyyy')}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 md:h-8 md:w-8 text-destructive hover:text-destructive"
+                        className="h-6 w-6 md:h-8 md:w-8 text-destructive hover:text-destructive"
                         onClick={(e) => { e.stopPropagation(); setFraudOrder(order); }}
                         title={t('admin.fraudDetection' as any)}
                       >
-                        <ShieldAlert className="h-4 w-4" />
+                        <ShieldAlert className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       </Button>
-                      {isExpanded ? <ChevronUp className="h-4 w-4 md:h-5 md:w-5" /> : <ChevronDown className="h-4 w-4 md:h-5 md:w-5" />}
+                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </div>
                   </div>
 
