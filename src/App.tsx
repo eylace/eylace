@@ -46,6 +46,20 @@ import FlashSale from "./pages/FlashSale";
 import SellerDashboard from "./pages/SellerDashboard";
 import SellerRegistration from "./pages/SellerRegistration";
 import Account from "./pages/Account";
+// New product sub-pages
+import AdminAddProduct from "./pages/AdminAddProduct";
+import AdminInHouseProducts from "./pages/AdminInHouseProducts";
+import AdminSellerProducts from "./pages/AdminSellerProducts";
+import AdminAddDigitalProduct from "./pages/AdminAddDigitalProduct";
+import AdminBulkImport from "./pages/AdminBulkImport";
+import AdminBulkExport from "./pages/AdminBulkExport";
+import AdminBrands from "./pages/AdminBrands";
+import AdminColors from "./pages/AdminColors";
+import AdminAttributes from "./pages/AdminAttributes";
+import AdminLabels from "./pages/AdminLabels";
+import AdminWarranties from "./pages/AdminWarranties";
+import AdminSizeGuides from "./pages/AdminSizeGuides";
+import AdminCategoryDiscount from "./pages/AdminCategoryDiscount";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +92,19 @@ const App = () => (
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
+                <Route path="/admin/products/add" element={<AdminAddProduct />} />
+                <Route path="/admin/products/in-house" element={<AdminInHouseProducts />} />
+                <Route path="/admin/products/seller" element={<AdminSellerProducts />} />
+                <Route path="/admin/products/digital/add" element={<AdminAddDigitalProduct />} />
+                <Route path="/admin/products/bulk-import" element={<AdminBulkImport />} />
+                <Route path="/admin/products/bulk-export" element={<AdminBulkExport />} />
+                <Route path="/admin/products/brands" element={<AdminBrands />} />
+                <Route path="/admin/products/colors" element={<AdminColors />} />
+                <Route path="/admin/products/attributes" element={<AdminAttributes />} />
+                <Route path="/admin/products/labels" element={<AdminLabels />} />
+                <Route path="/admin/products/warranties" element={<AdminWarranties />} />
+                <Route path="/admin/products/size-guides" element={<AdminSizeGuides />} />
+                <Route path="/admin/products/category-discount" element={<AdminCategoryDiscount />} />
                 <Route path="/admin/categories" element={<AdminCategories />} />
                 <Route path="/admin/customers" element={<AdminCustomers />} />
                 <Route path="/admin/sellers" element={<AdminSellers />} />
