@@ -1,40 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Bell, Plus, Send, Trash2 } from 'lucide-react';
+import { Bell, Plus, Send, Trash2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PushNotification {
   id: string;
   title: string;
-  message: string;
+  message: string | null;
   audience: string;
-  status: 'draft' | 'sent';
-  sentAt: string | null;
+  status: string;
+  sent_at: string | null;
 }
 
 const AdminMarketingNotification = () => {
-  const [notifications, setNotifications] = useState<PushNotification[]>([
-    { id: '1', title: 'Flash Sale Starting!', message: 'Up to 50% off for the next 2 hours', audience: 'All Users', status: 'sent', sentAt: '2026-03-07' },
-    { id: '2', title: 'New Arrivals', message: 'Check out what just dropped', audience: 'Active Users', status: 'draft', sentAt: null },
-  ]);
+  const [notifications, setNotifications] = useState<PushNotification[]>([]);
+  const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ title: '', message: '', audience: 'All Users' });
 
-  const handleCreate = () => {
+  const fetchNotifications = async () => {
+    const { data, error } = await supabase.from('push_notifications').select('*').order('created_at', { ascending: false });
+    if (error) console.error(error);
+    else setNotifications(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchNotifications(); }, []);
+
+  const handleCreate = async () => {
     if (!form.title.trim()) return;
-    setNotifications(prev => [{ id: Date.now().toString(), ...form, status: 'draft', sentAt: null }, ...prev]);
+    const { error } = await supabase.from('push_notifications').insert(form);
+    if (error) { toast.error('Failed to create'); console.error(error); return; }
+    toast.success('Notification created');
     setForm({ title: '', message: '', audience: 'All Users' });
     setAddOpen(false);
-    toast.success('Notification created');
+    fetchNotifications();
+  };
+
+  const sendNotification = async (id: string) => {
+    const { error } = await supabase.from('push_notifications').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', id);
+    if (error) { toast.error('Failed'); return; }
+    toast.success('Sent!');
+    fetchNotifications();
+  };
+
+  const deleteNotification = async (id: string) => {
+    await supabase.from('push_notifications').delete().eq('id', id);
+    toast.success('Deleted');
+    fetchNotifications();
   };
 
   return (
@@ -65,23 +88,29 @@ const AdminMarketingNotification = () => {
           </Dialog>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Audience</TableHead><TableHead>Status</TableHead><TableHead>Sent At</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {notifications.map(n => (
-                <TableRow key={n.id}>
-                  <TableCell className="font-medium">{n.title}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{n.audience}</TableCell>
-                  <TableCell>{n.status === 'sent' ? <Badge className="bg-green-500/10 text-green-600">Sent</Badge> : <Badge variant="secondary">Draft</Badge>}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{n.sentAt || '—'}</TableCell>
-                  <TableCell className="text-right space-x-1">
-                    {n.status === 'draft' && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, status: 'sent' as const, sentAt: new Date().toISOString().split('T')[0] } : x)); toast.success('Sent!'); }}><Send className="h-4 w-4" /></Button>}
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setNotifications(prev => prev.filter(x => x.id !== n.id)); toast.success('Deleted'); }}><Trash2 className="h-4 w-4" /></Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {loading ? (
+            <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <Table>
+              <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Audience</TableHead><TableHead>Status</TableHead><TableHead>Sent At</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {notifications.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No notifications yet</TableCell></TableRow>
+                ) : notifications.map(n => (
+                  <TableRow key={n.id}>
+                    <TableCell className="font-medium">{n.title}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{n.audience}</TableCell>
+                    <TableCell>{n.status === 'sent' ? <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Sent</Badge> : <Badge variant="secondary">Draft</Badge>}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{n.sent_at?.split('T')[0] || '—'}</TableCell>
+                    <TableCell className="text-right space-x-1">
+                      {n.status === 'draft' && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => sendNotification(n.id)}><Send className="h-4 w-4" /></Button>}
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteNotification(n.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </AdminLayout>
