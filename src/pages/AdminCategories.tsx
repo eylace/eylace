@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,6 +63,7 @@ const emptyForm = {
 };
 
 const AdminCategories = () => {
+  const { t } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [flatCategories, setFlatCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -298,7 +300,7 @@ const AdminCategories = () => {
   };
 
   return (
-    <AdminLayout title="Categories" description="Organize your product catalog with nested categories">
+    <AdminLayout titleKey="admin.title.categories" descriptionKey="admin.desc.categories">
       <Card className="border border-border">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">

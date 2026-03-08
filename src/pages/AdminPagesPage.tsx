@@ -65,7 +65,7 @@ const AdminPagesPage = () => {
   };
 
   return (
-    <AdminLayout title="Pages" description="Manage static CMS pages">
+    <AdminLayout titleKey="admin.title.pages" descriptionKey="admin.desc.pages">
       <Card className="border border-border">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2"><FileText className="h-5 w-5" /> Pages ({pages.length})</CardTitle>

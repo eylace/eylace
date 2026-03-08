@@ -59,7 +59,7 @@ const AdminSettingsPage = () => {
   const update = (key: string, value: any) => setSettings(prev => ({ ...prev, [key]: value }));
 
   return (
-    <AdminLayout title="Settings" description="Configure your store settings">
+    <AdminLayout titleKey="admin.title.settings" descriptionKey="admin.desc.settings">
       <div className="space-y-6">
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={loading}>

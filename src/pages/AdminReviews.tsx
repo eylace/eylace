@@ -2,7 +2,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminReviewsTab } from '@/components/admin/AdminReviewsTab';
 
 const AdminReviews = () => (
-  <AdminLayout title="Reviews" description="Moderate customer reviews">
+  <AdminLayout titleKey="admin.title.reviews" descriptionKey="admin.desc.reviews">
     <AdminReviewsTab />
   </AdminLayout>
 );

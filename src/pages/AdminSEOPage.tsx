@@ -30,7 +30,7 @@ const AdminSEOPage = () => {
   };
 
   return (
-    <AdminLayout title="SEO & Analytics" description="Search engine optimization and tracking">
+    <AdminLayout titleKey="admin.title.seo" descriptionKey="admin.desc.seo">
       <div className="space-y-6">
         <div className="flex justify-end">
           <Button onClick={handleSave}><Save className="h-4 w-4 mr-1" /> Save SEO Settings</Button>

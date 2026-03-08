@@ -2,7 +2,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminCouponsTab } from '@/components/admin/AdminCouponsTab';
 
 const AdminCoupons = () => (
-  <AdminLayout title="Coupons" description="Create and manage discount coupons">
+  <AdminLayout titleKey="admin.title.coupons" descriptionKey="admin.desc.coupons">
     <AdminCouponsTab />
   </AdminLayout>
 );

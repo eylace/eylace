@@ -3,7 +3,7 @@ import { AdminDashboardOverview } from '@/components/admin/AdminDashboardOvervie
 
 const Admin = () => {
   return (
-    <AdminLayout>
+    <AdminLayout titleKey="admin.dashboard">
       <AdminDashboardOverview />
     </AdminLayout>
   );

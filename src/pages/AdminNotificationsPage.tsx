@@ -68,7 +68,7 @@ const AdminNotificationsPage = () => {
   };
 
   return (
-    <AdminLayout title="Notifications" description="Manage and send system notifications">
+    <AdminLayout titleKey="admin.title.notifications" descriptionKey="admin.desc.notifications">
       <Tabs defaultValue="history">
         <TabsList>
           <TabsTrigger value="history">Notification History</TabsTrigger>

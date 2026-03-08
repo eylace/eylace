@@ -36,7 +36,7 @@ const AdminMediaPage = () => {
   };
 
   return (
-    <AdminLayout title="Media Gallery" description="Manage uploaded images and files">
+    <AdminLayout titleKey="admin.title.media" descriptionKey="admin.desc.media">
       <div className="space-y-6">
         {/* Controls */}
         <Card className="border border-border">
