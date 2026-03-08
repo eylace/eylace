@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, CheckCircle, XCircle, Clock, Store } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Clock, Store, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { exportToCSV } from '@/lib/csvExport';
 
 interface SellerApplication {
   id: string; user_id: string; store_name: string; store_description: string | null;
@@ -84,7 +85,35 @@ export const AdminSellersTab = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t('admin.sellerApplications' as any)} ({applications.length})</CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="text-lg">{t('admin.sellerApplications' as any)} ({applications.length})</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToCSV(
+                applications.map(a => ({
+                  store_name: a.store_name,
+                  business_type: a.business_type || '',
+                  phone: a.phone || '',
+                  status: a.status,
+                  description: a.store_description || '',
+                  date: new Date(a.created_at).toLocaleDateString(),
+                })),
+                [
+                  { key: 'store_name', label: 'Store Name' },
+                  { key: 'business_type', label: 'Business Type' },
+                  { key: 'phone', label: 'Phone' },
+                  { key: 'status', label: 'Status' },
+                  { key: 'description', label: 'Description' },
+                  { key: 'date', label: 'Applied Date' },
+                ],
+                'seller-applications'
+              )}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              CSV
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {applications.length === 0 ? (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, Star, Trash2, Loader2 } from 'lucide-react';
+import { MessageSquare, Star, Trash2, Loader2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { exportToCSV } from '@/lib/csvExport';
 
 export const AdminReviewsTab = () => {
   const { reviews, isLoading, deleteReview } = useAdminReviews();
@@ -39,10 +40,40 @@ export const AdminReviewsTab = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          {t('admin.allReviews' as any)} ({reviews.length})
-        </CardTitle>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            {t('admin.allReviews' as any)} ({reviews.length})
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportToCSV(
+              reviews.map(r => ({
+                product_id: r.product_id,
+                title: r.title,
+                rating: r.rating,
+                content: r.content,
+                verified: r.verified_purchase ? 'Yes' : 'No',
+                helpful: r.helpful_count || 0,
+                date: format(new Date(r.created_at), 'yyyy-MM-dd'),
+              })),
+              [
+                { key: 'product_id', label: 'Product ID' },
+                { key: 'title', label: 'Title' },
+                { key: 'rating', label: 'Rating' },
+                { key: 'content', label: 'Content' },
+                { key: 'verified', label: 'Verified' },
+                { key: 'helpful', label: 'Helpful' },
+                { key: 'date', label: 'Date' },
+              ],
+              'reviews'
+            )}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            CSV
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
