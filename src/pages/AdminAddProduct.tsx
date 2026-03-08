@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart, Tag } from 'lucide-react';
+import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const AdminAddProduct = () => {
@@ -25,7 +25,7 @@ const AdminAddProduct = () => {
   const [imageUploading, setImageUploading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [flashDeals, setFlashDeals] = useState<string[]>(['Flash Sale', 'Flash Deal', 'Electronic', 'Winter Sale', 'End of Season']);
+  const flashDeals = ['Flash Sale', 'Flash Deal', 'Electronic', 'Winter Sale', 'End of Season'];
 
   const [form, setForm] = useState({
     name: '',
