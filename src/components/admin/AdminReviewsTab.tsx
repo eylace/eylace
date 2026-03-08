@@ -139,7 +139,7 @@ export const AdminReviewsTab = () => {
 
       {/* Bulk Actions Bar */}
       {selectedReviews.size > 0 && (
-        <div className="mx-4 mb-3 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+        <div className="mx-2 md:mx-4 mb-3 p-2 md:p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
           <span className="text-sm font-medium text-foreground">
             {selectedReviews.size} {t('admin.selected' as any) || 'selected'}
           </span>

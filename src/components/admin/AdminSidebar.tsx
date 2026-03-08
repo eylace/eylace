@@ -123,7 +123,7 @@ export function AdminSidebar() {
   );
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
         <Link to="/admin" className="flex items-center gap-2">
           {!collapsed ? (

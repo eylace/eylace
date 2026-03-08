@@ -164,7 +164,7 @@ export const AdminSellersTab = () => {
 
         {/* Bulk Actions Bar */}
         {selectedPendingCount > 0 && (
-          <div className="mx-4 mb-3 p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="mx-2 md:mx-4 mb-3 p-2 md:p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-col items-start gap-2">
             <span className="text-sm font-medium text-foreground">
               {selectedPendingCount} {t('admin.selected' as any) || 'selected'}
             </span>
@@ -172,8 +172,8 @@ export const AdminSellersTab = () => {
               <Textarea
                 value={bulkNotes}
                 onChange={(e) => setBulkNotes(e.target.value)}
-                placeholder={t('admin.adminNotes' as any) || 'Admin notes (optional)'}
-                className="h-8 min-h-[32px] text-xs w-48"
+                placeholder={t('admin.adminNotes' as any) || 'Notes (optional)'}
+                className="h-8 min-h-[32px] text-[10px] md:text-xs w-full sm:w-48"
                 maxLength={500}
               />
               <AlertDialog>
