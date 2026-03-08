@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Loader2, Tag, Copy, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, Loader2, Tag, Copy, Check, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { exportToCSV } from '@/lib/csvExport';
 
 interface Coupon {
   id: string; code: string; description: string | null; discount_type: string; discount_value: number;
@@ -84,8 +85,41 @@ export const AdminCouponsTab = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-xl font-bold text-foreground">{t('admin.couponsPromo' as any)}</h2>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportToCSV(
+              coupons.map(c => ({
+                code: c.code,
+                description: c.description || '',
+                type: c.discount_type,
+                value: c.discount_value,
+                min_order: c.min_order_amount || 0,
+                max_discount: c.max_discount || '',
+                usage: `${c.used_count}${c.usage_limit ? '/' + c.usage_limit : ''}`,
+                active: c.is_active ? 'Yes' : 'No',
+                expires: c.expires_at ? format(new Date(c.expires_at), 'yyyy-MM-dd') : '',
+              })),
+              [
+                { key: 'code', label: 'Code' },
+                { key: 'description', label: 'Description' },
+                { key: 'type', label: 'Type' },
+                { key: 'value', label: 'Value' },
+                { key: 'min_order', label: 'Min Order' },
+                { key: 'max_discount', label: 'Max Discount' },
+                { key: 'usage', label: 'Usage' },
+                { key: 'active', label: 'Active' },
+                { key: 'expires', label: 'Expires' },
+              ],
+              'coupons'
+            )}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            CSV
+          </Button>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
           <DialogTrigger asChild>
             <Button variant="accent" size="sm"><Plus className="h-4 w-4 mr-2" />{t('admin.addCoupon' as any)}</Button>

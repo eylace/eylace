@@ -9,6 +9,7 @@ import {
   Loader2,
   Send,
   ShieldAlert,
+  Download,
 } from 'lucide-react';
 import { FraudDetectionModal } from '@/components/admin/FraudDetectionModal';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { exportToCSV } from '@/lib/csvExport';
 
 const statusConfig: Record<string, { labelKey: string; color: string; icon: React.ElementType }> = {
   pending: { labelKey: 'admin.statusPending', color: 'bg-yellow-500/10 text-yellow-600', icon: Clock },
@@ -86,10 +88,42 @@ export const AdminOrdersTab = () => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            {t('admin.allOrders' as any)} ({orders.length})
-          </CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {t('admin.allOrders' as any)} ({orders.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToCSV(
+                orders.map(o => ({
+                  order_number: o.order_number,
+                  customer: `${o.profile?.first_name || ''} ${o.profile?.last_name || ''}`.trim(),
+                  email: o.profile?.email || '',
+                  status: o.status,
+                  total: o.total?.toFixed(2),
+                  carrier: o.carrier || '',
+                  tracking: o.tracking_number || '',
+                  date: format(new Date(o.created_at), 'yyyy-MM-dd'),
+                })),
+                [
+                  { key: 'order_number', label: 'Order #' },
+                  { key: 'customer', label: 'Customer' },
+                  { key: 'email', label: 'Email' },
+                  { key: 'status', label: 'Status' },
+                  { key: 'total', label: 'Total' },
+                  { key: 'carrier', label: 'Carrier' },
+                  { key: 'tracking', label: 'Tracking #' },
+                  { key: 'date', label: 'Date' },
+                ],
+                'orders'
+              )}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              CSV
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
