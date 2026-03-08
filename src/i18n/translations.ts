@@ -569,6 +569,18 @@ export const translations = {
   // Filters
   'admin.filterByStatus': { en: 'Filter by status', bn: 'স্ট্যাটাস অনুযায়ী ফিল্টার' },
   'admin.allStatuses': { en: 'All statuses', bn: 'সব স্ট্যাটাস' },
+  'admin.inHouseProducts': { en: 'In House Products', bn: 'ইন-হাউস পণ্য' },
+  'admin.addDigitalProduct': { en: 'Add Digital Product', bn: 'ডিজিটাল পণ্য যোগ' },
+  'admin.sellerProducts': { en: 'Seller Products', bn: 'বিক্রেতার পণ্য' },
+  'admin.bulkImport': { en: 'Bulk Import', bn: 'বাল্ক ইম্পোর্ট' },
+  'admin.bulkExport': { en: 'Bulk Export', bn: 'বাল্ক এক্সপোর্ট' },
+  'admin.categoryDiscount': { en: 'Category Discount', bn: 'ক্যাটেগরি ডিসকাউন্ট' },
+  'admin.brands': { en: 'Brands', bn: 'ব্র্যান্ড' },
+  'admin.customLabels': { en: 'Custom Labels', bn: 'কাস্টম লেবেল' },
+  'admin.attributes': { en: 'Attributes', bn: 'অ্যাট্রিবিউট' },
+  'admin.colors': { en: 'Colors', bn: 'রং' },
+  'admin.sizeGuide': { en: 'Size Guide', bn: 'সাইজ গাইড' },
+  'admin.warranty': { en: 'Warranty', bn: 'ওয়ারেন্টি' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
