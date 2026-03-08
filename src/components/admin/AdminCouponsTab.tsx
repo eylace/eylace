@@ -90,7 +90,17 @@ export const AdminCouponsTab = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-xl font-bold text-foreground">{t('admin.couponsPromo' as any)}</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={activeFilter} onValueChange={setActiveFilter}>
+            <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('admin.all' as any) || 'All'}</SelectItem>
+              <SelectItem value="active">{t('admin.active' as any)}</SelectItem>
+              <SelectItem value="inactive">{t('admin.inactive' as any)}</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             size="sm"
@@ -171,7 +181,7 @@ export const AdminCouponsTab = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {coupons.map((c) => (
+          {filteredCoupons.map((c) => (
             <div key={c.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 md:p-4 bg-card border border-border rounded-lg">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
