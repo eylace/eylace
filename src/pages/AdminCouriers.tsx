@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,6 +66,7 @@ const emptyCourier = {
 };
 
 const AdminCouriers = () => {
+  const { t } = useLanguage();
   const [couriers, setCouriers] = useState<Courier[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
@@ -156,7 +158,7 @@ const AdminCouriers = () => {
   };
 
   return (
-    <AdminLayout title="Courier Management" description="Manage shipping carriers, tracking and delivery zones">
+    <AdminLayout titleKey="admin.title.couriers" descriptionKey="admin.desc.couriers">
       <Card className="border border-border">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">

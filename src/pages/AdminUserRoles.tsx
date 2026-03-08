@@ -140,7 +140,7 @@ const AdminUserRoles = () => {
   };
 
   return (
-    <AdminLayout title="User Roles" description="Manage user roles and permissions">
+    <AdminLayout titleKey="admin.title.userRoles" descriptionKey="admin.desc.userRoles">
       <Card className="border border-border">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">

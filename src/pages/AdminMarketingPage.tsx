@@ -72,7 +72,7 @@ const AdminMarketingPage = () => {
   };
 
   return (
-    <AdminLayout title="Marketing" description="Manage campaigns and promotions">
+    <AdminLayout titleKey="admin.title.marketing" descriptionKey="admin.desc.marketing">
       <div className="space-y-6">
         <Tabs defaultValue="campaigns">
           <TabsList>
