@@ -22,7 +22,7 @@ const AdminSmartBar = () => {
 
   useEffect(() => {
     setLoading(true);
-    supabase.from('system_settings').select('value').eq('key', 'smart_bar').single().then(({ data }) => {
+    supabase.from('system_settings').select('value').eq('key', 'smart_bar').maybeSingle().then(({ data }) => {
       if (data?.value) {
         const val = data.value as any;
         setForm({
