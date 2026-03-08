@@ -49,6 +49,7 @@ export default function AdminOtpLoginConfig() {
 
   const saveConfig = async () => {
     setSaving(true);
+    const payload = JSON.parse(JSON.stringify(config));
     const { data: existing } = await supabase
       .from('system_settings')
       .select('id')
@@ -56,9 +57,9 @@ export default function AdminOtpLoginConfig() {
       .maybeSingle();
 
     if (existing) {
-      await supabase.from('system_settings').update({ value: config as unknown as Record<string, unknown> }).eq('key', 'otp_login_config');
+      await supabase.from('system_settings').update({ value: payload }).eq('key', 'otp_login_config');
     } else {
-      await supabase.from('system_settings').insert({ key: 'otp_login_config', value: config as unknown as Record<string, unknown> });
+      await supabase.from('system_settings').insert({ key: 'otp_login_config', value: payload });
     }
     setSaving(false);
     toast({ title: 'Saved', description: 'OTP login configuration updated successfully.' });

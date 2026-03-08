@@ -54,6 +54,7 @@ export default function AdminOtpConfigurations() {
 
   const saveConfig = async () => {
     setSaving(true);
+    const payload = JSON.parse(JSON.stringify(config));
     const { data: existing } = await supabase
       .from('system_settings')
       .select('id')
@@ -61,9 +62,9 @@ export default function AdminOtpConfigurations() {
       .maybeSingle();
 
     if (existing) {
-      await supabase.from('system_settings').update({ value: config as unknown as Record<string, unknown> }).eq('key', 'otp_provider_config');
+      await supabase.from('system_settings').update({ value: payload }).eq('key', 'otp_provider_config');
     } else {
-      await supabase.from('system_settings').insert({ key: 'otp_provider_config', value: config as unknown as Record<string, unknown> });
+      await supabase.from('system_settings').insert({ key: 'otp_provider_config', value: payload });
     }
     setSaving(false);
     toast({ title: 'Saved', description: 'OTP provider configuration updated.' });
