@@ -152,10 +152,10 @@ export function AdminSidebar() {
         {renderGroup('admin.group.system', systemItems)}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-3 space-y-1">
+      <SidebarFooter className="border-t border-sidebar-border p-2 md:p-3 space-y-1">
         <SidebarMenuButton asChild>
-          <Link to="/" className="flex items-center gap-2 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground">
-            <ArrowLeft className="h-4 w-4" />
+          <Link to="/" className="flex items-center gap-2 text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground min-h-[40px]">
+            <ArrowLeft className="h-4 w-4 shrink-0" />
             {!collapsed && <span>{t('admin.backToStore')}</span>}
           </Link>
         </SidebarMenuButton>
@@ -164,9 +164,9 @@ export function AdminSidebar() {
             await signOut();
             navigate('/admin/login');
           }}
-          className="flex items-center gap-2 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+          className="flex items-center gap-2 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer min-h-[40px]"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span>{t('admin.logout')}</span>}
         </SidebarMenuButton>
       </SidebarFooter>

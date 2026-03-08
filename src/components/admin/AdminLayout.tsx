@@ -59,21 +59,21 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center gap-4 border-b border-border bg-card px-4 sticky top-0 z-30">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+          <header className="h-12 md:h-14 flex items-center gap-2 md:gap-4 border-b border-border bg-card px-2 md:px-4 sticky top-0 z-30">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground shrink-0" />
             {displayTitle && (
-              <div className="flex-1">
-                <h1 className="text-lg font-semibold text-foreground">{displayTitle}</h1>
-                {displayDesc && <p className="text-xs text-muted-foreground">{displayDesc}</p>}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{displayTitle}</h1>
+                {displayDesc && <p className="text-[10px] md:text-xs text-muted-foreground truncate hidden sm:block">{displayDesc}</p>}
               </div>
             )}
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1 md:gap-2 shrink-0">
               <AdminLanguageSwitcher />
               <ThemeToggle />
               <AdminNotificationBell />
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 overflow-auto">
+          <main className="flex-1 p-3 md:p-6 overflow-auto">
             {children}
           </main>
         </div>
