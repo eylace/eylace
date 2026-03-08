@@ -556,6 +556,15 @@ export const translations = {
   'admin.noLimit': { en: 'No limit', bn: 'কোনো সীমা নেই' },
   'admin.off': { en: 'off', bn: 'ছাড়' },
   'admin.min': { en: 'Min', bn: 'সর্বনিম্ন' },
+
+  // Bulk actions
+  'admin.selectAll': { en: 'Select all', bn: 'সব নির্বাচন করুন' },
+  'admin.selected': { en: 'selected', bn: 'নির্বাচিত' },
+  'admin.bulkChangeStatus': { en: 'Change status to...', bn: 'স্ট্যাটাস পরিবর্তন করুন...' },
+  'admin.ordersUpdated': { en: 'orders updated', bn: 'অর্ডার আপডেট হয়েছে' },
+  'admin.reviewsDeleted': { en: 'reviews deleted', bn: 'রিভিউ মুছে ফেলা হয়েছে' },
+  'admin.deleteSelected': { en: 'Delete selected', bn: 'নির্বাচিত মুছুন' },
+  'admin.bulkDeleteConfirm': { en: 'Are you sure you want to delete the selected items? This cannot be undone.', bn: 'আপনি কি নিশ্চিত যে নির্বাচিত আইটেমগুলো মুছতে চান? এটি পূর্বাবস্থায় ফেরানো যাবে না।' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
