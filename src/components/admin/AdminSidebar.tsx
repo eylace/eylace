@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, MessageSquare, Store, Tag, Settings,
   BarChart3, Truck, ShieldAlert, Megaphone, FileText, Globe, Layers, Image, Bell,
-  CreditCard, ArrowLeft, LogOut, Shield, ChevronDown, ChevronRight,
+  CreditCard, ArrowLeft, LogOut, Shield, ChevronDown, ChevronRight, RefreshCw, Server, Map,
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
@@ -123,6 +123,9 @@ export function AdminSidebar() {
     { titleKey: 'admin.userRoles' as TranslationKey, url: '/admin/user-roles', icon: Shield },
     { titleKey: 'admin.pages' as TranslationKey, url: '/admin/pages', icon: FileText },
     { titleKey: 'admin.seoAnalytics' as TranslationKey, url: '/admin/seo', icon: Globe },
+    { titleKey: 'admin.system.update' as TranslationKey, url: '/admin/system/update', icon: RefreshCw },
+    { titleKey: 'admin.system.serverStatus' as TranslationKey, url: '/admin/system/server-status', icon: Server },
+    { titleKey: 'admin.system.sitemap' as TranslationKey, url: '/admin/system/sitemap', icon: Map },
   ];
 
   const websiteSetupItems: NavItem[] = [

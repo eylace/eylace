@@ -96,6 +96,9 @@ import AdminPreorderNotificationTypes from "./pages/AdminPreorderNotificationTyp
 import AdminOtpLoginConfig from "./pages/AdminOtpLoginConfig";
 import AdminOtpConfigurations from "./pages/AdminOtpConfigurations";
 import AdminOtpSmsTemplates from "./pages/AdminOtpSmsTemplates";
+import AdminSystemUpdate from "./pages/AdminSystemUpdate";
+import AdminSystemServerStatus from "./pages/AdminSystemServerStatus";
+import AdminSystemSitemap from "./pages/AdminSystemSitemap";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -189,6 +192,9 @@ const App = () => (
                 <Route path="/admin/otp/login-config" element={<AdminOtpLoginConfig />} />
                 <Route path="/admin/otp/configurations" element={<AdminOtpConfigurations />} />
                 <Route path="/admin/otp/sms-templates" element={<AdminOtpSmsTemplates />} />
+                <Route path="/admin/system/update" element={<AdminSystemUpdate />} />
+                <Route path="/admin/system/server-status" element={<AdminSystemServerStatus />} />
+                <Route path="/admin/system/sitemap" element={<AdminSystemSitemap />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />

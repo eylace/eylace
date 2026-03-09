@@ -660,6 +660,10 @@ export const translations = {
   'admin.otp.loginConfig': { en: 'OTP Login Configuration', bn: 'ওটিপি লগইন কনফিগারেশন' },
   'admin.otp.configurations': { en: 'OTP Configurations', bn: 'ওটিপি কনফিগারেশন' },
   'admin.otp.smsTemplates': { en: 'SMS Templates', bn: 'এসএমএস টেমপ্লেট' },
+  // System section
+  'admin.system.update': { en: 'Update', bn: 'আপডেট' },
+  'admin.system.serverStatus': { en: 'Server Status', bn: 'সার্ভার স্ট্যাটাস' },
+  'admin.system.sitemap': { en: 'Sitemap Generator', bn: 'সাইটম্যাপ জেনারেটর' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
