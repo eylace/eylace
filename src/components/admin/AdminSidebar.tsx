@@ -96,6 +96,7 @@ export function AdminSidebar() {
 
   const operationsItems = [
     { titleKey: 'admin.courierManagement' as TranslationKey, url: '/admin/couriers', icon: Truck },
+    { titleKey: 'admin.shippingProviders' as TranslationKey, url: '/admin/shipping-providers', icon: Package },
     { titleKey: 'admin.fraudDetection' as TranslationKey, url: '/admin/fraud', icon: ShieldAlert },
     { titleKey: 'admin.transactions' as TranslationKey, url: '/admin/transactions', icon: CreditCard },
   ];

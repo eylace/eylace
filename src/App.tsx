@@ -99,6 +99,7 @@ import AdminOtpSmsTemplates from "./pages/AdminOtpSmsTemplates";
 import AdminSystemUpdate from "./pages/AdminSystemUpdate";
 import AdminSystemServerStatus from "./pages/AdminSystemServerStatus";
 import AdminSystemSitemap from "./pages/AdminSystemSitemap";
+import AdminShippingProviders from "./pages/AdminShippingProviders";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -195,6 +196,7 @@ const App = () => (
                 <Route path="/admin/system/update" element={<AdminSystemUpdate />} />
                 <Route path="/admin/system/server-status" element={<AdminSystemServerStatus />} />
                 <Route path="/admin/system/sitemap" element={<AdminSystemSitemap />} />
+                <Route path="/admin/shipping-providers" element={<AdminShippingProviders />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
