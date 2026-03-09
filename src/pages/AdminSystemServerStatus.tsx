@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { Server, HardDrive, Cpu, MemoryStick, Wifi, RefreshCw, Clock, Activity } from 'lucide-react';
 
