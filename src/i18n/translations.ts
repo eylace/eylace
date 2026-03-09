@@ -172,6 +172,7 @@ export const translations = {
   'admin.reviews': { en: 'Reviews', bn: 'রিভিউ' },
   'admin.coupons': { en: 'Coupons', bn: 'কুপন' },
   'admin.courierManagement': { en: 'Courier Management', bn: 'কুরিয়ার ম্যানেজমেন্ট' },
+  'admin.shippingProviders': { en: 'Shipping Providers', bn: 'শিপিং প্রোভাইডার' },
   'admin.fraudDetection': { en: 'Fraud Detection', bn: 'জালিয়াতি সনাক্তকরণ' },
   'admin.transactions': { en: 'Transactions', bn: 'লেনদেন' },
   'admin.marketing': { en: 'Marketing', bn: 'মার্কেটিং' },
