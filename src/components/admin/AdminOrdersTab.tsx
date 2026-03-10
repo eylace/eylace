@@ -86,7 +86,7 @@ export const AdminOrdersTab = () => {
   }, [orders, statusFilter, searchQuery, dateFilter]);
 
   const toggleSelect = (id: string) => {
-    setSelectedOrders(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setSelectedOrders(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   };
   const toggleSelectAll = () => {
     setSelectedOrders(selectedOrders.size === filteredOrders.length ? new Set() : new Set(filteredOrders.map(o => o.id)));

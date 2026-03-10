@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, Search, Loader2, Plus, Trash2, UserCog, Users, Settings, Eye, Edit, ShoppingBag, Package, BarChart3, FileText, Megaphone, Lock } from 'lucide-react';
+import { Shield, Search, Loader2, Plus, Trash2, UserCog, Users, Settings, ShoppingBag, Package, BarChart3, FileText, Megaphone, Lock } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
