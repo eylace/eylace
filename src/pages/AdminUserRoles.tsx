@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
+
 import { supabase } from '@/integrations/supabase/client';
 import { Shield, Search, Loader2, Plus, Trash2, UserCog, Users, Settings, Eye, Edit, ShoppingBag, Package, BarChart3, FileText, Megaphone, Lock } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
