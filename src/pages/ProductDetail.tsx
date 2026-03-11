@@ -411,7 +411,7 @@ const ProductDetail = () => {
 
           <TabsContent value="specifications" className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {(product.attributes || []).map((attr, i) => (
+               {specificationAttributes.map((attr, i) => (
                 <div 
                   key={i}
                   className={cn(
