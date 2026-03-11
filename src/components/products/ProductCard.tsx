@@ -198,15 +198,15 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
         )}
 
         {/* Variations Preview */}
-        {product.variations && product.variations.length > 0 && (
+        {product.variations && product.variations.length > 0 && product.variations[0]?.options && (
           <div className="flex items-center gap-1">
-            {product.variations[0].options.slice(0, 4).map((option, i) => (
+            {product.variations[0].options.filter(Boolean).slice(0, 4).map((option, i) => (
               <div 
-                key={option.id || i}
+                key={option?.id || i}
                 className="w-5 h-5 rounded-full border-2 border-border bg-secondary text-[8px] flex items-center justify-center font-medium"
-                title={option.value || ''}
+                title={option?.value || ''}
               >
-                {(option.value || '?').charAt(0)}
+                {(option?.value || '?').charAt(0)}
               </div>
             ))}
             {product.variations[0].options.length > 4 && (
