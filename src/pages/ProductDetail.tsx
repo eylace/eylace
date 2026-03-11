@@ -80,6 +80,7 @@ const ProductDetail = () => {
   const savings = product.originalPrice 
     ? (product.originalPrice - product.price) * quantity 
     : 0;
+  const specificationAttributes = Array.isArray(product.attributes) ? product.attributes : [];
 
   const handleWishlistToggle = () => {
     if (isWishlisted) {
