@@ -7,12 +7,15 @@ import { CartSummary } from '@/components/cart/CartSummary';
 import { ProductCard } from '@/components/products/ProductCard';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { featuredProducts } from '@/data/mockData';
+import { useProducts } from '@/hooks/useProducts';
+import { adaptDBProducts } from '@/lib/productAdapter';
 
 const Cart = () => {
   const { items, clearCart, getItemCount } = useCart();
   const itemCount = getItemCount();
   const { t } = useLanguage();
+  const { products: dbProducts } = useProducts({ limit: 7 });
+  const recommendedProducts = adaptDBProducts(dbProducts);
 
   if (items.length === 0) {
     return (
@@ -31,7 +34,7 @@ const Cart = () => {
           <section className="mt-16">
             <h2 className="text-xl font-bold text-foreground mb-6">{t('cart.recommended')}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {featuredProducts.slice(0, 5).map((product) => (<ProductCard key={product.id} product={product} />))}
+              {recommendedProducts.slice(0, 5).map((product) => (<ProductCard key={product.id} product={product} />))}
             </div>
           </section>
         </div>
@@ -77,7 +80,7 @@ const Cart = () => {
         <section className="mt-16">
           <h2 className="text-xl font-bold text-foreground mb-6">{t('cart.youMayAlsoLike')}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {featuredProducts.slice(2, 7).map((product) => (<ProductCard key={product.id} product={product} />))}
+            {recommendedProducts.slice(2, 7).map((product) => (<ProductCard key={product.id} product={product} />))}
           </div>
         </section>
       </div>

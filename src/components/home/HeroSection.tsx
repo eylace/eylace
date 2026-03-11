@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { categories } from '@/data/mockData';
+import { useCategories } from '@/hooks/useProducts';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { t } = useLanguage();
+  const { categories } = useCategories();
 
   const heroSlides = [
     {
@@ -44,7 +45,12 @@ export const HeroSection = () => {
             <div className="py-1">
               {categories.map((cat) => (
                 <Link key={cat.id} to={`/category/${cat.slug}`} className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-secondary transition-colors">
-                  <span>{cat.icon}</span><span className="truncate">{cat.name}</span>
+                  {cat.image ? (
+                    <img src={cat.image} alt={cat.name} className="w-5 h-5 rounded-full object-cover" />
+                  ) : (
+                    <span>{cat.icon || '📦'}</span>
+                  )}
+                  <span className="truncate">{cat.name}</span>
                 </Link>
               ))}
             </div>
