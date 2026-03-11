@@ -80,6 +80,7 @@ const ProductDetail = () => {
   const savings = product.originalPrice 
     ? (product.originalPrice - product.price) * quantity 
     : 0;
+  const specificationAttributes = Array.isArray(product.attributes) ? product.attributes : [];
 
   const handleWishlistToggle = () => {
     if (isWishlisted) {
@@ -410,7 +411,7 @@ const ProductDetail = () => {
 
           <TabsContent value="specifications" className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {(product.attributes || []).map((attr, i) => (
+               {specificationAttributes.map((attr, i) => (
                 <div 
                   key={i}
                   className={cn(
