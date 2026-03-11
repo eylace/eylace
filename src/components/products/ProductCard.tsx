@@ -198,24 +198,52 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
         )}
 
         {/* Variations Preview */}
-        {product.variations && product.variations.length > 0 && product.variations[0]?.options && (
-          <div className="flex items-center gap-1">
-            {product.variations[0].options.filter(Boolean).slice(0, 4).map((option, i) => (
-              <div 
-                key={option?.id || i}
-                className="w-5 h-5 rounded-full border-2 border-border bg-secondary text-[8px] flex items-center justify-center font-medium"
-                title={option?.value || ''}
-              >
-                {(option?.value || '?').charAt(0)}
-              </div>
-            ))}
-            {product.variations[0].options.length > 4 && (
-              <span className="text-xs text-muted-foreground">
-                +{product.variations[0].options.length - 4}
-              </span>
-            )}
-          </div>
-        )}
+        {product.variations && product.variations.length > 0 && (() => {
+          // Prefer color variation for preview, fallback to first variation
+          const colorVar = product.variations.find(v => v.type === 'color') || product.variations[0];
+          if (!colorVar?.options) return null;
+          const opts = colorVar.options.filter(Boolean);
+          if (opts.length === 0) return null;
+
+          const colorMap: Record<string, string> = {
+            'black': '#1a1a1a', 'white': '#ffffff', 'navy': '#1e3a5f', 'red': '#dc2626',
+            'blue': '#2563eb', 'green': '#16a34a', 'pink': '#ec4899', 'gray': '#6b7280',
+            'grey': '#6b7280', 'brown': '#92400e', 'beige': '#d4c4a8', 'yellow': '#eab308',
+            'orange': '#f97316', 'purple': '#9333ea', 'maroon': '#7f1d1d', 'silver': '#c0c0c0',
+            'gold': '#d4a843', 'camel': '#c19a6b', 'burgundy': '#800020', 'tan': '#d2b48c',
+          };
+
+          return (
+            <div className="flex items-center gap-1.5">
+              {opts.slice(0, 5).map((option, i) => {
+                const val = option?.value || '';
+                const hex = colorMap[val.toLowerCase().split('/')[0].trim()];
+                return hex ? (
+                  <div
+                    key={option?.id || i}
+                    className={cn(
+                      "w-5 h-5 rounded-full border-2 border-border",
+                      val.toLowerCase() === 'white' && "border-muted-foreground/30"
+                    )}
+                    style={{ backgroundColor: hex }}
+                    title={val}
+                  />
+                ) : (
+                  <div
+                    key={option?.id || i}
+                    className="px-1.5 py-0.5 rounded border border-border bg-secondary text-[9px] font-medium text-foreground"
+                    title={val}
+                  >
+                    {val}
+                  </div>
+                );
+              })}
+              {opts.length > 5 && (
+                <span className="text-xs text-muted-foreground">+{opts.length - 5}</span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Actions */}
         <div className="flex gap-2 pt-2">
