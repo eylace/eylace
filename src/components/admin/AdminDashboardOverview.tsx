@@ -217,6 +217,7 @@ export const AdminDashboardOverview = () => {
         </CardContent>
       </Card>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 border border-border">
           <CardHeader className="pb-2"><CardTitle className="text-base font-semibold flex items-center gap-2"><BarChart3 className="h-4 w-4 text-accent" />{t('admin.revenueOverview')}</CardTitle></CardHeader>
           <CardContent>
