@@ -21,7 +21,8 @@
    flash_sale_ends: string | null;
    is_prime: boolean | null;
    is_free_shipping: boolean | null;
-   is_active: boolean | null;
+  is_active: boolean | null;
+  is_digital: boolean | null;
    created_at: string;
    updated_at: string;
    category?: DBCategory | null;
