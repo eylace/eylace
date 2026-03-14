@@ -102,7 +102,9 @@ import AdminSystemSitemap from "./pages/AdminSystemSitemap";
 import AdminShippingProviders from "./pages/AdminShippingProviders";
 import AdminAIAnalyzer from "./pages/AdminAIAnalyzer";
 import AdminAISettings from "./pages/AdminAISettings";
+import AdminTrackingAnalytics from "./pages/AdminTrackingAnalytics";
 import { AIChatWidget } from "./components/chat/AIChatWidget";
+import { TrackingScriptInjector } from "./components/tracking/TrackingScriptInjector";
 const queryClient = new QueryClient();
 
 const App = () => (
