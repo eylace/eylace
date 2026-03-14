@@ -100,6 +100,8 @@ import AdminSystemUpdate from "./pages/AdminSystemUpdate";
 import AdminSystemServerStatus from "./pages/AdminSystemServerStatus";
 import AdminSystemSitemap from "./pages/AdminSystemSitemap";
 import AdminShippingProviders from "./pages/AdminShippingProviders";
+import AdminAIAnalyzer from "./pages/AdminAIAnalyzer";
+import { AIChatWidget } from "./components/chat/AIChatWidget";
 const queryClient = new QueryClient();
 
 const App = () => (
