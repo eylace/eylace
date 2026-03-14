@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   DollarSign, ShoppingCart, Users, Package, TrendingUp, TrendingDown,
-  BarChart3, Star, Truck, Clock,
+  BarChart3, Star, Truck, Clock, Brain, Search, MessageCircle, FileText,
+  Facebook, CheckCircle2, XCircle, Settings, Sparkles, Bot,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -13,6 +17,8 @@ import {
 import { format, subDays, startOfDay } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAISettings } from '@/hooks/useAISettings';
+import { toast } from 'sonner';
 
 interface DashboardStats {
   totalRevenue: number;
