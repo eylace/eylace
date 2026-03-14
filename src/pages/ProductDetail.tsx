@@ -12,10 +12,11 @@ import {
   Check,
   MessageCircle,
   ChevronRight,
-  Package,
-  Store,
-  GitCompareArrows
-} from 'lucide-react';
+   Package,
+   Store,
+   GitCompareArrows,
+   Download
+ } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
  import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
