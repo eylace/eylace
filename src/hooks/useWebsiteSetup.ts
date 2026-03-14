@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface HeroBanner {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  ctaText: string;
+  ctaLink: string;
+  imageUrl: string;
+  gradient: string;
+  sortOrder: number;
+}
+
 export interface WebsiteSetup {
   selectedHomepage: string;
   homepageBannerEnabled: boolean;
@@ -49,6 +61,7 @@ export interface WebsiteSetup {
   customCss: string;
   logoUrl: string;
   faviconUrl: string;
+  heroBanners: HeroBanner[];
 }
 
 const defaults: WebsiteSetup = {
