@@ -66,10 +66,14 @@ export function AdminSidebar() {
     { titleKey: 'admin.reviews', url: '/admin/reviews', icon: MessageSquare },
   ];
 
+  const aiItems: NavItem[] = [
+    { titleKey: 'admin.ai.settings', url: '/admin/ai-settings', icon: Settings },
+    { titleKey: 'admin.ai.analyzer', url: '/admin/ai-analyzer', icon: BarChart3 },
+  ];
+
   const mainItems = [
     { titleKey: 'admin.dashboard' as TranslationKey, url: '/admin', icon: LayoutDashboard },
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
-    { titleKey: 'admin.aiAnalyzer' as TranslationKey, url: '/admin/ai-analyzer', icon: Brain },
   ];
 
   const sellerItems: NavItem[] = [

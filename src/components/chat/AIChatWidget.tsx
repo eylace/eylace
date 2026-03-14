@@ -3,19 +3,31 @@ import { MessageCircle, X, Send, Loader2, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
+import { useAISettings } from '@/hooks/useAISettings';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 
 export const AIChatWidget = () => {
+  const { settings, loading: settingsLoading } = useAISettings();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Msg[]>([
-    { role: 'assistant', content: 'আসসালামু আলাইকুম! 👋 Grand Mall Emporium-এ স্বাগতম। আমি আপনার AI শপিং সহকারী। কিভাবে সাহায্য করতে পারি?' }
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [initialized, setInitialized] = useState(false);
+
+  // Set greeting from settings
+  useEffect(() => {
+    if (!settingsLoading && !initialized) {
+      setMessages([{ role: 'assistant', content: settings.ai_chat_greeting }]);
+      setInitialized(true);
+    }
+  }, [settingsLoading, settings.ai_chat_greeting, initialized]);
+
+  // If chat is disabled, don't render
+  if (settingsLoading || !settings.ai_chat_enabled) return null;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
