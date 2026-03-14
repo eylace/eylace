@@ -118,6 +118,7 @@ export function AdminSidebar() {
     { titleKey: 'admin.marketing.bulkSMS', url: '/admin/marketing/bulk-sms', icon: MessageSquare },
     { titleKey: 'admin.marketing.subscribers', url: '/admin/marketing/subscribers', icon: UsersRound },
     { titleKey: 'admin.marketing.visitors', url: '/admin/marketing/visitors', icon: Eye },
+    { titleKey: 'admin.marketing.ads', url: '/admin/marketing/ads', icon: LayoutList },
   ];
 
   const contentItems = [
