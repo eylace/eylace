@@ -32,28 +32,96 @@ serve(async (req) => {
     // Admin client for privileged ops
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { coupon_id, order_id, discount_amount } = await req.json();
+    const { coupon_id, order_id } = await req.json();
 
     if (!coupon_id || !order_id) {
       return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+
+    // Validate order belongs to the authenticated user
+    const { data: order, error: orderError } = await adminClient
+      .from('orders')
+      .select('id, user_id, subtotal')
+      .eq('id', order_id)
+      .single();
+
+    if (orderError || !order) {
+      return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    if (order.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Fetch and validate coupon server-side
+    const { data: coupon, error: couponError } = await adminClient
+      .from('coupons')
+      .select('*')
+      .eq('id', coupon_id)
+      .single();
+
+    if (couponError || !coupon) {
+      return new Response(JSON.stringify({ error: 'Coupon not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Check coupon is active
+    if (!coupon.is_active) {
+      return new Response(JSON.stringify({ error: 'Coupon is not active' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Check expiry
+    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+      return new Response(JSON.stringify({ error: 'Coupon has expired' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Check usage limit
+    if (coupon.usage_limit && coupon.used_count >= coupon.usage_limit) {
+      return new Response(JSON.stringify({ error: 'Coupon usage limit reached' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Check if user already used this coupon
+    const { data: existingUsage } = await adminClient
+      .from('coupon_usage')
+      .select('id')
+      .eq('coupon_id', coupon_id)
+      .eq('user_id', user.id)
+      .limit(1);
+
+    if (existingUsage && existingUsage.length > 0) {
+      return new Response(JSON.stringify({ error: 'You have already used this coupon' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Check min order amount
+    const subtotal = Number(order.subtotal);
+    if (coupon.min_order_amount && subtotal < coupon.min_order_amount) {
+      return new Response(JSON.stringify({ error: `Minimum order amount is ${coupon.min_order_amount}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Calculate discount server-side
+    let discountAmount: number;
+    if (coupon.discount_type === 'percentage') {
+      discountAmount = subtotal * (coupon.discount_value / 100);
+      if (coupon.max_discount && discountAmount > coupon.max_discount) {
+        discountAmount = coupon.max_discount;
+      }
+    } else {
+      discountAmount = coupon.discount_value;
+    }
+    discountAmount = Math.min(discountAmount, subtotal);
 
     // Record usage
     await adminClient.from('coupon_usage').insert({
       coupon_id,
       user_id: user.id,
       order_id,
-      discount_amount: discount_amount || 0,
+      discount_amount: discountAmount,
     });
 
     // Increment used_count
-    const { data: coupon } = await adminClient.from('coupons').select('used_count').eq('id', coupon_id).single();
-    if (coupon) {
-      await adminClient.from('coupons').update({ used_count: (coupon.used_count || 0) + 1 }).eq('id', coupon_id);
-    }
+    await adminClient.from('coupons').update({ used_count: (coupon.used_count || 0) + 1 }).eq('id', coupon_id);
 
-    return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true, discount_amount: discountAmount }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
