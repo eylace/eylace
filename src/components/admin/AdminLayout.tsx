@@ -89,27 +89,25 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-30 bg-card border-b border-border">
-            {/* Primary header row */}
-            <div className="h-12 md:h-14 flex items-center gap-2 md:gap-4 px-2 md:px-4">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground shrink-0" />
-              {displayTitle && (
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{displayTitle}</h1>
-                  {displayDesc && <p className="text-[10px] md:text-xs text-muted-foreground truncate hidden sm:block">{displayDesc}</p>}
+          <header className="sticky top-0 z-30 bg-card border-b-2 border-accent">
+            <div className="h-12 flex items-center px-3 gap-3 overflow-x-auto scrollbar-none">
+              {/* Logo */}
+              <Link to="/admin" className="flex items-center gap-2 shrink-0">
+                <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
+                  <LayoutDashboard className="h-4 w-4 text-accent-foreground" />
                 </div>
-              )}
-              <div className="ml-auto flex items-center gap-1 md:gap-2 shrink-0">
-                <AdminLanguageSwitcher />
-                <ThemeToggle />
-                <AdminNotificationBell />
-              </div>
-            </div>
+                <div className="hidden sm:block">
+                  <span className="font-bold text-sm text-foreground leading-none">Eylace</span>
+                  <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Admin Panel</p>
+                </div>
+              </Link>
 
-            {/* Quick navigation strip */}
-            <div className="h-10 flex items-center gap-1.5 px-2 md:px-4 border-t border-border/50 bg-muted/30 overflow-x-auto scrollbar-none">
-              {/* Icon buttons group */}
+              {/* Separator */}
+              <div className="w-px h-6 bg-border shrink-0" />
+
+              {/* Icon buttons */}
               <div className="flex items-center gap-0.5 shrink-0">
+                <SidebarTrigger className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors" />
                 <Link
                   to="/"
                   target="_blank"
@@ -149,7 +147,7 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
               </div>
 
               {/* Separator */}
-              <div className="w-px h-5 bg-border shrink-0 mx-1" />
+              <div className="w-px h-6 bg-border shrink-0" />
 
               {/* Navigation tabs */}
               <nav className="flex items-center gap-1 shrink-0">
@@ -169,14 +167,25 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
                 ))}
               </nav>
 
+              {/* Spacer */}
+              <div className="flex-1" />
+
               {/* Add New button */}
-              <div className="ml-auto shrink-0">
-                <Link to="/admin/products/add">
-                  <Button size="sm" variant="accent" className="h-7 text-xs gap-1 px-3 rounded-md">
-                    <Plus className="h-3.5 w-3.5" />
-                    Add New
-                  </Button>
-                </Link>
+              <Link to="/admin/products/add" className="shrink-0">
+                <Button size="sm" variant="accent" className="h-8 text-xs gap-1 px-3 rounded-md">
+                  <Plus className="h-3.5 w-3.5" />
+                  Add New
+                </Button>
+              </Link>
+
+              {/* Separator */}
+              <div className="w-px h-6 bg-border shrink-0" />
+
+              {/* Right utilities */}
+              <div className="flex items-center gap-1 shrink-0">
+                <AdminLanguageSwitcher />
+                <ThemeToggle />
+                <AdminNotificationBell />
               </div>
             </div>
           </header>
