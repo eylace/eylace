@@ -5,6 +5,7 @@ import {
   MapPin, Heart, LogOut, Package, Settings, ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useMenuConfig } from '@/hooks/useMenuConfig';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
