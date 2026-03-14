@@ -31,6 +31,8 @@ export const Header = () => {
   const { isAdmin } = useAdminCheck();
   const { language, setLanguage, t } = useLanguage();
   const setup = useWebsiteSetup();
+  const menuItems = useMenuConfig();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const handleSignOut = async () => { await signOut(); };
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User';
