@@ -178,6 +178,7 @@ export const translations = {
   'admin.transactions': { en: 'Transactions', bn: 'লেনদেন' },
   'admin.marketing': { en: 'Marketing', bn: 'মার্কেটিং' },
   'admin.reports': { en: 'Reports', bn: 'রিপোর্ট' },
+  'admin.trackingAnalytics': { en: 'Tracking & Analytics', bn: 'ট্র্যাকিং ও অ্যানালিটিক্স' },
   'admin.mediaGallery': { en: 'Media Gallery', bn: 'মিডিয়া গ্যালারি' },
   'admin.notifications': { en: 'Notifications', bn: 'নোটিফিকেশন' },
   'admin.userRoles': { en: 'User Roles', bn: 'ইউজার রোল' },
