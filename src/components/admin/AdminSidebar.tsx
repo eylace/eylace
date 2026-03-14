@@ -7,6 +7,7 @@ import {
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
   Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
+  Brain,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -68,6 +69,7 @@ export function AdminSidebar() {
   const mainItems = [
     { titleKey: 'admin.dashboard' as TranslationKey, url: '/admin', icon: LayoutDashboard },
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
+    { titleKey: 'admin.aiAnalyzer' as TranslationKey, url: '/admin/ai-analyzer', icon: Brain },
   ];
 
   const sellerItems: NavItem[] = [

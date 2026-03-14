@@ -20,3 +20,15 @@ project_id = "jmowninkqcfgwldyjeqo"
 
  [functions.fraud-check]
  verify_jwt = false
+
+ [functions.ai-product-search]
+ verify_jwt = false
+
+ [functions.ai-generate-description]
+ verify_jwt = false
+
+ [functions.ai-product-analyzer]
+ verify_jwt = false
+
+ [functions.ai-chat]
+ verify_jwt = false

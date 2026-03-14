@@ -165,6 +165,7 @@ export const translations = {
   // Admin Sidebar
   'admin.dashboard': { en: 'Dashboard', bn: 'ড্যাশবোর্ড' },
   'admin.orders': { en: 'Orders', bn: 'অর্ডার' },
+  'admin.aiAnalyzer': { en: 'AI Analyzer', bn: 'AI বিশ্লেষক' },
   'admin.products': { en: 'Products', bn: 'পণ্য' },
   'admin.categories': { en: 'Categories', bn: 'ক্যাটাগরি' },
   'admin.customers': { en: 'Customers', bn: 'গ্রাহক' },

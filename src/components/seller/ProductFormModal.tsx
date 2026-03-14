@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, Upload, X, Plus } from 'lucide-react';
+import { Loader2, Upload, X, Plus, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +58,7 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!product?.id;
@@ -211,7 +212,35 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="p-desc">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="p-desc">Description</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1 h-7 text-xs"
+                disabled={aiGenerating || !form.name}
+                onClick={async () => {
+                  setAiGenerating(true);
+                  try {
+                    const categoryName = categories.find(c => c.id === form.category_id)?.name;
+                    const { data, error } = await supabase.functions.invoke('ai-generate-description', {
+                      body: { productName: form.name, category: categoryName, price: form.price }
+                    });
+                    if (error) throw error;
+                    if (data?.error) throw new Error(data.error);
+                    setForm(f => ({ ...f, description: data.description }));
+                    toast.success('AI Description generated!');
+                  } catch (e: any) {
+                    toast.error(e.message || 'AI generation failed');
+                  }
+                  setAiGenerating(false);
+                }}
+              >
+                {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                AI Generate
+              </Button>
+            </div>
             <Textarea id="p-desc" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={4} maxLength={5000} />
           </div>
 
