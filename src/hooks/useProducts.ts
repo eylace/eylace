@@ -64,14 +64,14 @@
      setError(null);
  
      try {
-       let query = supabase
-         .from('products')
-         .select(`
-           *,
-           category:categories(*),
-           seller:sellers(*)
-         `)
-         .eq('is_active', true);
+        let query = supabase
+          .from('products_public')
+          .select(`
+            *,
+            category:categories(*),
+            seller:sellers(*)
+          `)
+          .eq('is_active', true);
  
        if (options.categorySlug) {
          const { data: category } = await supabase
