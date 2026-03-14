@@ -103,6 +103,8 @@ import AdminShippingProviders from "./pages/AdminShippingProviders";
 import AdminAIAnalyzer from "./pages/AdminAIAnalyzer";
 import AdminAISettings from "./pages/AdminAISettings";
 import AdminTrackingAnalytics from "./pages/AdminTrackingAnalytics";
+import AdminMenuManager from "./pages/AdminMenuManager";
+import AdminMarketingAds from "./pages/AdminMarketingAds";
 import { AIChatWidget } from "./components/chat/AIChatWidget";
 import { TrackingScriptInjector } from "./components/tracking/TrackingScriptInjector";
 const queryClient = new QueryClient();
@@ -205,6 +207,8 @@ const App = () => (
                 <Route path="/admin/ai-analyzer" element={<AdminAIAnalyzer />} />
                 <Route path="/admin/ai-settings" element={<AdminAISettings />} />
                 <Route path="/admin/tracking" element={<AdminTrackingAnalytics />} />
+                <Route path="/admin/menu-manager" element={<AdminMenuManager />} />
+                <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />

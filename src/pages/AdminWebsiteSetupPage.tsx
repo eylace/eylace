@@ -17,8 +17,9 @@ import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
+import type { HeroBanner } from '@/hooks/useWebsiteSetup';
+
 interface WebsiteSetupState {
-  // Homepage
   selectedHomepage: string;
   homepageBannerEnabled: boolean;
   homepageFeaturedCategories: boolean;
@@ -30,18 +31,15 @@ interface WebsiteSetupState {
   homepageBrandsCarousel: boolean;
   homepageTestimonials: boolean;
   homepageSectionsOrder: string[];
-  // Font
   fontFamily: string;
   headingFont: string;
   fontSize: string;
-  // Auth
   authLayout: string;
   authBgImage: string;
   authShowSocialLogin: boolean;
   authShowRememberMe: boolean;
   authRequireEmailVerification: boolean;
   authAllowGuestCheckout: boolean;
-  // Header
   selectedHeader: string;
   headerStickyEnabled: boolean;
   headerSearchEnabled: boolean;
@@ -50,13 +48,11 @@ interface WebsiteSetupState {
   headerLanguageSwitcher: boolean;
   headerCurrencySwitcher: boolean;
   headerAnnouncementText: string;
-  // Top Bar
   topBarEnabled: boolean;
   topBarText: string;
   topBarBgColor: string;
   topBarTextColor: string;
   topBarLinks: { label: string; url: string }[];
-  // Footer
   footerStyle: string;
   footerAboutText: string;
   footerCopyright: string;
@@ -65,9 +61,7 @@ interface WebsiteSetupState {
   footerShowPaymentIcons: boolean;
   footerColumns: { title: string; links: { label: string; url: string }[] }[];
   footerSocialLinks: { platform: string; url: string }[];
-  // Pages (CMS)
   pages: { id: string; title: string; slug: string; content: string; isPublished: boolean; sortOrder: number }[];
-  // Appearance
   primaryColor: string;
   accentColor: string;
   borderRadius: string;
@@ -75,6 +69,7 @@ interface WebsiteSetupState {
   customCss: string;
   logoUrl: string;
   faviconUrl: string;
+  heroBanners: HeroBanner[];
 }
 
 const defaultSetup: WebsiteSetupState = {
@@ -142,6 +137,7 @@ const defaultSetup: WebsiteSetupState = {
   customCss: '',
   logoUrl: '',
   faviconUrl: '',
+  heroBanners: [],
 };
 
 const fontOptions = [
@@ -288,6 +284,81 @@ const AdminWebsiteSetupPage = () => {
                     />
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+
+            {/* Hero Banners CRUD */}
+            <Card className="mt-4">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Hero Banners ({setup.heroBanners?.length || 0})</CardTitle>
+                <Button size="sm" onClick={() => {
+                  const banner: HeroBanner = {
+                    id: Date.now().toString(), title: 'New Banner', subtitle: 'Subtitle', description: 'Description',
+                    ctaText: 'Shop Now', ctaLink: '/', imageUrl: '', gradient: 'from-primary via-primary/90 to-primary/70', sortOrder: (setup.heroBanners?.length || 0),
+                  };
+                  update('heroBanners', [...(setup.heroBanners || []), banner]);
+                }}>
+                  <Plus className="h-3 w-3 mr-1" /> Add Banner
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {(setup.heroBanners || []).map((banner, idx) => (
+                  <Card key={banner.id} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Banner #{idx + 1}</span>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() =>
+                        update('heroBanners', setup.heroBanners.filter(b => b.id !== banner.id))
+                      }><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Title</Label>
+                        <Input value={banner.title} className="h-8 text-xs" onChange={e => {
+                          const banners = [...setup.heroBanners]; banners[idx] = { ...banners[idx], title: e.target.value }; update('heroBanners', banners);
+                        }} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Subtitle</Label>
+                        <Input value={banner.subtitle} className="h-8 text-xs" onChange={e => {
+                          const banners = [...setup.heroBanners]; banners[idx] = { ...banners[idx], subtitle: e.target.value }; update('heroBanners', banners);
+                        }} />
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <Label className="text-xs">Description</Label>
+                        <Input value={banner.description} className="h-8 text-xs" onChange={e => {
+                          const banners = [...setup.heroBanners]; banners[idx] = { ...banners[idx], description: e.target.value }; update('heroBanners', banners);
+                        }} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">CTA Text</Label>
+                        <Input value={banner.ctaText} className="h-8 text-xs" onChange={e => {
+                          const banners = [...setup.heroBanners]; banners[idx] = { ...banners[idx], ctaText: e.target.value }; update('heroBanners', banners);
+                        }} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">CTA Link</Label>
+                        <Input value={banner.ctaLink} className="h-8 text-xs" onChange={e => {
+                          const banners = [...setup.heroBanners]; banners[idx] = { ...banners[idx], ctaLink: e.target.value }; update('heroBanners', banners);
+                        }} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Image URL</Label>
+                        <Input value={banner.imageUrl} className="h-8 text-xs" placeholder="https://..." onChange={e => {
+                          const banners = [...setup.heroBanners]; banners[idx] = { ...banners[idx], imageUrl: e.target.value }; update('heroBanners', banners);
+                        }} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Gradient (fallback)</Label>
+                        <Input value={banner.gradient} className="h-8 text-xs" onChange={e => {
+                          const banners = [...setup.heroBanners]; banners[idx] = { ...banners[idx], gradient: e.target.value }; update('heroBanners', banners);
+                        }} />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                {(!setup.heroBanners || setup.heroBanners.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No custom banners. Default banners will be shown.</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

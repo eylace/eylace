@@ -7,7 +7,7 @@ import {
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
   Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
-  Brain, Activity,
+  Brain, Activity, LayoutList, Megaphone as MegaphoneIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -118,6 +118,7 @@ export function AdminSidebar() {
     { titleKey: 'admin.marketing.bulkSMS', url: '/admin/marketing/bulk-sms', icon: MessageSquare },
     { titleKey: 'admin.marketing.subscribers', url: '/admin/marketing/subscribers', icon: UsersRound },
     { titleKey: 'admin.marketing.visitors', url: '/admin/marketing/visitors', icon: Eye },
+    { titleKey: 'admin.marketing.ads', url: '/admin/marketing/ads', icon: LayoutList },
   ];
 
   const contentItems = [
@@ -137,6 +138,7 @@ export function AdminSidebar() {
   ];
 
   const websiteSetupItems: NavItem[] = [
+    { titleKey: 'admin.websiteSetup.menuManager' as TranslationKey, url: '/admin/menu-manager', icon: LayoutList },
     { titleKey: 'admin.websiteSetup.homepage' as TranslationKey, url: '/admin/website-setup?tab=homepage', icon: Home },
     { titleKey: 'admin.websiteSetup.homepageSettings' as TranslationKey, url: '/admin/website-setup?tab=homepage-settings', icon: LayoutTemplate },
     { titleKey: 'admin.websiteSetup.font' as TranslationKey, url: '/admin/website-setup?tab=font', icon: Type },

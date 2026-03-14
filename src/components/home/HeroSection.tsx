@@ -4,34 +4,40 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCategories } from '@/hooks/useProducts';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
 export const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { t } = useLanguage();
   const { categories } = useCategories();
+  const setup = useWebsiteSetup();
 
-  const heroSlides = [
+  const defaultSlides = [
     {
-      id: 1, title: t('hero.megaSale'), subtitle: t('hero.upTo70'),
-      description: t('hero.megaDesc'), cta: t('hero.shopNow'), link: '/sale',
-      gradient: 'from-primary via-primary/90 to-primary/70',
+      id: '1', title: t('hero.megaSale'), subtitle: t('hero.upTo70'),
+      description: t('hero.megaDesc'), ctaText: t('hero.shopNow'), ctaLink: '/sale',
+      imageUrl: '', gradient: 'from-primary via-primary/90 to-primary/70',
     },
     {
-      id: 2, title: t('hero.newElectronics'), subtitle: t('hero.latestGadgets'),
-      description: t('hero.electronicsDesc'), cta: t('hero.explore'), link: '/category/electronics',
-      gradient: 'from-[hsl(199,89%,35%)] via-[hsl(199,89%,40%)] to-[hsl(199,89%,48%)]',
+      id: '2', title: t('hero.newElectronics'), subtitle: t('hero.latestGadgets'),
+      description: t('hero.electronicsDesc'), ctaText: t('hero.explore'), ctaLink: '/category/electronics',
+      imageUrl: '', gradient: 'from-[hsl(199,89%,35%)] via-[hsl(199,89%,40%)] to-[hsl(199,89%,48%)]',
     },
     {
-      id: 3, title: t('hero.fashionWeek'), subtitle: t('hero.trendingStyles'),
-      description: t('hero.fashionDesc'), cta: t('hero.shopFashion'), link: '/category/fashion',
-      gradient: 'from-[hsl(330,60%,40%)] via-[hsl(330,60%,50%)] to-[hsl(330,60%,60%)]',
+      id: '3', title: t('hero.fashionWeek'), subtitle: t('hero.trendingStyles'),
+      description: t('hero.fashionDesc'), ctaText: t('hero.shopFashion'), ctaLink: '/category/fashion',
+      imageUrl: '', gradient: 'from-[hsl(330,60%,40%)] via-[hsl(330,60%,50%)] to-[hsl(330,60%,60%)]',
     },
   ];
+
+  const heroSlides = setup.heroBanners && setup.heroBanners.length > 0
+    ? setup.heroBanners.sort((a, b) => a.sortOrder - b.sortOrder)
+    : defaultSlides;
 
   useEffect(() => {
     const timer = setInterval(() => { setCurrentSlide((prev) => (prev + 1) % heroSlides.length); }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [heroSlides.length]);
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
@@ -61,12 +67,16 @@ export const HeroSection = () => {
           <div className="relative rounded-lg overflow-hidden">
             <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
               {heroSlides.map((slide) => (
-                <div key={slide.id} className={`min-w-full aspect-[2/1] md:aspect-[2.5/1] bg-gradient-to-r ${slide.gradient} text-primary-foreground p-6 md:p-10 flex flex-col justify-center`}>
+                <div
+                  key={slide.id}
+                  className={`min-w-full aspect-[2/1] md:aspect-[2.5/1] text-primary-foreground p-6 md:p-10 flex flex-col justify-center ${!slide.imageUrl ? `bg-gradient-to-r ${slide.gradient}` : ''}`}
+                  style={slide.imageUrl ? { backgroundImage: `url(${slide.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                >
                   <div className="max-w-lg animate-fade-in">
                     <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-sm font-bold rounded mb-3">{slide.subtitle}</span>
                     <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3">{slide.title}</h2>
                     <p className="text-primary-foreground/80 mb-6 text-sm md:text-base">{slide.description}</p>
-                    <Button variant="hero" size="lg" asChild><Link to={slide.link}>{slide.cta}</Link></Button>
+                    <Button variant="hero" size="lg" asChild><Link to={slide.ctaLink}>{slide.ctaText}</Link></Button>
                   </div>
                 </div>
               ))}
