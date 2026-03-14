@@ -308,7 +308,20 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Secondary Actions */}
+               {/* Digital Download Button */}
+               {product.isDigital && user && (
+                 <Button 
+                   variant="outline" 
+                   size="xl" 
+                   className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                   onClick={handleDigitalDownload}
+                 >
+                   <Download className="h-5 w-5 mr-2" />
+                   Download Digital Product
+                 </Button>
+               )}
+
+               {/* Secondary Actions */}
               <div className="flex gap-3">
                 <Button 
                   variant="ghost" 
