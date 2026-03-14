@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload } from 'lucide-react';
+import { Loader2, Plus, X, Upload, Sparkles } from 'lucide-react';
 
 interface ProductFormModalProps {
   open: boolean;
