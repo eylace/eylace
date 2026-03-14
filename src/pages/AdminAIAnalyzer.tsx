@@ -29,7 +29,7 @@ const AdminAIAnalyzer = () => {
   };
 
   return (
-    <AdminLayout titleKey="AI Product Analyzer" descriptionKey="AI-powered sales analysis">
+    <AdminLayout titleKey="admin.title.products" descriptionKey="admin.desc.products">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
