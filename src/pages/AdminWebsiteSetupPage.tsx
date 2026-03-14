@@ -137,6 +137,7 @@ const defaultSetup: WebsiteSetupState = {
   customCss: '',
   logoUrl: '',
   faviconUrl: '',
+  heroBanners: [],
 };
 
 const fontOptions = [
