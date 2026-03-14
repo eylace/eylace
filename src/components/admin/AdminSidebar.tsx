@@ -122,6 +122,7 @@ export function AdminSidebar() {
 
   const contentItems = [
     { titleKey: 'admin.reports' as TranslationKey, url: '/admin/reports', icon: BarChart3 },
+    { titleKey: 'admin.trackingAnalytics' as TranslationKey, url: '/admin/tracking', icon: Activity },
     { titleKey: 'admin.mediaGallery' as TranslationKey, url: '/admin/media', icon: Image },
     { titleKey: 'admin.notifications' as TranslationKey, url: '/admin/notifications', icon: Bell },
   ];
