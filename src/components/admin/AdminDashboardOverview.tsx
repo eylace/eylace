@@ -37,6 +37,8 @@ const COLORS = [
 ];
 
 export const AdminDashboardOverview = () => {
+  const navigate = useNavigate();
+  const { settings: aiSettings, loading: aiLoading } = useAISettings();
   const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [revenueData, setRevenueData] = useState<any[]>([]);
