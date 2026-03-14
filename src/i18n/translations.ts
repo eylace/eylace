@@ -658,6 +658,7 @@ export const translations = {
   'admin.marketing.bulkSMS': { en: 'Bulk SMS', bn: 'বাল্ক এসএমএস' },
   'admin.marketing.subscribers': { en: 'Subscribers', bn: 'সাবস্ক্রাইবার' },
   'admin.marketing.visitors': { en: 'Custom Visitors', bn: 'কাস্টম ভিজিটর' },
+  'admin.marketing.ads': { en: 'Ads Manager', bn: 'অ্যাডস ম্যানেজার' },
   // OTP System
   'admin.otp.section': { en: 'OTP System', bn: 'ওটিপি সিস্টেম' },
   'admin.otp.loginConfig': { en: 'OTP Login Configuration', bn: 'ওটিপি লগইন কনফিগারেশন' },
@@ -671,6 +672,19 @@ export const translations = {
   'admin.ai.section': { en: 'AI Automation', bn: 'AI অটোমেশন' },
   'admin.ai.settings': { en: 'AI Settings', bn: 'AI সেটিংস' },
   'admin.ai.analyzer': { en: 'AI Analyzer', bn: 'AI অ্যানালাইজার' },
+  // Website Setup
+  'admin.websiteSetup': { en: 'Website Setup', bn: 'ওয়েবসাইট সেটআপ' },
+  'admin.websiteSetup.menuManager': { en: 'Menu Manager', bn: 'মেনু ম্যানেজার' },
+  'admin.websiteSetup.homepage': { en: 'Select Homepage', bn: 'হোমপেজ নির্বাচন' },
+  'admin.websiteSetup.homepageSettings': { en: 'Homepage Settings', bn: 'হোমপেজ সেটিংস' },
+  'admin.websiteSetup.font': { en: 'Font Family', bn: 'ফন্ট ফ্যামিলি' },
+  'admin.websiteSetup.auth': { en: 'Auth Layout', bn: 'অথ লেআউট' },
+  'admin.websiteSetup.header': { en: 'Select Header', bn: 'হেডার নির্বাচন' },
+  'admin.websiteSetup.headerSettings': { en: 'Header Settings', bn: 'হেডার সেটিংস' },
+  'admin.websiteSetup.topbar': { en: 'Top Bar', bn: 'টপ বার' },
+  'admin.websiteSetup.footer': { en: 'Footer', bn: 'ফুটার' },
+  'admin.websiteSetup.pages': { en: 'Pages', bn: 'পেজ' },
+  'admin.websiteSetup.appearance': { en: 'Appearance', bn: 'অ্যাপিয়ারেন্স' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

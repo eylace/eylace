@@ -6,6 +6,7 @@ import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { DealsSection } from '@/components/home/DealsSection';
 import { PromoBanners } from '@/components/home/PromoBanners';
 import { SmartBar } from '@/components/home/SmartBar';
+import { BannerAdsSection } from '@/components/home/BannerAdsSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
@@ -20,6 +21,7 @@ const Index = () => {
       {setup.homepageFeaturedCategories && <CategoriesSection />}
       {setup.homepageFlashSale && <FlashSaleSection />}
       {setup.homepagePromoBanners && <PromoBanners />}
+      <BannerAdsSection />
       {setup.homepageDeals && <DealsSection />}
 
       {setup.homepageBestSellers && (

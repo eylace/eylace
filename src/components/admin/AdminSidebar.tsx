@@ -138,6 +138,7 @@ export function AdminSidebar() {
   ];
 
   const websiteSetupItems: NavItem[] = [
+    { titleKey: 'admin.websiteSetup.menuManager' as TranslationKey, url: '/admin/menu-manager', icon: LayoutList },
     { titleKey: 'admin.websiteSetup.homepage' as TranslationKey, url: '/admin/website-setup?tab=homepage', icon: Home },
     { titleKey: 'admin.websiteSetup.homepageSettings' as TranslationKey, url: '/admin/website-setup?tab=homepage-settings', icon: LayoutTemplate },
     { titleKey: 'admin.websiteSetup.font' as TranslationKey, url: '/admin/website-setup?tab=font', icon: Type },
