@@ -1,5 +1,5 @@
 import { Navigate, Link, useLocation } from 'react-router-dom';
-import { Loader2, ShieldAlert, Globe, ClipboardList, SlidersHorizontal, Plus } from 'lucide-react';
+import { Loader2, ShieldAlert, Globe, ClipboardList, SlidersHorizontal, Plus, Trash2 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminNotificationBell } from './AdminNotificationBell';
@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import type { TranslationKey } from '@/i18n/translations';
 
 interface AdminLayoutProps {
@@ -28,12 +29,6 @@ const quickNavTabs = [
   { label: 'Homepage Settings', path: '/admin/website-setup' },
 ];
 
-const iconButtons = [
-  { icon: Globe, path: '/', title: 'View Storefront', external: true },
-  { icon: ClipboardList, path: '/admin/reports', title: 'Reports' },
-  { icon: SlidersHorizontal, path: '/admin/settings', title: 'Settings' },
-];
-
 export const AdminLayout = ({ children, titleKey, descriptionKey, title, description }: AdminLayoutProps) => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminCheck();
@@ -46,6 +41,19 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
   const isTabActive = (path: string, exact?: boolean) => {
     if (exact) return location.pathname === path;
     return location.pathname.startsWith(path);
+  };
+
+  const handleClearCache = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      });
+    }
+    localStorage.setItem('eylace-lang', 'en');
+    toast.success('Cache cleared successfully! Reloading...', { duration: 1500 });
+    setTimeout(() => window.location.reload(), 1500);
   };
 
   if (authLoading || adminLoading) {
@@ -97,40 +105,63 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
                 <AdminNotificationBell />
               </div>
             </div>
+
             {/* Quick navigation strip */}
-            <div className="h-10 flex items-center gap-1 px-2 md:px-4 border-t border-border/50 bg-muted/30 overflow-x-auto scrollbar-none">
-              {/* Icon buttons */}
-              <div className="flex items-center gap-0.5 shrink-0 mr-2">
-                {iconButtons.map(({ icon: Icon, path, title: btnTitle, external }) => (
-                  <Link
-                    key={path}
-                    to={path}
-                    {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    title={btnTitle}
-                    className={cn(
-                      "inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors",
-                      !external && isTabActive(path) && "text-foreground bg-accent/50"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </Link>
-                ))}
+            <div className="h-10 flex items-center gap-1.5 px-2 md:px-4 border-t border-border/50 bg-muted/30 overflow-x-auto scrollbar-none">
+              {/* Icon buttons group */}
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Link
+                  to="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="View Storefront"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors"
+                >
+                  <Globe className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/admin/reports"
+                  title="Reports"
+                  className={cn(
+                    "inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors",
+                    isTabActive('/admin/reports') && "text-accent bg-accent/10"
+                  )}
+                >
+                  <ClipboardList className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/admin/settings"
+                  title="Settings"
+                  className={cn(
+                    "inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors",
+                    isTabActive('/admin/settings') && "text-accent bg-accent/10"
+                  )}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                </Link>
+                <button
+                  onClick={handleClearCache}
+                  title="Clear Cache"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
 
               {/* Separator */}
-              <div className="w-px h-5 bg-border shrink-0" />
+              <div className="w-px h-5 bg-border shrink-0 mx-1" />
 
               {/* Navigation tabs */}
-              <nav className="flex items-center gap-0.5 mx-2 shrink-0">
+              <nav className="flex items-center gap-1 shrink-0">
                 {quickNavTabs.map(({ label, path, exact }) => (
                   <Link
                     key={path}
                     to={path}
                     className={cn(
-                      "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors",
+                      "inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors",
                       isTabActive(path, exact)
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        ? "bg-accent text-accent-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent/10"
                     )}
                   >
                     {label}
@@ -138,16 +169,15 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
                 ))}
               </nav>
 
-              {/* Separator */}
-              <div className="w-px h-5 bg-border shrink-0" />
-
               {/* Add New button */}
-              <Link to="/admin/products/add" className="shrink-0 ml-1">
-                <Button size="sm" variant="accent" className="h-7 text-xs gap-1 px-2.5">
-                  <Plus className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Add New</span>
-                </Button>
-              </Link>
+              <div className="ml-auto shrink-0">
+                <Link to="/admin/products/add">
+                  <Button size="sm" variant="accent" className="h-7 text-xs gap-1 px-3 rounded-md">
+                    <Plus className="h-3.5 w-3.5" />
+                    Add New
+                  </Button>
+                </Link>
+              </div>
             </div>
           </header>
           <main className="flex-1 p-3 md:p-6 overflow-auto">
