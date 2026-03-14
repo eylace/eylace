@@ -129,15 +129,15 @@
        setError(null);
  
        try {
-         const { data, error: fetchError } = await supabase
-           .from('products')
-           .select(`
-             *,
-             category:categories(*),
-             seller:sellers(*)
-           `)
-           .eq('slug', slug)
-           .single();
+          const { data, error: fetchError } = await supabase
+            .from('products_public')
+            .select(`
+              *,
+              category:categories(*),
+              seller:sellers(*)
+            `)
+            .eq('slug', slug)
+            .single();
  
          if (fetchError) throw fetchError;
          setProduct(data);
