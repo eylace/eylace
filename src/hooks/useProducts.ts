@@ -21,7 +21,8 @@
    flash_sale_ends: string | null;
    is_prime: boolean | null;
    is_free_shipping: boolean | null;
-   is_active: boolean | null;
+  is_active: boolean | null;
+  is_digital: boolean | null;
    created_at: string;
    updated_at: string;
    category?: DBCategory | null;
@@ -64,14 +65,14 @@
      setError(null);
  
      try {
-       let query = supabase
-         .from('products')
-         .select(`
-           *,
-           category:categories(*),
-           seller:sellers(*)
-         `)
-         .eq('is_active', true);
+        let query = supabase
+          .from('products_public')
+          .select(`
+            *,
+            category:categories(*),
+            seller:sellers(*)
+          `)
+          .eq('is_active', true);
  
        if (options.categorySlug) {
          const { data: category } = await supabase
@@ -129,15 +130,15 @@
        setError(null);
  
        try {
-         const { data, error: fetchError } = await supabase
-           .from('products')
-           .select(`
-             *,
-             category:categories(*),
-             seller:sellers(*)
-           `)
-           .eq('slug', slug)
-           .single();
+          const { data, error: fetchError } = await supabase
+            .from('products_public')
+            .select(`
+              *,
+              category:categories(*),
+              seller:sellers(*)
+            `)
+            .eq('slug', slug)
+            .single();
  
          if (fetchError) throw fetchError;
          setProduct(data);

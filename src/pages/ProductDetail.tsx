@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   Star, 
@@ -12,10 +12,11 @@ import {
   Check,
   MessageCircle,
   ChevronRight,
-  Package,
-  Store,
-  GitCompareArrows
-} from 'lucide-react';
+   Package,
+   Store,
+   GitCompareArrows,
+   Download
+ } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
  import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ import { ReviewsSection } from '@/components/products/ReviewsSection';
 import { ProductCard } from '@/components/products/ProductCard';
  import { useProduct, useProducts } from '@/hooks/useProducts';
  import { adaptDBProduct, adaptDBProducts } from '@/lib/productAdapter';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
@@ -50,7 +52,29 @@ const ProductDetail = () => {
    
    const product = dbProduct ? adaptDBProduct(dbProduct) : null;
    const relatedProducts = adaptDBProducts(relatedDbProducts);
- 
+
+   const handleDigitalDownload = useCallback(async () => {
+     if (!user) {
+       toast.error('Please log in to download');
+       return;
+     }
+     if (!product) return;
+     try {
+       const { data, error } = await supabase.functions.invoke('get-digital-download', {
+         body: { product_id: product.id },
+       });
+       if (error) throw error;
+       if (data?.download_url) {
+         window.open(data.download_url, '_blank');
+         toast.success('Download started!');
+       } else {
+         toast.error(data?.error || 'Download not available');
+       }
+     } catch (err: any) {
+       toast.error(err?.message || 'You need to purchase this product first');
+     }
+   }, [user, product]);
+
    if (isLoading) {
      return (
        <Layout>
@@ -106,11 +130,12 @@ const ProductDetail = () => {
     window.location.href = '/checkout';
   };
 
-  const handleBookNow = () => {
-    toast.info('Product added to your booking', {
-      description: 'You will be notified when available',
-    });
-  };
+   const handleBookNow = () => {
+     toast.info('Product added to your booking', {
+       description: 'You will be notified when available',
+     });
+   };
+
 
   return (
     <Layout>
@@ -283,7 +308,20 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Secondary Actions */}
+               {/* Digital Download Button */}
+               {product.isDigital && user && (
+                 <Button 
+                   variant="outline" 
+                   size="xl" 
+                   className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                   onClick={handleDigitalDownload}
+                 >
+                   <Download className="h-5 w-5 mr-2" />
+                   Download Digital Product
+                 </Button>
+               )}
+
+               {/* Secondary Actions */}
               <div className="flex gap-3">
                 <Button 
                   variant="ghost" 
