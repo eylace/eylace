@@ -32,3 +32,6 @@ project_id = "jmowninkqcfgwldyjeqo"
 
  [functions.ai-chat]
  verify_jwt = false
+
+ [functions.facebook-messenger-webhook]
+ verify_jwt = false
