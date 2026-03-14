@@ -69,6 +69,7 @@ export function AdminSidebar() {
   const mainItems = [
     { titleKey: 'admin.dashboard' as TranslationKey, url: '/admin', icon: LayoutDashboard },
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
+    { titleKey: 'admin.aiAnalyzer' as TranslationKey, url: '/admin/ai-analyzer', icon: Brain },
   ];
 
   const sellerItems: NavItem[] = [
