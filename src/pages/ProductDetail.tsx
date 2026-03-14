@@ -52,7 +52,29 @@ const ProductDetail = () => {
    
    const product = dbProduct ? adaptDBProduct(dbProduct) : null;
    const relatedProducts = adaptDBProducts(relatedDbProducts);
- 
+
+   const handleDigitalDownload = useCallback(async () => {
+     if (!user) {
+       toast.error('Please log in to download');
+       return;
+     }
+     if (!product) return;
+     try {
+       const { data, error } = await supabase.functions.invoke('get-digital-download', {
+         body: { product_id: product.id },
+       });
+       if (error) throw error;
+       if (data?.download_url) {
+         window.open(data.download_url, '_blank');
+         toast.success('Download started!');
+       } else {
+         toast.error(data?.error || 'Download not available');
+       }
+     } catch (err: any) {
+       toast.error(err?.message || 'You need to purchase this product first');
+     }
+   }, [user, product]);
+
    if (isLoading) {
      return (
        <Layout>
