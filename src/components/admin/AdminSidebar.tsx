@@ -66,10 +66,14 @@ export function AdminSidebar() {
     { titleKey: 'admin.reviews', url: '/admin/reviews', icon: MessageSquare },
   ];
 
+  const aiItems: NavItem[] = [
+    { titleKey: 'admin.ai.settings', url: '/admin/ai-settings', icon: Settings },
+    { titleKey: 'admin.ai.analyzer', url: '/admin/ai-analyzer', icon: BarChart3 },
+  ];
+
   const mainItems = [
     { titleKey: 'admin.dashboard' as TranslationKey, url: '/admin', icon: LayoutDashboard },
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
-    { titleKey: 'admin.aiAnalyzer' as TranslationKey, url: '/admin/ai-analyzer', icon: Brain },
   ];
 
   const sellerItems: NavItem[] = [
@@ -225,6 +229,44 @@ export function AdminSidebar() {
 
       <SidebarContent className="overflow-y-auto">
         {renderGroup('admin.group.main', mainItems)}
+
+        {/* AI Automation Section */}
+        <SidebarGroup>
+          <Collapsible open={openSections.has('ai')} onOpenChange={() => toggleSection('ai')}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+                <span className="flex items-center gap-1.5">
+                  <Brain className="h-3.5 w-3.5" />
+                  {t('admin.ai.section' as TranslationKey)}
+                </span>
+                {openSections.has('ai') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {aiItems.map((item) => {
+                    const title = t(item.titleKey as TranslationKey);
+                    return (
+                      <SidebarMenuItem key={item.titleKey}>
+                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                          <NavLink
+                            to={item.url}
+                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
+                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
+                          >
+                            <item.icon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{title}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
 
         {/* Products Section with Collapsible Sub-menu */}
         <SidebarGroup>

@@ -101,6 +101,7 @@ import AdminSystemServerStatus from "./pages/AdminSystemServerStatus";
 import AdminSystemSitemap from "./pages/AdminSystemSitemap";
 import AdminShippingProviders from "./pages/AdminShippingProviders";
 import AdminAIAnalyzer from "./pages/AdminAIAnalyzer";
+import AdminAISettings from "./pages/AdminAISettings";
 import { AIChatWidget } from "./components/chat/AIChatWidget";
 const queryClient = new QueryClient();
 
@@ -200,6 +201,7 @@ const App = () => (
                 <Route path="/admin/system/sitemap" element={<AdminSystemSitemap />} />
                 <Route path="/admin/shipping-providers" element={<AdminShippingProviders />} />
                 <Route path="/admin/ai-analyzer" element={<AdminAIAnalyzer />} />
+                <Route path="/admin/ai-settings" element={<AdminAISettings />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />

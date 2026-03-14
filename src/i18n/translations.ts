@@ -666,6 +666,10 @@ export const translations = {
   'admin.system.update': { en: 'Update', bn: 'আপডেট' },
   'admin.system.serverStatus': { en: 'Server Status', bn: 'সার্ভার স্ট্যাটাস' },
   'admin.system.sitemap': { en: 'Sitemap Generator', bn: 'সাইটম্যাপ জেনারেটর' },
+  // AI Section
+  'admin.ai.section': { en: 'AI Automation', bn: 'AI অটোমেশন' },
+  'admin.ai.settings': { en: 'AI Settings', bn: 'AI সেটিংস' },
+  'admin.ai.analyzer': { en: 'AI Analyzer', bn: 'AI অ্যানালাইজার' },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
