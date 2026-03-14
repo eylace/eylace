@@ -19,6 +19,7 @@ export interface Product {
   flashSaleEnds?: Date;
   isPrime?: boolean;
   isFreeShipping?: boolean;
+  isDigital?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
