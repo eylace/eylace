@@ -28,6 +28,7 @@ import { ReviewsSection } from '@/components/products/ReviewsSection';
 import { ProductCard } from '@/components/products/ProductCard';
  import { useProduct, useProducts } from '@/hooks/useProducts';
  import { adaptDBProduct, adaptDBProducts } from '@/lib/productAdapter';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
