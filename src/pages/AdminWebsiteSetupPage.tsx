@@ -17,8 +17,9 @@ import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
+import type { HeroBanner } from '@/hooks/useWebsiteSetup';
+
 interface WebsiteSetupState {
-  // Homepage
   selectedHomepage: string;
   homepageBannerEnabled: boolean;
   homepageFeaturedCategories: boolean;
@@ -30,18 +31,15 @@ interface WebsiteSetupState {
   homepageBrandsCarousel: boolean;
   homepageTestimonials: boolean;
   homepageSectionsOrder: string[];
-  // Font
   fontFamily: string;
   headingFont: string;
   fontSize: string;
-  // Auth
   authLayout: string;
   authBgImage: string;
   authShowSocialLogin: boolean;
   authShowRememberMe: boolean;
   authRequireEmailVerification: boolean;
   authAllowGuestCheckout: boolean;
-  // Header
   selectedHeader: string;
   headerStickyEnabled: boolean;
   headerSearchEnabled: boolean;
@@ -50,13 +48,11 @@ interface WebsiteSetupState {
   headerLanguageSwitcher: boolean;
   headerCurrencySwitcher: boolean;
   headerAnnouncementText: string;
-  // Top Bar
   topBarEnabled: boolean;
   topBarText: string;
   topBarBgColor: string;
   topBarTextColor: string;
   topBarLinks: { label: string; url: string }[];
-  // Footer
   footerStyle: string;
   footerAboutText: string;
   footerCopyright: string;
@@ -65,9 +61,7 @@ interface WebsiteSetupState {
   footerShowPaymentIcons: boolean;
   footerColumns: { title: string; links: { label: string; url: string }[] }[];
   footerSocialLinks: { platform: string; url: string }[];
-  // Pages (CMS)
   pages: { id: string; title: string; slug: string; content: string; isPublished: boolean; sortOrder: number }[];
-  // Appearance
   primaryColor: string;
   accentColor: string;
   borderRadius: string;
@@ -75,6 +69,7 @@ interface WebsiteSetupState {
   customCss: string;
   logoUrl: string;
   faviconUrl: string;
+  heroBanners: HeroBanner[];
 }
 
 const defaultSetup: WebsiteSetupState = {
