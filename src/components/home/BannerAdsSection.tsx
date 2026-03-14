@@ -11,7 +11,7 @@ export const BannerAdsSection = () => {
       const { data } = await supabase.from('system_settings').select('value').eq('key', 'marketing_ads_v1').maybeSingle();
       if (data?.value && Array.isArray(data.value)) {
         const now = new Date().toISOString().split('T')[0];
-        const active = (data.value as BannerAd[]).filter(ad => {
+        const active = (data.value as unknown as BannerAd[]).filter(ad => {
           if (!ad.isActive) return false;
           if (ad.placement !== 'homepage') return false;
           if (ad.startDate && ad.startDate > now) return false;

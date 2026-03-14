@@ -112,6 +112,7 @@ const defaults: WebsiteSetup = {
   customCss: '',
   logoUrl: '',
   faviconUrl: '',
+  heroBanners: [],
 };
 
 let cachedSetup: WebsiteSetup | null = null;

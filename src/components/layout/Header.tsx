@@ -200,15 +200,39 @@ export const Header = () => {
             <button className="flex items-center gap-2 text-sm font-medium hover:text-accent transition-colors whitespace-nowrap">
               <Menu className="h-4 w-4" />{t('nav.allCategories')}
             </button>
-            <Link to="/deals" className="text-sm hover:text-accent transition-colors whitespace-nowrap">{t('nav.todaysDeals')}</Link>
-            <Link to="/flash-sale" className="text-sm hover:text-accent transition-colors whitespace-nowrap flex items-center gap-1">
-              <span className="bg-accent text-accent-foreground text-xs px-1.5 py-0.5 rounded font-bold">⚡</span>
-              {t('nav.flashSale')}
-            </Link>
-            <Link to="/new-arrivals" className="text-sm hover:text-accent transition-colors whitespace-nowrap">{t('nav.newArrivals')}</Link>
-            <Link to="/best-sellers" className="text-sm hover:text-accent transition-colors whitespace-nowrap">{t('nav.bestSellers')}</Link>
-            <Link to="/sell" className="text-sm hover:text-accent transition-colors whitespace-nowrap">{t('nav.sellOnEylace')}</Link>
-            <Link to="/help" className="text-sm hover:text-accent transition-colors whitespace-nowrap">{t('nav.helpSupport')}</Link>
+            {menuItems.filter(m => m.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map(item => {
+              if (item.type === 'link') {
+                return (
+                  <Link key={item.id} to={item.url} className="text-sm hover:text-accent transition-colors whitespace-nowrap">
+                    {language === 'bn' && item.labelBn ? item.labelBn : item.label}
+                  </Link>
+                );
+              }
+              // dropdown or mega
+              return (
+                <div key={item.id} className="relative"
+                  onMouseEnter={() => setOpenDropdown(item.id)}
+                  onMouseLeave={() => setOpenDropdown(null)}
+                >
+                  <button className="text-sm hover:text-accent transition-colors whitespace-nowrap flex items-center gap-1">
+                    {language === 'bn' && item.labelBn ? item.labelBn : item.label}
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                  {openDropdown === item.id && item.children.length > 0 && (
+                    <div className={`absolute top-full left-0 mt-0 bg-card text-card-foreground rounded-lg shadow-lg border border-border py-2 animate-slide-down z-50 ${item.type === 'mega' ? 'w-[400px] grid grid-cols-2 gap-0' : 'w-48'}`}>
+                      {item.children.map(child => (
+                        <Link key={child.id} to={child.url}
+                          className="block px-4 py-2 text-sm hover:bg-secondary transition-colors"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          {language === 'bn' && child.labelBn ? child.labelBn : child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </nav>
