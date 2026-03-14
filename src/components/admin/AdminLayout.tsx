@@ -90,13 +90,51 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="sticky top-0 z-30 bg-card border-b-2 border-accent">
-            <div className="h-12 flex items-center px-3 gap-3 overflow-x-auto scrollbar-none">
+            {/* Mobile header */}
+            <div className="flex md:hidden items-center h-12 px-2 gap-2">
+              <SidebarTrigger className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors shrink-0" />
+              <Link to="/admin" className="flex items-center gap-1.5 shrink-0">
+                <div className="h-7 w-7 rounded-lg bg-accent flex items-center justify-center">
+                  <LayoutDashboard className="h-3.5 w-3.5 text-accent-foreground" />
+                </div>
+                <span className="font-bold text-sm text-foreground">Eylace</span>
+              </Link>
+              <div className="flex-1" />
+              <Link to="/admin/products/add" className="shrink-0">
+                <Button size="sm" variant="accent" className="h-7 text-[11px] gap-1 px-2 rounded-md">
+                  <Plus className="h-3 w-3" />
+                  Add New
+                </Button>
+              </Link>
+              <ThemeToggle />
+              <AdminNotificationBell />
+            </div>
+            {/* Mobile nav tabs */}
+            <div className="flex md:hidden items-center gap-1 px-2 pb-2 overflow-x-auto scrollbar-none">
+              {quickNavTabs.map(({ label, path, exact }) => (
+                <Link
+                  key={path}
+                  to={path}
+                  className={cn(
+                    "inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-medium whitespace-nowrap transition-colors",
+                    isTabActive(path, exact)
+                      ? "bg-accent text-accent-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/10"
+                  )}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Desktop header - single row */}
+            <div className="hidden md:flex items-center h-12 px-3 gap-3">
               {/* Logo */}
               <Link to="/admin" className="flex items-center gap-2 shrink-0">
                 <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
                   <LayoutDashboard className="h-4 w-4 text-accent-foreground" />
                 </div>
-                <div className="hidden sm:block">
+                <div>
                   <span className="font-bold text-sm text-foreground leading-none">Eylace</span>
                   <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Admin Panel</p>
                 </div>
