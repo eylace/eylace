@@ -26,12 +26,12 @@ export const AIChatWidget = () => {
     }
   }, [settingsLoading, settings.ai_chat_greeting, initialized]);
 
-  // If chat is disabled, don't render
-  if (settingsLoading || !settings.ai_chat_enabled) return null;
-
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
+
+  // If chat is disabled, don't render
+  if (settingsLoading || !settings.ai_chat_enabled) return null;
 
   const send = async () => {
     const text = input.trim();
