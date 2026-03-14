@@ -159,7 +159,64 @@ export const AdminDashboardOverview = () => {
         <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-full bg-[hsl(var(--rating))]/10 flex items-center justify-center"><Star className="h-5 w-5 text-[hsl(var(--rating))]" /></div><div><p className="text-xl font-bold">{stats?.totalReviews || 0}</p><p className="text-xs text-muted-foreground">{t('admin.totalReviews')}</p></div></CardContent></Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* AI Automation Section */}
+      <Card className="border border-border bg-gradient-to-r from-primary/5 to-accent/5">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              AI Automation Center
+              <Badge variant="secondary" className="text-[10px]">Smart</Badge>
+            </CardTitle>
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => navigate('/admin/ai-settings')}>
+              <Settings className="h-3.5 w-3.5" /> সেটিংস
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {[
+              { label: 'AI Search', desc: 'স্মার্ট সার্চ', icon: Search, enabled: aiSettings.ai_search_enabled, route: '/admin/ai-settings' },
+              { label: 'AI Chat', desc: 'লাইভ চ্যাট বট', icon: Bot, enabled: aiSettings.ai_chat_enabled, route: '/admin/ai-settings' },
+              { label: 'AI Writer', desc: 'ডেসক্রিপশন', icon: FileText, enabled: aiSettings.ai_description_enabled, route: '/admin/ai-settings' },
+              { label: 'AI Analyzer', desc: 'সেলস রিপোর্ট', icon: BarChart3, enabled: aiSettings.ai_analyzer_enabled, route: '/admin/ai-analyzer' },
+              { label: 'Messenger', desc: 'FB ইন্টিগ্রেশন', icon: Facebook, enabled: aiSettings.fb_messenger_enabled, route: '/admin/ai-settings' },
+            ].map((item) => (
+              <div
+                key={item.label}
+                onClick={() => navigate(item.route)}
+                className={`relative cursor-pointer rounded-xl border p-3 transition-all hover:shadow-md ${
+                  item.enabled
+                    ? 'border-primary/30 bg-card hover:border-primary/50'
+                    : 'border-border bg-card/50 hover:border-border'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
+                    item.enabled ? 'bg-primary/10' : 'bg-muted'
+                  }`}>
+                    <item.icon className={`h-4 w-4 ${item.enabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                  </div>
+                  {item.enabled ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--success))] ml-auto" />
+                  ) : (
+                    <XCircle className="h-3.5 w-3.5 text-muted-foreground/50 ml-auto" />
+                  )}
+                </div>
+                <p className="text-xs font-semibold">{item.label}</p>
+                <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+                <Badge
+                  variant={item.enabled ? 'default' : 'secondary'}
+                  className="mt-1.5 text-[9px] px-1.5 py-0"
+                >
+                  {item.enabled ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
         <Card className="lg:col-span-2 border border-border">
           <CardHeader className="pb-2"><CardTitle className="text-base font-semibold flex items-center gap-2"><BarChart3 className="h-4 w-4 text-accent" />{t('admin.revenueOverview')}</CardTitle></CardHeader>
           <CardContent>
