@@ -129,19 +129,8 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
 
             {/* Desktop header - single row */}
             <div className="hidden md:flex items-center h-12 px-3 gap-3">
-              {/* Logo */}
-              <Link to="/admin" className="flex items-center gap-2 shrink-0">
-                <div className="h-8 w-8 rounded-lg bg-accent flex items-center justify-center">
-                  <LayoutDashboard className="h-4 w-4 text-accent-foreground" />
-                </div>
-                <div>
-                  <span className="font-bold text-sm text-foreground leading-none">Eylace</span>
-                  <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Admin Panel</p>
-                </div>
-              </Link>
 
-              {/* Separator */}
-              <div className="w-px h-6 bg-border shrink-0" />
+              {/* Icon buttons */}
 
               {/* Icon buttons */}
               <div className="flex items-center gap-0.5 shrink-0">
