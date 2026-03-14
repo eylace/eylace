@@ -33,6 +33,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
