@@ -58,6 +58,7 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!product?.id;
