@@ -198,7 +198,35 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
           </div>
 
           <div>
-            <Label>Description</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label>Description</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1 h-7 text-xs"
+                disabled={aiGenerating || !form.name}
+                onClick={async () => {
+                  setAiGenerating(true);
+                  try {
+                    const categoryName = categories.find(c => c.id === form.category_id)?.name;
+                    const { data, error } = await supabase.functions.invoke('ai-generate-description', {
+                      body: { productName: form.name, category: categoryName, price: form.price }
+                    });
+                    if (error) throw error;
+                    if (data?.error) throw new Error(data.error);
+                    setForm(f => ({ ...f, description: data.description }));
+                    toast.success('AI Description generated!');
+                  } catch (e: any) {
+                    toast.error(e.message || 'AI generation failed');
+                  }
+                  setAiGenerating(false);
+                }}
+              >
+                {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                AI Generate
+              </Button>
+            </div>
             <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Product description..." rows={3} />
           </div>
 
