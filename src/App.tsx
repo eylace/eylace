@@ -216,6 +216,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <AIChatWidget />
+              <TrackingScriptInjector />
             </BrowserRouter>
           </TooltipProvider>
           </CompareProvider>
