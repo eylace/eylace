@@ -987,6 +987,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "preorder_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       preorder_queries: {
@@ -1876,7 +1883,129 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      products_public: {
+        Row: {
+          attributes: Json | null
+          brand_id: string | null
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          discount: number | null
+          flash_sale_ends: string | null
+          id: string | null
+          images: string[] | null
+          is_active: boolean | null
+          is_digital: boolean | null
+          is_flash_sale: boolean | null
+          is_free_shipping: boolean | null
+          is_prime: boolean | null
+          label_id: string | null
+          name: string | null
+          original_price: number | null
+          price: number | null
+          rating: number | null
+          review_count: number | null
+          seller_id: string | null
+          slug: string | null
+          stock: number | null
+          updated_at: string | null
+          variations: Json | null
+          warranty_id: string | null
+        }
+        Insert: {
+          attributes?: Json | null
+          brand_id?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount?: number | null
+          flash_sale_ends?: string | null
+          id?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          is_digital?: boolean | null
+          is_flash_sale?: boolean | null
+          is_free_shipping?: boolean | null
+          is_prime?: boolean | null
+          label_id?: string | null
+          name?: string | null
+          original_price?: number | null
+          price?: number | null
+          rating?: number | null
+          review_count?: number | null
+          seller_id?: string | null
+          slug?: string | null
+          stock?: number | null
+          updated_at?: string | null
+          variations?: Json | null
+          warranty_id?: string | null
+        }
+        Update: {
+          attributes?: Json | null
+          brand_id?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          discount?: number | null
+          flash_sale_ends?: string | null
+          id?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          is_digital?: boolean | null
+          is_flash_sale?: boolean | null
+          is_free_shipping?: boolean | null
+          is_prime?: boolean | null
+          label_id?: string | null
+          name?: string | null
+          original_price?: number | null
+          price?: number | null
+          rating?: number | null
+          review_count?: number | null
+          seller_id?: string | null
+          slug?: string | null
+          stock?: number | null
+          updated_at?: string | null
+          variations?: Json | null
+          warranty_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "product_labels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_warranty_id_fkey"
+            columns: ["warranty_id"]
+            isOneToOne: false
+            referencedRelation: "warranties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
