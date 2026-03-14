@@ -204,6 +204,7 @@ const App = () => (
                 <Route path="/admin/shipping-providers" element={<AdminShippingProviders />} />
                 <Route path="/admin/ai-analyzer" element={<AdminAIAnalyzer />} />
                 <Route path="/admin/ai-settings" element={<AdminAISettings />} />
+                <Route path="/admin/tracking" element={<AdminTrackingAnalytics />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
