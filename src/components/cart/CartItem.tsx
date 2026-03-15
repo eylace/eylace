@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { QuantitySelector } from '@/components/products/QuantitySelector';
 import { CartItem as CartItemType } from '@/types';
 import { useCart } from '@/contexts/CartContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { cn } from '@/lib/utils';
 
 interface CartItemProps {
