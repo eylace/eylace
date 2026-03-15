@@ -14,6 +14,7 @@ interface CartItemProps {
 
 export const CartItemComponent = ({ item }: CartItemProps) => {
   const { updateQuantity, removeItem } = useCart();
+  const { formatPrice } = useCurrency();
   const { product, quantity, selectedVariations } = item;
   
   const hasDiscount = product.discount && product.discount > 0;
