@@ -14,6 +14,7 @@ interface CartSummaryProps {
 
 export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => {
   const { getSubtotal, getShipping, getTax, getTotal, getItemCount } = useCart();
+  const { formatPrice } = useCurrency();
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
 
