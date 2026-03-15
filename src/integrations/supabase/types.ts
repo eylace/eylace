@@ -822,6 +822,13 @@ export type Database = {
             referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "preorder_commissions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       preorder_conversations: {
@@ -865,6 +872,13 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preorder_conversations_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1356,6 +1370,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "products_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "products_warranty_id_fkey"
             columns: ["warranty_id"]
             isOneToOne: false
@@ -1586,6 +1607,13 @@ export type Database = {
             referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "seller_commission_config_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       seller_packages: {
@@ -1681,6 +1709,13 @@ export type Database = {
             referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "seller_payout_requests_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       seller_payouts: {
@@ -1723,6 +1758,13 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_payouts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2047,6 +2089,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "products_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "products_warranty_id_fkey"
             columns: ["warranty_id"]
             isOneToOne: false
@@ -2054,6 +2103,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sellers_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          is_verified: boolean | null
+          logo: string | null
+          name: string | null
+          rating: number | null
+          slug: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          logo?: string | null
+          name?: string | null
+          rating?: number | null
+          slug?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          logo?: string | null
+          name?: string | null
+          rating?: number | null
+          slug?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -2067,6 +2146,21 @@ export type Database = {
       is_owner_of_order: { Args: { order_id: string }; Returns: boolean }
       is_owner_of_order_tracking: {
         Args: { tracking_order_id: string }
+        Returns: boolean
+      }
+      seller_safe_update: {
+        Args: { _logo?: string; _name?: string; _slug?: string }
+        Returns: undefined
+      }
+      user_cancel_order: { Args: { _order_id: string }; Returns: boolean }
+      user_update_review: {
+        Args: {
+          _content?: string
+          _images?: string[]
+          _rating?: number
+          _review_id: string
+          _title?: string
+        }
         Returns: boolean
       }
     }
