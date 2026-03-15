@@ -1,0 +1,68 @@
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+const CURRENCY_FLAGS: Record<string, string> = {
+  BDT: '🇧🇩',
+  USD: '🇺🇸',
+  EUR: '🇪🇺',
+  GBP: '🇬🇧',
+  INR: '🇮🇳',
+  AED: '🇦🇪',
+};
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  BDT: '৳',
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  INR: '₹',
+  AED: 'د.إ',
+};
+
+export const CurrencySwitcher = () => {
+  const { currency, setCurrency, config, rates, lastUpdated } = useCurrency();
+
+  const enabledCurrencies = config.enabledCurrencies.length > 0 
+    ? config.enabledCurrencies 
+    : ['BDT', 'USD'];
+
+  if (enabledCurrencies.length <= 1) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-primary-foreground/10 transition-colors outline-none">
+        <span className="text-lg">{CURRENCY_FLAGS[currency] || '💱'}</span>
+        <span className="text-sm font-medium">{CURRENCY_SYMBOLS[currency]}{currency}</span>
+        <ChevronDown className="h-3 w-3" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[160px]">
+        {enabledCurrencies.map((code) => (
+          <DropdownMenuItem
+            key={code}
+            onClick={() => setCurrency(code)}
+            className={currency === code ? 'bg-accent/10 font-semibold' : ''}
+          >
+            <span className="text-lg mr-2">{CURRENCY_FLAGS[code] || '💱'}</span>
+            <span>{CURRENCY_SYMBOLS[code]} {code}</span>
+            {rates[code] && code !== 'USD' && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                1$ = {rates[code]?.toFixed(2)}
+              </span>
+            )}
+          </DropdownMenuItem>
+        ))}
+        {lastUpdated && (
+          <div className="px-2 py-1 text-[10px] text-muted-foreground border-t border-border mt-1">
+            Rate updated: {new Date(lastUpdated).toLocaleTimeString()}
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
