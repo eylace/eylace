@@ -44,14 +44,31 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
   };
 
   const handleClearCache = () => {
+    // Preserve auth-related keys to prevent logout
+    const preserveKeys: Record<string, string | null> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+        preserveKeys[key] = localStorage.getItem(key);
+      }
+    }
+    const lang = localStorage.getItem('eylace-lang');
+
     localStorage.clear();
     sessionStorage.clear();
+
+    // Restore auth keys
+    Object.entries(preserveKeys).forEach(([key, value]) => {
+      if (value) localStorage.setItem(key, value);
+    });
+    localStorage.setItem('eylace-lang', lang || 'en');
+
     if ('caches' in window) {
       caches.keys().then(names => {
         names.forEach(name => caches.delete(name));
       });
     }
-    localStorage.setItem('eylace-lang', 'en');
+
     toast.success('Cache cleared successfully! Reloading...', { duration: 1500 });
     setTimeout(() => window.location.reload(), 1500);
   };
