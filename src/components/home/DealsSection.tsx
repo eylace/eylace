@@ -3,6 +3,7 @@ import { Percent, ChevronRight, Loader2 } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { adaptDBProducts } from '@/lib/productAdapter';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export const DealsSection = () => {
   const { products: dbProducts, isLoading } = useProducts({ limit: 8 });
