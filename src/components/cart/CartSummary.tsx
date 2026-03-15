@@ -109,7 +109,7 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
         <div className="flex justify-between">
           <span className="text-lg font-bold text-foreground">Total</span>
           <span className="text-xl font-bold text-foreground">
-            ${(appliedPromo ? total * 0.9 : total).toFixed(2)}
+            {formatPrice(appliedPromo ? total * 0.9 : total)}
           </span>
         </div>
       </div>
