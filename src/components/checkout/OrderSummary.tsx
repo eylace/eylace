@@ -35,7 +35,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
           Order Summary ({itemCount} {itemCount === 1 ? 'item' : 'items'})
         </span>
         <div className="flex items-center gap-2">
-          <span className="font-bold text-foreground">${total.toFixed(2)}</span>
+          <span className="font-bold text-foreground">{formatPrice(total)}</span>
           <span className="lg:hidden">
             {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </span>
