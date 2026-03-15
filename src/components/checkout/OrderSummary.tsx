@@ -15,6 +15,7 @@ interface OrderSummaryProps {
 
 export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProps) => {
   const { items, getSubtotal, getShipping, getTax, getTotal, getItemCount } = useCart();
+  const { formatPrice } = useCurrency();
   const [isExpanded, setIsExpanded] = useState(true);
 
   const subtotal = getSubtotal();
