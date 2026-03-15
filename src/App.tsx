@@ -255,6 +255,7 @@ const App = () => (
         </WishlistProvider>
       </CartProvider>
     </AuthProvider>
+    </CurrencyProvider>
     </LanguageProvider>
   </QueryClientProvider>
 );
