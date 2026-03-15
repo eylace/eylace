@@ -5,6 +5,7 @@ import { AdminSidebar } from './AdminSidebar';
 import { AdminNotificationBell } from './AdminNotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 import { AdminLanguageSwitcher } from './AdminLanguageSwitcher';
+import { AdminProfileMenu } from './AdminProfileMenu';
 import { useAdminCheck } from '@/hooks/useAdminData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
