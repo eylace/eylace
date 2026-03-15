@@ -88,7 +88,7 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
           {shipping === 0 ? (
             <span className="font-medium text-success">FREE</span>
           ) : (
-            <span className="font-medium text-foreground">${shipping.toFixed(2)}</span>
+            <span className="font-medium text-foreground">{formatPrice(shipping)}</span>
           )}
         </div>
 
