@@ -104,7 +104,7 @@ export const CartItemComponent = ({ item }: CartItemProps) => {
             )}
             {savings > 0 && (
               <p className="text-xs text-success mt-1">
-                You save: ${savings.toFixed(2)}
+                You save: {formatPrice(savings)}
               </p>
             )}
           </div>
