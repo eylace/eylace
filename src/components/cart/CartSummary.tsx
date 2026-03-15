@@ -100,7 +100,7 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
         {appliedPromo && (
           <div className="flex justify-between text-sm text-success">
             <span>Promo Discount</span>
-            <span>-${(subtotal * 0.1).toFixed(2)}</span>
+            <span>-{formatPrice(subtotal * 0.1)}</span>
           </div>
         )}
 
