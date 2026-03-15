@@ -108,10 +108,6 @@ export const Header = () => {
               </div>
               )}
 
-              {/* Currency Switcher */}
-              <div className="hidden lg:flex items-center">
-                <CurrencySwitcher />
-              </div>
 
               {loading ? (
                 <div className="hidden md:block h-5 w-20 bg-primary-foreground/20 rounded animate-pulse" />
