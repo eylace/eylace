@@ -19,6 +19,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { SearchModal } from '@/components/search/SearchModal';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
+import { CurrencySwitcher } from '@/components/currency/CurrencySwitcher';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
