@@ -89,11 +89,11 @@ export const CartItemComponent = ({ item }: CartItemProps) => {
           <div className="text-right shrink-0">
             <div className="flex items-baseline gap-2 md:justify-end">
               <span className="text-lg font-bold text-foreground">
-                ${(product.price * quantity).toFixed(2)}
+                {formatPrice(product.price * quantity)}
               </span>
               {hasDiscount && product.originalPrice && (
                 <span className="text-sm text-muted-foreground line-through">
-                  ${(product.originalPrice * quantity).toFixed(2)}
+                  {formatPrice(product.originalPrice * quantity)}
                 </span>
               )}
             </div>
