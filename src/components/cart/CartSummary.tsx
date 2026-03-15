@@ -94,7 +94,7 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
 
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Estimated Tax</span>
-          <span className="font-medium text-foreground">${tax.toFixed(2)}</span>
+          <span className="font-medium text-foreground">{formatPrice(tax)}</span>
         </div>
 
         {appliedPromo && (
