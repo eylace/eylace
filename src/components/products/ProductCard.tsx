@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompare } from '@/contexts/CompareContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface ProductCardProps {
   product: Product;
