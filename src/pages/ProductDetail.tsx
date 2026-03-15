@@ -47,6 +47,7 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
+  const { formatPrice } = useCurrency();
    
    const { product: dbProduct, isLoading, error } = useProduct(slug || '');
    const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
