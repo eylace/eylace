@@ -108,10 +108,6 @@ export const Header = () => {
               </div>
               )}
 
-              {/* Currency Switcher */}
-              <div className="hidden lg:flex items-center">
-                <CurrencySwitcher />
-              </div>
 
               {loading ? (
                 <div className="hidden md:block h-5 w-20 bg-primary-foreground/20 rounded animate-pulse" />
@@ -202,43 +198,47 @@ export const Header = () => {
 
       <nav className="bg-primary/90 text-primary-foreground border-t border-primary-foreground/10">
         <div className="container-main">
-          <div className="flex items-center gap-6 h-10 overflow-x-auto scrollbar-hide">
-            <button className="flex items-center gap-2 text-sm font-medium hover:text-accent transition-colors whitespace-nowrap">
-              <Menu className="h-4 w-4" />{t('nav.allCategories')}
-            </button>
-            {menuItems.filter(m => m.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map(item => {
-              if (item.type === 'link') {
+          <div className="flex items-center justify-between h-10">
+            <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide">
+              <button className="flex items-center gap-2 text-sm font-medium hover:text-accent transition-colors whitespace-nowrap">
+                <Menu className="h-4 w-4" />{t('nav.allCategories')}
+              </button>
+              {menuItems.filter(m => m.isActive).sort((a, b) => a.sortOrder - b.sortOrder).map(item => {
+                if (item.type === 'link') {
+                  return (
+                    <Link key={item.id} to={item.url} className="text-sm hover:text-accent transition-colors whitespace-nowrap">
+                      {language === 'bn' && item.labelBn ? item.labelBn : item.label}
+                    </Link>
+                  );
+                }
                 return (
-                  <Link key={item.id} to={item.url} className="text-sm hover:text-accent transition-colors whitespace-nowrap">
-                    {language === 'bn' && item.labelBn ? item.labelBn : item.label}
-                  </Link>
+                  <div key={item.id} className="relative"
+                    onMouseEnter={() => setOpenDropdown(item.id)}
+                    onMouseLeave={() => setOpenDropdown(null)}
+                  >
+                    <button className="text-sm hover:text-accent transition-colors whitespace-nowrap flex items-center gap-1">
+                      {language === 'bn' && item.labelBn ? item.labelBn : item.label}
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                    {openDropdown === item.id && item.children.length > 0 && (
+                      <div className={`absolute top-full left-0 mt-0 bg-card text-card-foreground rounded-lg shadow-lg border border-border py-2 animate-slide-down z-50 ${item.type === 'mega' ? 'w-[400px] grid grid-cols-2 gap-0' : 'w-48'}`}>
+                        {item.children.map(child => (
+                          <Link key={child.id} to={child.url}
+                            className="block px-4 py-2 text-sm hover:bg-secondary transition-colors"
+                            onClick={() => setOpenDropdown(null)}
+                          >
+                            {language === 'bn' && child.labelBn ? child.labelBn : child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
-              }
-              // dropdown or mega
-              return (
-                <div key={item.id} className="relative"
-                  onMouseEnter={() => setOpenDropdown(item.id)}
-                  onMouseLeave={() => setOpenDropdown(null)}
-                >
-                  <button className="text-sm hover:text-accent transition-colors whitespace-nowrap flex items-center gap-1">
-                    {language === 'bn' && item.labelBn ? item.labelBn : item.label}
-                    <ChevronDown className="h-3 w-3" />
-                  </button>
-                  {openDropdown === item.id && item.children.length > 0 && (
-                    <div className={`absolute top-full left-0 mt-0 bg-card text-card-foreground rounded-lg shadow-lg border border-border py-2 animate-slide-down z-50 ${item.type === 'mega' ? 'w-[400px] grid grid-cols-2 gap-0' : 'w-48'}`}>
-                      {item.children.map(child => (
-                        <Link key={child.id} to={child.url}
-                          className="block px-4 py-2 text-sm hover:bg-secondary transition-colors"
-                          onClick={() => setOpenDropdown(null)}
-                        >
-                          {language === 'bn' && child.labelBn ? child.labelBn : child.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+              })}
+            </div>
+            <div className="flex-shrink-0 ml-4">
+              <CurrencySwitcher />
+            </div>
           </div>
         </div>
       </nav>
