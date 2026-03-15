@@ -1981,6 +1981,44 @@ export type Database = {
       }
     }
     Views: {
+      preorder_reviews_public: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string | null
+          images: string[] | null
+          preorder_product_id: string | null
+          rating: number | null
+          title: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          images?: string[] | null
+          preorder_product_id?: string | null
+          rating?: number | null
+          title?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          images?: string[] | null
+          preorder_product_id?: string | null
+          rating?: number | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preorder_reviews_preorder_product_id_fkey"
+            columns: ["preorder_product_id"]
+            isOneToOne: false
+            referencedRelation: "preorder_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews_public: {
         Row: {
           content: string | null
@@ -2150,6 +2188,42 @@ export type Database = {
           },
         ]
       }
+      seller_applications_safe: {
+        Row: {
+          business_type: string | null
+          created_at: string | null
+          id: string | null
+          phone: string | null
+          status: string | null
+          store_description: string | null
+          store_name: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          business_type?: string | null
+          created_at?: string | null
+          id?: string | null
+          phone?: string | null
+          status?: string | null
+          store_description?: string | null
+          store_name?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          business_type?: string | null
+          created_at?: string | null
+          id?: string | null
+          phone?: string | null
+          status?: string | null
+          store_description?: string | null
+          store_name?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sellers_public: {
         Row: {
           created_at: string | null
@@ -2193,6 +2267,28 @@ export type Database = {
       is_owner_of_order_tracking: {
         Args: { tracking_order_id: string }
         Returns: boolean
+      }
+      lookup_coupon: {
+        Args: { _code: string }
+        Returns: {
+          code: string
+          discount_type: string
+          discount_value: number
+          expires_at: string
+          id: string
+          max_discount: number
+          min_order_amount: number
+          usage_limit: number
+          used_count: number
+        }[]
+      }
+      record_coupon_usage: {
+        Args: {
+          _coupon_id: string
+          _discount_amount: number
+          _order_id: string
+        }
+        Returns: undefined
       }
       seller_safe_update: {
         Args: { _logo?: string; _name?: string; _slug?: string }
