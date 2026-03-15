@@ -76,7 +76,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
                   </p>
                 )}
                 <p className="text-sm font-medium text-foreground mt-1">
-                  ${(item.product.price * item.quantity).toFixed(2)}
+                  {formatPrice(item.product.price * item.quantity)}
                 </p>
               </div>
             </div>
