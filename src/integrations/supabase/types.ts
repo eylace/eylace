@@ -2069,6 +2069,21 @@ export type Database = {
         Args: { tracking_order_id: string }
         Returns: boolean
       }
+      seller_safe_update: {
+        Args: { _logo?: string; _name?: string; _slug?: string }
+        Returns: undefined
+      }
+      user_cancel_order: { Args: { _order_id: string }; Returns: boolean }
+      user_update_review: {
+        Args: {
+          _content?: string
+          _images?: string[]
+          _rating?: number
+          _review_id: string
+          _title?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
