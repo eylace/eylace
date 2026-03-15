@@ -80,7 +80,7 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
           <span className="text-muted-foreground">
             Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})
           </span>
-          <span className="font-medium text-foreground">${subtotal.toFixed(2)}</span>
+          <span className="font-medium text-foreground">{formatPrice(subtotal)}</span>
         </div>
 
         <div className="flex justify-between text-sm">
