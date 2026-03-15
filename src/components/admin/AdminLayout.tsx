@@ -128,8 +128,16 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
                   Add New
                 </Button>
               </Link>
+              <button
+                onClick={handleClearCache}
+                title="Clear Cache"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
               <ThemeToggle />
               <AdminNotificationBell />
+              <AdminProfileMenu />
             </div>
             {/* Mobile nav tabs */}
             <div className="flex md:hidden items-center gap-1 px-2 pb-2 overflow-x-auto scrollbar-none">
