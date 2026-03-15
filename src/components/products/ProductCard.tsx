@@ -65,9 +65,9 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
             <span className="text-xs text-muted-foreground">({product.reviewCount.toLocaleString()})</span>
           </div>
           <div className="flex items-baseline gap-2 mt-2">
-            <span className="price-current">${product.price.toFixed(2)}</span>
+            <span className="price-current">{formatPrice(product.price)}</span>
             {hasDiscount && product.originalPrice && (
-              <span className="price-original">${product.originalPrice.toFixed(2)}</span>
+              <span className="price-original">{formatPrice(product.originalPrice)}</span>
             )}
           </div>
         </div>
