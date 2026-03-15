@@ -138,7 +138,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
 
           <div className="flex justify-between">
             <span className="text-lg font-bold text-foreground">Total</span>
-            <span className="text-xl font-bold text-foreground">${total.toFixed(2)}</span>
+            <span className="text-xl font-bold text-foreground">{formatPrice(total)}</span>
           </div>
         </div>
       </div>
