@@ -111,7 +111,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
             {shipping === 0 ? (
               <span className="text-success font-medium">FREE</span>
             ) : (
-              <span className="text-foreground">${shipping.toFixed(2)}</span>
+              <span className="text-foreground">{formatPrice(shipping)}</span>
             )}
           </div>
 
