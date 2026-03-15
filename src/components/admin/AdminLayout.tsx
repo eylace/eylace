@@ -243,6 +243,7 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
                 <AdminLanguageSwitcher />
                 <ThemeToggle />
                 <AdminNotificationBell />
+                <AdminProfileMenu />
               </div>
             </div>
           </header>
