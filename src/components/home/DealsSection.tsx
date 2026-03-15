@@ -10,6 +10,7 @@ export const DealsSection = () => {
   const allProducts = adaptDBProducts(dbProducts);
   const dealsProducts = allProducts.filter(p => p.discount && p.discount >= 20).slice(0, 4);
   const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   if (isLoading) {
     return (
