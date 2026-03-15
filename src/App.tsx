@@ -144,6 +144,7 @@ const App = () => (
             <CompareBar />
             <CompareModal />
             <BrowserRouter>
+              <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/account" element={<Account />} />
@@ -241,8 +242,11 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <AIChatWidget />
-              <TrackingScriptInjector />
+              </Suspense>
+              <Suspense fallback={null}>
+                <AIChatWidget />
+                <TrackingScriptInjector />
+              </Suspense>
             </BrowserRouter>
           </TooltipProvider>
           </CompareProvider>
