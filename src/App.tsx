@@ -135,6 +135,7 @@ const PageLoader = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
+    <CurrencyProvider>
     <AuthProvider>
       <CartProvider>
         <WishlistProvider>
