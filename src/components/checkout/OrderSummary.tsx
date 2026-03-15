@@ -103,7 +103,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
         <div className="p-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
-            <span className="text-foreground">${subtotal.toFixed(2)}</span>
+            <span className="text-foreground">{formatPrice(subtotal)}</span>
           </div>
 
           <div className="flex justify-between text-sm">
