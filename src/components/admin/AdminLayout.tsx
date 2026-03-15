@@ -44,34 +44,38 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
     return location.pathname.startsWith(path);
   };
 
-  const handleClearCache = () => {
-    // Preserve auth-related keys to prevent logout
-    const preserveKeys: Record<string, string | null> = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
-        preserveKeys[key] = localStorage.getItem(key);
+  const shouldPreserveStorageKey = (key: string) => {
+    return (
+      key.startsWith('sb-') ||
+      key.includes('supabase') ||
+      key === 'eylace-lang' ||
+      key === 'eylace-theme'
+    );
+  };
+
+  const removeNonEssentialStorage = (storage: Storage) => {
+    const keysToDelete: string[] = [];
+
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key && !shouldPreserveStorageKey(key)) {
+        keysToDelete.push(key);
       }
     }
-    const lang = localStorage.getItem('eylace-lang');
 
-    localStorage.clear();
-    sessionStorage.clear();
+    keysToDelete.forEach((key) => storage.removeItem(key));
+  };
 
-    // Restore auth keys
-    Object.entries(preserveKeys).forEach(([key, value]) => {
-      if (value) localStorage.setItem(key, value);
-    });
-    localStorage.setItem('eylace-lang', lang || 'en');
+  const handleClearCache = async () => {
+    removeNonEssentialStorage(localStorage);
+    removeNonEssentialStorage(sessionStorage);
 
     if ('caches' in window) {
-      caches.keys().then(names => {
-        names.forEach(name => caches.delete(name));
-      });
+      const names = await caches.keys();
+      await Promise.all(names.map((name) => caches.delete(name)));
     }
 
-    toast.success('Cache cleared successfully! Reloading...', { duration: 1500 });
-    setTimeout(() => window.location.reload(), 1500);
+    toast.success('Only unnecessary cache cleared. You stay logged in.', { duration: 2000 });
   };
 
   if (authLoading || adminLoading) {
