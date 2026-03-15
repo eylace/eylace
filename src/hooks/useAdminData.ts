@@ -57,15 +57,16 @@
    const [isAdmin, setIsAdmin] = useState(false);
    const [isLoading, setIsLoading] = useState(true);
  
-   useEffect(() => {
-     const checkAdmin = async () => {
-       if (!user) {
-         setIsAdmin(false);
-         setIsLoading(false);
-         return;
-       }
- 
-       const { data, error } = await supabase
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      const { data, error } = await supabase
          .from('user_roles')
          .select('role')
          .eq('user_id', user.id)
