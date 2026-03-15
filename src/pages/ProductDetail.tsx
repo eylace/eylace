@@ -234,7 +234,7 @@ const ProductDetail = () => {
               </div>
               {savings > 0 && (
                 <p className="text-success font-medium">
-                  You save: ${savings.toFixed(2)}
+                  You save: {formatPrice(savings)}
                 </p>
               )}
             </div>
