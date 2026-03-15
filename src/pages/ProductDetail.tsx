@@ -36,6 +36,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompare } from '@/contexts/CompareContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
  import { Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
@@ -46,6 +47,7 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
+  const { formatPrice } = useCurrency();
    
    const { product: dbProduct, isLoading, error } = useProduct(slug || '');
    const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
@@ -217,12 +219,12 @@ const ProductDetail = () => {
             <div className="space-y-2">
               <div className="flex items-baseline gap-3 flex-wrap">
                 <span className="text-3xl md:text-4xl font-bold text-foreground">
-                  ${product.price.toFixed(2)}
+                  {formatPrice(product.price)}
                 </span>
                 {hasDiscount && product.originalPrice && (
                   <>
                     <span className="text-xl text-muted-foreground line-through">
-                      ${product.originalPrice.toFixed(2)}
+                      {formatPrice(product.originalPrice)}
                     </span>
                     <Badge className="badge-flash text-sm">
                       {product.discount}% OFF
@@ -232,7 +234,7 @@ const ProductDetail = () => {
               </div>
               {savings > 0 && (
                 <p className="text-success font-medium">
-                  You save: ${savings.toFixed(2)}
+                  You save: {formatPrice(savings)}
                 </p>
               )}
             </div>

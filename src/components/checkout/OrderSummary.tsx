@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +15,7 @@ interface OrderSummaryProps {
 
 export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProps) => {
   const { items, getSubtotal, getShipping, getTax, getTotal, getItemCount } = useCart();
+  const { formatPrice } = useCurrency();
   const [isExpanded, setIsExpanded] = useState(true);
 
   const subtotal = getSubtotal();
@@ -33,7 +35,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
           Order Summary ({itemCount} {itemCount === 1 ? 'item' : 'items'})
         </span>
         <div className="flex items-center gap-2">
-          <span className="font-bold text-foreground">${total.toFixed(2)}</span>
+          <span className="font-bold text-foreground">{formatPrice(total)}</span>
           <span className="lg:hidden">
             {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </span>
@@ -74,7 +76,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
                   </p>
                 )}
                 <p className="text-sm font-medium text-foreground mt-1">
-                  ${(item.product.price * item.quantity).toFixed(2)}
+                  {formatPrice(item.product.price * item.quantity)}
                 </p>
               </div>
             </div>
@@ -101,7 +103,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
         <div className="p-4 space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
-            <span className="text-foreground">${subtotal.toFixed(2)}</span>
+            <span className="text-foreground">{formatPrice(subtotal)}</span>
           </div>
 
           <div className="flex justify-between text-sm">
@@ -109,26 +111,26 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
             {shipping === 0 ? (
               <span className="text-success font-medium">FREE</span>
             ) : (
-              <span className="text-foreground">${shipping.toFixed(2)}</span>
+              <span className="text-foreground">{formatPrice(shipping)}</span>
             )}
           </div>
 
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Tax</span>
-            <span className="text-foreground">${tax.toFixed(2)}</span>
+            <span className="text-foreground">{formatPrice(tax)}</span>
           </div>
 
           {promoDiscount > 0 && (
             <div className="flex justify-between text-sm text-success">
               <span>Promo Discount</span>
-              <span>-${promoDiscount.toFixed(2)}</span>
+              <span>-{formatPrice(promoDiscount)}</span>
             </div>
           )}
 
           {codFee > 0 && (
             <div className="flex justify-between text-sm text-warning">
               <span>COD Fee</span>
-              <span>+${codFee.toFixed(2)}</span>
+              <span>+{formatPrice(codFee)}</span>
             </div>
           )}
 
@@ -136,7 +138,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
 
           <div className="flex justify-between">
             <span className="text-lg font-bold text-foreground">Total</span>
-            <span className="text-xl font-bold text-foreground">${total.toFixed(2)}</span>
+            <span className="text-xl font-bold text-foreground">{formatPrice(total)}</span>
           </div>
         </div>
       </div>

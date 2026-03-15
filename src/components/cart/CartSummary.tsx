@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ interface CartSummaryProps {
 
 export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => {
   const { getSubtotal, getShipping, getTax, getTotal, getItemCount } = useCart();
+  const { formatPrice } = useCurrency();
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
 
@@ -78,7 +80,7 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
           <span className="text-muted-foreground">
             Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})
           </span>
-          <span className="font-medium text-foreground">${subtotal.toFixed(2)}</span>
+          <span className="font-medium text-foreground">{formatPrice(subtotal)}</span>
         </div>
 
         <div className="flex justify-between text-sm">
@@ -86,19 +88,19 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
           {shipping === 0 ? (
             <span className="font-medium text-success">FREE</span>
           ) : (
-            <span className="font-medium text-foreground">${shipping.toFixed(2)}</span>
+            <span className="font-medium text-foreground">{formatPrice(shipping)}</span>
           )}
         </div>
 
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Estimated Tax</span>
-          <span className="font-medium text-foreground">${tax.toFixed(2)}</span>
+          <span className="font-medium text-foreground">{formatPrice(tax)}</span>
         </div>
 
         {appliedPromo && (
           <div className="flex justify-between text-sm text-success">
             <span>Promo Discount</span>
-            <span>-${(subtotal * 0.1).toFixed(2)}</span>
+            <span>-{formatPrice(subtotal * 0.1)}</span>
           </div>
         )}
 
@@ -107,7 +109,7 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
         <div className="flex justify-between">
           <span className="text-lg font-bold text-foreground">Total</span>
           <span className="text-xl font-bold text-foreground">
-            ${(appliedPromo ? total * 0.9 : total).toFixed(2)}
+            {formatPrice(appliedPromo ? total * 0.9 : total)}
           </span>
         </div>
       </div>

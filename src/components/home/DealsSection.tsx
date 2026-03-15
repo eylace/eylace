@@ -3,12 +3,14 @@ import { Percent, ChevronRight, Loader2 } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { adaptDBProducts } from '@/lib/productAdapter';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export const DealsSection = () => {
   const { products: dbProducts, isLoading } = useProducts({ limit: 8 });
   const allProducts = adaptDBProducts(dbProducts);
   const dealsProducts = allProducts.filter(p => p.discount && p.discount >= 20).slice(0, 4);
   const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
 
   if (isLoading) {
     return (
@@ -46,8 +48,8 @@ export const DealsSection = () => {
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">{product.category.name}</p>
                 <h3 className="font-medium text-foreground line-clamp-2 group-hover:text-accent transition-colors">{product.name}</h3>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-lg font-bold text-foreground">${product.price.toFixed(2)}</span>
-                  {product.originalPrice && <span className="text-sm text-muted-foreground line-through">${product.originalPrice.toFixed(2)}</span>}
+                  <span className="text-lg font-bold text-foreground">{formatPrice(product.price)}</span>
+                  {product.originalPrice && <span className="text-sm text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>}
                 </div>
                 <div className="flex items-center gap-2 pt-1">
                   <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">

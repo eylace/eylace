@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { QuantitySelector } from '@/components/products/QuantitySelector';
 import { CartItem as CartItemType } from '@/types';
 import { useCart } from '@/contexts/CartContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { cn } from '@/lib/utils';
 
 interface CartItemProps {
@@ -13,6 +14,7 @@ interface CartItemProps {
 
 export const CartItemComponent = ({ item }: CartItemProps) => {
   const { updateQuantity, removeItem } = useCart();
+  const { formatPrice } = useCurrency();
   const { product, quantity, selectedVariations } = item;
   
   const hasDiscount = product.discount && product.discount > 0;
@@ -87,11 +89,11 @@ export const CartItemComponent = ({ item }: CartItemProps) => {
           <div className="text-right shrink-0">
             <div className="flex items-baseline gap-2 md:justify-end">
               <span className="text-lg font-bold text-foreground">
-                ${(product.price * quantity).toFixed(2)}
+                {formatPrice(product.price * quantity)}
               </span>
               {hasDiscount && product.originalPrice && (
                 <span className="text-sm text-muted-foreground line-through">
-                  ${(product.originalPrice * quantity).toFixed(2)}
+                  {formatPrice(product.originalPrice * quantity)}
                 </span>
               )}
             </div>
@@ -102,7 +104,7 @@ export const CartItemComponent = ({ item }: CartItemProps) => {
             )}
             {savings > 0 && (
               <p className="text-xs text-success mt-1">
-                You save: ${savings.toFixed(2)}
+                You save: {formatPrice(savings)}
               </p>
             )}
           </div>
