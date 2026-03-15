@@ -123,7 +123,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
           {promoDiscount > 0 && (
             <div className="flex justify-between text-sm text-success">
               <span>Promo Discount</span>
-              <span>-${promoDiscount.toFixed(2)}</span>
+              <span>-{formatPrice(promoDiscount)}</span>
             </div>
           )}
 
