@@ -36,6 +36,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompare } from '@/contexts/CompareContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
  import { Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
