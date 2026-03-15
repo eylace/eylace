@@ -10,104 +10,126 @@ import { CompareProvider } from "@/contexts/CompareContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CompareBar } from "@/components/compare/CompareBar";
 import { CompareModal } from "@/components/compare/CompareModal";
+import { lazy, Suspense } from "react";
+
+// Critical pages - eager load
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
 import Auth from "./pages/Auth";
-import Search from "./pages/Search";
-import Category from "./pages/Category";
-import Orders from "./pages/Orders";
-import Settings from "./pages/Settings";
-import Wishlist from "./pages/Wishlist";
 import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
-import AdminLogin from "./pages/AdminLogin";
-import AdminUserRoles from "./pages/AdminUserRoles";
-import AdminOrders from "./pages/AdminOrders";
-import AdminProducts from "./pages/AdminProducts";
-import AdminReviews from "./pages/AdminReviews";
-import AdminAllSellers from "./pages/AdminAllSellers";
-import AdminAppliedSellers from "./pages/AdminAppliedSellers";
-import AdminSellerRatings from "./pages/AdminSellerRatings";
-import AdminSellerPayouts from "./pages/AdminSellerPayouts";
-import AdminSellerPayoutRequests from "./pages/AdminSellerPayoutRequests";
-import AdminSellerCommission from "./pages/AdminSellerCommission";
-import AdminSellerBasedCommission from "./pages/AdminSellerBasedCommission";
-import AdminCategoryBasedCommission from "./pages/AdminCategoryBasedCommission";
-import AdminSellerPackages from "./pages/AdminSellerPackages";
-import AdminSellerVerification from "./pages/AdminSellerVerification";
-import AdminCoupons from "./pages/AdminCoupons";
-import AdminCustomers from "./pages/AdminCustomers";
-import AdminCouriers from "./pages/AdminCouriers";
-import AdminCategories from "./pages/AdminCategories";
-import AdminReportsPage from "./pages/AdminReportsPage";
-import AdminTransactionsPage from "./pages/AdminTransactionsPage";
-import AdminMarketingPage from "./pages/AdminMarketingPage";
-import AdminMarketingFlashDeals from "./pages/AdminMarketingFlashDeals";
-import AdminMarketingPopup from "./pages/AdminMarketingPopup";
-import AdminMarketingCustomAlert from "./pages/AdminMarketingCustomAlert";
-import AdminMarketingSellAlert from "./pages/AdminMarketingSellAlert";
-import AdminMarketingEmailTemplates from "./pages/AdminMarketingEmailTemplates";
-import AdminMarketingNewsletters from "./pages/AdminMarketingNewsletters";
-import AdminMarketingNotification from "./pages/AdminMarketingNotification";
-import AdminMarketingBulkSMS from "./pages/AdminMarketingBulkSMS";
-import AdminMarketingSubscribers from "./pages/AdminMarketingSubscribers";
-import AdminMarketingVisitors from "./pages/AdminMarketingVisitors";
-import AdminFraudPage from "./pages/AdminFraudPage";
-import AdminSettingsPage from "./pages/AdminSettingsPage";
-import AdminPagesPage from "./pages/AdminPagesPage";
-import AdminSEOPage from "./pages/AdminSEOPage";
-import AdminMediaPage from "./pages/AdminMediaPage";
-import AdminNotificationsPage from "./pages/AdminNotificationsPage";
-import Deals from "./pages/Deals";
-import FlashSale from "./pages/FlashSale";
-import SellerDashboard from "./pages/SellerDashboard";
-import SellerRegistration from "./pages/SellerRegistration";
-import Account from "./pages/Account";
-// New product sub-pages
-import AdminAddProduct from "./pages/AdminAddProduct";
-import AdminInHouseProducts from "./pages/AdminInHouseProducts";
-import AdminSellerProducts from "./pages/AdminSellerProducts";
-import AdminAddDigitalProduct from "./pages/AdminAddDigitalProduct";
-import AdminBulkImport from "./pages/AdminBulkImport";
-import AdminBulkExport from "./pages/AdminBulkExport";
-import AdminBrands from "./pages/AdminBrands";
-import AdminColors from "./pages/AdminColors";
-import AdminAttributes from "./pages/AdminAttributes";
-import AdminLabels from "./pages/AdminLabels";
-import AdminWarranties from "./pages/AdminWarranties";
-import AdminSizeGuides from "./pages/AdminSizeGuides";
-import AdminCategoryDiscount from "./pages/AdminCategoryDiscount";
-import AdminSmartBar from "./pages/AdminSmartBar";
-import AdminWebsiteSetupPage from "./pages/AdminWebsiteSetupPage";
-// Preorder pages
-import AdminPreorderDashboard from "./pages/AdminPreorderDashboard";
-import AdminPreorderAddProduct from "./pages/AdminPreorderAddProduct";
-import AdminPreorderProducts from "./pages/AdminPreorderProducts";
-import AdminPreorderOrders from "./pages/AdminPreorderOrders";
-import AdminPreorderCommissions from "./pages/AdminPreorderCommissions";
-import AdminPreorderSettings from "./pages/AdminPreorderSettings";
-import AdminPreorderConversations from "./pages/AdminPreorderConversations";
-import AdminPreorderQueries from "./pages/AdminPreorderQueries";
-import AdminPreorderReviews from "./pages/AdminPreorderReviews";
-import AdminPreorderFaqs from "./pages/AdminPreorderFaqs";
-import AdminPreorderNotificationTypes from "./pages/AdminPreorderNotificationTypes";
-import AdminOtpLoginConfig from "./pages/AdminOtpLoginConfig";
-import AdminOtpConfigurations from "./pages/AdminOtpConfigurations";
-import AdminOtpSmsTemplates from "./pages/AdminOtpSmsTemplates";
-import AdminSystemUpdate from "./pages/AdminSystemUpdate";
-import AdminSystemServerStatus from "./pages/AdminSystemServerStatus";
-import AdminSystemSitemap from "./pages/AdminSystemSitemap";
-import AdminShippingProviders from "./pages/AdminShippingProviders";
-import AdminAIAnalyzer from "./pages/AdminAIAnalyzer";
-import AdminAISettings from "./pages/AdminAISettings";
-import AdminTrackingAnalytics from "./pages/AdminTrackingAnalytics";
-import AdminMenuManager from "./pages/AdminMenuManager";
-import AdminMarketingAds from "./pages/AdminMarketingAds";
-import { AIChatWidget } from "./components/chat/AIChatWidget";
-import { TrackingScriptInjector } from "./components/tracking/TrackingScriptInjector";
-const queryClient = new QueryClient();
+
+// Lazy-loaded pages for performance
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Search = lazy(() => import("./pages/Search"));
+const Category = lazy(() => import("./pages/Category"));
+const Orders = lazy(() => import("./pages/Orders"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const Deals = lazy(() => import("./pages/Deals"));
+const FlashSale = lazy(() => import("./pages/FlashSale"));
+const Account = lazy(() => import("./pages/Account"));
+const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
+const SellerRegistration = lazy(() => import("./pages/SellerRegistration"));
+
+// Admin pages - lazy loaded (rarely accessed by regular users)
+const Admin = lazy(() => import("./pages/Admin"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const AdminUserRoles = lazy(() => import("./pages/AdminUserRoles"));
+const AdminOrders = lazy(() => import("./pages/AdminOrders"));
+const AdminProducts = lazy(() => import("./pages/AdminProducts"));
+const AdminReviews = lazy(() => import("./pages/AdminReviews"));
+const AdminAllSellers = lazy(() => import("./pages/AdminAllSellers"));
+const AdminAppliedSellers = lazy(() => import("./pages/AdminAppliedSellers"));
+const AdminSellerRatings = lazy(() => import("./pages/AdminSellerRatings"));
+const AdminSellerPayouts = lazy(() => import("./pages/AdminSellerPayouts"));
+const AdminSellerPayoutRequests = lazy(() => import("./pages/AdminSellerPayoutRequests"));
+const AdminSellerCommission = lazy(() => import("./pages/AdminSellerCommission"));
+const AdminSellerBasedCommission = lazy(() => import("./pages/AdminSellerBasedCommission"));
+const AdminCategoryBasedCommission = lazy(() => import("./pages/AdminCategoryBasedCommission"));
+const AdminSellerPackages = lazy(() => import("./pages/AdminSellerPackages"));
+const AdminSellerVerification = lazy(() => import("./pages/AdminSellerVerification"));
+const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
+const AdminCustomers = lazy(() => import("./pages/AdminCustomers"));
+const AdminCouriers = lazy(() => import("./pages/AdminCouriers"));
+const AdminCategories = lazy(() => import("./pages/AdminCategories"));
+const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
+const AdminTransactionsPage = lazy(() => import("./pages/AdminTransactionsPage"));
+const AdminMarketingPage = lazy(() => import("./pages/AdminMarketingPage"));
+const AdminMarketingFlashDeals = lazy(() => import("./pages/AdminMarketingFlashDeals"));
+const AdminMarketingPopup = lazy(() => import("./pages/AdminMarketingPopup"));
+const AdminMarketingCustomAlert = lazy(() => import("./pages/AdminMarketingCustomAlert"));
+const AdminMarketingSellAlert = lazy(() => import("./pages/AdminMarketingSellAlert"));
+const AdminMarketingEmailTemplates = lazy(() => import("./pages/AdminMarketingEmailTemplates"));
+const AdminMarketingNewsletters = lazy(() => import("./pages/AdminMarketingNewsletters"));
+const AdminMarketingNotification = lazy(() => import("./pages/AdminMarketingNotification"));
+const AdminMarketingBulkSMS = lazy(() => import("./pages/AdminMarketingBulkSMS"));
+const AdminMarketingSubscribers = lazy(() => import("./pages/AdminMarketingSubscribers"));
+const AdminMarketingVisitors = lazy(() => import("./pages/AdminMarketingVisitors"));
+const AdminFraudPage = lazy(() => import("./pages/AdminFraudPage"));
+const AdminSettingsPage = lazy(() => import("./pages/AdminSettingsPage"));
+const AdminPagesPage = lazy(() => import("./pages/AdminPagesPage"));
+const AdminSEOPage = lazy(() => import("./pages/AdminSEOPage"));
+const AdminMediaPage = lazy(() => import("./pages/AdminMediaPage"));
+const AdminNotificationsPage = lazy(() => import("./pages/AdminNotificationsPage"));
+const AdminAddProduct = lazy(() => import("./pages/AdminAddProduct"));
+const AdminInHouseProducts = lazy(() => import("./pages/AdminInHouseProducts"));
+const AdminSellerProducts = lazy(() => import("./pages/AdminSellerProducts"));
+const AdminAddDigitalProduct = lazy(() => import("./pages/AdminAddDigitalProduct"));
+const AdminBulkImport = lazy(() => import("./pages/AdminBulkImport"));
+const AdminBulkExport = lazy(() => import("./pages/AdminBulkExport"));
+const AdminBrands = lazy(() => import("./pages/AdminBrands"));
+const AdminColors = lazy(() => import("./pages/AdminColors"));
+const AdminAttributes = lazy(() => import("./pages/AdminAttributes"));
+const AdminLabels = lazy(() => import("./pages/AdminLabels"));
+const AdminWarranties = lazy(() => import("./pages/AdminWarranties"));
+const AdminSizeGuides = lazy(() => import("./pages/AdminSizeGuides"));
+const AdminCategoryDiscount = lazy(() => import("./pages/AdminCategoryDiscount"));
+const AdminSmartBar = lazy(() => import("./pages/AdminSmartBar"));
+const AdminWebsiteSetupPage = lazy(() => import("./pages/AdminWebsiteSetupPage"));
+const AdminPreorderDashboard = lazy(() => import("./pages/AdminPreorderDashboard"));
+const AdminPreorderAddProduct = lazy(() => import("./pages/AdminPreorderAddProduct"));
+const AdminPreorderProducts = lazy(() => import("./pages/AdminPreorderProducts"));
+const AdminPreorderOrders = lazy(() => import("./pages/AdminPreorderOrders"));
+const AdminPreorderCommissions = lazy(() => import("./pages/AdminPreorderCommissions"));
+const AdminPreorderSettings = lazy(() => import("./pages/AdminPreorderSettings"));
+const AdminPreorderConversations = lazy(() => import("./pages/AdminPreorderConversations"));
+const AdminPreorderQueries = lazy(() => import("./pages/AdminPreorderQueries"));
+const AdminPreorderReviews = lazy(() => import("./pages/AdminPreorderReviews"));
+const AdminPreorderFaqs = lazy(() => import("./pages/AdminPreorderFaqs"));
+const AdminPreorderNotificationTypes = lazy(() => import("./pages/AdminPreorderNotificationTypes"));
+const AdminOtpLoginConfig = lazy(() => import("./pages/AdminOtpLoginConfig"));
+const AdminOtpConfigurations = lazy(() => import("./pages/AdminOtpConfigurations"));
+const AdminOtpSmsTemplates = lazy(() => import("./pages/AdminOtpSmsTemplates"));
+const AdminSystemUpdate = lazy(() => import("./pages/AdminSystemUpdate"));
+const AdminSystemServerStatus = lazy(() => import("./pages/AdminSystemServerStatus"));
+const AdminSystemSitemap = lazy(() => import("./pages/AdminSystemSitemap"));
+const AdminShippingProviders = lazy(() => import("./pages/AdminShippingProviders"));
+const AdminAIAnalyzer = lazy(() => import("./pages/AdminAIAnalyzer"));
+const AdminAISettings = lazy(() => import("./pages/AdminAISettings"));
+const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics"));
+const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
+const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
+
+const AIChatWidget = lazy(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
+const TrackingScriptInjector = lazy(() => import("./components/tracking/TrackingScriptInjector").then(m => ({ default: m.TrackingScriptInjector })));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetches
+      gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -122,6 +144,7 @@ const App = () => (
             <CompareBar />
             <CompareModal />
             <BrowserRouter>
+              <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/account" element={<Account />} />
@@ -219,8 +242,11 @@ const App = () => (
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <AIChatWidget />
-              <TrackingScriptInjector />
+              </Suspense>
+              <Suspense fallback={null}>
+                <AIChatWidget />
+                <TrackingScriptInjector />
+              </Suspense>
             </BrowserRouter>
           </TooltipProvider>
           </CompareProvider>
