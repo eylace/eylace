@@ -54,8 +54,10 @@ interface Order {
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning/10 text-warning border-warning/20',
+  confirmed: 'bg-accent/10 text-accent border-accent/20',
   processing: 'bg-primary/10 text-primary border-primary/20',
   shipped: 'bg-prime/10 text-prime border-prime/20',
+  out_for_delivery: 'bg-primary/10 text-primary border-primary/20',
   delivered: 'bg-success/10 text-success border-success/20',
   cancelled: 'bg-destructive/10 text-destructive border-destructive/20',
 };
