@@ -105,6 +105,7 @@ export const Header = () => {
             )}
 
             <SearchModal open={isSearchOpen} onOpenChange={setIsSearchOpen} />
+            <DeliveryLocationPicker />
 
             <div className="flex items-center gap-4">
               {/* Language Switcher */}

@@ -258,6 +258,7 @@ const App = () => (
           </CompareProvider>
         </WishlistProvider>
       </CartProvider>
+      </DeliveryLocationProvider>
     </AuthProvider>
     </CurrencyProvider>
     </LanguageProvider>
