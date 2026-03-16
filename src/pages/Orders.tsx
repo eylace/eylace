@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
@@ -62,6 +63,7 @@ const statusColors: Record<string, string> = {
 const Orders = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
@@ -80,18 +82,16 @@ const Orders = () => {
 
   const fetchOrders = async () => {
     setLoading(true);
-    const { data: ordersData, error: ordersError } = await supabase
+    const { data: ordersData, error } = await supabase
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (ordersError) {
-      console.error('Error fetching orders:', ordersError);
+    if (error) {
       setLoading(false);
       return;
     }
 
-    // Fetch order items and tracking events for each order
     const ordersWithDetails = await Promise.all(
       (ordersData || []).map(async (order) => {
         const [itemsResult, eventsResult] = await Promise.all([
@@ -139,9 +139,9 @@ const Orders = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-2xl font-bold">My Orders</h1>
+              <h1 className="text-2xl font-bold">{t('orders.myOrders')}</h1>
               <p className="text-muted-foreground mt-1">
-                Track and manage your orders
+                {t('orders.trackManage')}
               </p>
             </div>
           </div>
@@ -151,12 +151,12 @@ const Orders = () => {
               <div className="w-20 h-20 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
                 <ShoppingBag className="h-10 w-10 text-muted-foreground" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">No orders yet</h2>
+              <h2 className="text-xl font-semibold mb-2">{t('orders.noOrders')}</h2>
               <p className="text-muted-foreground mb-6">
-                Start shopping to see your orders here
+                {t('orders.startShoppingDesc')}
               </p>
               <Link to="/">
-                <Button variant="accent">Start Shopping</Button>
+                <Button variant="accent">{t('orders.startShopping')}</Button>
               </Link>
             </div>
           ) : (
@@ -185,8 +185,7 @@ const Orders = () => {
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(order.created_at), 'MMM d, yyyy')} ·{' '}
-                          {order.order_items.length} item
-                          {order.order_items.length !== 1 ? 's' : ''}
+                          {order.order_items.length} {order.order_items.length !== 1 ? t('common.items') : t('common.item')}
                         </p>
                       </div>
                     </div>
@@ -201,7 +200,7 @@ const Orders = () => {
                         {order.status}
                       </Badge>
                       <span className="font-semibold">
-                        ${order.total.toFixed(2)}
+                        ৳{order.total.toFixed(2)}
                       </span>
                       <ChevronRight
                         className={cn(
@@ -224,7 +223,7 @@ const Orders = () => {
                             onClick={() => setShowTracking(showTracking === order.id ? null : order.id)}
                           >
                             <Truck className="h-4 w-4" />
-                            {showTracking === order.id ? 'Hide Tracking' : 'Track Order'}
+                            {showTracking === order.id ? t('orders.hideTracking') : t('orders.trackOrder')}
                           </Button>
                         </div>
                       )}
@@ -270,11 +269,11 @@ const Orders = () => {
                                 </p>
                               )}
                               <p className="text-sm text-muted-foreground">
-                                Qty: {item.quantity}
+                                {t('orders.qty')} {item.quantity}
                               </p>
                             </div>
                             <p className="font-medium">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              ৳{(item.price * item.quantity).toFixed(2)}
                             </p>
                           </div>
                         ))}
@@ -285,31 +284,31 @@ const Orders = () => {
                       {/* Order Summary */}
                       <div className="p-4 bg-secondary/30">
                         <div className="grid grid-cols-2 gap-4 text-sm max-w-xs ml-auto">
-                          <span className="text-muted-foreground">Subtotal</span>
-                          <span className="text-right">${order.subtotal.toFixed(2)}</span>
+                          <span className="text-muted-foreground">{t('orders.subtotal')}</span>
+                          <span className="text-right">৳{order.subtotal.toFixed(2)}</span>
                           
-                          <span className="text-muted-foreground">Shipping</span>
+                          <span className="text-muted-foreground">{t('orders.shipping')}</span>
                           <span className="text-right">
-                            {order.shipping === 0 ? 'Free' : `$${order.shipping.toFixed(2)}`}
+                            {order.shipping === 0 ? t('orders.free') : `৳${order.shipping.toFixed(2)}`}
                           </span>
                           
-                          <span className="text-muted-foreground">Tax</span>
-                          <span className="text-right">${order.tax.toFixed(2)}</span>
+                          <span className="text-muted-foreground">{t('orders.tax')}</span>
+                          <span className="text-right">৳{order.tax.toFixed(2)}</span>
                           
                           {order.discount > 0 && (
                             <>
-                              <span className="text-muted-foreground">Discount</span>
+                              <span className="text-muted-foreground">{t('orders.discount')}</span>
                               <span className="text-right text-success">
-                                -${order.discount.toFixed(2)}
+                                -৳{order.discount.toFixed(2)}
                               </span>
                             </>
                           )}
                           
                           <Separator className="col-span-2" />
                           
-                          <span className="font-semibold">Total</span>
+                          <span className="font-semibold">{t('orders.total')}</span>
                           <span className="text-right font-bold text-lg">
-                            ${order.total.toFixed(2)}
+                            ৳{order.total.toFixed(2)}
                           </span>
                         </div>
                       </div>
