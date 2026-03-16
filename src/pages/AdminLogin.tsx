@@ -28,7 +28,7 @@ const AdminLogin = () => {
       if (error) { toast.error('Login failed', { description: error.message }); setLoading(false); return; }
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) { toast.error('Authentication failed'); setLoading(false); return; }
-      const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', authUser.id).eq('role', 'admin').single();
+      const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', authUser.id).in('role', ['admin', 'super_admin']).limit(1).maybeSingle();
       if (!roleData) { toast.error('Access Denied'); await supabase.auth.signOut(); setLoading(false); return; }
       toast.success('Welcome, Admin!');
       navigate('/admin');

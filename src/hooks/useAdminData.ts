@@ -70,8 +70,9 @@
          .from('user_roles')
          .select('role')
          .eq('user_id', user.id)
-         .eq('role', 'admin')
-         .single();
+         .in('role', ['admin', 'super_admin'])
+         .limit(1)
+         .maybeSingle();
  
        setIsAdmin(!!data && !error);
        setIsLoading(false);
