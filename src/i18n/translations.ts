@@ -1107,6 +1107,6 @@ export const translations = {
   'common.home': { en: 'Home', bn: 'হোম' },
   'common.items': { en: 'items', bn: 'আইটেম' },
   'common.item': { en: 'item', bn: 'আইটেম' },
-} as const;
+} satisfies Record<string, Record<Language, string>>;
 
 export type TranslationKey = keyof typeof translations;
