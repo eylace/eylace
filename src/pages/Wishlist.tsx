@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/products/ProductCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Wishlist = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { items, isLoading } = useWishlist();
+  const { t } = useLanguage();
 
   if (authLoading || isLoading) {
     return (
@@ -29,12 +31,10 @@ const Wishlist = () => {
             <div className="w-20 h-20 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
               <Heart className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">Sign in to view your wishlist</h2>
-            <p className="text-muted-foreground mb-6">
-              Save your favorite items and access them from any device
-            </p>
+            <h2 className="text-xl font-semibold mb-2">{t('wishlist.signInTitle')}</h2>
+            <p className="text-muted-foreground mb-6">{t('wishlist.signInDesc')}</p>
             <Link to="/auth">
-              <Button variant="accent">Sign In</Button>
+              <Button variant="accent">{t('wishlist.signIn')}</Button>
             </Link>
           </div>
         </div>
@@ -45,12 +45,11 @@ const Wishlist = () => {
   return (
     <Layout>
       <div className="container-main py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold">My Wishlist</h1>
+            <h1 className="text-2xl font-bold">{t('wishlist.myWishlist')}</h1>
             <p className="text-muted-foreground mt-1">
-              {items.length} {items.length === 1 ? 'item' : 'items'} saved
+              {items.length} {items.length === 1 ? t('wishlist.itemSaved') : t('wishlist.itemsSaved')}
             </p>
           </div>
         </div>
@@ -60,12 +59,10 @@ const Wishlist = () => {
             <div className="w-20 h-20 mx-auto bg-secondary rounded-full flex items-center justify-center mb-4">
               <Heart className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">Your wishlist is empty</h2>
-            <p className="text-muted-foreground mb-6">
-              Start adding products you love to your wishlist
-            </p>
+            <h2 className="text-xl font-semibold mb-2">{t('wishlist.empty')}</h2>
+            <p className="text-muted-foreground mb-6">{t('wishlist.emptyDesc')}</p>
             <Link to="/">
-              <Button variant="accent">Start Shopping</Button>
+              <Button variant="accent">{t('wishlist.startShopping')}</Button>
             </Link>
           </div>
         ) : (

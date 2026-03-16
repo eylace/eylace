@@ -11,6 +11,7 @@ import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { PromoCodeInput } from '@/components/checkout/PromoCodeInput';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -37,6 +38,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { items, clearCart, getSubtotal, getShipping, getTax, getTotal } = useCart();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -56,7 +58,6 @@ const Checkout = () => {
   const paymentMethod = form.watch('paymentMethod');
   const codFee = paymentMethod === 'cod' ? 0.50 : 0;
 
-  // Save incomplete order when user fills form but doesn't complete
   useEffect(() => {
     const subscription = form.watch((data) => {
       if (data.firstName || data.phone || data.email) {
@@ -83,7 +84,6 @@ const Checkout = () => {
     return () => subscription.unsubscribe();
   }, [form, items, user]);
 
-  // Auto-redirect countdown after order
   useEffect(() => {
     if (!orderComplete) return;
     const timer = setInterval(() => {
@@ -101,7 +101,6 @@ const Checkout = () => {
 
   const onSubmit = async (data: CheckoutFormData) => {
     setIsProcessing(true);
-    
     try {
       const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       const subtotal = getSubtotal();
@@ -111,52 +110,29 @@ const Checkout = () => {
 
       if (user) {
         const shippingAddress = {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          address: data.address,
-          apartment: data.apartment,
-          city: data.city,
-          state: data.state,
-          zipCode: data.zipCode,
-          country: data.country,
+          firstName: data.firstName, lastName: data.lastName, email: data.email,
+          phone: data.phone, address: data.address, apartment: data.apartment,
+          city: data.city, state: data.state, zipCode: data.zipCode, country: data.country,
         };
 
         const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            user_id: user.id,
-            order_number: orderNumber,
-            status: 'pending',
-            subtotal,
-            shipping,
-            tax,
-            discount: promoDiscount,
-            total,
-            payment_method: data.paymentMethod,
-            shipping_address: shippingAddress,
-          })
-          .select()
-          .single();
+          .from('orders').insert({
+            user_id: user.id, order_number: orderNumber, status: 'pending',
+            subtotal, shipping, tax, discount: promoDiscount, total,
+            payment_method: data.paymentMethod, shipping_address: shippingAddress,
+          }).select().single();
 
         if (orderError) {
-          console.error('Error creating order:', orderError);
           toast.error('Failed to create order. Please try again.');
           setIsProcessing(false);
           return;
         }
 
         const orderItems = items.map(item => ({
-          order_id: orderData.id,
-          product_id: item.product.id,
-          product_name: item.product.name,
-          product_image: item.product.images[0] || null,
-          price: item.product.price,
-          quantity: item.quantity,
-          variations: item.selectedVariations || null,
+          order_id: orderData.id, product_id: item.product.id, product_name: item.product.name,
+          product_image: item.product.images[0] || null, price: item.product.price,
+          quantity: item.quantity, variations: item.selectedVariations || null,
         }));
-
         await supabase.from('order_items').insert(orderItems);
 
         if (appliedCouponId && orderData) {
@@ -166,23 +142,13 @@ const Checkout = () => {
         }
 
         if (data.saveAddress) {
-          await supabase
-            .from('profiles')
-            .update({
-              first_name: data.firstName,
-              last_name: data.lastName,
-              phone: data.phone,
-              address: data.address,
-              apartment: data.apartment,
-              city: data.city,
-              state: data.state,
-              zip_code: data.zipCode,
-              country: data.country,
-            })
-            .eq('user_id', user.id);
+          await supabase.from('profiles').update({
+            first_name: data.firstName, last_name: data.lastName, phone: data.phone,
+            address: data.address, apartment: data.apartment, city: data.city,
+            state: data.state, zip_code: data.zipCode, country: data.country,
+          }).eq('user_id', user.id);
         }
 
-        // Remove incomplete order entries for this user
         if (user?.id) {
           await (supabase.from('incomplete_orders' as any) as any).delete().eq('user_id', user.id);
         }
@@ -192,10 +158,7 @@ const Checkout = () => {
       setOrderId(orderNumber);
       clearCart();
       setOrderComplete(true);
-      
-      toast.success('অর্ডার সফলভাবে প্লেস হয়েছে!', {
-        description: `Order ID: ${orderNumber}`,
-      });
+      toast.success(t('checkout.orderSuccess'), { description: `Order ID: ${orderNumber}` });
     } catch (err) {
       console.error('Checkout error:', err);
       toast.error('An error occurred during checkout. Please try again.');
@@ -209,16 +172,15 @@ const Checkout = () => {
       <Layout>
         <div className="container-main py-12">
           <div className="max-w-md mx-auto text-center space-y-6">
-            <h1 className="text-2xl font-bold text-foreground">Your cart is empty</h1>
-            <p className="text-muted-foreground">Add some items to your cart before checking out.</p>
-            <Button variant="accent" size="lg" asChild><Link to="/">Start Shopping</Link></Button>
+            <h1 className="text-2xl font-bold text-foreground">{t('checkout.emptyCart')}</h1>
+            <p className="text-muted-foreground">{t('checkout.emptyCartDesc')}</p>
+            <Button variant="accent" size="lg" asChild><Link to="/">{t('checkout.startShopping')}</Link></Button>
           </div>
         </div>
       </Layout>
     );
   }
 
-  // Order Complete with countdown redirect
   if (orderComplete) {
     return (
       <Layout>
@@ -227,38 +189,31 @@ const Checkout = () => {
             <div className="w-20 h-20 mx-auto bg-success/20 rounded-full flex items-center justify-center">
               <CheckCircle2 className="h-10 w-10 text-success" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground">অর্ডার কনফার্ম হয়েছে!</h1>
-            <p className="text-muted-foreground">ধন্যবাদ! আপনার অর্ডার সফলভাবে প্লেস হয়েছে।</p>
-            
+            <h1 className="text-3xl font-bold text-foreground">{t('checkout.orderConfirmed')}</h1>
+            <p className="text-muted-foreground">{t('checkout.orderThankYou')}</p>
             <div className="p-6 bg-card border border-border rounded-lg text-left space-y-4">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">অর্ডার নম্বর</span>
+                <span className="text-muted-foreground">{t('checkout.orderNumber')}</span>
                 <span className="font-mono font-bold text-foreground">{orderId}</span>
               </div>
               <Separator />
               <div className="flex justify-between">
-                <span className="text-muted-foreground">আনুমানিক ডেলিভারি</span>
-                <span className="font-medium text-foreground">৩-৫ কার্যদিবস</span>
+                <span className="text-muted-foreground">{t('checkout.estimatedDelivery')}</span>
+                <span className="font-medium text-foreground">{t('checkout.businessDays')}</span>
               </div>
             </div>
-
-            {/* Countdown auto-redirect */}
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
               <p className="text-sm text-muted-foreground">
                 <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-lg mx-1">
                   {countdown}
                 </span>
-                সেকেন্ড পর স্বয়ংক্রিয়ভাবে হোমপেজে ফিরে যাবে
+                {t('checkout.autoRedirect')}
               </p>
             </div>
-
-            <p className="text-sm text-muted-foreground">
-              আপনার ইমেইলে একটি কনফার্মেশন মেসেজ পাঠানো হয়েছে।
-            </p>
-
+            <p className="text-sm text-muted-foreground">{t('checkout.confirmationEmail')}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button variant="outline" asChild><Link to="/orders">অর্ডার ট্র্যাক করুন</Link></Button>
-              <Button variant="accent" asChild><Link to="/">শপিং চালিয়ে যান</Link></Button>
+              <Button variant="outline" asChild><Link to="/orders">{t('checkout.trackOrder')}</Link></Button>
+              <Button variant="accent" asChild><Link to="/">{t('checkout.continueShopping')}</Link></Button>
             </div>
           </div>
         </div>
@@ -270,17 +225,17 @@ const Checkout = () => {
     <Layout>
       <div className="container-main py-6">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link to="/" className="hover:text-accent transition-colors">Home</Link>
+          <Link to="/" className="hover:text-accent transition-colors">{t('checkout.home')}</Link>
           <ChevronRight className="h-4 w-4" />
-          <Link to="/cart" className="hover:text-accent transition-colors">Cart</Link>
+          <Link to="/cart" className="hover:text-accent transition-colors">{t('checkout.cart')}</Link>
           <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">Checkout</span>
+          <span className="text-foreground">{t('checkout.title')}</span>
         </nav>
 
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Checkout</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t('checkout.title')}</h1>
           <Button variant="ghost" asChild>
-            <Link to="/cart"><ArrowLeft className="h-4 w-4 mr-2" />Back to Cart</Link>
+            <Link to="/cart"><ArrowLeft className="h-4 w-4 mr-2" />{t('checkout.backToCart')}</Link>
           </Button>
         </div>
 
@@ -292,15 +247,14 @@ const Checkout = () => {
               <div className="lg:hidden">
                 <Button type="submit" variant="buy-now" size="xl" className="w-full" disabled={isProcessing}>
                   {isProcessing ? (
-                    <><div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />Processing...</>
+                    <><div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />{t('checkout.processing')}</>
                   ) : (
-                    <><Lock className="h-5 w-5 mr-2" />Place Order</>
+                    <><Lock className="h-5 w-5 mr-2" />{t('checkout.placeOrder')}</>
                   )}
                 </Button>
-                <p className="text-xs text-center text-muted-foreground mt-3">By placing your order, you agree to our Terms of Service and Privacy Policy</p>
+                <p className="text-xs text-center text-muted-foreground mt-3">{t('checkout.termsAgree')}</p>
               </div>
             </div>
-
             <div className="space-y-4">
               <OrderSummary codFee={codFee} promoDiscount={promoDiscount} />
               <div className="bg-card border border-border rounded-lg p-4">
@@ -314,12 +268,12 @@ const Checkout = () => {
               <div className="hidden lg:block space-y-3">
                 <Button type="submit" variant="buy-now" size="xl" className="w-full" disabled={isProcessing}>
                   {isProcessing ? (
-                    <><div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />Processing...</>
+                    <><div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />{t('checkout.processing')}</>
                   ) : (
-                    <><Lock className="h-5 w-5 mr-2" />Place Order</>
+                    <><Lock className="h-5 w-5 mr-2" />{t('checkout.placeOrder')}</>
                   )}
                 </Button>
-                <p className="text-xs text-center text-muted-foreground">By placing your order, you agree to our Terms of Service and Privacy Policy</p>
+                <p className="text-xs text-center text-muted-foreground">{t('checkout.termsAgree')}</p>
               </div>
             </div>
           </div>
