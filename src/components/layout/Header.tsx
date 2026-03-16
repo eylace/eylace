@@ -52,11 +52,20 @@ export const Header = () => {
               </div>
             </Link>
 
-            <div className="hidden md:flex items-center gap-2 text-sm cursor-pointer hover:text-accent transition-colors">
+            <div
+              onClick={openPicker}
+              className="hidden md:flex items-center gap-2 text-sm cursor-pointer hover:text-accent transition-colors"
+            >
               <MapPin className="h-4 w-4" />
               <div>
                 <p className="text-xs text-primary-foreground/70">{t('header.deliverTo')}</p>
-                <p className="font-medium">{t('header.location')}</p>
+                <p className="font-medium">
+                  {deliveryLocation
+                    ? (language === 'bn'
+                        ? `${deliveryLocation.upazilaBn}, ${deliveryLocation.districtBn}`
+                        : `${deliveryLocation.upazila}, ${deliveryLocation.district}`)
+                    : t('header.location')}
+                </p>
               </div>
             </div>
 
