@@ -26,24 +26,24 @@ export const DashboardIncompleteOrders = () => {
   const fetchIncomplete = async () => {
     setLoading(true);
     const { data } = await supabase
-      .from('incomplete_orders')
+      .from('incomplete_orders' as any)
       .select('*')
       .order('created_at', { ascending: false })
       .limit(10);
-    setOrders((data as IncompleteOrder[]) || []);
+    setOrders((data as unknown as IncompleteOrder[]) || []);
     setLoading(false);
   };
 
   useEffect(() => { fetchIncomplete(); }, []);
 
   const markContacted = async (id: string) => {
-    await supabase.from('incomplete_orders').update({ status: 'contacted' }).eq('id', id);
+    await (supabase.from('incomplete_orders' as any) as any).update({ status: 'contacted' }).eq('id', id);
     toast.success('স্ট্যাটাস আপডেট হয়েছে');
     fetchIncomplete();
   };
 
   const deleteOrder = async (id: string) => {
-    await supabase.from('incomplete_orders').delete().eq('id', id);
+    await (supabase.from('incomplete_orders' as any) as any).delete().eq('id', id);
     toast.success('ডিলিট হয়েছে');
     fetchIncomplete();
   };

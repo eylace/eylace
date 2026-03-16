@@ -249,6 +249,7 @@ const App = () => (
               <Suspense fallback={null}>
                 <AIChatWidget />
                 <TrackingScriptInjector />
+                <SourceCodeProtection />
               </Suspense>
             </BrowserRouter>
           </TooltipProvider>

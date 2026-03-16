@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ChevronRight, ArrowLeft, Lock, CheckCircle2 } from 'lucide-react';
@@ -15,7 +15,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface CheckoutFormData {
-  // Shipping
   firstName: string;
   lastName: string;
   email: string;
@@ -27,7 +26,6 @@ interface CheckoutFormData {
   zipCode: string;
   country: string;
   saveAddress: boolean;
-  // Payment
   paymentMethod: string;
   cardNumber?: string;
   cardName?: string;
@@ -45,10 +43,11 @@ const Checkout = () => {
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(15);
 
   const form = useForm<CheckoutFormData>({
     defaultValues: {
-      country: 'US',
+      country: 'BD',
       paymentMethod: 'card',
       saveAddress: false,
     },
@@ -57,20 +56,59 @@ const Checkout = () => {
   const paymentMethod = form.watch('paymentMethod');
   const codFee = paymentMethod === 'cod' ? 0.50 : 0;
 
+  // Save incomplete order when user fills form but doesn't complete
+  useEffect(() => {
+    const subscription = form.watch((data) => {
+      if (data.firstName || data.phone || data.email) {
+        const saveTimeout = setTimeout(() => {
+          supabase.from('incomplete_orders' as any).insert({
+            user_id: user?.id || null,
+            first_name: data.firstName || null,
+            last_name: data.lastName || null,
+            email: data.email || null,
+            phone: data.phone || null,
+            address: data.address || null,
+            city: data.city || null,
+            state: data.state || null,
+            zip_code: data.zipCode || null,
+            country: data.country || null,
+            cart_items: items.map(i => ({ name: i.product.name, qty: i.quantity, price: i.product.price })),
+            cart_total: getTotal(),
+            status: 'abandoned',
+          } as any);
+        }, 5000);
+        return () => clearTimeout(saveTimeout);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, items, user]);
+
+  // Auto-redirect countdown after order
+  useEffect(() => {
+    if (!orderComplete) return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          navigate('/');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [orderComplete, navigate]);
+
   const onSubmit = async (data: CheckoutFormData) => {
     setIsProcessing(true);
     
     try {
-      // Generate order number
       const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      
-      // Calculate totals
       const subtotal = getSubtotal();
       const shipping = getShipping();
       const tax = getTax();
       const total = getTotal() + codFee - promoDiscount;
 
-      // Save order to database if user is authenticated
       if (user) {
         const shippingAddress = {
           firstName: data.firstName,
@@ -85,7 +123,6 @@ const Checkout = () => {
           country: data.country,
         };
 
-        // Create order
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .insert({
@@ -110,7 +147,6 @@ const Checkout = () => {
           return;
         }
 
-        // Create order items
         const orderItems = items.map(item => ({
           order_id: orderData.id,
           product_id: item.product.id,
@@ -121,22 +157,14 @@ const Checkout = () => {
           variations: item.selectedVariations || null,
         }));
 
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems);
+        await supabase.from('order_items').insert(orderItems);
 
-        if (itemsError) {
-          console.error('Error creating order items:', itemsError);
-        }
-
-        // Record coupon usage via edge function
         if (appliedCouponId && orderData) {
           await supabase.functions.invoke('apply-coupon', {
             body: { coupon_id: appliedCouponId, order_id: orderData.id, discount_amount: promoDiscount },
           });
         }
 
-        // Update user profile with shipping address if they opted to save it
         if (data.saveAddress) {
           await supabase
             .from('profiles')
@@ -153,18 +181,19 @@ const Checkout = () => {
             })
             .eq('user_id', user.id);
         }
+
+        // Remove incomplete order entries for this user
+        if (user?.id) {
+          await (supabase.from('incomplete_orders' as any) as any).delete().eq('user_id', user.id);
+        }
       }
 
-      // Simulate payment processing delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-
       setOrderId(orderNumber);
-      
-      // Clear cart and show success
       clearCart();
       setOrderComplete(true);
       
-      toast.success('Order placed successfully!', {
+      toast.success('অর্ডার সফলভাবে প্লেস হয়েছে!', {
         description: `Order ID: ${orderNumber}`,
       });
     } catch (err) {
@@ -175,26 +204,21 @@ const Checkout = () => {
     }
   };
 
-  // Redirect to cart if empty
   if (items.length === 0 && !orderComplete) {
     return (
       <Layout>
         <div className="container-main py-12">
           <div className="max-w-md mx-auto text-center space-y-6">
             <h1 className="text-2xl font-bold text-foreground">Your cart is empty</h1>
-            <p className="text-muted-foreground">
-              Add some items to your cart before checking out.
-            </p>
-            <Button variant="accent" size="lg" asChild>
-              <Link to="/">Start Shopping</Link>
-            </Button>
+            <p className="text-muted-foreground">Add some items to your cart before checking out.</p>
+            <Button variant="accent" size="lg" asChild><Link to="/">Start Shopping</Link></Button>
           </div>
         </div>
       </Layout>
     );
   }
 
-  // Order Complete State
+  // Order Complete with countdown redirect
   if (orderComplete) {
     return (
       <Layout>
@@ -203,34 +227,38 @@ const Checkout = () => {
             <div className="w-20 h-20 mx-auto bg-success/20 rounded-full flex items-center justify-center">
               <CheckCircle2 className="h-10 w-10 text-success" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground">Order Confirmed!</h1>
-            <p className="text-muted-foreground">
-              Thank you for your purchase. Your order has been placed successfully.
-            </p>
+            <h1 className="text-3xl font-bold text-foreground">অর্ডার কনফার্ম হয়েছে!</h1>
+            <p className="text-muted-foreground">ধন্যবাদ! আপনার অর্ডার সফলভাবে প্লেস হয়েছে।</p>
             
             <div className="p-6 bg-card border border-border rounded-lg text-left space-y-4">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Order Number</span>
+                <span className="text-muted-foreground">অর্ডার নম্বর</span>
                 <span className="font-mono font-bold text-foreground">{orderId}</span>
               </div>
               <Separator />
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Estimated Delivery</span>
-                <span className="font-medium text-foreground">3-5 Business Days</span>
+                <span className="text-muted-foreground">আনুমানিক ডেলিভারি</span>
+                <span className="font-medium text-foreground">৩-৫ কার্যদিবস</span>
               </div>
             </div>
 
+            {/* Countdown auto-redirect */}
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
+              <p className="text-sm text-muted-foreground">
+                <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-lg mx-1">
+                  {countdown}
+                </span>
+                সেকেন্ড পর স্বয়ংক্রিয়ভাবে হোমপেজে ফিরে যাবে
+              </p>
+            </div>
+
             <p className="text-sm text-muted-foreground">
-              A confirmation email has been sent to your email address.
+              আপনার ইমেইলে একটি কনফার্মেশন মেসেজ পাঠানো হয়েছে।
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button variant="outline" asChild>
-                <Link to={`/orders/${orderId}`}>Track Order</Link>
-              </Button>
-              <Button variant="accent" asChild>
-                <Link to="/">Continue Shopping</Link>
-              </Button>
+              <Button variant="outline" asChild><Link to="/orders">অর্ডার ট্র্যাক করুন</Link></Button>
+              <Button variant="accent" asChild><Link to="/">শপিং চালিয়ে যান</Link></Button>
             </div>
           </div>
         </div>
@@ -241,7 +269,6 @@ const Checkout = () => {
   return (
     <Layout>
       <div className="container-main py-6">
-        {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-accent transition-colors">Home</Link>
           <ChevronRight className="h-4 w-4" />
@@ -250,63 +277,32 @@ const Checkout = () => {
           <span className="text-foreground">Checkout</span>
         </nav>
 
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Checkout</h1>
           <Button variant="ghost" asChild>
-            <Link to="/cart">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Cart
-            </Link>
+            <Link to="/cart"><ArrowLeft className="h-4 w-4 mr-2" />Back to Cart</Link>
           </Button>
         </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form Sections */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Shipping */}
-              <div className="bg-card border border-border rounded-lg p-6">
-                <ShippingForm form={form} />
-              </div>
-
-              {/* Payment */}
-              <div className="bg-card border border-border rounded-lg p-6">
-                <PaymentMethods form={form} />
-              </div>
-
-              {/* Place Order Button - Mobile */}
+              <div className="bg-card border border-border rounded-lg p-6"><ShippingForm form={form} /></div>
+              <div className="bg-card border border-border rounded-lg p-6"><PaymentMethods form={form} /></div>
               <div className="lg:hidden">
-                <Button
-                  type="submit"
-                  variant="buy-now"
-                  size="xl"
-                  className="w-full"
-                  disabled={isProcessing}
-                >
+                <Button type="submit" variant="buy-now" size="xl" className="w-full" disabled={isProcessing}>
                   {isProcessing ? (
-                    <>
-                      <div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                      Processing...
-                    </>
+                    <><div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />Processing...</>
                   ) : (
-                    <>
-                      <Lock className="h-5 w-5 mr-2" />
-                      Place Order - ${(getTotal() + codFee - promoDiscount).toFixed(2)}
-                    </>
+                    <><Lock className="h-5 w-5 mr-2" />Place Order</>
                   )}
                 </Button>
-                <p className="text-xs text-center text-muted-foreground mt-3">
-                  By placing your order, you agree to our Terms of Service and Privacy Policy
-                </p>
+                <p className="text-xs text-center text-muted-foreground mt-3">By placing your order, you agree to our Terms of Service and Privacy Policy</p>
               </div>
             </div>
 
-            {/* Order Summary */}
             <div className="space-y-4">
               <OrderSummary codFee={codFee} promoDiscount={promoDiscount} />
-              
-              {/* Promo Code */}
               <div className="bg-card border border-border rounded-lg p-4">
                 <PromoCodeInput
                   onApply={(d, c, cid) => { setPromoDiscount(d); setAppliedCode(c); setAppliedCouponId(cid); }}
@@ -315,31 +311,15 @@ const Checkout = () => {
                   discount={promoDiscount}
                 />
               </div>
-              
-              {/* Place Order Button - Desktop */}
               <div className="hidden lg:block space-y-3">
-                <Button
-                  type="submit"
-                  variant="buy-now"
-                  size="xl"
-                  className="w-full"
-                  disabled={isProcessing}
-                >
+                <Button type="submit" variant="buy-now" size="xl" className="w-full" disabled={isProcessing}>
                   {isProcessing ? (
-                    <>
-                      <div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                      Processing...
-                    </>
+                    <><div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />Processing...</>
                   ) : (
-                    <>
-                      <Lock className="h-5 w-5 mr-2" />
-                      Place Order
-                    </>
+                    <><Lock className="h-5 w-5 mr-2" />Place Order</>
                   )}
                 </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  By placing your order, you agree to our Terms of Service and Privacy Policy
-                </p>
+                <p className="text-xs text-center text-muted-foreground">By placing your order, you agree to our Terms of Service and Privacy Policy</p>
               </div>
             </div>
           </div>

@@ -8,7 +8,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -18,7 +17,9 @@ import { format, subDays, startOfDay } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAISettings } from '@/hooks/useAISettings';
-import { toast } from 'sonner';
+import { DashboardDailyReport } from './DashboardDailyReport';
+import { DashboardFeatureCards } from './DashboardFeatureCards';
+import { DashboardIncompleteOrders } from './DashboardIncompleteOrders';
 
 interface DashboardStats {
   totalRevenue: number;
@@ -44,6 +45,7 @@ export const AdminDashboardOverview = () => {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [orderStatusData, setOrderStatusData] = useState<any[]>([]);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [allOrders, setAllOrders] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,6 +55,7 @@ export const AdminDashboardOverview = () => {
     try {
       const { data: ordersData } = await supabase.functions.invoke('admin-get-orders');
       const orders = ordersData?.orders || [];
+      setAllOrders(orders);
       const { count: productCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
       const { count: reviewCount } = await supabase.from('product_reviews').select('*', { count: 'exact', head: true });
 
@@ -112,7 +115,7 @@ export const AdminDashboardOverview = () => {
   }
 
   const statCards = [
-    { title: t('admin.totalRevenue'), value: `$${(stats?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: DollarSign, trend: '+12.5%', trendUp: true, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
+    { title: t('admin.totalRevenue'), value: `৳${(stats?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: DollarSign, trend: '+12.5%', trendUp: true, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
     { title: t('admin.totalOrders'), value: stats?.totalOrders || 0, icon: ShoppingCart, trend: '+8.2%', trendUp: true, color: 'text-accent', bg: 'bg-accent/10' },
     { title: t('admin.customers'), value: stats?.totalCustomers || 0, icon: Users, trend: '+5.1%', trendUp: true, color: 'text-[hsl(var(--prime))]', bg: 'bg-[hsl(var(--prime))]/10' },
     { title: t('admin.products'), value: stats?.totalProducts || 0, icon: Package, trend: '+3', trendUp: true, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },
@@ -133,6 +136,7 @@ export const AdminDashboardOverview = () => {
         <p className="text-muted-foreground text-sm">{t('admin.welcomeBack')}</p>
       </div>
 
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => (
           <Card key={stat.title} className="border border-border hover:shadow-md transition-shadow">
@@ -152,12 +156,16 @@ export const AdminDashboardOverview = () => {
         ))}
       </div>
 
+      {/* Quick Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-full bg-[hsl(var(--warning))]/10 flex items-center justify-center"><Clock className="h-5 w-5 text-[hsl(var(--warning))]" /></div><div><p className="text-xl font-bold">{stats?.pendingOrders || 0}</p><p className="text-xs text-muted-foreground">{t('admin.pendingOrders')}</p></div></CardContent></Card>
         <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center"><Truck className="h-5 w-5 text-purple-600" /></div><div><p className="text-xl font-bold">{stats?.shippedOrders || 0}</p><p className="text-xs text-muted-foreground">{t('admin.inTransit')}</p></div></CardContent></Card>
-        <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center"><DollarSign className="h-5 w-5 text-accent" /></div><div><p className="text-xl font-bold">${(stats?.avgOrderValue || 0).toFixed(0)}</p><p className="text-xs text-muted-foreground">{t('admin.avgOrderValue')}</p></div></CardContent></Card>
+        <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center"><DollarSign className="h-5 w-5 text-accent" /></div><div><p className="text-xl font-bold">৳{(stats?.avgOrderValue || 0).toFixed(0)}</p><p className="text-xs text-muted-foreground">{t('admin.avgOrderValue')}</p></div></CardContent></Card>
         <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-full bg-[hsl(var(--rating))]/10 flex items-center justify-center"><Star className="h-5 w-5 text-[hsl(var(--rating))]" /></div><div><p className="text-xl font-bold">{stats?.totalReviews || 0}</p><p className="text-xs text-muted-foreground">{t('admin.totalReviews')}</p></div></CardContent></Card>
       </div>
+
+      {/* Power Features Section */}
+      <DashboardFeatureCards />
 
       {/* AI Automation Section */}
       <Card className="border border-border bg-gradient-to-r from-primary/5 to-accent/5">
@@ -186,29 +194,18 @@ export const AdminDashboardOverview = () => {
                 key={item.label}
                 onClick={() => navigate(item.route)}
                 className={`relative cursor-pointer rounded-xl border p-3 transition-all hover:shadow-md ${
-                  item.enabled
-                    ? 'border-primary/30 bg-card hover:border-primary/50'
-                    : 'border-border bg-card/50 hover:border-border'
+                  item.enabled ? 'border-primary/30 bg-card hover:border-primary/50' : 'border-border bg-card/50 hover:border-border'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-                    item.enabled ? 'bg-primary/10' : 'bg-muted'
-                  }`}>
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${item.enabled ? 'bg-primary/10' : 'bg-muted'}`}>
                     <item.icon className={`h-4 w-4 ${item.enabled ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
-                  {item.enabled ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--success))] ml-auto" />
-                  ) : (
-                    <XCircle className="h-3.5 w-3.5 text-muted-foreground/50 ml-auto" />
-                  )}
+                  {item.enabled ? <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--success))] ml-auto" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/50 ml-auto" />}
                 </div>
                 <p className="text-xs font-semibold">{item.label}</p>
                 <p className="text-[10px] text-muted-foreground">{item.desc}</p>
-                <Badge
-                  variant={item.enabled ? 'default' : 'secondary'}
-                  className="mt-1.5 text-[9px] px-1.5 py-0"
-                >
+                <Badge variant={item.enabled ? 'default' : 'secondary'} className="mt-1.5 text-[9px] px-1.5 py-0">
                   {item.enabled ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
                 </Badge>
               </div>
@@ -217,6 +214,7 @@ export const AdminDashboardOverview = () => {
         </CardContent>
       </Card>
 
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 border border-border">
           <CardHeader className="pb-2"><CardTitle className="text-base font-semibold flex items-center gap-2"><BarChart3 className="h-4 w-4 text-accent" />{t('admin.revenueOverview')}</CardTitle></CardHeader>
@@ -228,7 +226,7 @@ export const AdminDashboardOverview = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
                   <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']} />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} formatter={(value: number) => [`৳${value.toFixed(2)}`, 'Revenue']} />
                   <Area type="monotone" dataKey="revenue" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#revenueGradient)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -256,7 +254,13 @@ export const AdminDashboardOverview = () => {
         </Card>
       </div>
 
+      {/* Daily Report */}
+      <DashboardDailyReport orders={allOrders} />
+
+      {/* Incomplete Orders + Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DashboardIncompleteOrders />
+
         <Card className="border border-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center justify-between">
@@ -270,11 +274,16 @@ export const AdminDashboardOverview = () => {
                 <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between px-3 md:px-6 py-3 hover:bg-muted/50 transition-colors gap-1 sm:gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">#{order.order_number}</p>
-                    <p className="text-xs text-muted-foreground truncate">{order.profile?.first_name} {order.profile?.last_name} • {format(new Date(order.created_at), 'MMM d, h:mm a')}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {order.profile?.first_name} {order.profile?.last_name} • {format(new Date(order.created_at), 'MMM d, h:mm a')}
+                      {order.shipping_address?.phone && (
+                        <a href={`tel:${order.shipping_address.phone}`} className="ml-1 text-primary hover:underline">📞</a>
+                      )}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 md:gap-3">
                     <Badge className={`text-xs ${statusConfig[order.status] || ''}`}>{order.status}</Badge>
-                    <span className="text-sm font-bold">${order.total?.toFixed(2)}</span>
+                    <span className="text-sm font-bold">৳{order.total?.toFixed(2)}</span>
                   </div>
                 </div>
               ))}
@@ -282,24 +291,25 @@ export const AdminDashboardOverview = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="border border-border">
-          <CardHeader className="pb-3"><CardTitle className="text-base font-semibold flex items-center gap-2"><Package className="h-4 w-4 text-accent" />{t('admin.topSelling')}</CardTitle></CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              {topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-3 hover:bg-muted/50 transition-colors">
-                  <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-muted flex items-center justify-center text-xs md:text-sm font-bold text-muted-foreground shrink-0">{index + 1}</div>
-                  {product.image && (<img src={product.image} alt={product.name} className="h-8 w-8 md:h-10 md:w-10 rounded-lg object-cover shrink-0" />)}
-                  <div className="flex-1 min-w-0"><p className="text-xs md:text-sm font-medium truncate">{product.name}</p><p className="text-xs text-muted-foreground">{product.sales} {t('admin.sold')}</p></div>
-                  <span className="text-xs md:text-sm font-bold text-accent shrink-0">${product.revenue.toFixed(2)}</span>
-                </div>
-              ))}
-              {topProducts.length === 0 && (<div className="px-3 md:px-6 py-8 text-center text-muted-foreground text-sm">{t('admin.noData')}</div>)}
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Top Products */}
+      <Card className="border border-border">
+        <CardHeader className="pb-3"><CardTitle className="text-base font-semibold flex items-center gap-2"><Package className="h-4 w-4 text-accent" />{t('admin.topSelling')}</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          <div className="divide-y divide-border">
+            {topProducts.map((product, index) => (
+              <div key={product.name} className="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-3 hover:bg-muted/50 transition-colors">
+                <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-muted flex items-center justify-center text-xs md:text-sm font-bold text-muted-foreground shrink-0">{index + 1}</div>
+                {product.image && (<img src={product.image} alt={product.name} className="h-8 w-8 md:h-10 md:w-10 rounded-lg object-cover shrink-0" />)}
+                <div className="flex-1 min-w-0"><p className="text-xs md:text-sm font-medium truncate">{product.name}</p><p className="text-xs text-muted-foreground">{product.sales} {t('admin.sold')}</p></div>
+                <span className="text-xs md:text-sm font-bold text-accent shrink-0">৳{product.revenue.toFixed(2)}</span>
+              </div>
+            ))}
+            {topProducts.length === 0 && (<div className="px-3 md:px-6 py-8 text-center text-muted-foreground text-sm">{t('admin.noData')}</div>)}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
