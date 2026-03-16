@@ -836,6 +836,33 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          label: string
+          module: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          label: string
+          module: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          label?: string
+          module?: string
+        }
+        Relationships: []
+      }
       preorder_commissions: {
         Row: {
           commission_amount: number
@@ -1565,6 +1592,35 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "product_reviews_public"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["key"]
           },
         ]
       }
@@ -2367,7 +2423,33 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "super_admin"
+        | "product_manager"
+        | "order_manager"
+        | "vendor_manager"
+        | "customer_manager"
+        | "content_manager"
+        | "marketing_manager"
+        | "finance_manager"
+        | "support_manager"
+        | "vendor_admin"
+        | "vendor_product_manager"
+        | "vendor_inventory_manager"
+        | "vendor_order_manager"
+        | "vendor_staff"
+        | "registered_customer"
+        | "premium_customer"
+        | "guest_user"
+        | "delivery_partner"
+        | "delivery_agent"
+        | "warehouse_manager"
+        | "affiliate_marketer"
+        | "influencer"
+        | "campaign_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2495,7 +2577,34 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "super_admin",
+        "product_manager",
+        "order_manager",
+        "vendor_manager",
+        "customer_manager",
+        "content_manager",
+        "marketing_manager",
+        "finance_manager",
+        "support_manager",
+        "vendor_admin",
+        "vendor_product_manager",
+        "vendor_inventory_manager",
+        "vendor_order_manager",
+        "vendor_staff",
+        "registered_customer",
+        "premium_customer",
+        "guest_user",
+        "delivery_partner",
+        "delivery_agent",
+        "warehouse_manager",
+        "affiliate_marketer",
+        "influencer",
+        "campaign_manager",
+      ],
     },
   },
 } as const

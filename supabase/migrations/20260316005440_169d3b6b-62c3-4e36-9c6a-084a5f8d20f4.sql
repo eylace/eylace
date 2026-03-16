@@ -1,0 +1,24 @@
+
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'super_admin';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'product_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'order_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'vendor_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'customer_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'content_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'marketing_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'finance_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'support_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'vendor_admin';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'vendor_product_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'vendor_inventory_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'vendor_order_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'vendor_staff';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'registered_customer';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'premium_customer';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'guest_user';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'delivery_partner';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'delivery_agent';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'warehouse_manager';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'affiliate_marketer';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'influencer';
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'campaign_manager';
