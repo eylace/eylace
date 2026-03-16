@@ -1,24 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
-  Star, 
-  Heart, 
-  Share2, 
-  ShoppingCart, 
-  Zap, 
-  Truck, 
-  Shield, 
-  RotateCcw,
-  Check,
-  MessageCircle,
-  ChevronRight,
-   Package,
-   Store,
-   GitCompareArrows,
-   Download
- } from 'lucide-react';
+  Star, Heart, Share2, ShoppingCart, Zap, Truck, Shield, RotateCcw,
+  Check, MessageCircle, ChevronRight, Package, Store, GitCompareArrows, Download
+} from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
- import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,8 +14,8 @@ import { VariationSelector } from '@/components/products/VariationSelector';
 import { QuantitySelector } from '@/components/products/QuantitySelector';
 import { ReviewsSection } from '@/components/products/ReviewsSection';
 import { ProductCard } from '@/components/products/ProductCard';
- import { useProduct, useProducts } from '@/hooks/useProducts';
- import { adaptDBProduct, adaptDBProducts } from '@/lib/productAdapter';
+import { useProduct, useProducts } from '@/hooks/useProducts';
+import { adaptDBProduct, adaptDBProducts } from '@/lib/productAdapter';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -37,7 +24,8 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompare } from '@/contexts/CompareContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
- import { Loader2 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -48,58 +36,59 @@ const ProductDetail = () => {
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
   const { formatPrice } = useCurrency();
+  const { t } = useLanguage();
    
-   const { product: dbProduct, isLoading, error } = useProduct(slug || '');
-   const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
+  const { product: dbProduct, isLoading, error } = useProduct(slug || '');
+  const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
    
-   const product = dbProduct ? adaptDBProduct(dbProduct) : null;
-   const relatedProducts = adaptDBProducts(relatedDbProducts);
+  const product = dbProduct ? adaptDBProduct(dbProduct) : null;
+  const relatedProducts = adaptDBProducts(relatedDbProducts);
 
-   const handleDigitalDownload = useCallback(async () => {
-     if (!user) {
-       toast.error('Please log in to download');
-       return;
-     }
-     if (!product) return;
-     try {
-       const { data, error } = await supabase.functions.invoke('get-digital-download', {
-         body: { product_id: product.id },
-       });
-       if (error) throw error;
-       if (data?.download_url) {
-         window.open(data.download_url, '_blank');
-         toast.success('Download started!');
-       } else {
-         toast.error(data?.error || 'Download not available');
-       }
-     } catch (err: any) {
-       toast.error(err?.message || 'You need to purchase this product first');
-     }
-   }, [user, product]);
+  const handleDigitalDownload = useCallback(async () => {
+    if (!user) {
+      toast.error('Please log in to download');
+      return;
+    }
+    if (!product) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('get-digital-download', {
+        body: { product_id: product.id },
+      });
+      if (error) throw error;
+      if (data?.download_url) {
+        window.open(data.download_url, '_blank');
+        toast.success('Download started!');
+      } else {
+        toast.error(data?.error || 'Download not available');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'You need to purchase this product first');
+    }
+  }, [user, product]);
 
-   if (isLoading) {
-     return (
-       <Layout>
-         <div className="container-main py-16 flex items-center justify-center">
-           <Loader2 className="h-8 w-8 animate-spin text-accent" />
-         </div>
-       </Layout>
-     );
-   }
- 
-   if (!product) {
-     return (
-       <Layout>
-         <div className="container-main py-16 text-center">
-           <h1 className="text-2xl font-bold mb-4">Product not found</h1>
-           <Button variant="accent" onClick={() => window.location.href = '/'}>
-             Back to Home
-           </Button>
-         </div>
-       </Layout>
-     );
-   }
- 
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container-main py-16 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!product) {
+    return (
+      <Layout>
+        <div className="container-main py-16 text-center">
+          <h1 className="text-2xl font-bold mb-4">{t('product.notFound')}</h1>
+          <Button variant="accent" onClick={() => window.location.href = '/'}>
+            {t('product.backToHome')}
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
+
   const isWishlisted = isInWishlist(product.id);
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
@@ -118,33 +107,31 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     addItem(product, quantity, selectedVariations);
-    toast.success('Added to cart!', {
+    toast.success(t('product.addedToCart'), {
       description: `${quantity}x ${product.name}`,
     });
   };
 
   const handleBuyNow = () => {
     addItem(product, quantity, selectedVariations);
-    toast.success('Redirecting to checkout...', {
+    toast.success(t('product.redirectCheckout'), {
       description: 'Your order is being prepared',
     });
-    // In real app, navigate to checkout
     window.location.href = '/checkout';
   };
 
-   const handleBookNow = () => {
-     toast.info('Product added to your booking', {
-       description: 'You will be notified when available',
-     });
-   };
-
+  const handleBookNow = () => {
+    toast.info('Product added to your booking', {
+      description: 'You will be notified when available',
+    });
+  };
 
   return (
     <Layout>
       <div className="container-main py-6">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link to="/" className="hover:text-accent transition-colors">Home</Link>
+          <Link to="/" className="hover:text-accent transition-colors">{t('common.home')}</Link>
           <ChevronRight className="h-4 w-4" />
           <Link to={`/category/${product.category.slug}`} className="hover:text-accent transition-colors">
             {product.category.name}
@@ -155,19 +142,17 @@ const ProductDetail = () => {
 
         {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Image Gallery */}
           <div className="lg:sticky lg:top-24 lg:self-start">
             <ImageGallery images={product.images} productName={product.name} />
           </div>
 
-          {/* Product Info */}
           <div className="space-y-6">
             {/* Badges */}
             <div className="flex flex-wrap gap-2">
               {product.isFlashSale && (
                 <Badge className="badge-flash flex items-center gap-1">
                   <Zap className="h-3 w-3" />
-                  Flash Sale
+                  {t('product.flashSale')}
                 </Badge>
               )}
               {product.isPrime && (
@@ -175,7 +160,7 @@ const ProductDetail = () => {
               )}
               {product.isFreeShipping && (
                 <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                  Free Shipping
+                  {t('product.freeShipping')}
                 </Badge>
               )}
             </div>
@@ -186,7 +171,6 @@ const ProductDetail = () => {
                 {product.name}
               </h1>
               
-              {/* Rating & Reviews */}
               <div className="flex flex-wrap items-center gap-4 mt-3">
                 <div className="flex items-center gap-1">
                   <div className="flex">
@@ -205,10 +189,10 @@ const ProductDetail = () => {
                   <span className="font-medium text-foreground">{product.rating}</span>
                 </div>
                 <a href="#reviews" className="text-sm text-accent hover:underline">
-                  {product.reviewCount.toLocaleString()} reviews
+                  {product.reviewCount.toLocaleString()} {t('product.reviews')}
                 </a>
                 <span className="text-sm text-muted-foreground">
-                  5,000+ sold
+                  5,000+ {t('product.sold')}
                 </span>
               </div>
             </div>
@@ -227,14 +211,14 @@ const ProductDetail = () => {
                       {formatPrice(product.originalPrice)}
                     </span>
                     <Badge className="badge-flash text-sm">
-                      {product.discount}% OFF
+                      {product.discount}% {t('common.off')}
                     </Badge>
                   </>
                 )}
               </div>
               {savings > 0 && (
                 <p className="text-success font-medium">
-                  You save: {formatPrice(savings)}
+                  {t('product.youSave')} {formatPrice(savings)}
                 </p>
               )}
             </div>
@@ -255,7 +239,7 @@ const ProductDetail = () => {
 
             {/* Quantity */}
             <div className="space-y-3">
-              <h3 className="font-medium text-foreground">Quantity</h3>
+              <h3 className="font-medium text-foreground">{t('product.quantity')}</h3>
               <div className="flex items-center gap-4">
                 <QuantitySelector 
                   value={quantity}
@@ -266,10 +250,10 @@ const ProductDetail = () => {
                   {product.stock > 0 ? (
                     <span className="text-success">
                       <Check className="h-4 w-4 inline mr-1" />
-                      {product.stock} in stock
+                      {product.stock} {t('product.inStock')}
                     </span>
                   ) : (
-                    <span className="text-destructive">Out of Stock</span>
+                    <span className="text-destructive">{t('product.outOfStock')}</span>
                   )}
                 </span>
               </div>
@@ -285,7 +269,7 @@ const ProductDetail = () => {
                   onClick={handleBookNow}
                 >
                   <Package className="h-5 w-5 mr-2" />
-                  Book Now - Get Notified
+                  {t('product.bookNow')}
                 </Button>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
@@ -296,7 +280,7 @@ const ProductDetail = () => {
                     onClick={handleAddToCart}
                   >
                     <ShoppingCart className="h-5 w-5 mr-2" />
-                    Add to Cart
+                    {t('product.addToCart')}
                   </Button>
                   <Button 
                     variant="buy-now" 
@@ -305,25 +289,23 @@ const ProductDetail = () => {
                     onClick={handleBuyNow}
                   >
                     <Zap className="h-5 w-5 mr-2" />
-                    Buy Now
+                    {t('product.buyNow')}
                   </Button>
                 </div>
               )}
 
-               {/* Digital Download Button */}
-               {product.isDigital && user && (
-                 <Button 
-                   variant="outline" 
-                   size="xl" 
-                   className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground"
-                   onClick={handleDigitalDownload}
-                 >
-                   <Download className="h-5 w-5 mr-2" />
-                   Download Digital Product
-                 </Button>
-               )}
+              {product.isDigital && user && (
+                <Button 
+                  variant="outline" 
+                  size="xl" 
+                  className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                  onClick={handleDigitalDownload}
+                >
+                  <Download className="h-5 w-5 mr-2" />
+                  {t('product.downloadDigital')}
+                </Button>
+              )}
 
-               {/* Secondary Actions */}
               <div className="flex gap-3">
                 <Button 
                   variant="ghost" 
@@ -334,7 +316,7 @@ const ProductDetail = () => {
                     "h-5 w-5 mr-2",
                     isWishlisted && "fill-destructive text-destructive"
                   )} />
-                  {isWishlisted ? 'Saved' : 'Wishlist'}
+                  {isWishlisted ? t('product.saved') : t('product.wishlist')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -342,21 +324,20 @@ const ProductDetail = () => {
                   onClick={() => isInCompare(product.id) ? removeFromCompare(product.id) : addToCompare(product)}
                 >
                   <GitCompareArrows className="h-5 w-5 mr-2" />
-                  {isInCompare(product.id) ? 'Comparing' : 'Compare'}
+                  {isInCompare(product.id) ? t('product.comparing') : t('product.compare')}
                 </Button>
                 <Button variant="ghost" className="flex-1">
                   <Share2 className="h-5 w-5 mr-2" />
-                  Share
+                  {t('product.share')}
                 </Button>
               </div>
 
-              {/* WhatsApp */}
               <Button 
                 variant="outline" 
                 className="w-full border-success text-success hover:bg-success hover:text-success-foreground"
               >
                 <MessageCircle className="h-5 w-5 mr-2" />
-                Chat with Seller on WhatsApp
+                {t('product.chatWhatsApp')}
               </Button>
             </div>
 
@@ -364,27 +345,27 @@ const ProductDetail = () => {
 
             {/* Delivery & Services */}
             <div className="space-y-4">
-              <h3 className="font-medium text-foreground">Delivery & Services</h3>
+              <h3 className="font-medium text-foreground">{t('product.deliveryServices')}</h3>
               <div className="grid gap-3">
                 <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-lg">
                   <Truck className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-foreground">Free Delivery</p>
-                    <p className="text-sm text-muted-foreground">Estimated delivery: 3-5 business days</p>
+                    <p className="font-medium text-foreground">{t('product.freeDelivery')}</p>
+                    <p className="text-sm text-muted-foreground">{t('product.estimatedDelivery')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-lg">
                   <RotateCcw className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-foreground">Easy Returns</p>
-                    <p className="text-sm text-muted-foreground">30-day return policy</p>
+                    <p className="font-medium text-foreground">{t('product.easyReturns')}</p>
+                    <p className="text-sm text-muted-foreground">{t('product.returnPolicy')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-lg">
                   <Shield className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-foreground">2 Year Warranty</p>
-                    <p className="text-sm text-muted-foreground">Official manufacturer warranty</p>
+                    <p className="font-medium text-foreground">{t('product.warranty')}</p>
+                    <p className="text-sm text-muted-foreground">{t('product.warrantyDesc')}</p>
                   </div>
                 </div>
               </div>
@@ -406,12 +387,12 @@ const ProductDetail = () => {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Star className="h-3 w-3 fill-rating text-rating" />
-                      <span>{product.seller.rating} seller rating</span>
+                      <span>{product.seller.rating} {t('product.sellerRating')}</span>
                     </div>
                   </div>
                 </div>
                 <Button variant="outline" size="sm">
-                  Visit Store
+                  {t('product.visitStore')}
                 </Button>
               </div>
             </div>
@@ -425,19 +406,19 @@ const ProductDetail = () => {
               value="description"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent"
             >
-              Description
+              {t('product.description')}
             </TabsTrigger>
             <TabsTrigger 
               value="specifications"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent"
             >
-              Specifications
+              {t('product.specifications')}
             </TabsTrigger>
             <TabsTrigger 
               value="reviews"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent"
             >
-              Reviews ({product.reviewCount.toLocaleString()})
+              {t('product.reviews')} ({product.reviewCount.toLocaleString()})
             </TabsTrigger>
           </TabsList>
 
@@ -451,7 +432,7 @@ const ProductDetail = () => {
 
           <TabsContent value="specifications" className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               {specificationAttributes.map((attr, i) => (
+              {specificationAttributes.map((attr, i) => (
                 <div 
                   key={i}
                   className={cn(
@@ -459,8 +440,8 @@ const ProductDetail = () => {
                     i % 2 === 0 ? "bg-secondary/50" : "bg-transparent"
                   )}
                 >
-                   <span className="text-muted-foreground">{attr.name}</span>
-                   <span className="font-medium text-foreground">{attr.value}</span>
+                  <span className="text-muted-foreground">{attr.name}</span>
+                  <span className="font-medium text-foreground">{attr.value}</span>
                 </div>
               ))}
             </div>
@@ -479,11 +460,11 @@ const ProductDetail = () => {
         {/* Related Products */}
         <section className="mb-12">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
-            Related Products
+            {t('product.relatedProducts')}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-             {relatedProducts.slice(0, 5).map((p) => (
-               <ProductCard key={p.id} product={p} />
+            {relatedProducts.slice(0, 5).map((p) => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </section>
@@ -491,11 +472,11 @@ const ProductDetail = () => {
         {/* Recently Viewed */}
         <section>
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
-            Recently Viewed
+            {t('product.recentlyViewed')}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-             {relatedProducts.slice(0, 5).map((p) => (
-               <ProductCard key={p.id} product={p} />
+            {relatedProducts.slice(0, 5).map((p) => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </section>

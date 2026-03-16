@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -48,6 +49,7 @@ const passwordSchema = z.object({
 const Account = () => {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, updateProfile, signOut } = useAuth();
+  const { t } = useLanguage();
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -188,7 +190,6 @@ const Account = () => {
     const fileExt = file.name.split('.').pop();
     const filePath = `${user.id}/avatar.${fileExt}`;
 
-    // Delete old avatar if exists
     await supabase.storage.from('avatars').remove([filePath]);
 
     const { error: uploadError } = await supabase.storage
@@ -280,16 +281,16 @@ const Account = () => {
                     )}
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
-                      Member since {memberSince}
+                      {t('account.memberSince')} {memberSince}
                     </span>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { setActiveTab('profile'); setIsEditingProfile(true); }}>
-                    <Edit2 className="h-3.5 w-3.5" /> Edit Profile
+                    <Edit2 className="h-3.5 w-3.5" /> {t('account.editProfile')}
                   </Button>
                   <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={handleSignOut}>
-                    <LogOut className="h-3.5 w-3.5" /> Sign Out
+                    <LogOut className="h-3.5 w-3.5" /> {t('account.signOut')}
                   </Button>
                 </div>
               </div>
@@ -299,10 +300,10 @@ const Account = () => {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { label: 'Total Orders', value: orderCount, icon: Package, color: 'text-primary', link: '/orders' },
-              { label: 'Wishlist', value: wishlistCount, icon: Heart, color: 'text-destructive', link: '/wishlist' },
-              { label: 'Reviews', value: reviewCount, icon: Star, color: 'text-[hsl(var(--rating))]', link: '#' },
-              { label: 'Addresses', value: addressData.address ? 1 : 0, icon: MapPin, color: 'text-[hsl(var(--success))]', link: '#addresses' },
+              { label: t('account.totalOrders'), value: orderCount, icon: Package, color: 'text-primary', link: '/orders' },
+              { label: t('account.wishlist'), value: wishlistCount, icon: Heart, color: 'text-destructive', link: '/wishlist' },
+              { label: t('account.reviews'), value: reviewCount, icon: Star, color: 'text-[hsl(var(--rating))]', link: '#' },
+              { label: t('account.addresses'), value: addressData.address ? 1 : 0, icon: MapPin, color: 'text-[hsl(var(--success))]', link: '#addresses' },
             ].map((stat) => (
               <Link key={stat.label} to={stat.link} className="bg-card rounded-xl border border-border p-4 hover:shadow-[var(--shadow-card-hover)] transition-all group">
                 <div className="flex items-center justify-between mb-2">
@@ -319,40 +320,39 @@ const Account = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4 lg:grid-cols-5 mb-6 h-auto">
               <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm py-2.5">
-                <User className="h-4 w-4 hidden sm:block" /> Overview
+                <User className="h-4 w-4 hidden sm:block" /> {t('account.overview')}
               </TabsTrigger>
               <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm py-2.5">
-                <Edit2 className="h-4 w-4 hidden sm:block" /> Profile
+                <Edit2 className="h-4 w-4 hidden sm:block" /> {t('account.profile')}
               </TabsTrigger>
               <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm py-2.5">
-                <MapPin className="h-4 w-4 hidden sm:block" /> Addresses
+                <MapPin className="h-4 w-4 hidden sm:block" /> {t('account.addresses')}
               </TabsTrigger>
               <TabsTrigger value="security" className="gap-1.5 text-xs sm:text-sm py-2.5">
-                <Shield className="h-4 w-4 hidden sm:block" /> Security
+                <Shield className="h-4 w-4 hidden sm:block" /> {t('account.security')}
               </TabsTrigger>
               <TabsTrigger value="notifications" className="gap-1.5 text-xs sm:text-sm py-2.5 hidden lg:flex">
-                <Bell className="h-4 w-4 hidden sm:block" /> Notifications
+                <Bell className="h-4 w-4 hidden sm:block" /> {t('account.notifications')}
               </TabsTrigger>
             </TabsList>
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
-              {/* Recent Orders */}
               <div className="bg-card rounded-xl border border-border p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Recent Orders</h2>
+                  <h2 className="text-lg font-semibold">{t('account.recentOrders')}</h2>
                   <Link to="/orders">
                     <Button variant="ghost" size="sm" className="gap-1 text-accent hover:text-accent">
-                      View All <ChevronRight className="h-4 w-4" />
+                      {t('account.viewAll')} <ChevronRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
                 {recentOrders.length === 0 ? (
                   <div className="text-center py-8">
                     <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground">No orders yet</p>
+                    <p className="text-muted-foreground">{t('account.noOrders')}</p>
                     <Link to="/">
-                      <Button variant="accent" size="sm" className="mt-3">Start Shopping</Button>
+                      <Button variant="accent" size="sm" className="mt-3">{t('account.startShopping')}</Button>
                     </Link>
                   </div>
                 ) : (
@@ -365,7 +365,7 @@ const Account = () => {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm">Order #{order.order_number}</p>
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(order.created_at), 'MMM d, yyyy')} · {order.order_items?.length || 0} items
+                            {format(new Date(order.created_at), 'MMM d, yyyy')} · {order.order_items?.length || 0} {t('common.items')}
                           </p>
                         </div>
                         <div className="text-right">
@@ -383,10 +383,10 @@ const Account = () => {
               {/* Quick Links */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { label: 'My Wishlist', desc: 'View saved products', icon: Heart, link: '/wishlist', color: 'text-destructive' },
-                  { label: 'Order History', desc: 'Track all your orders', icon: Clock, link: '/orders', color: 'text-primary' },
-                  { label: 'Account Settings', desc: 'Update personal info', icon: Settings, link: '#', onClick: () => setActiveTab('profile'), color: 'text-accent' },
-                  { label: 'Sell on Eylace', desc: 'Start your own store', icon: ShoppingBag, link: '/sell', color: 'text-[hsl(var(--success))]' },
+                  { label: t('account.myWishlist'), desc: t('account.viewSavedProducts'), icon: Heart, link: '/wishlist', color: 'text-destructive' },
+                  { label: t('account.orderHistory'), desc: t('account.trackAllOrders'), icon: Clock, link: '/orders', color: 'text-primary' },
+                  { label: t('account.accountSettings'), desc: t('account.updatePersonalInfo'), icon: Settings, link: '#', onClick: () => setActiveTab('profile'), color: 'text-accent' },
+                  { label: t('account.sellOnEylace'), desc: t('account.startYourStore'), icon: ShoppingBag, link: '/sell', color: 'text-[hsl(var(--success))]' },
                 ].map((item) => (
                   <Link
                     key={item.label}
@@ -411,10 +411,10 @@ const Account = () => {
             <TabsContent value="profile" className="space-y-6">
               <div className="bg-card rounded-xl border border-border p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold">Personal Information</h2>
+                  <h2 className="text-lg font-semibold">{t('account.personalInfo')}</h2>
                   {!isEditingProfile ? (
                     <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setIsEditingProfile(true)}>
-                      <Edit2 className="h-3.5 w-3.5" /> Edit
+                      <Edit2 className="h-3.5 w-3.5" /> {t('account.edit')}
                     </Button>
                   ) : (
                     <div className="flex gap-2">
@@ -429,36 +429,36 @@ const Account = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="first_name">First Name</Label>
-                        <Input id="first_name" value={profileData.first_name} onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })} placeholder="Enter first name" />
+                        <Label htmlFor="first_name">{t('account.firstName')}</Label>
+                        <Input id="first_name" value={profileData.first_name} onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })} placeholder={t('account.firstName')} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="last_name">Last Name</Label>
-                        <Input id="last_name" value={profileData.last_name} onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })} placeholder="Enter last name" />
+                        <Label htmlFor="last_name">{t('account.lastName')}</Label>
+                        <Input id="last_name" value={profileData.last_name} onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })} placeholder={t('account.lastName')} />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">{t('account.email')}</Label>
                       <Input id="email" value={user.email || ''} disabled className="bg-secondary" />
-                      <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+                      <p className="text-xs text-muted-foreground">{t('account.emailCannotChange')}</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone">{t('account.phoneNumber')}</Label>
                       <Input id="phone" type="tel" value={profileData.phone} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} placeholder="+880 1XXX-XXXXXX" />
                     </div>
                     <Separator />
                     <Button onClick={handleProfileSave} disabled={isSaving} className="gap-2">
                       {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      Save Changes
+                      {t('account.saveChanges')}
                     </Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {[
-                      { label: 'First Name', value: profile?.first_name || '—' },
-                      { label: 'Last Name', value: profile?.last_name || '—' },
-                      { label: 'Email', value: user.email || '—' },
-                      { label: 'Phone', value: profile?.phone || '—' },
+                      { label: t('account.firstName'), value: profile?.first_name || '—' },
+                      { label: t('account.lastName'), value: profile?.last_name || '—' },
+                      { label: t('account.email'), value: user.email || '—' },
+                      { label: t('account.phoneNumber'), value: profile?.phone || '—' },
                     ].map((field) => (
                       <div key={field.label}>
                         <p className="text-sm text-muted-foreground mb-1">{field.label}</p>
@@ -474,10 +474,10 @@ const Account = () => {
             <TabsContent value="addresses" className="space-y-6">
               <div className="bg-card rounded-xl border border-border p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold">Shipping Address</h2>
+                  <h2 className="text-lg font-semibold">{t('account.shippingAddress')}</h2>
                   {!isEditingAddress ? (
                     <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setIsEditingAddress(true)}>
-                      <Edit2 className="h-3.5 w-3.5" /> Edit
+                      <Edit2 className="h-3.5 w-3.5" /> {t('account.edit')}
                     </Button>
                   ) : (
                     <Button variant="ghost" size="sm" onClick={() => setIsEditingAddress(false)}>
@@ -489,32 +489,32 @@ const Account = () => {
                 {isEditingAddress ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="address">Street Address</Label>
-                      <Input id="address" value={addressData.address} onChange={(e) => setAddressData({ ...addressData, address: e.target.value })} placeholder="Enter street address" />
+                      <Label htmlFor="address">{t('account.streetAddress')}</Label>
+                      <Input id="address" value={addressData.address} onChange={(e) => setAddressData({ ...addressData, address: e.target.value })} placeholder={t('account.streetAddress')} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="apartment">Apartment, suite, etc. (optional)</Label>
+                      <Label htmlFor="apartment">{t('account.apartmentOptional')}</Label>
                       <Input id="apartment" value={addressData.apartment} onChange={(e) => setAddressData({ ...addressData, apartment: e.target.value })} placeholder="Apt, Suite, Unit" />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
-                        <Input id="city" value={addressData.city} onChange={(e) => setAddressData({ ...addressData, city: e.target.value })} placeholder="Enter city" />
+                        <Label htmlFor="city">{t('account.city')}</Label>
+                        <Input id="city" value={addressData.city} onChange={(e) => setAddressData({ ...addressData, city: e.target.value })} placeholder={t('account.city')} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="state">State / Division</Label>
-                        <Input id="state" value={addressData.state} onChange={(e) => setAddressData({ ...addressData, state: e.target.value })} placeholder="Enter state" />
+                        <Label htmlFor="state">{t('account.stateDivision')}</Label>
+                        <Input id="state" value={addressData.state} onChange={(e) => setAddressData({ ...addressData, state: e.target.value })} placeholder={t('account.stateDivision')} />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="zip_code">ZIP / Postal Code</Label>
-                        <Input id="zip_code" value={addressData.zip_code} onChange={(e) => setAddressData({ ...addressData, zip_code: e.target.value })} placeholder="Enter ZIP code" />
+                        <Label htmlFor="zip_code">{t('account.zipCode')}</Label>
+                        <Input id="zip_code" value={addressData.zip_code} onChange={(e) => setAddressData({ ...addressData, zip_code: e.target.value })} placeholder={t('account.zipCode')} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="country">Country</Label>
+                        <Label htmlFor="country">{t('account.country')}</Label>
                         <Select value={addressData.country} onValueChange={(v) => setAddressData({ ...addressData, country: v })}>
-                          <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder={t('account.country')} /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="BD">Bangladesh</SelectItem>
                             <SelectItem value="US">United States</SelectItem>
@@ -527,7 +527,7 @@ const Account = () => {
                     <Separator />
                     <Button onClick={handleAddressSave} disabled={isSaving} className="gap-2">
                       {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                      Save Address
+                      {t('account.saveAddress')}
                     </Button>
                   </div>
                 ) : (
@@ -536,20 +536,20 @@ const Account = () => {
                       <div className="flex items-start gap-4 p-4 bg-secondary/50 rounded-lg">
                         <MapPin className="h-5 w-5 text-accent mt-0.5 shrink-0" />
                         <div>
-                          <p className="font-medium">Default Shipping Address</p>
+                          <p className="font-medium">{t('account.defaultShipping')}</p>
                           <p className="text-sm text-muted-foreground mt-1">
                             {[addressData.address, addressData.apartment, addressData.city, addressData.state, addressData.zip_code].filter(Boolean).join(', ')}
                           </p>
                           <p className="text-sm text-muted-foreground">{addressData.country}</p>
                         </div>
-                        <Badge variant="outline" className="ml-auto shrink-0">Default</Badge>
+                        <Badge variant="outline" className="ml-auto shrink-0">{t('account.default')}</Badge>
                       </div>
                     ) : (
                       <div className="text-center py-8">
                         <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                        <p className="text-muted-foreground mb-3">No address saved yet</p>
+                        <p className="text-muted-foreground mb-3">{t('account.noAddressSaved')}</p>
                         <Button variant="outline" size="sm" onClick={() => setIsEditingAddress(true)}>
-                          Add Address
+                          {t('account.addAddress')}
                         </Button>
                       </div>
                     )}
@@ -561,60 +561,60 @@ const Account = () => {
             {/* Security Tab */}
             <TabsContent value="security" className="space-y-6">
               <div className="bg-card rounded-xl border border-border p-6">
-                <h2 className="text-lg font-semibold mb-6">Change Password</h2>
+                <h2 className="text-lg font-semibold mb-6">{t('account.changePassword')}</h2>
                 <div className="space-y-4 max-w-md">
                   <div className="space-y-2">
-                    <Label htmlFor="new_password">New Password</Label>
+                    <Label htmlFor="new_password">{t('account.newPassword')}</Label>
                     <Input
                       id="new_password"
                       type="password"
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      placeholder="Enter new password"
+                      placeholder={t('account.newPassword')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirm_password">Confirm Password</Label>
+                    <Label htmlFor="confirm_password">{t('account.confirmPassword')}</Label>
                     <Input
                       id="confirm_password"
                       type="password"
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      placeholder="Confirm new password"
+                      placeholder={t('account.confirmPassword')}
                     />
                   </div>
                   <Button onClick={handlePasswordChange} disabled={isSaving || !passwordData.newPassword} className="gap-2">
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
-                    Update Password
+                    {t('account.updatePassword')}
                   </Button>
                 </div>
               </div>
 
               <div className="bg-card rounded-xl border border-border p-6">
-                <h2 className="text-lg font-semibold mb-4">Account Info</h2>
+                <h2 className="text-lg font-semibold mb-4">{t('account.accountInfo')}</h2>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Email</span>
+                    <span className="text-muted-foreground">{t('account.email')}</span>
                     <span className="font-medium">{user.email}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Account Created</span>
+                    <span className="text-muted-foreground">{t('account.accountCreated')}</span>
                     <span className="font-medium">{memberSince}</span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Last Sign In</span>
+                    <span className="text-muted-foreground">{t('account.lastSignIn')}</span>
                     <span className="font-medium">{user.last_sign_in_at ? format(new Date(user.last_sign_in_at), 'MMM d, yyyy h:mm a') : '—'}</span>
                   </div>
                 </div>
               </div>
 
               <div className="bg-destructive/5 rounded-xl border border-destructive/20 p-6">
-                <h2 className="text-lg font-semibold text-destructive mb-2">Danger Zone</h2>
+                <h2 className="text-lg font-semibold text-destructive mb-2">{t('account.dangerZone')}</h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Once you sign out, you'll need to log in again to access your account.
+                  {t('account.signOutDesc')}
                 </p>
                 <Button variant="destructive" size="sm" onClick={handleSignOut} className="gap-2">
-                  <LogOut className="h-4 w-4" /> Sign Out of Account
+                  <LogOut className="h-4 w-4" /> {t('account.signOutOfAccount')}
                 </Button>
               </div>
             </TabsContent>
@@ -622,14 +622,14 @@ const Account = () => {
             {/* Notifications Tab */}
             <TabsContent value="notifications" className="space-y-6">
               <div className="bg-card rounded-xl border border-border p-6">
-                <h2 className="text-lg font-semibold mb-6">Notification Preferences</h2>
+                <h2 className="text-lg font-semibold mb-6">{t('account.notificationPrefs')}</h2>
                 <div className="space-y-6">
                   {[
-                    { title: 'Order Updates', desc: 'Get notified about order status changes', defaultChecked: true },
-                    { title: 'Promotions & Deals', desc: 'Receive emails about sales and special offers', defaultChecked: false },
-                    { title: 'Product Recommendations', desc: 'Get personalized product suggestions', defaultChecked: false },
-                    { title: 'Review Reminders', desc: 'Reminders to review purchased products', defaultChecked: true },
-                    { title: 'Wishlist Alerts', desc: 'Get notified when wishlist items go on sale', defaultChecked: true },
+                    { title: t('account.orderUpdates'), desc: t('account.orderUpdatesDesc'), defaultChecked: true },
+                    { title: t('account.promotionsDeals'), desc: t('account.promotionsDesc'), defaultChecked: false },
+                    { title: t('account.productRecommendations'), desc: t('account.productRecommendationsDesc'), defaultChecked: false },
+                    { title: t('account.reviewReminders'), desc: t('account.reviewRemindersDesc'), defaultChecked: true },
+                    { title: t('account.wishlistAlerts'), desc: t('account.wishlistAlertsDesc'), defaultChecked: true },
                   ].map((pref) => (
                     <div key={pref.title} className="flex items-center justify-between">
                       <div>
