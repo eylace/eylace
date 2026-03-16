@@ -217,7 +217,7 @@ const Orders = () => {
                   {expandedOrder === order.id && (
                     <div className="border-t border-border">
                       {/* Tracking Timeline - Always visible */}
-                      {status !== 'cancelled' && (
+                      {order.status !== 'cancelled' && (
                         <div className="p-4 border-b border-border bg-secondary/30">
                           <OrderTrackingTimeline
                             status={order.status}
