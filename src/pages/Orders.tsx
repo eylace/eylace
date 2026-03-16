@@ -216,22 +216,8 @@ const Orders = () => {
                   {/* Expanded Content */}
                   {expandedOrder === order.id && (
                     <div className="border-t border-border">
-                      {/* Track Order Button */}
-                      {(order.status === 'shipped' || order.status === 'processing' || order.status === 'delivered') && (
-                        <div className="p-4 border-b border-border">
-                          <Button
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => setShowTracking(showTracking === order.id ? null : order.id)}
-                          >
-                            <Truck className="h-4 w-4" />
-                            {showTracking === order.id ? t('orders.hideTracking') : t('orders.trackOrder')}
-                          </Button>
-                        </div>
-                      )}
-
-                      {/* Tracking Timeline */}
-                      {showTracking === order.id && (
+                      {/* Tracking Timeline - Always visible */}
+                      {status !== 'cancelled' && (
                         <div className="p-4 border-b border-border bg-secondary/30">
                           <OrderTrackingTimeline
                             status={order.status}
@@ -240,6 +226,15 @@ const Orders = () => {
                             estimatedDelivery={order.estimated_delivery}
                             shippedAt={order.shipped_at}
                             deliveredAt={order.delivered_at}
+                            events={order.tracking_events}
+                          />
+                        </div>
+                      )}
+
+                      {order.status === 'cancelled' && (
+                        <div className="p-4 border-b border-border bg-destructive/5">
+                          <OrderTrackingTimeline
+                            status={order.status}
                             events={order.tracking_events}
                           />
                         </div>
