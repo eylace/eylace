@@ -176,7 +176,7 @@ export const ReviewsSection = ({ productId, productName = 'Product', rating, rev
                 {/* Avatar */}
                 <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
                   <span className="font-semibold text-foreground">
-                    {review.user_email?.charAt(0).toUpperCase() || 'U'}
+                    {review.user_initials || 'A'}
                   </span>
                 </div>
 
@@ -184,7 +184,7 @@ export const ReviewsSection = ({ productId, productName = 'Product', rating, rev
                   {/* User Info & Rating */}
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="font-medium text-foreground">
-                      {review.user_email?.split('@')[0] || 'Anonymous'}
+                      {review.user_name || 'Anonymous'}
                     </span>
                     {review.verified_purchase && (
                       <span className="flex items-center gap-1 text-xs text-success">

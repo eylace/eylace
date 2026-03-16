@@ -418,7 +418,7 @@ const ProductDetail = () => {
               value="reviews"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent"
             >
-              {t('product.reviews')} ({product.reviewCount.toLocaleString()})
+              {t('product.reviews')} ({(product.reviewCount || 0).toLocaleString()})
             </TabsTrigger>
           </TabsList>
 

@@ -234,15 +234,32 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <Label>Price *</Label>
-              <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0.00" />
+              <Input type="number" value={form.price} onChange={e => {
+                const newPrice = e.target.value;
+                setForm(f => {
+                  const op = parseFloat(f.original_price);
+                  const p = parseFloat(newPrice);
+                  const autoDiscount = op && p && op > p ? String(Math.round(((op - p) / op) * 100)) : '';
+                  return { ...f, price: newPrice, discount: autoDiscount };
+                });
+              }} placeholder="0.00" />
             </div>
             <div>
               <Label>Original Price</Label>
-              <Input type="number" value={form.original_price} onChange={e => setForm(f => ({ ...f, original_price: e.target.value }))} placeholder="0.00" />
+              <Input type="number" value={form.original_price} onChange={e => {
+                const newOp = e.target.value;
+                setForm(f => {
+                  const op = parseFloat(newOp);
+                  const p = parseFloat(f.price);
+                  const autoDiscount = op && p && op > p ? String(Math.round(((op - p) / op) * 100)) : '';
+                  return { ...f, original_price: newOp, discount: autoDiscount };
+                });
+              }} placeholder="0.00" />
             </div>
             <div>
               <Label>Discount %</Label>
-              <Input type="number" value={form.discount} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" />
+              <Input type="number" value={form.discount} readOnly className="bg-muted cursor-not-allowed" placeholder="Auto" />
+              {form.discount && <p className="text-xs text-success mt-1">{form.discount}% off</p>}
             </div>
             <div>
               <Label>Stock</Label>
