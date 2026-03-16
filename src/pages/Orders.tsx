@@ -69,7 +69,7 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  const [showTracking, setShowTracking] = useState<string | null>(null);
+  
 
   useEffect(() => {
     if (!authLoading && !user) {
