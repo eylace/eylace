@@ -1121,6 +1121,14 @@ export const translations = {
   'tracking.orderCancelled': { en: 'Order Cancelled', bn: 'অর্ডার বাতিল' },
   'tracking.deliveredOn': { en: 'Delivered on', bn: 'ডেলিভারি হয়েছে' },
   'tracking.trackingHistory': { en: 'Tracking History', bn: 'ট্র্যাকিং ইতিহাস' },
+
+  // Location Picker
+  'location.title': { en: 'Choose Your Delivery Location', bn: 'আপনার ডেলিভারি লোকেশন নির্বাচন করুন' },
+  'location.selectDivision': { en: 'Division (বিভাগ)', bn: 'বিভাগ' },
+  'location.selectDistrict': { en: 'District (জেলা)', bn: 'জেলা' },
+  'location.selectUpazila': { en: 'Upazila/Thana (উপজেলা/থানা)', bn: 'উপজেলা/থানা' },
+  'location.streetAddress': { en: 'Street Address (Optional)', bn: 'রাস্তার ঠিকানা (ঐচ্ছিক)' },
+  'location.saveAddress': { en: 'Save Address', bn: 'ঠিকানা সংরক্ষণ করুন' },
 } satisfies Record<string, Record<Language, string>>;
 
 export type TranslationKey = keyof typeof translations;
