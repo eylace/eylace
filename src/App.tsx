@@ -139,6 +139,7 @@ const App = () => (
     <LanguageProvider>
     <CurrencyProvider>
     <AuthProvider>
+      <DeliveryLocationProvider>
       <CartProvider>
         <WishlistProvider>
           <CompareProvider>
