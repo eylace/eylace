@@ -1,26 +1,31 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { translations, Language, TranslationKey } from '@/i18n/translations';
+import { translations, Language } from '@/i18n/translations';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    return (localStorage.getItem('eylace-lang') as Language) || 'en';
+    try {
+      return (localStorage.getItem('eylace-lang') as Language) || 'en';
+    } catch {
+      return 'en';
+    }
   });
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('eylace-lang', lang);
+    try { localStorage.setItem('eylace-lang', lang); } catch {}
   }, []);
 
-  const t = useCallback((key: TranslationKey): string => {
-    return translations[key]?.[language] || key;
+  const t = useCallback((key: string): string => {
+    const entry = (translations as Record<string, Record<string, string>>)[key];
+    return entry?.[language] || key;
   }, [language]);
 
   return (
