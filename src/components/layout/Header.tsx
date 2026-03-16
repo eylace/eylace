@@ -20,6 +20,8 @@ import { SearchModal } from '@/components/search/SearchModal';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 import { CurrencySwitcher } from '@/components/currency/CurrencySwitcher';
+import { useDeliveryLocation } from '@/contexts/DeliveryLocationContext';
+import { DeliveryLocationPicker } from '@/components/location/DeliveryLocationPicker';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
