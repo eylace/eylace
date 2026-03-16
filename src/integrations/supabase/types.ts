@@ -2367,7 +2367,33 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "super_admin"
+        | "product_manager"
+        | "order_manager"
+        | "vendor_manager"
+        | "customer_manager"
+        | "content_manager"
+        | "marketing_manager"
+        | "finance_manager"
+        | "support_manager"
+        | "vendor_admin"
+        | "vendor_product_manager"
+        | "vendor_inventory_manager"
+        | "vendor_order_manager"
+        | "vendor_staff"
+        | "registered_customer"
+        | "premium_customer"
+        | "guest_user"
+        | "delivery_partner"
+        | "delivery_agent"
+        | "warehouse_manager"
+        | "affiliate_marketer"
+        | "influencer"
+        | "campaign_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2495,7 +2521,34 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "super_admin",
+        "product_manager",
+        "order_manager",
+        "vendor_manager",
+        "customer_manager",
+        "content_manager",
+        "marketing_manager",
+        "finance_manager",
+        "support_manager",
+        "vendor_admin",
+        "vendor_product_manager",
+        "vendor_inventory_manager",
+        "vendor_order_manager",
+        "vendor_staff",
+        "registered_customer",
+        "premium_customer",
+        "guest_user",
+        "delivery_partner",
+        "delivery_agent",
+        "warehouse_manager",
+        "affiliate_marketer",
+        "influencer",
+        "campaign_manager",
+      ],
     },
   },
 } as const
