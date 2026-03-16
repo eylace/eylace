@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, ChevronRight, ShoppingBag, Loader2, Truck } from 'lucide-react';
+import { Package, ChevronRight, ShoppingBag, Loader2 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,8 +54,10 @@ interface Order {
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning/10 text-warning border-warning/20',
+  confirmed: 'bg-accent/10 text-accent border-accent/20',
   processing: 'bg-primary/10 text-primary border-primary/20',
   shipped: 'bg-prime/10 text-prime border-prime/20',
+  out_for_delivery: 'bg-primary/10 text-primary border-primary/20',
   delivered: 'bg-success/10 text-success border-success/20',
   cancelled: 'bg-destructive/10 text-destructive border-destructive/20',
 };
@@ -67,7 +69,7 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  const [showTracking, setShowTracking] = useState<string | null>(null);
+  
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -214,22 +216,8 @@ const Orders = () => {
                   {/* Expanded Content */}
                   {expandedOrder === order.id && (
                     <div className="border-t border-border">
-                      {/* Track Order Button */}
-                      {(order.status === 'shipped' || order.status === 'processing' || order.status === 'delivered') && (
-                        <div className="p-4 border-b border-border">
-                          <Button
-                            variant="outline"
-                            className="gap-2"
-                            onClick={() => setShowTracking(showTracking === order.id ? null : order.id)}
-                          >
-                            <Truck className="h-4 w-4" />
-                            {showTracking === order.id ? t('orders.hideTracking') : t('orders.trackOrder')}
-                          </Button>
-                        </div>
-                      )}
-
-                      {/* Tracking Timeline */}
-                      {showTracking === order.id && (
+                      {/* Tracking Timeline - Always visible */}
+                      {status !== 'cancelled' && (
                         <div className="p-4 border-b border-border bg-secondary/30">
                           <OrderTrackingTimeline
                             status={order.status}
@@ -238,6 +226,15 @@ const Orders = () => {
                             estimatedDelivery={order.estimated_delivery}
                             shippedAt={order.shipped_at}
                             deliveredAt={order.delivered_at}
+                            events={order.tracking_events}
+                          />
+                        </div>
+                      )}
+
+                      {order.status === 'cancelled' && (
+                        <div className="p-4 border-b border-border bg-destructive/5">
+                          <OrderTrackingTimeline
+                            status={order.status}
                             events={order.tracking_events}
                           />
                         </div>
