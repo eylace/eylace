@@ -36,6 +36,7 @@ export const Header = () => {
   const setup = useWebsiteSetup();
   const menuItems = useMenuConfig();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const { location: deliveryLocation, openPicker } = useDeliveryLocation();
 
   const handleSignOut = async () => { await signOut(); };
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'User';
