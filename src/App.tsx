@@ -114,6 +114,7 @@ const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
 
 const AIChatWidget = lazy(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
 const TrackingScriptInjector = lazy(() => import("./components/tracking/TrackingScriptInjector").then(m => ({ default: m.TrackingScriptInjector })));
+const SourceCodeProtection = lazy(() => import("./components/security/SourceCodeProtection").then(m => ({ default: m.SourceCodeProtection })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -248,6 +249,7 @@ const App = () => (
               <Suspense fallback={null}>
                 <AIChatWidget />
                 <TrackingScriptInjector />
+                <SourceCodeProtection />
               </Suspense>
             </BrowserRouter>
           </TooltipProvider>
