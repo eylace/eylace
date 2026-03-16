@@ -1107,6 +1107,20 @@ export const translations = {
   'common.home': { en: 'Home', bn: 'হোম' },
   'common.items': { en: 'items', bn: 'আইটেম' },
   'common.item': { en: 'item', bn: 'আইটেম' },
+
+  // Tracking
+  'tracking.pending': { en: 'Order Placed', bn: 'অর্ডার হয়েছে' },
+  'tracking.confirmed': { en: 'Confirmed', bn: 'নিশ্চিত' },
+  'tracking.processing': { en: 'Processing', bn: 'প্রসেসিং' },
+  'tracking.shipped': { en: 'Shipped', bn: 'শিপ হয়েছে' },
+  'tracking.outForDelivery': { en: 'Out for Delivery', bn: 'ডেলিভারিতে' },
+  'tracking.delivered': { en: 'Delivered', bn: 'ডেলিভারি হয়েছে' },
+  'tracking.carrier': { en: 'Carrier', bn: 'ক্যারিয়ার' },
+  'tracking.trackingNumber': { en: 'Tracking #', bn: 'ট্র্যাকিং #' },
+  'tracking.estDelivery': { en: 'Est. Delivery', bn: 'আনুমানিক ডেলিভারি' },
+  'tracking.orderCancelled': { en: 'Order Cancelled', bn: 'অর্ডার বাতিল' },
+  'tracking.deliveredOn': { en: 'Delivered on', bn: 'ডেলিভারি হয়েছে' },
+  'tracking.trackingHistory': { en: 'Tracking History', bn: 'ট্র্যাকিং ইতিহাস' },
 } satisfies Record<string, Record<Language, string>>;
 
 export type TranslationKey = keyof typeof translations;
