@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -22,6 +23,7 @@ const applicationSchema = z.object({
 
 const SellerRegistration = () => {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const [registrationEnabled, setRegistrationEnabled] = useState<boolean | null>(null);
   const [existingApplication, setExistingApplication] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,15 +31,11 @@ const SellerRegistration = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
-    store_name: '',
-    store_description: '',
-    phone: '',
-    business_type: '',
+    store_name: '', store_description: '', phone: '', business_type: '',
   });
 
   useEffect(() => {
     const load = async () => {
-      // Check if registration is enabled
       const { data: settings } = await supabase
         .from('system_settings')
         .select('value')
@@ -46,7 +44,6 @@ const SellerRegistration = () => {
 
       setRegistrationEnabled((settings?.value as any)?.enabled ?? false);
 
-      // Check existing application
       if (user) {
         const { data: app } = await supabase
           .from('seller_applications')
@@ -83,10 +80,8 @@ const SellerRegistration = () => {
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <Store className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Seller Registration Closed</h1>
-            <p className="text-muted-foreground">
-              Seller registration is currently closed. Please check back later.
-            </p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">{t('sellerReg.closed')}</h1>
+            <p className="text-muted-foreground">{t('sellerReg.closedDesc')}</p>
           </div>
         </div>
       </Layout>
@@ -95,9 +90,9 @@ const SellerRegistration = () => {
 
   if (existingApplication) {
     const statusConfig: Record<string, { icon: any; color: string; text: string }> = {
-      pending: { icon: Clock, color: 'text-yellow-500', text: 'Your application is under review. We\'ll notify you soon.' },
-      approved: { icon: CheckCircle, color: 'text-green-500', text: 'Congratulations! Your application has been approved.' },
-      rejected: { icon: XCircle, color: 'text-destructive', text: 'Your application was not approved at this time.' },
+      pending: { icon: Clock, color: 'text-yellow-500', text: t('sellerReg.pendingText') },
+      approved: { icon: CheckCircle, color: 'text-green-500', text: t('sellerReg.approvedText') },
+      rejected: { icon: XCircle, color: 'text-destructive', text: t('sellerReg.rejectedText') },
     };
 
     const status = statusConfig[existingApplication.status] || statusConfig.pending;
@@ -111,18 +106,18 @@ const SellerRegistration = () => {
               <StatusIcon className={`h-8 w-8 ${status.color}`} />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              Application {existingApplication.status.charAt(0).toUpperCase() + existingApplication.status.slice(1)}
+              {t('sellerReg.application')} {existingApplication.status.charAt(0).toUpperCase() + existingApplication.status.slice(1)}
             </h1>
             <p className="text-muted-foreground mb-4">{status.text}</p>
             {existingApplication.admin_notes && (
               <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                <strong>Note:</strong> {existingApplication.admin_notes}
+                <strong>{t('sellerReg.note')}</strong> {existingApplication.admin_notes}
               </p>
             )}
             {existingApplication.status === 'approved' && (
               <Button asChild className="mt-6">
                 <Link to="/seller">
-                  Go to Seller Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                  {t('sellerReg.goToDashboard')} <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             )}
@@ -162,7 +157,6 @@ const SellerRegistration = () => {
       toast.error('Failed to submit application. Please try again.');
     } else {
       toast.success('Application submitted successfully!');
-      // Reload to show status
       window.location.reload();
     }
 
@@ -177,49 +171,47 @@ const SellerRegistration = () => {
             <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Store className="h-8 w-8 text-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground">Sell on Eylace</h1>
-            <p className="text-muted-foreground mt-2">
-              Start your seller journey — reach millions of customers
-            </p>
+            <h1 className="text-3xl font-bold text-foreground">{t('sellerReg.title')}</h1>
+            <p className="text-muted-foreground mt-2">{t('sellerReg.subtitle')}</p>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Seller Application</CardTitle>
-              <CardDescription>Fill in your store details to apply</CardDescription>
+              <CardTitle>{t('sellerReg.applicationTitle')}</CardTitle>
+              <CardDescription>{t('sellerReg.applicationDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="store_name">Store Name *</Label>
+                  <Label htmlFor="store_name">{t('sellerReg.storeName')}</Label>
                   <Input
                     id="store_name"
                     value={form.store_name}
                     onChange={(e) => setForm({ ...form, store_name: e.target.value })}
-                    placeholder="e.g. My Awesome Store"
+                    placeholder={t('sellerReg.storeNamePlaceholder')}
                     maxLength={100}
                   />
                   {errors.store_name && <p className="text-sm text-destructive">{errors.store_name}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="business_type">Business Type *</Label>
+                  <Label htmlFor="business_type">{t('sellerReg.businessType')}</Label>
                   <Select value={form.business_type} onValueChange={(v) => setForm({ ...form, business_type: v })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select business type" />
+                      <SelectValue placeholder={t('sellerReg.selectBusinessType')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="individual">Individual</SelectItem>
-                      <SelectItem value="small_business">Small Business</SelectItem>
-                      <SelectItem value="brand">Brand / Manufacturer</SelectItem>
-                      <SelectItem value="wholesaler">Wholesaler</SelectItem>
+                      <SelectItem value="individual">{t('sellerReg.individual')}</SelectItem>
+                      <SelectItem value="small_business">{t('sellerReg.smallBusiness')}</SelectItem>
+                      <SelectItem value="brand">{t('sellerReg.brandManufacturer')}</SelectItem>
+                      <SelectItem value="wholesaler">{t('sellerReg.wholesaler')}</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.business_type && <p className="text-sm text-destructive">{errors.business_type}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Label htmlFor="phone">{t('sellerReg.phoneNumber')}</Label>
                   <Input
                     id="phone"
                     value={form.phone}
@@ -231,12 +223,12 @@ const SellerRegistration = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="store_description">Store Description</Label>
+                  <Label htmlFor="store_description">{t('sellerReg.storeDescription')}</Label>
                   <Textarea
                     id="store_description"
                     value={form.store_description}
                     onChange={(e) => setForm({ ...form, store_description: e.target.value })}
-                    placeholder="Tell us about your store and what you'll sell..."
+                    placeholder={t('sellerReg.storeDescPlaceholder')}
                     maxLength={500}
                     rows={4}
                   />
@@ -247,10 +239,10 @@ const SellerRegistration = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Submitting...
+                      {t('sellerReg.submitting')}
                     </>
                   ) : (
-                    'Submit Application'
+                    t('sellerReg.submit')
                   )}
                 </Button>
               </form>
