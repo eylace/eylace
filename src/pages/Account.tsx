@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   User, MapPin, Package, Heart, Settings, Shield, CreditCard,
   Bell, ChevronRight, Loader2, Save, Camera, Mail, Phone,
-  Calendar, Star, ShoppingBag, Clock, LogOut, Edit2, Check, X, Upload
+  Calendar, Star, ShoppingBag, Clock, LogOut, Edit2, Check, X, Upload,
+  Gift, Award, Ticket, TrendingUp, Sparkles, Crown, Truck
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,14 +100,12 @@ const Account = () => {
   }, [user]);
 
   const fetchStats = async () => {
-    const [ordersRes, wishlistRes, reviewsRes, recentRes] = await Promise.all([
+    const [ordersRes, reviewsRes, recentRes] = await Promise.all([
       supabase.from('orders').select('id', { count: 'exact', head: true }),
-      supabase.from('wishlist').select('id', { count: 'exact', head: true }),
       supabase.from('product_reviews').select('id', { count: 'exact', head: true }),
-      supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(3),
+      supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),
     ]);
     setOrderCount(ordersRes.count || 0);
-    setWishlistCount(wishlistRes.count || 0);
     setReviewCount(reviewsRes.count || 0);
     setRecentOrders(recentRes.data || []);
   };
@@ -173,6 +173,12 @@ const Account = () => {
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Customer';
   const memberSince = user?.created_at ? format(new Date(user.created_at), 'MMMM yyyy') : '';
 
+  // Calculate member level based on order count
+  const memberLevel = orderCount >= 20 ? 'platinum' : orderCount >= 10 ? 'gold' : 'silver';
+  const rewardPoints = orderCount * 50; // 50 points per order
+  const nextLevelPoints = memberLevel === 'silver' ? 500 : memberLevel === 'gold' ? 1000 : 2000;
+  const progressToNext = Math.min((rewardPoints / nextLevelPoints) * 100, 100);
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -223,6 +229,12 @@ const Account = () => {
     cancelled: 'bg-destructive/10 text-destructive',
   };
 
+  const levelColors: Record<string, string> = {
+    silver: 'from-slate-300 to-slate-400',
+    gold: 'from-amber-400 to-yellow-500',
+    platinum: 'from-violet-400 to-purple-500',
+  };
+
   if (authLoading) {
     return (
       <Layout>
@@ -241,20 +253,22 @@ const Account = () => {
         <div className="max-w-5xl mx-auto">
           {/* Profile Hero */}
           <div className="bg-card rounded-2xl border border-border overflow-hidden mb-8">
-            <div className="h-32 bg-gradient-to-r from-primary to-primary/70" />
-            <div className="px-6 pb-6 -mt-12">
+            <div className="h-36 bg-gradient-to-r from-primary via-primary/80 to-accent/60 relative">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIi8+PC9zdmc+')] opacity-40" />
+            </div>
+            <div className="px-6 pb-6 -mt-14">
               <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
                 <div className="relative">
-                  <Avatar className="h-24 w-24 border-4 border-card shadow-lg">
+                  <Avatar className="h-28 w-28 border-4 border-card shadow-xl ring-2 ring-accent/20">
                     <AvatarImage src={(profile as any)?.avatar_url || ''} />
-                    <AvatarFallback className="text-2xl font-bold bg-accent text-accent-foreground">
+                    <AvatarFallback className="text-2xl font-bold bg-gradient-to-br from-accent to-accent/70 text-accent-foreground">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={avatarUploading}
-                    className="absolute bottom-0 right-0 bg-accent text-accent-foreground rounded-full p-1.5 shadow-md hover:bg-accent/90 transition-colors"
+                    className="absolute bottom-1 right-1 bg-accent text-accent-foreground rounded-full p-2 shadow-lg hover:bg-accent/90 transition-all hover:scale-105"
                   >
                     {avatarUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                   </button>
@@ -267,8 +281,14 @@ const Account = () => {
                   />
                 </div>
                 <div className="flex-1 pt-2">
-                  <h1 className="text-2xl font-bold">{fullName}</h1>
-                  <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl font-bold">{fullName}</h1>
+                    <Badge className={cn('text-xs font-medium text-white bg-gradient-to-r', levelColors[memberLevel])}>
+                      <Crown className="h-3 w-3 mr-1" />
+                      {t(`account.${memberLevel}`)}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Mail className="h-3.5 w-3.5" />
                       {user.email}
@@ -300,14 +320,16 @@ const Account = () => {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { label: t('account.totalOrders'), value: orderCount, icon: Package, color: 'text-primary', link: '/orders' },
-              { label: t('account.wishlist'), value: wishlistCount, icon: Heart, color: 'text-destructive', link: '/wishlist' },
-              { label: t('account.reviews'), value: reviewCount, icon: Star, color: 'text-[hsl(var(--rating))]', link: '#' },
-              { label: t('account.addresses'), value: addressData.address ? 1 : 0, icon: MapPin, color: 'text-[hsl(var(--success))]', link: '#addresses' },
+              { label: t('account.totalOrders'), value: orderCount, icon: Package, color: 'text-primary', bg: 'bg-primary/10', link: '/orders' },
+              { label: t('account.rewardPoints'), value: rewardPoints, icon: Gift, color: 'text-accent', bg: 'bg-accent/10', link: '#' },
+              { label: t('account.reviews'), value: reviewCount, icon: Star, color: 'text-[hsl(var(--rating))]', bg: 'bg-[hsl(var(--rating))]/10', link: '#' },
+              { label: t('account.addresses'), value: addressData.address ? 1 : 0, icon: MapPin, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10', link: '#addresses' },
             ].map((stat) => (
-              <Link key={stat.label} to={stat.link} className="bg-card rounded-xl border border-border p-4 hover:shadow-[var(--shadow-card-hover)] transition-all group">
-                <div className="flex items-center justify-between mb-2">
-                  <stat.icon className={cn('h-5 w-5', stat.color)} />
+              <Link key={stat.label} to={stat.link} className="bg-card rounded-xl border border-border p-5 hover:shadow-[var(--shadow-card-hover)] transition-all group">
+                <div className="flex items-center justify-between mb-3">
+                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', stat.bg)}>
+                    <stat.icon className={cn('h-5 w-5', stat.color)} />
+                  </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <p className="text-2xl font-bold">{stat.value}</p>
@@ -318,7 +340,7 @@ const Account = () => {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-5 mb-6 h-auto">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6 h-auto">
               <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm py-2.5">
                 <User className="h-4 w-4 hidden sm:block" /> {t('account.overview')}
               </TabsTrigger>
@@ -328,16 +350,46 @@ const Account = () => {
               <TabsTrigger value="addresses" className="gap-1.5 text-xs sm:text-sm py-2.5">
                 <MapPin className="h-4 w-4 hidden sm:block" /> {t('account.addresses')}
               </TabsTrigger>
+              <TabsTrigger value="rewards" className="gap-1.5 text-xs sm:text-sm py-2.5">
+                <Gift className="h-4 w-4 hidden sm:block" /> {t('account.rewardPoints')}
+              </TabsTrigger>
               <TabsTrigger value="security" className="gap-1.5 text-xs sm:text-sm py-2.5">
                 <Shield className="h-4 w-4 hidden sm:block" /> {t('account.security')}
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="gap-1.5 text-xs sm:text-sm py-2.5 hidden lg:flex">
+              <TabsTrigger value="notifications" className="gap-1.5 text-xs sm:text-sm py-2.5">
                 <Bell className="h-4 w-4 hidden sm:block" /> {t('account.notifications')}
               </TabsTrigger>
             </TabsList>
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
+              {/* Reward Points Summary */}
+              <div className="bg-gradient-to-r from-accent/5 via-accent/10 to-primary/5 rounded-xl border border-accent/20 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-accent/15 rounded-xl flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-accent" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{t('account.rewardPoints')}</h3>
+                      <p className="text-sm text-muted-foreground">{t('account.earnMore')}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-accent">{rewardPoints}</p>
+                    <p className="text-xs text-muted-foreground">{t('account.pointsBalance')}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{t(`account.${memberLevel}`)}</span>
+                    <span>{rewardPoints}/{nextLevelPoints}</span>
+                  </div>
+                  <Progress value={progressToNext} className="h-2" />
+                </div>
+              </div>
+
+              {/* Recent Orders */}
               <div className="bg-card rounded-xl border border-border p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">{t('account.recentOrders')}</h2>
@@ -348,18 +400,21 @@ const Account = () => {
                   </Link>
                 </div>
                 {recentOrders.length === 0 ? (
-                  <div className="text-center py-8">
-                    <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground">{t('account.noOrders')}</p>
+                  <div className="text-center py-10">
+                    <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-muted-foreground font-medium mb-1">{t('account.noOrders')}</p>
+                    <p className="text-sm text-muted-foreground mb-4">{t('account.earnMore')}</p>
                     <Link to="/">
-                      <Button variant="accent" size="sm" className="mt-3">{t('account.startShopping')}</Button>
+                      <Button variant="accent" size="sm">{t('account.startShopping')}</Button>
                     </Link>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {recentOrders.map((order: any) => (
-                      <Link key={order.id} to="/orders" className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors">
-                        <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center shrink-0">
+                      <Link key={order.id} to="/orders" className="flex items-center gap-4 p-4 rounded-xl hover:bg-secondary/50 transition-colors border border-transparent hover:border-border">
+                        <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center shrink-0">
                           <Package className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -381,27 +436,29 @@ const Account = () => {
               </div>
 
               {/* Quick Links */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
-                  { label: t('account.myWishlist'), desc: t('account.viewSavedProducts'), icon: Heart, link: '/wishlist', color: 'text-destructive' },
-                  { label: t('account.orderHistory'), desc: t('account.trackAllOrders'), icon: Clock, link: '/orders', color: 'text-primary' },
-                  { label: t('account.accountSettings'), desc: t('account.updatePersonalInfo'), icon: Settings, link: '#', onClick: () => setActiveTab('profile'), color: 'text-accent' },
-                  { label: t('account.sellOnEylace'), desc: t('account.startYourStore'), icon: ShoppingBag, link: '/sell', color: 'text-[hsl(var(--success))]' },
+                  { label: t('account.myWishlist'), desc: t('account.viewSavedProducts'), icon: Heart, link: '/wishlist', color: 'text-destructive', bg: 'bg-destructive/10' },
+                  { label: t('account.orderHistory'), desc: t('account.trackAllOrders'), icon: Clock, link: '/orders', color: 'text-primary', bg: 'bg-primary/10' },
+                  { label: t('account.accountSettings'), desc: t('account.updatePersonalInfo'), icon: Settings, link: '#', onClick: () => setActiveTab('profile'), color: 'text-accent', bg: 'bg-accent/10' },
+                  { label: t('account.sellOnEylace'), desc: t('account.startYourStore'), icon: ShoppingBag, link: '/sell', color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
+                  { label: t('account.supportTickets'), desc: t('account.noTickets'), icon: Ticket, link: '#', color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },
+                  { label: t('account.memberBenefits'), desc: t('account.exclusiveDeals'), icon: Award, link: '#', onClick: () => setActiveTab('rewards'), color: 'text-violet-500', bg: 'bg-violet-500/10' },
                 ].map((item) => (
                   <Link
                     key={item.label}
                     to={item.link}
                     onClick={item.onClick}
-                    className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border hover:shadow-[var(--shadow-card-hover)] transition-all"
+                    className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border hover:shadow-[var(--shadow-card-hover)] transition-all group"
                   >
-                    <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                    <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center', item.bg)}>
                       <item.icon className={cn('h-5 w-5', item.color)} />
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">{item.label}</p>
-                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      <p className="text-xs text-muted-foreground truncate">{item.desc}</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
                 ))}
               </div>
@@ -468,6 +525,32 @@ const Account = () => {
                   </div>
                 )}
               </div>
+
+              {/* Linked Accounts */}
+              <div className="bg-card rounded-xl border border-border p-6">
+                <h2 className="text-lg font-semibold mb-4">{t('account.linkedAccounts')}</h2>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                    <div className="flex items-center gap-3">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                      </svg>
+                      <span className="text-sm font-medium">Google</span>
+                    </div>
+                    <Badge variant="outline" className="text-xs">{user.app_metadata?.provider === 'google' ? t('account.googleLinked') : 'Not linked'}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-5 w-5 text-accent" />
+                      <span className="text-sm font-medium">{t('auth.phoneNumber')}</span>
+                    </div>
+                    <Badge variant="outline" className="text-xs">{profile?.phone ? t('account.phoneLinked') : 'Not linked'}</Badge>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
 
             {/* Addresses Tab */}
@@ -533,7 +616,7 @@ const Account = () => {
                 ) : (
                   <div>
                     {addressData.address ? (
-                      <div className="flex items-start gap-4 p-4 bg-secondary/50 rounded-lg">
+                      <div className="flex items-start gap-4 p-4 bg-secondary/50 rounded-xl">
                         <MapPin className="h-5 w-5 text-accent mt-0.5 shrink-0" />
                         <div>
                           <p className="font-medium">{t('account.defaultShipping')}</p>
@@ -545,8 +628,10 @@ const Account = () => {
                         <Badge variant="outline" className="ml-auto shrink-0">{t('account.default')}</Badge>
                       </div>
                     ) : (
-                      <div className="text-center py-8">
-                        <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <div className="text-center py-10">
+                        <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <MapPin className="h-8 w-8 text-muted-foreground" />
+                        </div>
                         <p className="text-muted-foreground mb-3">{t('account.noAddressSaved')}</p>
                         <Button variant="outline" size="sm" onClick={() => setIsEditingAddress(true)}>
                           {t('account.addAddress')}
@@ -555,6 +640,49 @@ const Account = () => {
                     )}
                   </div>
                 )}
+              </div>
+            </TabsContent>
+
+            {/* Rewards Tab */}
+            <TabsContent value="rewards" className="space-y-6">
+              <div className="bg-gradient-to-br from-accent/5 via-card to-primary/5 rounded-xl border border-accent/20 p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br', levelColors[memberLevel])}>
+                    <Crown className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">{t(`account.${memberLevel}`)} {t('account.accountLevel')}</h2>
+                    <p className="text-muted-foreground">{rewardPoints} {t('account.pointsBalance')}</p>
+                  </div>
+                </div>
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t('account.redeemableValue')}</span>
+                    <span className="font-semibold text-accent">৳{(rewardPoints * 0.1).toFixed(0)}</span>
+                  </div>
+                  <Progress value={progressToNext} className="h-3" />
+                  <p className="text-xs text-muted-foreground text-center">
+                    {nextLevelPoints - rewardPoints} points to next level
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-xl border border-border p-6">
+                <h3 className="font-semibold mb-4">{t('account.memberBenefits')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { icon: Truck, text: t('account.freeShipping'), active: memberLevel !== 'silver' },
+                    { icon: Sparkles, text: t('account.exclusiveDeals'), active: true },
+                    { icon: TrendingUp, text: t('account.earlyAccess'), active: memberLevel === 'platinum' },
+                    { icon: Shield, text: t('account.prioritySupport'), active: memberLevel !== 'silver' },
+                  ].map((benefit) => (
+                    <div key={benefit.text} className={cn('flex items-center gap-3 p-3 rounded-lg', benefit.active ? 'bg-accent/5 border border-accent/20' : 'bg-secondary/50 opacity-60')}>
+                      <benefit.icon className={cn('h-5 w-5', benefit.active ? 'text-accent' : 'text-muted-foreground')} />
+                      <span className="text-sm font-medium">{benefit.text}</span>
+                      {benefit.active && <Check className="h-4 w-4 text-accent ml-auto" />}
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabsContent>
 
@@ -593,17 +721,24 @@ const Account = () => {
               <div className="bg-card rounded-xl border border-border p-6">
                 <h2 className="text-lg font-semibold mb-4">{t('account.accountInfo')}</h2>
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between py-2 border-b border-border">
+                  <div className="flex justify-between py-3 border-b border-border">
                     <span className="text-muted-foreground">{t('account.email')}</span>
                     <span className="font-medium">{user.email}</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b border-border">
+                  <div className="flex justify-between py-3 border-b border-border">
                     <span className="text-muted-foreground">{t('account.accountCreated')}</span>
                     <span className="font-medium">{memberSince}</span>
                   </div>
-                  <div className="flex justify-between py-2 border-b border-border">
+                  <div className="flex justify-between py-3 border-b border-border">
                     <span className="text-muted-foreground">{t('account.lastSignIn')}</span>
                     <span className="font-medium">{user.last_sign_in_at ? format(new Date(user.last_sign_in_at), 'MMM d, yyyy h:mm a') : '—'}</span>
+                  </div>
+                  <div className="flex justify-between py-3 border-b border-border">
+                    <span className="text-muted-foreground">{t('account.accountLevel')}</span>
+                    <Badge className={cn('text-xs font-medium text-white bg-gradient-to-r', levelColors[memberLevel])}>
+                      <Crown className="h-3 w-3 mr-1" />
+                      {t(`account.${memberLevel}`)}
+                    </Badge>
                   </div>
                 </div>
               </div>
