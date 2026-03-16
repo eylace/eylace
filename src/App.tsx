@@ -9,6 +9,7 @@ import { WishlistProvider } from "@/contexts/WishlistContext";
 import { CompareProvider } from "@/contexts/CompareContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { DeliveryLocationProvider } from "@/contexts/DeliveryLocationContext";
 import { CompareBar } from "@/components/compare/CompareBar";
 import { CompareModal } from "@/components/compare/CompareModal";
 import { lazy, Suspense } from "react";
@@ -138,6 +139,7 @@ const App = () => (
     <LanguageProvider>
     <CurrencyProvider>
     <AuthProvider>
+      <DeliveryLocationProvider>
       <CartProvider>
         <WishlistProvider>
           <CompareProvider>
@@ -256,6 +258,7 @@ const App = () => (
           </CompareProvider>
         </WishlistProvider>
       </CartProvider>
+      </DeliveryLocationProvider>
     </AuthProvider>
     </CurrencyProvider>
     </LanguageProvider>
