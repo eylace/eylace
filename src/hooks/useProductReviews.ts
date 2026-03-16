@@ -14,7 +14,8 @@ export interface Review {
   helpful_count: number;
   created_at: string;
   updated_at: string;
-  user_email?: string;
+  user_name?: string;
+  user_initials?: string;
   user_voted?: boolean | null;
 }
 
@@ -70,6 +71,23 @@ export const useProductReviews = ({
         return;
       }
 
+      // Fetch profile names for all review authors
+      const userIds = [...new Set((data || []).map((r) => r.user_id))];
+      let profileMap: Record<string, { first_name: string | null; last_name: string | null }> = {};
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name')
+          .in('user_id', userIds);
+
+        if (profiles) {
+          profiles.forEach((p) => {
+            profileMap[p.user_id] = { first_name: p.first_name, last_name: p.last_name };
+          });
+        }
+      }
+
       // Calculate stats from all reviews (not filtered)
       const { data: allReviews } = await supabase
         .from('product_reviews')
@@ -97,7 +115,24 @@ export const useProductReviews = ({
         });
       }
 
-      setReviews(data || []);
+      const enrichedReviews: Review[] = (data || []).map((r) => {
+        const profile = profileMap[r.user_id];
+        const firstName = profile?.first_name || '';
+        const lastName = profile?.last_name || '';
+        const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Anonymous';
+        const initials = [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || 'A';
+
+        return {
+          ...r,
+          images: r.images || [],
+          verified_purchase: r.verified_purchase ?? false,
+          helpful_count: r.helpful_count ?? 0,
+          user_name: fullName,
+          user_initials: initials,
+        };
+      });
+
+      setReviews(enrichedReviews);
     } catch (err) {
       console.error('Error fetching reviews:', err);
     } finally {
@@ -113,7 +148,6 @@ export const useProductReviews = ({
     if (!user) return;
 
     try {
-      // Check if user already voted
       const { data: existingVote } = await supabase
         .from('review_votes')
         .select('id, is_helpful')
@@ -122,14 +156,12 @@ export const useProductReviews = ({
         .single();
 
       if (existingVote) {
-        // Update vote if changed
         if (existingVote.is_helpful !== isHelpful) {
           await supabase
             .from('review_votes')
             .update({ is_helpful: isHelpful })
             .eq('id', existingVote.id);
 
-          // Update helpful count directly
           const review = reviews.find((r) => r.id === reviewId);
           if (review) {
             const delta = isHelpful ? 2 : -2;
@@ -140,7 +172,6 @@ export const useProductReviews = ({
           }
         }
       } else {
-        // Create new vote
         await supabase
           .from('review_votes')
           .insert({
@@ -149,7 +180,6 @@ export const useProductReviews = ({
             is_helpful: isHelpful,
           });
 
-        // Update helpful count
         if (isHelpful) {
           const review = reviews.find((r) => r.id === reviewId);
           if (review) {
@@ -161,7 +191,6 @@ export const useProductReviews = ({
         }
       }
 
-      // Refresh reviews
       fetchReviews();
     } catch (err) {
       console.error('Error voting on review:', err);
