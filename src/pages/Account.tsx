@@ -4,7 +4,7 @@ import {
   User, MapPin, Package, Heart, Settings, Shield, CreditCard,
   Bell, ChevronRight, Loader2, Save, Camera, Mail, Phone,
   Calendar, Star, ShoppingBag, Clock, LogOut, Edit2, Check, X, Upload,
-  Gift, Award, Ticket, TrendingUp, Sparkles, Crown
+  Gift, Award, Ticket, TrendingUp, Sparkles, Crown, Truck
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
