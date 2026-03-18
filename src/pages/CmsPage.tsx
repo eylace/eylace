@@ -1,11 +1,14 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Layout } from '@/components/layout/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const CmsPage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const location = useLocation();
+  // Use param slug if available (for /page/:slug), otherwise derive from path
+  const slug = paramSlug || location.pathname.replace(/^\//, '');
 
   const { data: page, isLoading } = useQuery({
     queryKey: ['cms-page', slug],
