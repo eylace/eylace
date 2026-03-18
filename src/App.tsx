@@ -244,6 +244,27 @@ const App = () => (
                 <Route path="/flash-sale" element={<FlashSale />} />
                 <Route path="/seller" element={<SellerDashboard />} />
                 <Route path="/sell" element={<SellerRegistration />} />
+                {/* CMS Pages - all footer links */}
+                <Route path="/about" element={<CmsPage />} />
+                <Route path="/contact" element={<CmsPage />} />
+                <Route path="/privacy" element={<CmsPage />} />
+                <Route path="/terms" element={<CmsPage />} />
+                <Route path="/cookies" element={<CmsPage />} />
+                <Route path="/help" element={<CmsPage />} />
+                <Route path="/returns" element={<CmsPage />} />
+                <Route path="/shipping" element={<CmsPage />} />
+                <Route path="/faq" element={<CmsPage />} />
+                <Route path="/careers" element={<CmsPage />} />
+                <Route path="/blog" element={<CmsPage />} />
+                <Route path="/track-order" element={<CmsPage />} />
+                <Route path="/seller-center" element={<CmsPage />} />
+                <Route path="/seller-policies" element={<CmsPage />} />
+                <Route path="/seller-support" element={<CmsPage />} />
+                <Route path="/delivery-partner" element={<CmsPage />} />
+                <Route path="/affiliate" element={<CmsPage />} />
+                <Route path="/advertise" element={<CmsPage />} />
+                <Route path="/sitemap" element={<CmsPage />} />
+                <Route path="/page/:slug" element={<CmsPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
