@@ -245,6 +245,8 @@ const App = () => (
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
                 <Route path="/deals" element={<Deals />} />
                 <Route path="/flash-sale" element={<FlashSale />} />
+                <Route path="/new-arrivals" element={<NewArrivals />} />
+                <Route path="/best-sellers" element={<BestSellers />} />
                 <Route path="/seller" element={<SellerDashboard />} />
                 <Route path="/sell" element={<SellerRegistration />} />
                 {/* CMS Pages - all footer links */}
