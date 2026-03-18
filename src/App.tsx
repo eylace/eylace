@@ -112,6 +112,7 @@ const AdminAISettings = lazy(() => import("./pages/AdminAISettings"));
 const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics"));
 const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
+const CmsPage = lazy(() => import("./pages/CmsPage"));
 
 const AIChatWidget = lazy(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
 const TrackingScriptInjector = lazy(() => import("./components/tracking/TrackingScriptInjector").then(m => ({ default: m.TrackingScriptInjector })));
