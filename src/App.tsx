@@ -30,6 +30,8 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Wishlist = lazy(() => import("./pages/Wishlist"));
 const Deals = lazy(() => import("./pages/Deals"));
 const FlashSale = lazy(() => import("./pages/FlashSale"));
+const NewArrivals = lazy(() => import("./pages/NewArrivals"));
+const BestSellers = lazy(() => import("./pages/BestSellers"));
 const Account = lazy(() => import("./pages/Account"));
 const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
 const SellerRegistration = lazy(() => import("./pages/SellerRegistration"));
