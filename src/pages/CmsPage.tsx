@@ -16,7 +16,7 @@ const CmsPage = () => {
       const { data, error } = await supabase
         .from('cms_pages')
         .select('*')
-        .eq('slug', slug!)
+        .eq('slug', slug)
         .eq('is_published', true)
         .single();
       if (error) throw error;
