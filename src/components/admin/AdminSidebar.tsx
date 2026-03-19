@@ -560,6 +560,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 md:p-3 space-y-1">
