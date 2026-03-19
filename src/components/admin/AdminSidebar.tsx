@@ -313,8 +313,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
         {/* Sellers Section */}
+        {canAccess('sellers') && (
         <SidebarGroup>
           <Collapsible open={openSections.has('sellers')} onOpenChange={() => toggleSection('sellers')}>
             <CollapsibleTrigger className="w-full">
