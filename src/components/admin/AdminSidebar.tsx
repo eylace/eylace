@@ -477,11 +477,13 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
-        {renderGroup('admin.group.content', contentItems)}
-        {renderGroup('admin.group.system', systemItems)}
+        {canAccess('content') && renderGroup('admin.group.content', contentItems)}
+        {canAccess('system') && renderGroup('admin.group.system', systemItems)}
 
         {/* Website Setup Section */}
+        {canAccess('websiteSetup') && (
         <SidebarGroup>
           <Collapsible open={openSections.has('websiteSetup')} onOpenChange={() => toggleSection('websiteSetup')}>
             <CollapsibleTrigger className="w-full">
