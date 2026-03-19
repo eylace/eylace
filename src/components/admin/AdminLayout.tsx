@@ -32,7 +32,7 @@ const quickNavTabs = [
 
 export const AdminLayout = ({ children, titleKey, descriptionKey, title, description }: AdminLayoutProps) => {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, isLoading: adminLoading } = useAdminCheck();
+  const { isAdmin, isLoading: adminLoading, hasAccess } = useAdminCheck();
   const { t } = useLanguage();
   const location = useLocation();
 
