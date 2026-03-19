@@ -357,6 +357,7 @@ const AdminUserRoles = () => {
                     <DialogHeader><DialogTitle className="flex items-center gap-2"><UserCog className="h-5 w-5" /> Assign Role</DialogTitle></DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2"><Label>User Email</Label><Input placeholder="user@example.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Password</Label><Input type="password" placeholder="Min 6 characters" value={newPassword} onChange={e => setNewPassword(e.target.value)} /><p className="text-[11px] text-muted-foreground">নতুন ইউজার হলে একাউন্ট তৈরি হবে। আগে থেকে থাকলে পাসওয়ার্ড আপডেট হবে।</p></div>
                       <div className="space-y-2">
                         <Label>Role</Label>
                         <Select value={newRole} onValueChange={v => setNewRole(v as AppRole)}>
