@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { ADMIN_PANEL_ROLES } from '@/hooks/useAdminData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,9 +29,10 @@ const AdminLogin = () => {
       if (error) { toast.error('Login failed', { description: error.message }); setLoading(false); return; }
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) { toast.error('Authentication failed'); setLoading(false); return; }
-      const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', authUser.id).in('role', ['admin', 'super_admin']).limit(1).maybeSingle();
-      if (!roleData) { toast.error('Access Denied'); await supabase.auth.signOut(); setLoading(false); return; }
-      toast.success('Welcome, Admin!');
+      const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', authUser.id).in('role', ADMIN_PANEL_ROLES).limit(1).maybeSingle();
+      if (!roleData) { toast.error('Access Denied', { description: 'আপনার এডমিন প্যানেলে অ্যাক্সেস নেই' }); await supabase.auth.signOut(); setLoading(false); return; }
+      const roleName = roleData.role.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+      toast.success(`Welcome! Role: ${roleName}`);
       navigate('/admin');
     } catch { toast.error('Something went wrong'); }
     setLoading(false);

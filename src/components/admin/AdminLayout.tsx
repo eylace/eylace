@@ -32,7 +32,7 @@ const quickNavTabs = [
 
 export const AdminLayout = ({ children, titleKey, descriptionKey, title, description }: AdminLayoutProps) => {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, isLoading: adminLoading } = useAdminCheck();
+  const { isAdmin, isLoading: adminLoading, hasAccess } = useAdminCheck();
   const { t } = useLanguage();
   const location = useLocation();
 
@@ -109,7 +109,7 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AdminSidebar />
+        <AdminSidebar hasAccess={hasAccess} />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="sticky top-0 z-30 bg-card border-b-2 border-accent">
             {/* Mobile header */}
