@@ -215,14 +215,42 @@ const AdminUserRoles = () => {
 
   const handleAddRole = async () => {
     if (!newEmail.trim()) return;
+    if (!newPassword.trim() || newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
     setAdding(true);
-    const { data: profile } = await supabase.from('profiles').select('user_id').eq('email', newEmail.trim()).single();
-    if (!profile) { toast.error('User not found with this email'); setAdding(false); return; }
-    const { data: existing } = await supabase.from('user_roles').select('id').eq('user_id', profile.user_id).eq('role', newRole).single();
-    if (existing) { toast.error('User already has this role'); setAdding(false); return; }
-    const { error } = await supabase.from('user_roles').insert({ user_id: profile.user_id, role: newRole });
-    if (error) toast.error('Failed to add role');
-    else { toast.success('Role assigned'); setNewEmail(''); setAddOpen(false); fetchRoles(); }
+    try {
+      // Step 1: Create user or update password via edge function
+      const { data: pwResult, error: pwError } = await supabase.functions.invoke('admin-set-password', {
+        body: { email: newEmail.trim(), password: newPassword }
+      });
+      if (pwError || !pwResult?.success) {
+        toast.error(pwResult?.error || 'Failed to set password');
+        setAdding(false);
+        return;
+      }
+
+      const userId = pwResult.user_id;
+
+      // Step 2: Check if role already assigned
+      const { data: existing } = await supabase.from('user_roles').select('id').eq('user_id', userId).eq('role', newRole).maybeSingle();
+      if (existing) { toast.error('User already has this role'); setAdding(false); return; }
+
+      // Step 3: Assign role
+      const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
+      if (error) toast.error('Failed to add role');
+      else {
+        const action = pwResult.action === 'created' ? 'User created & role assigned' : 'Password updated & role assigned';
+        toast.success(action);
+        setNewEmail('');
+        setNewPassword('');
+        setAddOpen(false);
+        fetchRoles();
+      }
+    } catch {
+      toast.error('Something went wrong');
+    }
     setAdding(false);
   };
 
