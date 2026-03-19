@@ -520,8 +520,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
-        {/* Settings Section with Collapsible Sub-menu */}
+        {/* Settings Section */}
+        {canAccess('settings') && (
         <SidebarGroup>
           <Collapsible open={openSections.has('settings')} onOpenChange={() => toggleSection('settings')}>
             <CollapsibleTrigger className="w-full">
