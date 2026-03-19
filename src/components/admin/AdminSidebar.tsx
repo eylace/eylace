@@ -222,6 +222,45 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     </SidebarGroup>
   );
 
+  const renderCollapsible = (sectionKey: string, labelKey: string, icon: React.ElementType, items: NavItem[], endPath?: string) => {
+    if (!canAccess(sectionKey)) return null;
+    const Icon = icon;
+    return (
+      <SidebarGroup>
+        <Collapsible open={openSections.has(sectionKey)} onOpenChange={() => toggleSection(sectionKey)}>
+          <CollapsibleTrigger className="w-full">
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+              <span className="flex items-center gap-1.5">
+                <Icon className="h-3.5 w-3.5" />
+                {t(labelKey as TranslationKey)}
+              </span>
+              {openSections.has(sectionKey) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            </SidebarGroupLabel>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => {
+                  const title = t(item.titleKey as TranslationKey);
+                  return (
+                    <SidebarMenuItem key={item.titleKey}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                        <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="hover:bg-sidebar-accent/50 text-xs pl-2" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
+                          <item.icon className="h-3.5 w-3.5 shrink-0" />
+                          <span>{title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarGroup>
+    );
+  };
+
   return (
     <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
@@ -238,322 +277,18 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
       <SidebarContent className="overflow-y-auto">
         {canAccess('main') && renderGroup('admin.group.main', mainItems)}
-
-        {/* AI Automation Section */}
-        {canAccess('ai') && (
-        <SidebarGroup>
-          <Collapsible open={openSections.has('ai')} onOpenChange={() => toggleSection('ai')}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
-                <span className="flex items-center gap-1.5">
-                  <Brain className="h-3.5 w-3.5" />
-                  {t('admin.ai.section' as TranslationKey)}
-                </span>
-                {openSections.has('ai') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {aiItems.map((item) => {
-                    const title = t(item.titleKey as TranslationKey);
-                    return (
-                      <SidebarMenuItem key={item.titleKey}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink to={item.url} className="hover:bg-sidebar-accent/50 text-xs pl-2" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
-        {/* Products Section */}
-        {canAccess('products') && (
-        <SidebarGroup>
-          <Collapsible open={openSections.has('products')} onOpenChange={() => toggleSection('products')}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
-                <span className="flex items-center gap-1.5">
-                  <Package className="h-3.5 w-3.5" />
-                  {t('admin.products' as TranslationKey)}
-                </span>
-                {openSections.has('products') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {productItems.map((item) => {
-                    const title = t(item.titleKey as TranslationKey);
-                    return (
-                      <SidebarMenuItem key={item.titleKey}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink to={item.url} end={item.url === '/admin/products'} className="hover:bg-sidebar-accent/50 text-xs pl-2" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
-        {/* Sellers Section */}
-        {canAccess('sellers') && (
-        <SidebarGroup>
-          <Collapsible open={openSections.has('sellers')} onOpenChange={() => toggleSection('sellers')}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
-                <span className="flex items-center gap-1.5">
-                  <Store className="h-3.5 w-3.5" />
-                  {t('admin.sellers.section' as TranslationKey)}
-                </span>
-                {openSections.has('sellers') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {sellerItems.map((item) => {
-                    const title = t(item.titleKey as TranslationKey);
-                    return (
-                      <SidebarMenuItem key={item.titleKey}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink
-                            to={item.url}
-                            end={item.url === '/admin/sellers'}
-                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
-                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
-                          >
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
+        {renderCollapsible('ai', 'admin.ai.section', Brain, aiItems)}
+        {renderCollapsible('products', 'admin.products', Package, productItems, '/admin/products')}
+        {renderCollapsible('sellers', 'admin.sellers.section', Store, sellerItems, '/admin/sellers')}
         {canAccess('management') && renderGroup('admin.group.management', managementItems)}
-
-        {/* Preorder Section */}
-        {canAccess('preorder') && (
-          <Collapsible open={openSections.has('preorder')} onOpenChange={() => toggleSection('preorder')}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
-                <span className="flex items-center gap-1.5">
-                  <CalendarClock className="h-3.5 w-3.5" />
-                  {t('admin.preorder' as TranslationKey)}
-                </span>
-                {openSections.has('preorder') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {preorderItems.map((item) => {
-                    const title = t(item.titleKey as TranslationKey);
-                    return (
-                      <SidebarMenuItem key={item.titleKey}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink
-                            to={item.url}
-                            end={item.url === '/admin/preorder'}
-                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
-                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
-                          >
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
-        {/* OTP System Section */}
-        {canAccess('otp') && (
-        <SidebarGroup>
-          <Collapsible open={openSections.has('otp')} onOpenChange={() => toggleSection('otp')}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
-                <span className="flex items-center gap-1.5">
-                  <Smartphone className="h-3.5 w-3.5" />
-                  {t('admin.otp.section' as TranslationKey)}
-                </span>
-                {openSections.has('otp') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {otpItems.map((item) => {
-                    const title = t(item.titleKey as TranslationKey);
-                    return (
-                      <SidebarMenuItem key={item.titleKey}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink to={item.url} className="hover:bg-sidebar-accent/50 text-xs pl-2" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
+        {renderCollapsible('preorder', 'admin.preorder', CalendarClock, preorderItems, '/admin/preorder')}
+        {renderCollapsible('otp', 'admin.otp.section', Smartphone, otpItems)}
         {canAccess('operations') && renderGroup('admin.group.operations', operationsItems)}
-
-        {/* Marketing Section */}
-        {canAccess('marketing') && (
-        <SidebarGroup>
-          <Collapsible open={openSections.has('marketing')} onOpenChange={() => toggleSection('marketing')}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
-                <span className="flex items-center gap-1.5">
-                  <Megaphone className="h-3.5 w-3.5" />
-                  {t('admin.marketing.section' as TranslationKey)}
-                </span>
-                {openSections.has('marketing') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {marketingItems.map((item) => {
-                    const title = t(item.titleKey as TranslationKey);
-                    return (
-                      <SidebarMenuItem key={item.titleKey}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink
-                            to={item.url}
-                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
-                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
-                          >
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
+        {renderCollapsible('marketing', 'admin.marketing.section', Megaphone, marketingItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
         {canAccess('system') && renderGroup('admin.group.system', systemItems)}
-
-        {/* Website Setup Section */}
-        {canAccess('websiteSetup') && (
-        <SidebarGroup>
-          <Collapsible open={openSections.has('websiteSetup')} onOpenChange={() => toggleSection('websiteSetup')}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
-                <span className="flex items-center gap-1.5">
-                  <Monitor className="h-3.5 w-3.5" />
-                  {t('admin.websiteSetup' as TranslationKey)}
-                </span>
-                {openSections.has('websiteSetup') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {websiteSetupItems.map((item) => {
-                    const title = t(item.titleKey as TranslationKey);
-                    return (
-                      <SidebarMenuItem key={item.titleKey}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink
-                            to={item.url}
-                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
-                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
-                          >
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
-
-        {/* Settings Section */}
-        {canAccess('settings') && (
-        <SidebarGroup>
-          <Collapsible open={openSections.has('settings')} onOpenChange={() => toggleSection('settings')}>
-            <CollapsibleTrigger className="w-full">
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
-                <span className="flex items-center gap-1.5">
-                  <Settings className="h-3.5 w-3.5" />
-                  {t('admin.settings' as TranslationKey)}
-                </span>
-                {openSections.has('settings') ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-              </SidebarGroupLabel>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {settingsItems.map((item) => {
-                    const title = t(item.titleKey as TranslationKey);
-                    return (
-                      <SidebarMenuItem key={item.titleKey}>
-                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink
-                            to={item.url}
-                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
-                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
-                          >
-                            <item.icon className="h-3.5 w-3.5 shrink-0" />
-                            <span>{title}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-        )}
+        {renderCollapsible('websiteSetup', 'admin.websiteSetup', Monitor, websiteSetupItems)}
+        {renderCollapsible('settings', 'admin.settings', Settings, settingsItems)}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 md:p-3 space-y-1">
