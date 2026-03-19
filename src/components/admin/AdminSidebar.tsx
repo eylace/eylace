@@ -396,9 +396,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
         {/* OTP System Section */}
-        <SidebarGroup>
+        {canAccess('otp') && (
           <Collapsible open={openSections.has('otp')} onOpenChange={() => toggleSection('otp')}>
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
