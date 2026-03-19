@@ -27,7 +27,11 @@ interface NavItem {
   children?: NavItem[];
 }
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  hasAccess?: (section: string) => boolean;
+}
+
+export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
   const { state } = useSidebar();
   const { signOut } = useAuth();
   const { t } = useLanguage();
@@ -35,6 +39,8 @@ export function AdminSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const currentPath = location.pathname;
+
+  const canAccess = (section: string) => !hasAccess || hasAccess(section);
 
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(['products']));
 
