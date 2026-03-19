@@ -354,11 +354,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
-        {renderGroup('admin.group.management', managementItems)}
+        {canAccess('management') && renderGroup('admin.group.management', managementItems)}
 
         {/* Preorder Section */}
-        <SidebarGroup>
+        {canAccess('preorder') && (
           <Collapsible open={openSections.has('preorder')} onOpenChange={() => toggleSection('preorder')}>
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
