@@ -240,6 +240,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {canAccess('main') && renderGroup('admin.group.main', mainItems)}
 
         {/* AI Automation Section */}
+        {canAccess('ai') && (
         <SidebarGroup>
           <Collapsible open={openSections.has('ai')} onOpenChange={() => toggleSection('ai')}>
             <CollapsibleTrigger className="w-full">
@@ -259,11 +260,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
                     return (
                       <SidebarMenuItem key={item.titleKey}>
                         <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
-                          <NavLink
-                            to={item.url}
-                            className="hover:bg-sidebar-accent/50 text-xs pl-2"
-                            activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent"
-                          >
+                          <NavLink to={item.url} className="hover:bg-sidebar-accent/50 text-xs pl-2" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
                             <item.icon className="h-3.5 w-3.5 shrink-0" />
                             <span>{title}</span>
                           </NavLink>
@@ -276,9 +273,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
-        {/* Products Section with Collapsible Sub-menu */}
-        <SidebarGroup>
+        {/* Products Section */}
+        {canAccess('products') && (
           <Collapsible open={openSections.has('products')} onOpenChange={() => toggleSection('products')}>
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
