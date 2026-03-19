@@ -182,6 +182,7 @@ const AdminUserRoles = () => {
   const [search, setSearch] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<AppRole>('user');
   const [adding, setAdding] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
