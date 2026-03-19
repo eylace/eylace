@@ -237,7 +237,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent className="overflow-y-auto">
-        {renderGroup('admin.group.main', mainItems)}
+        {canAccess('main') && renderGroup('admin.group.main', mainItems)}
 
         {/* AI Automation Section */}
         <SidebarGroup>
