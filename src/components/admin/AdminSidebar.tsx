@@ -435,10 +435,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
-        {renderGroup('admin.group.operations', operationsItems)}
+        {canAccess('operations') && renderGroup('admin.group.operations', operationsItems)}
 
         {/* Marketing Section */}
+        {canAccess('marketing') && (
         <SidebarGroup>
           <Collapsible open={openSections.has('marketing')} onOpenChange={() => toggleSection('marketing')}>
             <CollapsibleTrigger className="w-full">
