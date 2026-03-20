@@ -16,10 +16,11 @@ import { toast } from 'sonner';
 const defaultMenu: MenuItem[] = [
   { id: '1', label: "Today's Deals", labelBn: 'আজকের ডিল', url: '/deals', type: 'link', isActive: true, sortOrder: 0, children: [] },
   { id: '2', label: 'Flash Sale', labelBn: 'ফ্ল্যাশ সেল', url: '/flash-sale', type: 'link', isActive: true, sortOrder: 1, children: [] },
-  { id: '3', label: 'New Arrivals', labelBn: 'নতুন পণ্য', url: '/new-arrivals', type: 'link', isActive: true, sortOrder: 2, children: [] },
-  { id: '4', label: 'Best Sellers', labelBn: 'বেস্ট সেলার', url: '/best-sellers', type: 'link', isActive: true, sortOrder: 3, children: [] },
-  { id: '5', label: 'Sell on Eylace', labelBn: 'Eylace-এ বিক্রি করুন', url: '/sell', type: 'link', isActive: true, sortOrder: 4, children: [] },
-  { id: '6', label: 'Help & Support', labelBn: 'সাহায্য ও সহায়তা', url: '/help', type: 'link', isActive: true, sortOrder: 5, children: [] },
+  { id: '7', label: 'Trending Now', labelBn: 'ট্রেন্ডিং', url: '/trending', type: 'link', isActive: true, sortOrder: 2, children: [] },
+  { id: '3', label: 'New Arrivals', labelBn: 'নতুন পণ্য', url: '/new-arrivals', type: 'link', isActive: true, sortOrder: 3, children: [] },
+  { id: '4', label: 'Best Sellers', labelBn: 'বেস্ট সেলার', url: '/best-sellers', type: 'link', isActive: true, sortOrder: 4, children: [] },
+  { id: '5', label: 'Sell on Eylace', labelBn: 'Eylace-এ বিক্রি করুন', url: '/sell', type: 'link', isActive: true, sortOrder: 5, children: [] },
+  { id: '6', label: 'Help & Support', labelBn: 'সাহায্য ও সহায়তা', url: '/help', type: 'link', isActive: true, sortOrder: 6, children: [] },
 ];
 
 const AdminMenuManager = () => {
