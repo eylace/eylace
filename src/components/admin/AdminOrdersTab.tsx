@@ -367,7 +367,17 @@ export const AdminOrdersTab = () => {
                                   {order.shipping_address?.city}{order.shipping_address?.state ? `, ${order.shipping_address.state}` : ''} {order.shipping_address?.zip_code}
                                 </p>
                                 <p className="text-muted-foreground">{order.shipping_address?.country}</p>
-                                {order.shipping_address?.phone && <p className="text-muted-foreground flex items-center gap-1">📞 {order.shipping_address.phone}</p>}
+                                {order.shipping_address?.phone && (
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-muted-foreground flex items-center gap-1">📞 {order.shipping_address.phone}</p>
+                                    <a href={`tel:${order.shipping_address.phone}`} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-md transition-colors" title="Call Customer">
+                                      <Phone className="h-3 w-3" /> Call
+                                    </a>
+                                    <a href={`https://wa.me/${(order.shipping_address.phone || '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="WhatsApp">
+                                      <MessageCircle className="h-3 w-3" /> WhatsApp
+                                    </a>
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <div>

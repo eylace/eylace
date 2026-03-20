@@ -268,6 +268,13 @@ const Checkout = () => {
       clearCart();
       setOrderComplete(true);
       toast.success(t('checkout.orderSuccess'), { description: `Order ID: ${orderNumber}` });
+
+      // Send auto confirmation email (non-blocking)
+      if (user && orderData) {
+        supabase.functions.invoke('send-order-confirmation', {
+          body: { order_id: orderData.id },
+        }).catch(err => console.error('Confirmation email error:', err));
+      }
     } catch (err) {
       console.error('Checkout error:', err);
       toast.error('An error occurred during checkout. Please try again.');
