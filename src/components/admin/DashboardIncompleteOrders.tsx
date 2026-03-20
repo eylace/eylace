@@ -23,6 +23,7 @@ interface IncompleteOrder {
 
 export const DashboardIncompleteOrders = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<IncompleteOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
