@@ -121,7 +121,7 @@ export const DashboardIncompleteOrders = () => {
     <Card className="border border-border">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CardTitle className="text-base font-semibold flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={() => window.location.pathname !== '/admin/incomplete-orders' && (window.location.href = '/admin/incomplete-orders')}>
             <FileWarning className="h-4 w-4 text-[hsl(var(--warning))]" />
             {t('admin.incomplete.title')}
           </CardTitle>

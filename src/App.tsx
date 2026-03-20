@@ -132,6 +132,7 @@ const AdminAIAnalyzer = lazy(() => import("./pages/AdminAIAnalyzer"));
 const AdminAISettings = lazy(() => import("./pages/AdminAISettings"));
 const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics"));
 const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
+const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders"));
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
 const CmsPage = lazy(() => import("./pages/CmsPage"));
 
