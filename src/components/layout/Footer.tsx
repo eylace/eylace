@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, CreditCard, Shield, Truck, Headphones } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, CreditCard, Shield, Truck, Headphones, Wallet, Banknote, Building2, Globe, Smartphone } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
@@ -95,8 +95,23 @@ export const Footer = () => {
             <div>
               <p className="text-sm text-primary-foreground/70 mb-3">{t('footer.weAccept')}</p>
               <div className="flex flex-wrap gap-2">
-                {['Visa', 'Mastercard', 'bKash', 'Nagad', 'Rocket', 'SSLCommerz', 'COD'].map((method) => (
-                  <div key={method} className="px-3 py-1.5 bg-primary-foreground/10 rounded text-xs font-medium">{method}</div>
+                {[
+                  { name: 'Visa', icon: CreditCard, color: 'text-blue-400' },
+                  { name: 'Mastercard', icon: CreditCard, color: 'text-red-400' },
+                  { name: 'American Express', icon: CreditCard, color: 'text-sky-400' },
+                  { name: 'UnionPay', icon: Globe, color: 'text-red-500' },
+                  { name: 'bKash', icon: Wallet, color: 'text-pink-400' },
+                  { name: 'Nagad', icon: Wallet, color: 'text-orange-400' },
+                  { name: 'Rocket', icon: Building2, color: 'text-purple-400' },
+                  { name: 'Upay', icon: Smartphone, color: 'text-green-400' },
+                  { name: 'SSLCommerz', icon: Shield, color: 'text-emerald-400' },
+                  { name: 'PayPal', icon: Globe, color: 'text-blue-300' },
+                  { name: 'COD', icon: Banknote, color: 'text-yellow-400' },
+                ].map(({ name, icon: Icon, color }) => (
+                  <div key={name} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-foreground/10 rounded text-xs font-medium">
+                    <Icon className={`h-3.5 w-3.5 ${color}`} />
+                    <span>{name}</span>
+                  </div>
                 ))}
               </div>
             </div>
