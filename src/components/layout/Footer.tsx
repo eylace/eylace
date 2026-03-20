@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, CreditCard, Shield, Truck, Headphones, Wallet, Banknote, Building2, Globe, Smartphone } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, CreditCard, Shield, Truck, Headphones } from 'lucide-react';
+import { paymentMethods } from '@/components/payment/PaymentIcons';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
