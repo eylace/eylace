@@ -10,6 +10,7 @@ import {
   Zap, BadgePercent, Receipt, HelpCircle, Store
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
+import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
