@@ -1,43 +1,50 @@
 
 
-## Plan: "Sell on Eylace" — ৪টি ডেডিকেটেড পেজ তৈরি ও লিংক
+## Plan: Customer Service — ৫টি ডেডিকেটেড পেজ তৈরি ও লিংক
 
 ### বর্তমান অবস্থা
-- `/sell` → `SellerRegistration.tsx` (ইতিমধ্যে আছে — সেলার রেজিস্ট্রেশন ফর্ম)
-- `/seller-center`, `/seller-policies`, `/seller-support` → `CmsPage` (খালি/Page Not Found দেখায়)
+`/help`, `/track-order`, `/returns`, `/shipping`, `/faq` — সবগুলো `CmsPage`-এ পয়েন্ট করে, ফলে Page Not Found দেখায়।
 
 ### যা করা হবে
 
-**1. Seller Center পেজ (`/seller-center`)** — নতুন ফাইল তৈরি
-- সেলারদের জন্য হাব পেজ: "কেন Eylace-এ বিক্রি করবেন" ফিচার কার্ড (বিশাল কাস্টমার বেস, সহজ ড্যাশবোর্ড, নিরাপদ পেমেন্ট, ২৪/৭ সাপোর্ট)
-- "কিভাবে শুরু করবেন" — ৩ ধাপের গাইড (রেজিস্টার → প্রোডাক্ট আপলোড → বিক্রি শুরু)
-- সেলার ড্যাশবোর্ড ও রেজিস্ট্রেশনে CTA বাটন
-- সেলার ক্যাটাগরি (ইলেকট্রনিক্স, ফ্যাশন, গ্রোসারি ইত্যাদি)
+**1. Help Center (`/help`)** — `src/pages/HelpCenter.tsx`
+- সার্চ বার (হেল্প টপিক খুঁজতে)
+- ক্যাটাগরি কার্ড: Orders, Payments, Shipping, Returns, Account, Seller
+- জনপ্রিয় প্রশ্নোত্তর সেকশন
+- যোগাযোগ চ্যানেল (ইমেইল, ফোন, লাইভ চ্যাট)
 
-**2. Seller Policies পেজ (`/seller-policies`)** — নতুন ফাইল তৈরি
-- কমিশন স্ট্রাকচার
-- রিটার্ন ও রিফান্ড পলিসি
-- শিপিং গাইডলাইন
-- প্রোডাক্ট লিস্টিং নিয়ম
-- পেমেন্ট টার্মস
-- অ্যাকাউন্ট সাসপেনশন পলিসি
-- Accordion/collapsible ফরম্যাটে সাজানো
+**2. Track Order (`/track-order`)** — `src/pages/TrackOrder.tsx`
+- অর্ডার নম্বর দিয়ে সার্চ ফর্ম
+- লগইন থাকলে সরাসরি অর্ডার লিস্ট দেখাবে
+- ট্র্যাকিং টাইমলাইন (OrderTrackingTimeline ব্যবহার)
 
-**3. Seller Support পেজ (`/seller-support`)** — নতুন ফাইল তৈরি
-- FAQ সেকশন (সাধারণ প্রশ্নোত্তর accordion-এ)
-- যোগাযোগ ফর্ম (নাম, ইমেইল, বিষয়, বার্তা)
-- সাপোর্ট চ্যানেল কার্ড (ইমেইল, ফোন, লাইভ চ্যাট)
-- হেল্পফুল রিসোর্স লিংক
+**3. Returns & Refunds (`/returns`)** — `src/pages/ReturnsRefunds.tsx`
+- রিটার্ন পলিসি সামারি কার্ড (সময়সীমা, শর্ত)
+- ধাপে ধাপে রিটার্ন প্রক্রিয়া (৪ ধাপ)
+- রিফান্ড টাইমলাইন
+- FAQ accordion
 
-**4. Route আপডেট (`App.tsx`)**
-- `/seller-center`, `/seller-policies`, `/seller-support` — CmsPage থেকে নতুন ডেডিকেটেড কম্পোনেন্টে পরিবর্তন
-- `/sell` যেমন আছে তেমনই থাকবে (SellerRegistration)
+**4. Shipping Info (`/shipping`)** — `src/pages/ShippingInfo.tsx`
+- শিপিং অপশন টেবিল (Standard, Express, Same Day — সময় ও খরচ)
+- ডেলিভারি এরিয়া কাভারেজ
+- ট্র্যাকিং তথ্য
+- শিপিং FAQ
+
+**5. FAQ (`/faq`)** — `src/pages/FAQ.tsx`
+- ক্যাটাগরি ফিল্টার ট্যাব (All, Orders, Payment, Shipping, Returns, Account)
+- Accordion ফরম্যাটে প্রশ্নোত্তর
+- "প্রশ্নের উত্তর পাননি?" — সাপোর্ট CTA
+
+**6. Route আপডেট (`App.tsx`)**
+- ৫টি রাউট CmsPage → নতুন কম্পোনেন্টে পরিবর্তন
 
 ### ফাইল পরিবর্তন
 | ফাইল | পরিবর্তন |
 |---|---|
-| `src/pages/SellerCenter.tsx` | নতুন তৈরি |
-| `src/pages/SellerPolicies.tsx` | নতুন তৈরি |
-| `src/pages/SellerSupport.tsx` | নতুন তৈরি |
-| `src/App.tsx` | ৩টি route আপডেট |
+| `src/pages/HelpCenter.tsx` | নতুন তৈরি |
+| `src/pages/TrackOrder.tsx` | নতুন তৈরি |
+| `src/pages/ReturnsRefunds.tsx` | নতুন তৈরি |
+| `src/pages/ShippingInfo.tsx` | নতুন তৈরি |
+| `src/pages/FAQ.tsx` | নতুন তৈরি |
+| `src/App.tsx` | ৫টি route আপডেট |
 
