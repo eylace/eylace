@@ -83,6 +83,8 @@ const Account = () => {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [orderFilter, setOrderFilter] = useState('all');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [trackingEvents, setTrackingEvents] = useState<Record<string, any[]>>({});
   const [totalSpent, setTotalSpent] = useState(0);
   const [monthlySpending, setMonthlySpending] = useState<{month: string; amount: number}[]>([]);
 
