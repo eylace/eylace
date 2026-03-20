@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { 
   Package, Truck, CheckCircle, Clock, ChevronDown, ChevronUp, Loader2, Send, ShieldAlert, Download, 
-  Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle,
+  Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
 } from 'lucide-react';
 import { FraudDetectionModal } from '@/components/admin/FraudDetectionModal';
 import { Button } from '@/components/ui/button';
