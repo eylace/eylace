@@ -168,6 +168,22 @@ const Account = () => {
     error ? toast.error(error.message) : (toast.success('Password updated!'), setPasswordData({ newPassword: '', confirmPassword: '' }));
   };
 
+  const toggleOrderTracking = useCallback(async (orderId: string) => {
+    if (expandedOrderId === orderId) {
+      setExpandedOrderId(null);
+      return;
+    }
+    setExpandedOrderId(orderId);
+    if (!trackingEvents[orderId]) {
+      const { data } = await supabase
+        .from('order_tracking_events')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: false });
+      setTrackingEvents(prev => ({ ...prev, [orderId]: data || [] }));
+    }
+  }, [expandedOrderId, trackingEvents]);
+
   const handleSignOut = async () => { await signOut(); navigate('/'); };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
