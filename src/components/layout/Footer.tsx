@@ -94,7 +94,7 @@ export const Footer = () => {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm text-primary-foreground/70 mb-3">{t('footer.weAccept')}</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 {[
                   { name: 'Visa', icon: CreditCard, color: 'text-blue-400' },
                   { name: 'Mastercard', icon: CreditCard, color: 'text-red-400' },
@@ -108,9 +108,8 @@ export const Footer = () => {
                   { name: 'PayPal', icon: Globe, color: 'text-blue-300' },
                   { name: 'COD', icon: Banknote, color: 'text-yellow-400' },
                 ].map(({ name, icon: Icon, color }) => (
-                  <div key={name} className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-foreground/10 rounded text-xs font-medium">
-                    <Icon className={`h-3.5 w-3.5 ${color}`} />
-                    <span>{name}</span>
+                  <div key={name} className="p-2 bg-primary-foreground/10 rounded-md" title={name}>
+                    <Icon className={`h-5 w-5 ${color}`} />
                   </div>
                 ))}
               </div>
