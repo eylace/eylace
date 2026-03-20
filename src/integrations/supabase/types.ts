@@ -1683,6 +1683,7 @@ export type Database = {
           admin_notes: string | null
           business_type: string | null
           created_at: string
+          fulfillment_type: string
           id: string
           phone: string | null
           status: string
@@ -1695,6 +1696,7 @@ export type Database = {
           admin_notes?: string | null
           business_type?: string | null
           created_at?: string
+          fulfillment_type?: string
           id?: string
           phone?: string | null
           status?: string
@@ -1707,6 +1709,7 @@ export type Database = {
           admin_notes?: string | null
           business_type?: string | null
           created_at?: string
+          fulfillment_type?: string
           id?: string
           phone?: string | null
           status?: string
@@ -1961,6 +1964,7 @@ export type Database = {
       sellers: {
         Row: {
           created_at: string
+          fulfillment_type: string
           id: string
           is_verified: boolean | null
           logo: string | null
@@ -1972,6 +1976,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          fulfillment_type?: string
           id?: string
           is_verified?: boolean | null
           logo?: string | null
@@ -1983,6 +1988,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          fulfillment_type?: string
           id?: string
           is_verified?: boolean | null
           logo?: string | null
