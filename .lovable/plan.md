@@ -1,50 +1,48 @@
 
 
-## Plan: Customer Service — ৫টি ডেডিকেটেড পেজ তৈরি ও লিংক
+## Plan: ফুটারের বাকি সব পেজ তৈরি ও লিংক
 
 ### বর্তমান অবস্থা
-`/help`, `/track-order`, `/returns`, `/shipping`, `/faq` — সবগুলো `CmsPage`-এ পয়েন্ট করে, ফলে Page Not Found দেখায়।
+এই ১১টি রাউট এখনো `CmsPage` (খালি) দেখায়:
 
-### যা করা হবে
+### Quick Links (৫টি)
+| রাউট | পেজ | বিষয়বস্তু |
+|---|---|---|
+| `/about` | About Us | কোম্পানি পরিচিতি, মিশন-ভিশন, টিম, পরিসংখ্যান |
+| `/contact` | Contact Us | যোগাযোগ ফর্ম, ঠিকানা, ম্যাপ, ফোন/ইমেইল |
+| `/careers` | Careers | চাকরির সুবিধা, খোলা পদ তালিকা, আবেদন CTA |
+| `/blog` | Blog | ব্লগ পোস্ট কার্ড গ্রিড (mock data), ক্যাটাগরি ফিল্টার |
+| `/sitemap` | Sitemap | সাইটের সব লিংক ক্যাটাগরি অনুযায়ী সাজানো |
 
-**1. Help Center (`/help`)** — `src/pages/HelpCenter.tsx`
-- সার্চ বার (হেল্প টপিক খুঁজতে)
-- ক্যাটাগরি কার্ড: Orders, Payments, Shipping, Returns, Account, Seller
-- জনপ্রিয় প্রশ্নোত্তর সেকশন
-- যোগাযোগ চ্যানেল (ইমেইল, ফোন, লাইভ চ্যাট)
+### Partners (৩টি)
+| রাউট | পেজ | বিষয়বস্তু |
+|---|---|---|
+| `/delivery-partner` | Delivery Partner | ডেলিভারি পার্টনার হওয়ার সুবিধা, যোগদান প্রক্রিয়া, CTA |
+| `/affiliate` | Affiliate Program | অ্যাফিলিয়েট কমিশন, কিভাবে কাজ করে, সাইন আপ CTA |
+| `/advertise` | Advertise With Us | বিজ্ঞাপন প্যাকেজ, পরিসংখ্যান, যোগাযোগ ফর্ম |
 
-**2. Track Order (`/track-order`)** — `src/pages/TrackOrder.tsx`
-- অর্ডার নম্বর দিয়ে সার্চ ফর্ম
-- লগইন থাকলে সরাসরি অর্ডার লিস্ট দেখাবে
-- ট্র্যাকিং টাইমলাইন (OrderTrackingTimeline ব্যবহার)
-
-**3. Returns & Refunds (`/returns`)** — `src/pages/ReturnsRefunds.tsx`
-- রিটার্ন পলিসি সামারি কার্ড (সময়সীমা, শর্ত)
-- ধাপে ধাপে রিটার্ন প্রক্রিয়া (৪ ধাপ)
-- রিফান্ড টাইমলাইন
-- FAQ accordion
-
-**4. Shipping Info (`/shipping`)** — `src/pages/ShippingInfo.tsx`
-- শিপিং অপশন টেবিল (Standard, Express, Same Day — সময় ও খরচ)
-- ডেলিভারি এরিয়া কাভারেজ
-- ট্র্যাকিং তথ্য
-- শিপিং FAQ
-
-**5. FAQ (`/faq`)** — `src/pages/FAQ.tsx`
-- ক্যাটাগরি ফিল্টার ট্যাব (All, Orders, Payment, Shipping, Returns, Account)
-- Accordion ফরম্যাটে প্রশ্নোত্তর
-- "প্রশ্নের উত্তর পাননি?" — সাপোর্ট CTA
-
-**6. Route আপডেট (`App.tsx`)**
-- ৫টি রাউট CmsPage → নতুন কম্পোনেন্টে পরিবর্তন
+### Bottom Links (৩টি)
+| রাউট | পেজ | বিষয়বস্তু |
+|---|---|---|
+| `/privacy` | Privacy Policy | ডেটা সংগ্রহ, ব্যবহার, সুরক্ষা পলিসি সেকশন |
+| `/terms` | Terms & Conditions | ব্যবহারের শর্তাবলী, দায়িত্ব, বিরোধ নিষ্পত্তি |
+| `/cookies` | Cookie Policy | কুকি ধরন, ব্যবহার, নিয়ন্ত্রণ |
 
 ### ফাইল পরিবর্তন
 | ফাইল | পরিবর্তন |
 |---|---|
-| `src/pages/HelpCenter.tsx` | নতুন তৈরি |
-| `src/pages/TrackOrder.tsx` | নতুন তৈরি |
-| `src/pages/ReturnsRefunds.tsx` | নতুন তৈরি |
-| `src/pages/ShippingInfo.tsx` | নতুন তৈরি |
-| `src/pages/FAQ.tsx` | নতুন তৈরি |
-| `src/App.tsx` | ৫টি route আপডেট |
+| `src/pages/AboutUs.tsx` | নতুন তৈরি |
+| `src/pages/ContactUs.tsx` | নতুন তৈরি |
+| `src/pages/Careers.tsx` | নতুন তৈরি |
+| `src/pages/Blog.tsx` | নতুন তৈরি |
+| `src/pages/Sitemap.tsx` | নতুন তৈরি |
+| `src/pages/DeliveryPartner.tsx` | নতুন তৈরি |
+| `src/pages/AffiliateProgram.tsx` | নতুন তৈরি |
+| `src/pages/AdvertiseWithUs.tsx` | নতুন তৈরি |
+| `src/pages/PrivacyPolicy.tsx` | নতুন তৈরি |
+| `src/pages/TermsConditions.tsx` | নতুন তৈরি |
+| `src/pages/CookiePolicy.tsx` | নতুন তৈরি |
+| `src/App.tsx` | ১১টি route আপডেট — CmsPage → নতুন কম্পোনেন্ট |
+
+সব পেজ `Layout` কম্পোনেন্ট ব্যবহার করবে, প্রফেশনাল ডিজাইন হবে hero section + content sections সহ।
 
