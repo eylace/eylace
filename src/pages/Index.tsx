@@ -31,7 +31,7 @@ const Index = () => {
           titleKey="featured.title"
           subtitleKey="featured.subtitle"
           icon="star"
-          link="/best-sellers"
+          link="/trending"
           limit={5}
         />
       )}
@@ -42,7 +42,7 @@ const Index = () => {
           titleKey="featured.trending"
           subtitleKey="featured.trendingSub"
           icon="trending"
-          link="/best-sellers"
+          link="/trending"
           limit={5}
         />
       )}

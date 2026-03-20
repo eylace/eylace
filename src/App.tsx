@@ -32,6 +32,7 @@ const Deals = lazy(() => import("./pages/Deals"));
 const FlashSale = lazy(() => import("./pages/FlashSale"));
 const NewArrivals = lazy(() => import("./pages/NewArrivals"));
 const BestSellers = lazy(() => import("./pages/BestSellers"));
+const TrendingNow = lazy(() => import("./pages/TrendingNow"));
 const Account = lazy(() => import("./pages/Account"));
 const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
 const SellerRegistration = lazy(() => import("./pages/SellerRegistration"));
@@ -247,6 +248,7 @@ const App = () => (
                 <Route path="/flash-sale" element={<FlashSale />} />
                 <Route path="/new-arrivals" element={<NewArrivals />} />
                 <Route path="/best-sellers" element={<BestSellers />} />
+                <Route path="/trending" element={<TrendingNow />} />
                 <Route path="/seller" element={<SellerDashboard />} />
                 <Route path="/sell" element={<SellerRegistration />} />
                 {/* CMS Pages - all footer links */}
