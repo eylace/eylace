@@ -1,48 +1,39 @@
 
 
-## Plan: ফুটারের বাকি সব পেজ তৈরি ও লিংক
+## Plan: Amazon-স্টাইল সেলার প্ল্যান — দুটি ফুলফিলমেন্ট অপশন
 
-### বর্তমান অবস্থা
-এই ১১টি রাউট এখনো `CmsPage` (খালি) দেখায়:
+### ধারণা
+Amazon-এর মতো দুটি সেলিং প্ল্যান যোগ করা হবে:
 
-### Quick Links (৫টি)
-| রাউট | পেজ | বিষয়বস্তু |
-|---|---|---|
-| `/about` | About Us | কোম্পানি পরিচিতি, মিশন-ভিশন, টিম, পরিসংখ্যান |
-| `/contact` | Contact Us | যোগাযোগ ফর্ম, ঠিকানা, ম্যাপ, ফোন/ইমেইল |
-| `/careers` | Careers | চাকরির সুবিধা, খোলা পদ তালিকা, আবেদন CTA |
-| `/blog` | Blog | ব্লগ পোস্ট কার্ড গ্রিড (mock data), ক্যাটাগরি ফিল্টার |
-| `/sitemap` | Sitemap | সাইটের সব লিংক ক্যাটাগরি অনুযায়ী সাজানো |
+**1. FBE — Fulfilled by Eylace (Eylace ম্যানেজ করবে)**
+- Eylace শিপিং, স্টোরেজ, কাস্টমার সার্ভিস সব সামলাবে
+- উচ্চতর কমিশন (যেমন 15-20%)
+- সেলারের কাজ শুধু প্রোডাক্ট পাঠানো Eylace ওয়্যারহাউসে
 
-### Partners (৩টি)
-| রাউট | পেজ | বিষয়বস্তু |
-|---|---|---|
-| `/delivery-partner` | Delivery Partner | ডেলিভারি পার্টনার হওয়ার সুবিধা, যোগদান প্রক্রিয়া, CTA |
-| `/affiliate` | Affiliate Program | অ্যাফিলিয়েট কমিশন, কিভাবে কাজ করে, সাইন আপ CTA |
-| `/advertise` | Advertise With Us | বিজ্ঞাপন প্যাকেজ, পরিসংখ্যান, যোগাযোগ ফর্ম |
+**2. FBM — Fulfilled by Merchant (সেলার নিজে ম্যানেজ করবে)**
+- সেলার নিজে শিপিং, প্যাকেজিং, কাস্টমার সার্ভিস করবে
+- কম কমিশন (যেমন 5-10%)
+- সম্পূর্ণ নিয়ন্ত্রণ সেলারের হাতে
 
-### Bottom Links (৩টি)
-| রাউট | পেজ | বিষয়বস্তু |
-|---|---|---|
-| `/privacy` | Privacy Policy | ডেটা সংগ্রহ, ব্যবহার, সুরক্ষা পলিসি সেকশন |
-| `/terms` | Terms & Conditions | ব্যবহারের শর্তাবলী, দায়িত্ব, বিরোধ নিষ্পত্তি |
-| `/cookies` | Cookie Policy | কুকি ধরন, ব্যবহার, নিয়ন্ত্রণ |
+### যা করা হবে
+
+**1. SellerRegistration.tsx আপডেট**
+- ফর্মের আগে একটি প্ল্যান সিলেকশন স্টেপ যোগ — দুটি কার্ড (FBE ও FBM) পাশাপাশি দেখাবে
+- প্রতিটি কার্ডে: সুবিধা তালিকা, কমিশন রেট, মূল্য
+- সেলার প্ল্যান সিলেক্ট করলে ফর্ম দেখাবে
+- `seller_applications` টেবিলে `fulfillment_type` ফিল্ড সেভ হবে
+
+**2. SellerCenter.tsx আপডেট**
+- নতুন সেকশন: "আপনার জন্য সঠিক প্ল্যান বেছে নিন" — দুটি প্ল্যান কার্ড বিস্তারিত ফিচার তুলনাসহ
+
+**3. Database মাইগ্রেশন**
+- `seller_applications` টেবিলে `fulfillment_type` কলাম যোগ (text, default 'fbm')
+- `sellers` টেবিলে `fulfillment_type` কলাম যোগ
 
 ### ফাইল পরিবর্তন
 | ফাইল | পরিবর্তন |
 |---|---|
-| `src/pages/AboutUs.tsx` | নতুন তৈরি |
-| `src/pages/ContactUs.tsx` | নতুন তৈরি |
-| `src/pages/Careers.tsx` | নতুন তৈরি |
-| `src/pages/Blog.tsx` | নতুন তৈরি |
-| `src/pages/Sitemap.tsx` | নতুন তৈরি |
-| `src/pages/DeliveryPartner.tsx` | নতুন তৈরি |
-| `src/pages/AffiliateProgram.tsx` | নতুন তৈরি |
-| `src/pages/AdvertiseWithUs.tsx` | নতুন তৈরি |
-| `src/pages/PrivacyPolicy.tsx` | নতুন তৈরি |
-| `src/pages/TermsConditions.tsx` | নতুন তৈরি |
-| `src/pages/CookiePolicy.tsx` | নতুন তৈরি |
-| `src/App.tsx` | ১১টি route আপডেট — CmsPage → নতুন কম্পোনেন্ট |
-
-সব পেজ `Layout` কম্পোনেন্ট ব্যবহার করবে, প্রফেশনাল ডিজাইন হবে hero section + content sections সহ।
+| `src/pages/SellerRegistration.tsx` | প্ল্যান সিলেকশন স্টেপ যোগ |
+| `src/pages/SellerCenter.tsx` | প্ল্যান তুলনা সেকশন যোগ |
+| DB Migration | `fulfillment_type` কলাম যোগ |
 
