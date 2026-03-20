@@ -267,9 +267,9 @@ const App = () => (
                 <Route path="/careers" element={<CmsPage />} />
                 <Route path="/blog" element={<CmsPage />} />
                 <Route path="/track-order" element={<CmsPage />} />
-                <Route path="/seller-center" element={<CmsPage />} />
-                <Route path="/seller-policies" element={<CmsPage />} />
-                <Route path="/seller-support" element={<CmsPage />} />
+                <Route path="/seller-center" element={<SellerCenter />} />
+                <Route path="/seller-policies" element={<SellerPolicies />} />
+                <Route path="/seller-support" element={<SellerSupport />} />
                 <Route path="/delivery-partner" element={<CmsPage />} />
                 <Route path="/affiliate" element={<CmsPage />} />
                 <Route path="/advertise" element={<CmsPage />} />
