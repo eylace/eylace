@@ -265,13 +265,13 @@ const App = () => (
                 <Route path="/privacy" element={<CmsPage />} />
                 <Route path="/terms" element={<CmsPage />} />
                 <Route path="/cookies" element={<CmsPage />} />
-                <Route path="/help" element={<CmsPage />} />
-                <Route path="/returns" element={<CmsPage />} />
-                <Route path="/shipping" element={<CmsPage />} />
-                <Route path="/faq" element={<CmsPage />} />
+                <Route path="/help" element={<HelpCenter />} />
+                <Route path="/returns" element={<ReturnsRefunds />} />
+                <Route path="/shipping" element={<ShippingInfo />} />
+                <Route path="/faq" element={<FAQ />} />
                 <Route path="/careers" element={<CmsPage />} />
                 <Route path="/blog" element={<CmsPage />} />
-                <Route path="/track-order" element={<CmsPage />} />
+                <Route path="/track-order" element={<TrackOrder />} />
                 <Route path="/seller-center" element={<SellerCenter />} />
                 <Route path="/seller-policies" element={<SellerPolicies />} />
                 <Route path="/seller-support" element={<SellerSupport />} />
