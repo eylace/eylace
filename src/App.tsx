@@ -132,6 +132,7 @@ const AdminAIAnalyzer = lazy(() => import("./pages/AdminAIAnalyzer"));
 const AdminAISettings = lazy(() => import("./pages/AdminAISettings"));
 const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics"));
 const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
+const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders"));
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
 const CmsPage = lazy(() => import("./pages/CmsPage"));
 
@@ -258,6 +259,7 @@ const App = () => (
                 <Route path="/admin/ai-settings" element={<AdminAISettings />} />
                 <Route path="/admin/tracking" element={<AdminTrackingAnalytics />} />
                 <Route path="/admin/menu-manager" element={<AdminMenuManager />} />
+                <Route path="/admin/incomplete-orders" element={<AdminIncompleteOrders />} />
                 <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Phone, Mail, FileWarning, RefreshCw, Trash2, ChevronDown, ChevronUp, ShoppingBag, MapPin, Clock, MessageCircle, Search, Download, CheckCheck, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ interface IncompleteOrder {
 
 export const DashboardIncompleteOrders = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<IncompleteOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export const DashboardIncompleteOrders = () => {
     <Card className="border border-border">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <CardTitle className="text-base font-semibold flex items-center gap-2 cursor-pointer hover:text-primary transition-colors" onClick={() => navigate('/admin/incomplete-orders')}>
             <FileWarning className="h-4 w-4 text-[hsl(var(--warning))]" />
             {t('admin.incomplete.title')}
           </CardTitle>
