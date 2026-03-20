@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Phone, Mail, FileWarning, RefreshCw, Trash2, ChevronDown, ChevronUp, ShoppingBag, MapPin, Clock, MessageCircle, Search, Download, CheckCheck, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
