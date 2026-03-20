@@ -8,11 +8,11 @@ import { Calendar, User, ArrowRight } from 'lucide-react';
 const categories = ['All', 'Shopping Tips', 'Tech', 'Fashion', 'Home', 'News'];
 
 const posts = [
-  { id: 1, title: 'Top 10 Smartphones Under ৳20,000 in 2026', cat: 'Tech', date: 'Mar 15, 2026', author: 'Rafiq Ahmed', excerpt: 'Looking for the best budget smartphones? We've reviewed the top options available on Eylace right now.', img: '📱' },
-  { id: 2, title: 'Summer Fashion Trends You Can't Miss', cat: 'Fashion', date: 'Mar 12, 2026', author: 'Tasnim Akter', excerpt: 'From bold prints to pastel palettes — discover what's trending this summer season.', img: '👗' },
+  { id: 1, title: 'Top 10 Smartphones Under ৳20,000 in 2026', cat: 'Tech', date: 'Mar 15, 2026', author: 'Rafiq Ahmed', excerpt: 'Looking for the best budget smartphones? We have reviewed the top options available on Eylace right now.', img: '📱' },
+  { id: 2, title: 'Summer Fashion Trends You Cannot Miss', cat: 'Fashion', date: 'Mar 12, 2026', author: 'Tasnim Akter', excerpt: 'From bold prints to pastel palettes — discover what is trending this summer season.', img: '👗' },
   { id: 3, title: 'How to Save Big on Online Shopping', cat: 'Shopping Tips', date: 'Mar 10, 2026', author: 'Nusrat Jahan', excerpt: 'Smart strategies to make the most of flash sales, coupons, and cashback offers.', img: '🛒' },
   { id: 4, title: 'Best Kitchen Gadgets for Your Home', cat: 'Home', date: 'Mar 8, 2026', author: 'Ariful Islam', excerpt: 'Upgrade your kitchen with these must-have gadgets that make cooking easier and more fun.', img: '🍳' },
-  { id: 5, title: 'Eylace Launches Same-Day Delivery in Dhaka', cat: 'News', date: 'Mar 5, 2026', author: 'Team Eylace', excerpt: 'We're excited to announce same-day delivery across Dhaka city for select products.', img: '🚀' },
+  { id: 5, title: 'Eylace Launches Same-Day Delivery in Dhaka', cat: 'News', date: 'Mar 5, 2026', author: 'Team Eylace', excerpt: 'We are excited to announce same-day delivery across Dhaka city for select products.', img: '🚀' },
   { id: 6, title: 'Guide to Choosing the Right Laptop', cat: 'Tech', date: 'Mar 1, 2026', author: 'Rafiq Ahmed', excerpt: 'Whether for work, study, or gaming — find the perfect laptop with our comprehensive guide.', img: '💻' },
 ];
 

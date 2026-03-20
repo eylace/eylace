@@ -6,7 +6,7 @@ const cookieTypes = [
   { icon: Shield, title: 'Essential Cookies', desc: 'Required for the website to function properly. They enable basic features like page navigation, secure login, and cart functionality. These cannot be disabled.', always: true },
   { icon: BarChart3, title: 'Analytics Cookies', desc: 'Help us understand how visitors interact with our website by collecting anonymous usage data. This helps us improve our platform and user experience.', always: false },
   { icon: Target, title: 'Marketing Cookies', desc: 'Used to track visitors across websites to display relevant advertisements. They help us measure the effectiveness of our marketing campaigns.', always: false },
-  { icon: Settings, title: 'Preference Cookies', desc: 'Remember your settings and preferences, such as language, currency, and delivery location, so you don't have to set them each time you visit.', always: false },
+  { icon: Settings, title: 'Preference Cookies', desc: 'Remember your settings and preferences, such as language, currency, and delivery location, so you do not have to set them each time you visit.', always: false },
 ];
 
 const CookiePolicy = () => (

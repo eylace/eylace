@@ -7,7 +7,7 @@ import { Briefcase, Heart, GraduationCap, Coffee, MapPin, Clock } from 'lucide-r
 const perks = [
   { icon: Heart, title: 'Health Insurance', desc: 'Comprehensive medical coverage for you and your family' },
   { icon: GraduationCap, title: 'Learning Budget', desc: 'Annual budget for courses, conferences & books' },
-  { icon: Coffee, title: 'Flexible Hours', desc: 'Work when you're most productive' },
+  { icon: Coffee, title: 'Flexible Hours', desc: 'Work when you are most productive' },
   { icon: Briefcase, title: 'Career Growth', desc: 'Clear promotion paths and mentorship programs' },
 ];
 
