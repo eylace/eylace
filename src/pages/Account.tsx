@@ -546,32 +546,52 @@ const Account = () => {
                 ) : (
                   <div className="space-y-3">
                     {filteredOrders.map((order: any) => (
-                      <div key={order.id} className="bg-card rounded-xl border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
-                              <Receipt className="h-5 w-5 text-muted-foreground" />
+                      <div key={order.id} className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-[var(--shadow-card)] transition-shadow">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                                <Receipt className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-sm">Order #{order.order_number}</p>
+                                <p className="text-xs text-muted-foreground">{format(new Date(order.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-semibold text-sm">Order #{order.order_number}</p>
-                              <p className="text-xs text-muted-foreground">{format(new Date(order.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                            <div className="text-right flex items-center gap-3">
+                              <Badge variant="outline" className={cn('capitalize text-[10px]', statusColors[order.status])}>{order.status.replace('_', ' ')}</Badge>
+                              <span className="font-bold">৳{order.total?.toFixed(2)}</span>
                             </div>
                           </div>
-                          <div className="text-right flex items-center gap-3">
-                            <Badge variant="outline" className={cn('capitalize text-[10px]', statusColors[order.status])}>{order.status.replace('_', ' ')}</Badge>
-                            <span className="font-bold">৳{order.total?.toFixed(2)}</span>
+                          <Separator className="my-3" />
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex gap-4">
+                              <span>Payment: <span className="font-medium text-foreground capitalize">{order.payment_method}</span></span>
+                              {order.tracking_number && <span>Tracking: <span className="font-medium text-foreground">{order.tracking_number}</span></span>}
+                            </div>
+                            <button
+                              onClick={() => toggleOrderTracking(order.id)}
+                              className="text-accent font-medium hover:underline flex items-center gap-1"
+                            >
+                              {expandedOrderId === order.id ? 'Hide' : 'Track'}
+                              {expandedOrderId === order.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </button>
                           </div>
                         </div>
-                        <Separator className="my-3" />
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <div className="flex gap-4">
-                            <span>Payment: <span className="font-medium text-foreground capitalize">{order.payment_method}</span></span>
-                            {order.tracking_number && <span>Tracking: <span className="font-medium text-foreground">{order.tracking_number}</span></span>}
+
+                        {expandedOrderId === order.id && (
+                          <div className="border-t border-border bg-secondary/20 p-4">
+                            <OrderTrackingTimeline
+                              status={order.status}
+                              trackingNumber={order.tracking_number}
+                              carrier={order.carrier}
+                              estimatedDelivery={order.estimated_delivery}
+                              shippedAt={order.shipped_at}
+                              deliveredAt={order.delivered_at}
+                              events={trackingEvents[order.id] || []}
+                            />
                           </div>
-                          <Link to="/orders" className="text-accent font-medium hover:underline flex items-center gap-1">
-                            Track <ArrowUpRight className="h-3 w-3" />
-                          </Link>
-                        </div>
+                        )}
                       </div>
                     ))}
                   </div>
