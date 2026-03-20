@@ -39,6 +39,11 @@ const SellerRegistration = lazy(() => import("./pages/SellerRegistration"));
 const SellerCenter = lazy(() => import("./pages/SellerCenter"));
 const SellerPolicies = lazy(() => import("./pages/SellerPolicies"));
 const SellerSupport = lazy(() => import("./pages/SellerSupport"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const TrackOrder = lazy(() => import("./pages/TrackOrder"));
+const ReturnsRefunds = lazy(() => import("./pages/ReturnsRefunds"));
+const ShippingInfo = lazy(() => import("./pages/ShippingInfo"));
+const FAQ = lazy(() => import("./pages/FAQ"));
 
 // Admin pages - lazy loaded (rarely accessed by regular users)
 const Admin = lazy(() => import("./pages/Admin"));
