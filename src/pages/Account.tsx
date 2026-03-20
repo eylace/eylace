@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   User, MapPin, Package, Heart, Settings, Shield, CreditCard,
@@ -7,9 +7,10 @@ import {
   Gift, Award, Ticket, TrendingUp, Sparkles, Crown, Truck,
   BarChart3, Download, Eye, MessageSquare, RefreshCcw, Wallet,
   FileText, Tag, Copy, ChevronDown, ArrowUpRight, CircleDollarSign,
-  Zap, BadgePercent, Receipt, HelpCircle, Store
+  Zap, BadgePercent, Receipt, HelpCircle, Store, ChevronUp
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
+import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -82,6 +83,8 @@ const Account = () => {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [orderFilter, setOrderFilter] = useState('all');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [trackingEvents, setTrackingEvents] = useState<Record<string, any[]>>({});
   const [totalSpent, setTotalSpent] = useState(0);
   const [monthlySpending, setMonthlySpending] = useState<{month: string; amount: number}[]>([]);
 
@@ -164,6 +167,22 @@ const Account = () => {
     setIsSaving(false);
     error ? toast.error(error.message) : (toast.success('Password updated!'), setPasswordData({ newPassword: '', confirmPassword: '' }));
   };
+
+  const toggleOrderTracking = useCallback(async (orderId: string) => {
+    if (expandedOrderId === orderId) {
+      setExpandedOrderId(null);
+      return;
+    }
+    setExpandedOrderId(orderId);
+    if (!trackingEvents[orderId]) {
+      const { data } = await supabase
+        .from('order_tracking_events')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: false });
+      setTrackingEvents(prev => ({ ...prev, [orderId]: data || [] }));
+    }
+  }, [expandedOrderId, trackingEvents]);
 
   const handleSignOut = async () => { await signOut(); navigate('/'); };
 
@@ -527,32 +546,52 @@ const Account = () => {
                 ) : (
                   <div className="space-y-3">
                     {filteredOrders.map((order: any) => (
-                      <div key={order.id} className="bg-card rounded-xl border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
-                              <Receipt className="h-5 w-5 text-muted-foreground" />
+                      <div key={order.id} className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-[var(--shadow-card)] transition-shadow">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                                <Receipt className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-sm">Order #{order.order_number}</p>
+                                <p className="text-xs text-muted-foreground">{format(new Date(order.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-semibold text-sm">Order #{order.order_number}</p>
-                              <p className="text-xs text-muted-foreground">{format(new Date(order.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                            <div className="text-right flex items-center gap-3">
+                              <Badge variant="outline" className={cn('capitalize text-[10px]', statusColors[order.status])}>{order.status.replace('_', ' ')}</Badge>
+                              <span className="font-bold">৳{order.total?.toFixed(2)}</span>
                             </div>
                           </div>
-                          <div className="text-right flex items-center gap-3">
-                            <Badge variant="outline" className={cn('capitalize text-[10px]', statusColors[order.status])}>{order.status.replace('_', ' ')}</Badge>
-                            <span className="font-bold">৳{order.total?.toFixed(2)}</span>
+                          <Separator className="my-3" />
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex gap-4">
+                              <span>Payment: <span className="font-medium text-foreground capitalize">{order.payment_method}</span></span>
+                              {order.tracking_number && <span>Tracking: <span className="font-medium text-foreground">{order.tracking_number}</span></span>}
+                            </div>
+                            <button
+                              onClick={() => toggleOrderTracking(order.id)}
+                              className="text-accent font-medium hover:underline flex items-center gap-1"
+                            >
+                              {expandedOrderId === order.id ? 'Hide' : 'Track'}
+                              {expandedOrderId === order.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                            </button>
                           </div>
                         </div>
-                        <Separator className="my-3" />
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <div className="flex gap-4">
-                            <span>Payment: <span className="font-medium text-foreground capitalize">{order.payment_method}</span></span>
-                            {order.tracking_number && <span>Tracking: <span className="font-medium text-foreground">{order.tracking_number}</span></span>}
+
+                        {expandedOrderId === order.id && (
+                          <div className="border-t border-border bg-secondary/20 p-4">
+                            <OrderTrackingTimeline
+                              status={order.status}
+                              trackingNumber={order.tracking_number}
+                              carrier={order.carrier}
+                              estimatedDelivery={order.estimated_delivery}
+                              shippedAt={order.shipped_at}
+                              deliveredAt={order.delivered_at}
+                              events={trackingEvents[order.id] || []}
+                            />
                           </div>
-                          <Link to="/orders" className="text-accent font-medium hover:underline flex items-center gap-1">
-                            Track <ArrowUpRight className="h-3 w-3" />
-                          </Link>
-                        </div>
+                        )}
                       </div>
                     ))}
                   </div>
