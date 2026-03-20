@@ -44,7 +44,17 @@ const TrackOrder = lazy(() => import("./pages/TrackOrder"));
 const ReturnsRefunds = lazy(() => import("./pages/ReturnsRefunds"));
 const ShippingInfo = lazy(() => import("./pages/ShippingInfo"));
 const FAQ = lazy(() => import("./pages/FAQ"));
-
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Blog = lazy(() => import("./pages/Blog"));
+const Sitemap = lazy(() => import("./pages/Sitemap"));
+const DeliveryPartner = lazy(() => import("./pages/DeliveryPartner"));
+const AffiliateProgram = lazy(() => import("./pages/AffiliateProgram"));
+const AdvertiseWithUs = lazy(() => import("./pages/AdvertiseWithUs"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsConditions = lazy(() => import("./pages/TermsConditions"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 // Admin pages - lazy loaded (rarely accessed by regular users)
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
