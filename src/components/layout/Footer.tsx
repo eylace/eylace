@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, CreditCard, Shield, Truck, Headphones, Wallet, Banknote, Building2, Globe, Smartphone } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, CreditCard, Shield, Truck, Headphones } from 'lucide-react';
+import { paymentMethods } from '@/components/payment/PaymentIcons';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
@@ -94,22 +95,10 @@ export const Footer = () => {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm text-primary-foreground/70 mb-3">{t('footer.weAccept')}</p>
-              <div className="flex flex-wrap items-center gap-3">
-                {[
-                  { name: 'Visa', icon: CreditCard, color: 'text-blue-400' },
-                  { name: 'Mastercard', icon: CreditCard, color: 'text-red-400' },
-                  { name: 'American Express', icon: CreditCard, color: 'text-sky-400' },
-                  { name: 'UnionPay', icon: Globe, color: 'text-red-500' },
-                  { name: 'bKash', icon: Wallet, color: 'text-pink-400' },
-                  { name: 'Nagad', icon: Wallet, color: 'text-orange-400' },
-                  { name: 'Rocket', icon: Building2, color: 'text-purple-400' },
-                  { name: 'Upay', icon: Smartphone, color: 'text-green-400' },
-                  { name: 'SSLCommerz', icon: Shield, color: 'text-emerald-400' },
-                  { name: 'PayPal', icon: Globe, color: 'text-blue-300' },
-                  { name: 'COD', icon: Banknote, color: 'text-yellow-400' },
-                ].map(({ name, icon: Icon, color }) => (
-                  <div key={name} className="p-2 bg-primary-foreground/10 rounded-md" title={name}>
-                    <Icon className={`h-5 w-5 ${color}`} />
+              <div className="flex flex-wrap items-center gap-2">
+                {paymentMethods.map(({ name, Icon }) => (
+                  <div key={name} className="h-8 w-12 bg-white/90 rounded-md flex items-center justify-center p-1" title={name}>
+                    <Icon className="h-5" />
                   </div>
                 ))}
               </div>
