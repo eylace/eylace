@@ -36,6 +36,9 @@ const TrendingNow = lazy(() => import("./pages/TrendingNow"));
 const Account = lazy(() => import("./pages/Account"));
 const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
 const SellerRegistration = lazy(() => import("./pages/SellerRegistration"));
+const SellerCenter = lazy(() => import("./pages/SellerCenter"));
+const SellerPolicies = lazy(() => import("./pages/SellerPolicies"));
+const SellerSupport = lazy(() => import("./pages/SellerSupport"));
 
 // Admin pages - lazy loaded (rarely accessed by regular users)
 const Admin = lazy(() => import("./pages/Admin"));
@@ -264,9 +267,9 @@ const App = () => (
                 <Route path="/careers" element={<CmsPage />} />
                 <Route path="/blog" element={<CmsPage />} />
                 <Route path="/track-order" element={<CmsPage />} />
-                <Route path="/seller-center" element={<CmsPage />} />
-                <Route path="/seller-policies" element={<CmsPage />} />
-                <Route path="/seller-support" element={<CmsPage />} />
+                <Route path="/seller-center" element={<SellerCenter />} />
+                <Route path="/seller-policies" element={<SellerPolicies />} />
+                <Route path="/seller-support" element={<SellerSupport />} />
                 <Route path="/delivery-partner" element={<CmsPage />} />
                 <Route path="/affiliate" element={<CmsPage />} />
                 <Route path="/advertise" element={<CmsPage />} />
