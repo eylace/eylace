@@ -558,6 +558,7 @@ export type Database = {
           last_name: string | null
           notes: string | null
           phone: string | null
+          session_id: string | null
           state: string | null
           status: string | null
           updated_at: string | null
@@ -577,6 +578,7 @@ export type Database = {
           last_name?: string | null
           notes?: string | null
           phone?: string | null
+          session_id?: string | null
           state?: string | null
           status?: string | null
           updated_at?: string | null
@@ -596,6 +598,7 @@ export type Database = {
           last_name?: string | null
           notes?: string | null
           phone?: string | null
+          session_id?: string | null
           state?: string | null
           status?: string | null
           updated_at?: string | null

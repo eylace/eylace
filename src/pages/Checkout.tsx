@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ChevronRight, ArrowLeft, Lock, CheckCircle2 } from 'lucide-react';
@@ -47,6 +47,11 @@ const Checkout = () => {
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(15);
 
+  // Session-based incomplete order tracking
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const incompleteIdRef = useRef<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const form = useForm<CheckoutFormData>({
     defaultValues: {
       country: 'BD',
@@ -58,31 +63,136 @@ const Checkout = () => {
   const paymentMethod = form.watch('paymentMethod');
   const codFee = paymentMethod === 'cod' ? 0.50 : 0;
 
+  // Build enriched cart items with product_id, image, variation
+  const buildEnrichedCartItems = useCallback(() => {
+    return items.map(i => ({
+      product_id: i.product.id,
+      name: i.product.name,
+      qty: i.quantity,
+      price: i.product.price,
+      image: i.product.images?.[0] || null,
+      variation: i.selectedVariations || null,
+    }));
+  }, [items]);
+
+  // Save or update incomplete order
+  const saveIncompleteOrder = useCallback(async (data: Partial<CheckoutFormData>) => {
+    if (!data.firstName && !data.phone && !data.email) return;
+
+    const payload = {
+      session_id: sessionIdRef.current,
+      user_id: user?.id || null,
+      first_name: data.firstName || null,
+      last_name: data.lastName || null,
+      email: data.email || null,
+      phone: data.phone || null,
+      address: data.address || null,
+      city: data.city || null,
+      state: data.state || null,
+      zip_code: data.zipCode || null,
+      country: data.country || null,
+      cart_items: buildEnrichedCartItems(),
+      cart_total: getTotal(),
+      status: 'abandoned',
+    };
+
+    try {
+      if (incompleteIdRef.current) {
+        // Update existing record
+        await (supabase.from('incomplete_orders') as any)
+          .update({ ...payload, updated_at: new Date().toISOString() } as any)
+          .eq('id', incompleteIdRef.current);
+      } else {
+        // Insert new record
+        const { data: inserted } = await (supabase.from('incomplete_orders') as any)
+          .insert(payload as any)
+          .select('id')
+          .single();
+        if (inserted?.id) {
+          incompleteIdRef.current = inserted.id;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save incomplete order:', err);
+    }
+  }, [user, buildEnrichedCartItems, getTotal]);
+
+  // Debounced form watcher — saves incomplete order 3s after last change
   useEffect(() => {
     const subscription = form.watch((data) => {
       if (data.firstName || data.phone || data.email) {
-        const saveTimeout = setTimeout(() => {
-          supabase.from('incomplete_orders' as any).insert({
-            user_id: user?.id || null,
-            first_name: data.firstName || null,
-            last_name: data.lastName || null,
-            email: data.email || null,
-            phone: data.phone || null,
-            address: data.address || null,
-            city: data.city || null,
-            state: data.state || null,
-            zip_code: data.zipCode || null,
-            country: data.country || null,
-            cart_items: items.map(i => ({ name: i.product.name, qty: i.quantity, price: i.product.price })),
-            cart_total: getTotal(),
-            status: 'abandoned',
-          } as any);
-        }, 5000);
-        return () => clearTimeout(saveTimeout);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+          saveIncompleteOrder(data as Partial<CheckoutFormData>);
+        }, 3000);
       }
     });
-    return () => subscription.unsubscribe();
-  }, [form, items, user]);
+    return () => {
+      subscription.unsubscribe();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [form, saveIncompleteOrder]);
+
+  // Save on page unload (beforeunload)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const data = form.getValues();
+      if (data.firstName || data.phone || data.email) {
+        const payload = {
+          session_id: sessionIdRef.current,
+          user_id: user?.id || null,
+          first_name: data.firstName || null,
+          last_name: data.lastName || null,
+          email: data.email || null,
+          phone: data.phone || null,
+          address: data.address || null,
+          city: data.city || null,
+          state: data.state || null,
+          zip_code: data.zipCode || null,
+          country: data.country || null,
+          cart_items: buildEnrichedCartItems(),
+          cart_total: getTotal(),
+          status: 'abandoned',
+        };
+
+        // Use sendBeacon for reliable last-chance save
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/incomplete_orders`;
+        const headers = {
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Prefer': incompleteIdRef.current ? 'return=minimal' : 'return=minimal',
+        };
+
+        if (incompleteIdRef.current) {
+          // Can't PATCH with sendBeacon, just ensure we saved via debounce
+        } else {
+          navigator.sendBeacon(
+            url,
+            new Blob([JSON.stringify(payload)], { type: 'application/json' })
+          );
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [form, user, buildEnrichedCartItems, getTotal]);
+
+  // Cleanup incomplete order after successful purchase
+  const cleanupIncompleteOrder = useCallback(async () => {
+    try {
+      if (incompleteIdRef.current) {
+        await (supabase.from('incomplete_orders') as any).delete().eq('id', incompleteIdRef.current);
+      }
+      // Also clean up any other records for this user
+      if (user?.id) {
+        await (supabase.from('incomplete_orders') as any).delete().eq('user_id', user.id);
+      }
+    } catch (err) {
+      console.error('Failed to cleanup incomplete order:', err);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!orderComplete) return;
@@ -148,11 +258,10 @@ const Checkout = () => {
             state: data.state, zip_code: data.zipCode, country: data.country,
           }).eq('user_id', user.id);
         }
-
-        if (user?.id) {
-          await (supabase.from('incomplete_orders' as any) as any).delete().eq('user_id', user.id);
-        }
       }
+
+      // Cleanup incomplete order for both guest and logged-in
+      await cleanupIncompleteOrder();
 
       await new Promise(resolve => setTimeout(resolve, 1000));
       setOrderId(orderNumber);
