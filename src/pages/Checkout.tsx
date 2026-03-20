@@ -217,6 +217,7 @@ const Checkout = () => {
       const shipping = getShipping();
       const tax = getTax();
       const total = getTotal() + codFee - promoDiscount;
+      let createdOrderId: string | null = null;
 
       if (user) {
         const shippingAddress = {
@@ -237,6 +238,8 @@ const Checkout = () => {
           setIsProcessing(false);
           return;
         }
+
+        createdOrderId = orderData.id;
 
         const orderItems = items.map(item => ({
           order_id: orderData.id, product_id: item.product.id, product_name: item.product.name,
@@ -268,6 +271,13 @@ const Checkout = () => {
       clearCart();
       setOrderComplete(true);
       toast.success(t('checkout.orderSuccess'), { description: `Order ID: ${orderNumber}` });
+
+      // Send auto confirmation email (non-blocking)
+      if (user && createdOrderId) {
+        supabase.functions.invoke('send-order-confirmation', {
+          body: { order_id: createdOrderId },
+        }).catch(err => console.error('Confirmation email error:', err));
+      }
     } catch (err) {
       console.error('Checkout error:', err);
       toast.error('An error occurred during checkout. Please try again.');
