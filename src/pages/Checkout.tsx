@@ -216,6 +216,7 @@ const Checkout = () => {
       const subtotal = getSubtotal();
       const shipping = getShipping();
       const tax = getTax();
+      const total = getTotal() + codFee - promoDiscount;
       let createdOrderId: string | null = null;
 
       if (user) {
