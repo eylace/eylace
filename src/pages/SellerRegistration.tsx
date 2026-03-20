@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { Store, CheckCircle, Clock, XCircle, Loader2, ArrowRight } from 'lucide-react';
+import { Store, CheckCircle, Clock, XCircle, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { FulfillmentPlanSelector } from '@/components/seller/FulfillmentPlanSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,8 @@ const applicationSchema = z.object({
   business_type: z.string().min(1, 'Select a business type'),
 });
 
+type FulfillmentType = 'fbe' | 'fbm';
+
 const SellerRegistration = () => {
   const { user, loading: authLoading } = useAuth();
   const { t } = useLanguage();
@@ -29,6 +32,8 @@ const SellerRegistration = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [step, setStep] = useState<'plan' | 'form'>('plan');
+  const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType | null>(null);
 
   const [form, setForm] = useState({
     store_name: '', store_description: '', phone: '', business_type: '',
@@ -97,6 +102,7 @@ const SellerRegistration = () => {
 
     const status = statusConfig[existingApplication.status] || statusConfig.pending;
     const StatusIcon = status.icon;
+    const planLabel = existingApplication.fulfillment_type === 'fbe' ? 'FBE — Fulfilled by Eylace' : 'FBM — Fulfilled by Merchant';
 
     return (
       <Layout>
@@ -108,7 +114,10 @@ const SellerRegistration = () => {
             <h1 className="text-2xl font-bold text-foreground mb-2">
               {t('sellerReg.application')} {existingApplication.status.charAt(0).toUpperCase() + existingApplication.status.slice(1)}
             </h1>
-            <p className="text-muted-foreground mb-4">{status.text}</p>
+            <p className="text-muted-foreground mb-2">{status.text}</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              নির্বাচিত প্ল্যান: <span className="font-semibold text-foreground">{planLabel}</span>
+            </p>
             {existingApplication.admin_notes && (
               <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
                 <strong>{t('sellerReg.note')}</strong> {existingApplication.admin_notes}
@@ -151,6 +160,7 @@ const SellerRegistration = () => {
         store_description: result.data.store_description || null,
         phone: result.data.phone,
         business_type: result.data.business_type,
+        fulfillment_type: fulfillmentType || 'fbm',
       });
 
     if (error) {
@@ -166,7 +176,7 @@ const SellerRegistration = () => {
   return (
     <Layout>
       <div className="container-main py-12">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Store className="h-8 w-8 text-accent" />
@@ -175,79 +185,111 @@ const SellerRegistration = () => {
             <p className="text-muted-foreground mt-2">{t('sellerReg.subtitle')}</p>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('sellerReg.applicationTitle')}</CardTitle>
-              <CardDescription>{t('sellerReg.applicationDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="store_name">{t('sellerReg.storeName')}</Label>
-                  <Input
-                    id="store_name"
-                    value={form.store_name}
-                    onChange={(e) => setForm({ ...form, store_name: e.target.value })}
-                    placeholder={t('sellerReg.storeNamePlaceholder')}
-                    maxLength={100}
-                  />
-                  {errors.store_name && <p className="text-sm text-destructive">{errors.store_name}</p>}
-                </div>
+          {/* Step indicators */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step === 'plan' ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
+              <span className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs">১</span>
+              প্ল্যান নির্বাচন
+            </div>
+            <div className="w-8 h-px bg-border" />
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${step === 'form' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+              <span className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs">২</span>
+              তথ্য পূরণ
+            </div>
+          </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="business_type">{t('sellerReg.businessType')}</Label>
-                  <Select value={form.business_type} onValueChange={(v) => setForm({ ...form, business_type: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('sellerReg.selectBusinessType')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="individual">{t('sellerReg.individual')}</SelectItem>
-                      <SelectItem value="small_business">{t('sellerReg.smallBusiness')}</SelectItem>
-                      <SelectItem value="brand">{t('sellerReg.brandManufacturer')}</SelectItem>
-                      <SelectItem value="wholesaler">{t('sellerReg.wholesaler')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.business_type && <p className="text-sm text-destructive">{errors.business_type}</p>}
-                </div>
+          {step === 'plan' && (
+            <FulfillmentPlanSelector
+              selected={fulfillmentType}
+              onSelect={setFulfillmentType}
+              onContinue={() => setStep('form')}
+            />
+          )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t('sellerReg.phoneNumber')}</Label>
-                  <Input
-                    id="phone"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="+880 1XXX-XXXXXX"
-                    maxLength={20}
-                  />
-                  {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="store_description">{t('sellerReg.storeDescription')}</Label>
-                  <Textarea
-                    id="store_description"
-                    value={form.store_description}
-                    onChange={(e) => setForm({ ...form, store_description: e.target.value })}
-                    placeholder={t('sellerReg.storeDescPlaceholder')}
-                    maxLength={500}
-                    rows={4}
-                  />
-                  {errors.store_description && <p className="text-sm text-destructive">{errors.store_description}</p>}
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {t('sellerReg.submitting')}
-                    </>
-                  ) : (
-                    t('sellerReg.submit')
-                  )}
+          {step === 'form' && (
+            <>
+              <div className="mb-6">
+                <Button variant="ghost" onClick={() => setStep('plan')} className="text-muted-foreground">
+                  <ArrowLeft className="h-4 w-4 mr-2" /> প্ল্যান পরিবর্তন করুন
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('sellerReg.applicationTitle')}</CardTitle>
+                  <CardDescription>
+                    {t('sellerReg.applicationDesc')} — নির্বাচিত প্ল্যান: <span className="font-semibold">{fulfillmentType === 'fbe' ? 'FBE (Eylace ম্যানেজড)' : 'FBM (সেলার ম্যানেজড)'}</span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="store_name">{t('sellerReg.storeName')}</Label>
+                      <Input
+                        id="store_name"
+                        value={form.store_name}
+                        onChange={(e) => setForm({ ...form, store_name: e.target.value })}
+                        placeholder={t('sellerReg.storeNamePlaceholder')}
+                        maxLength={100}
+                      />
+                      {errors.store_name && <p className="text-sm text-destructive">{errors.store_name}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="business_type">{t('sellerReg.businessType')}</Label>
+                      <Select value={form.business_type} onValueChange={(v) => setForm({ ...form, business_type: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('sellerReg.selectBusinessType')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="individual">{t('sellerReg.individual')}</SelectItem>
+                          <SelectItem value="small_business">{t('sellerReg.smallBusiness')}</SelectItem>
+                          <SelectItem value="brand">{t('sellerReg.brandManufacturer')}</SelectItem>
+                          <SelectItem value="wholesaler">{t('sellerReg.wholesaler')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.business_type && <p className="text-sm text-destructive">{errors.business_type}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">{t('sellerReg.phoneNumber')}</Label>
+                      <Input
+                        id="phone"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        placeholder="+880 1XXX-XXXXXX"
+                        maxLength={20}
+                      />
+                      {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="store_description">{t('sellerReg.storeDescription')}</Label>
+                      <Textarea
+                        id="store_description"
+                        value={form.store_description}
+                        onChange={(e) => setForm({ ...form, store_description: e.target.value })}
+                        placeholder={t('sellerReg.storeDescPlaceholder')}
+                        maxLength={500}
+                        rows={4}
+                      />
+                      {errors.store_description && <p className="text-sm text-destructive">{errors.store_description}</p>}
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {t('sellerReg.submitting')}
+                        </>
+                      ) : (
+                        t('sellerReg.submit')
+                      )}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </div>
     </Layout>

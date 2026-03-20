@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Store, BarChart3, ShieldCheck, Headphones, UserPlus, Upload, TrendingUp, Shirt, Smartphone, ShoppingBasket, Gem, Home } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Store, BarChart3, ShieldCheck, Headphones, UserPlus, Upload, TrendingUp, Shirt, Smartphone, ShoppingBasket, Gem, Home, Warehouse, Truck, Package, CheckCircle, X } from 'lucide-react';
 
 const benefits = [
   { icon: Store, title: 'বিশাল কাস্টমার বেস', desc: 'লক্ষাধিক ক্রেতার কাছে আপনার পণ্য পৌঁছে দিন সহজেই।' },
@@ -26,6 +27,18 @@ const categories = [
   { icon: Store, name: 'আরও অনেক...' },
 ];
 
+const comparisonFeatures = [
+  { feature: 'শিপিং ও ডেলিভারি', fbe: 'Eylace পরিচালিত', fbm: 'সেলার নিজে করবে' },
+  { feature: 'স্টোরেজ ও ওয়্যারহাউস', fbe: 'Eylace ওয়্যারহাউস', fbm: 'সেলারের নিজস্ব' },
+  { feature: 'কাস্টমার সার্ভিস', fbe: 'Eylace টিম', fbm: 'সেলার নিজে' },
+  { feature: 'রিটার্ন হ্যান্ডলিং', fbe: 'Eylace পরিচালিত', fbm: 'সেলার নিজে' },
+  { feature: 'প্যাকেজিং', fbe: 'Eylace স্ট্যান্ডার্ড', fbm: 'নিজস্ব ব্র্যান্ডিং' },
+  { feature: 'কমিশন রেট', fbe: '১৫–২০%', fbm: '৫–১০%' },
+  { feature: 'মাসিক ফি', fbe: '৳৯৯৯', fbm: 'বিনামূল্যে' },
+  { feature: 'Prime ব্যাজ', fbe: true, fbm: false },
+  { feature: 'অগ্রাধিকার র‍্যাংকিং', fbe: true, fbm: false },
+];
+
 const SellerCenter = () => {
   return (
     <Layout>
@@ -47,54 +60,151 @@ const SellerCenter = () => {
         </div>
       </section>
 
-      {/* Benefits */}
+      {/* Plan Comparison */}
       <section className="container-main py-16">
-        <h2 className="text-2xl font-bold text-foreground text-center mb-10">কেন Eylace-এ বিক্রি করবেন?</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {benefits.map((b) => (
-            <Card key={b.title} className="text-center hover:shadow-lg transition-shadow">
-              <CardContent className="pt-8 pb-6">
-                <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
-                  <b.icon className="h-7 w-7 text-accent" />
+        <h2 className="text-2xl font-bold text-foreground text-center mb-3">আপনার জন্য সঠিক প্ল্যান বেছে নিন</h2>
+        <p className="text-muted-foreground text-center mb-10 max-w-2xl mx-auto">
+          Amazon-এর মতো দুটি ফুলফিলমেন্ট অপশন — আপনার ব্যবসার প্রয়োজন অনুযায়ী নির্বাচন করুন
+        </p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          {/* FBE Card */}
+          <Card className="relative border-primary/30 hover:shadow-lg transition-shadow">
+            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4">সবচেয়ে জনপ্রিয়</Badge>
+            <CardContent className="pt-8 pb-6">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <Warehouse className="h-7 w-7 text-primary" />
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">{b.title}</h3>
-                <p className="text-sm text-muted-foreground">{b.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
+                <h3 className="text-xl font-bold text-foreground">FBE — Fulfilled by Eylace</h3>
+                <p className="text-sm text-muted-foreground mt-1">Eylace সব ম্যানেজ করবে</p>
+              </div>
+              <div className="bg-primary/5 rounded-lg p-4 text-center mb-5">
+                <span className="text-2xl font-bold text-foreground">১৫–২০%</span>
+                <span className="text-sm text-muted-foreground block">কমিশন + ৳৯৯৯/মাস</span>
+              </div>
+              <ul className="space-y-2">
+                {['ওয়্যারহাউস স্টোরেজ', 'দ্রুত শিপিং', 'কাস্টমার সার্ভিস', 'রিটার্ন হ্যান্ডলিং', 'Prime ব্যাজ'].map((f) => (
+                  <li key={f} className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-primary shrink-0" />{f}</li>
+                ))}
+              </ul>
+              <Button asChild className="w-full mt-6">
+                <Link to="/sell">FBE দিয়ে শুরু করুন</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* FBM Card */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="pt-8 pb-6">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
+                  <Package className="h-7 w-7 text-accent" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">FBM — Fulfilled by Merchant</h3>
+                <p className="text-sm text-muted-foreground mt-1">আপনি নিজে ম্যানেজ করবেন</p>
+              </div>
+              <div className="bg-accent/5 rounded-lg p-4 text-center mb-5">
+                <span className="text-2xl font-bold text-foreground">৫–১০%</span>
+                <span className="text-sm text-muted-foreground block">কমিশন + বিনামূল্যে</span>
+              </div>
+              <ul className="space-y-2">
+                {['নিজস্ব ব্র্যান্ডিং', 'পছন্দের কুরিয়ার', 'সরাসরি যোগাযোগ', 'কম কমিশন', 'কোনো ফি নেই'].map((f) => (
+                  <li key={f} className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-accent shrink-0" />{f}</li>
+                ))}
+              </ul>
+              <Button asChild variant="outline" className="w-full mt-6">
+                <Link to="/sell">FBM দিয়ে শুরু করুন</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Comparison Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4 font-semibold text-foreground">ফিচার</th>
+                <th className="text-center py-3 px-4 font-semibold text-primary">FBE</th>
+                <th className="text-center py-3 px-4 font-semibold text-accent">FBM</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparisonFeatures.map((row) => (
+                <tr key={row.feature} className="border-b last:border-0">
+                  <td className="py-3 px-4 text-foreground">{row.feature}</td>
+                  <td className="py-3 px-4 text-center">
+                    {typeof row.fbe === 'boolean' ? (
+                      row.fbe ? <CheckCircle className="h-4 w-4 text-primary mx-auto" /> : <X className="h-4 w-4 text-muted-foreground mx-auto" />
+                    ) : (
+                      <span className="text-muted-foreground">{row.fbe}</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    {typeof row.fbm === 'boolean' ? (
+                      row.fbm ? <CheckCircle className="h-4 w-4 text-accent mx-auto" /> : <X className="h-4 w-4 text-muted-foreground mx-auto" />
+                    ) : (
+                      <span className="text-muted-foreground">{row.fbm}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* Benefits */}
       <section className="bg-muted py-16">
         <div className="container-main">
-          <h2 className="text-2xl font-bold text-foreground text-center mb-10">কিভাবে শুরু করবেন?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {steps.map((s) => (
-              <div key={s.step} className="text-center">
-                <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">
-                  {s.step}
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{s.title}</h3>
-                <p className="text-sm text-muted-foreground">{s.desc}</p>
-              </div>
+          <h2 className="text-2xl font-bold text-foreground text-center mb-10">কেন Eylace-এ বিক্রি করবেন?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {benefits.map((b) => (
+              <Card key={b.title} className="text-center hover:shadow-lg transition-shadow">
+                <CardContent className="pt-8 pb-6">
+                  <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
+                    <b.icon className="h-7 w-7 text-accent" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-2">{b.title}</h3>
+                  <p className="text-sm text-muted-foreground">{b.desc}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Categories */}
+      {/* How it works */}
       <section className="container-main py-16">
-        <h2 className="text-2xl font-bold text-foreground text-center mb-10">জনপ্রিয় সেলার ক্যাটাগরি</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((c) => (
-            <Card key={c.name} className="text-center hover:shadow-md transition-shadow cursor-default">
-              <CardContent className="pt-6 pb-4">
-                <c.icon className="h-8 w-8 text-primary mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">{c.name}</p>
-              </CardContent>
-            </Card>
+        <h2 className="text-2xl font-bold text-foreground text-center mb-10">কিভাবে শুরু করবেন?</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          {steps.map((s) => (
+            <div key={s.step} className="text-center">
+              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">
+                {s.step}
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">{s.title}</h3>
+              <p className="text-sm text-muted-foreground">{s.desc}</p>
+            </div>
           ))}
+        </div>
+      </section>
+
+      {/* Categories */}
+      <section className="bg-muted py-16">
+        <div className="container-main">
+          <h2 className="text-2xl font-bold text-foreground text-center mb-10">জনপ্রিয় সেলার ক্যাটাগরি</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {categories.map((c) => (
+              <Card key={c.name} className="text-center hover:shadow-md transition-shadow cursor-default">
+                <CardContent className="pt-6 pb-4">
+                  <c.icon className="h-8 w-8 text-primary mx-auto mb-2" />
+                  <p className="text-sm font-medium text-foreground">{c.name}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
