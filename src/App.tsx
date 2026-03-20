@@ -270,25 +270,25 @@ const App = () => (
                 <Route path="/seller" element={<SellerDashboard />} />
                 <Route path="/sell" element={<SellerRegistration />} />
                 {/* CMS Pages - all footer links */}
-                <Route path="/about" element={<CmsPage />} />
-                <Route path="/contact" element={<CmsPage />} />
-                <Route path="/privacy" element={<CmsPage />} />
-                <Route path="/terms" element={<CmsPage />} />
-                <Route path="/cookies" element={<CmsPage />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsConditions />} />
+                <Route path="/cookies" element={<CookiePolicy />} />
                 <Route path="/help" element={<HelpCenter />} />
                 <Route path="/returns" element={<ReturnsRefunds />} />
                 <Route path="/shipping" element={<ShippingInfo />} />
                 <Route path="/faq" element={<FAQ />} />
-                <Route path="/careers" element={<CmsPage />} />
-                <Route path="/blog" element={<CmsPage />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/blog" element={<Blog />} />
                 <Route path="/track-order" element={<TrackOrder />} />
                 <Route path="/seller-center" element={<SellerCenter />} />
                 <Route path="/seller-policies" element={<SellerPolicies />} />
                 <Route path="/seller-support" element={<SellerSupport />} />
-                <Route path="/delivery-partner" element={<CmsPage />} />
-                <Route path="/affiliate" element={<CmsPage />} />
-                <Route path="/advertise" element={<CmsPage />} />
-                <Route path="/sitemap" element={<CmsPage />} />
+                <Route path="/delivery-partner" element={<DeliveryPartner />} />
+                <Route path="/affiliate" element={<AffiliateProgram />} />
+                <Route path="/advertise" element={<AdvertiseWithUs />} />
+                <Route path="/sitemap" element={<Sitemap />} />
                 <Route path="/page/:slug" element={<CmsPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
