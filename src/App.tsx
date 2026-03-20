@@ -36,6 +36,9 @@ const TrendingNow = lazy(() => import("./pages/TrendingNow"));
 const Account = lazy(() => import("./pages/Account"));
 const SellerDashboard = lazy(() => import("./pages/SellerDashboard"));
 const SellerRegistration = lazy(() => import("./pages/SellerRegistration"));
+const SellerCenter = lazy(() => import("./pages/SellerCenter"));
+const SellerPolicies = lazy(() => import("./pages/SellerPolicies"));
+const SellerSupport = lazy(() => import("./pages/SellerSupport"));
 
 // Admin pages - lazy loaded (rarely accessed by regular users)
 const Admin = lazy(() => import("./pages/Admin"));
