@@ -1,41 +1,32 @@
 
 
-## Plan: Incomplete Order Tracking System — সম্পূর্ণ ওভারহল
+## Plan: Footer Payment Icons — Real Brand SVG Logos
 
-### বর্তমান সমস্যাগুলো
-1. **ডুপ্লিকেট**: প্রতিবার ফর্ম পরিবর্তনে নতুন row insert হয় — কোনো upsert নেই
-2. **সেশন ট্র্যাকিং নেই**: গেস্ট ইউজারের জন্য কোনো session ID নেই, তাই ডুপ্লিকেট ঠেকানো যায় না
-3. **ক্লিনআপ অসম্পূর্ণ**: শুধু logged-in ইউজারের incomplete record ডিলিট হয়, গেস্টের হয় না
-4. **cart_items-এ ডাটা কম**: শুধু name/qty/price — image, variation, product_id নেই
-5. **অ্যাডমিন প্যানেলে ফিচার কম**: সার্চ, ফিল্টার, CSV এক্সপোর্ট, "converted" স্ট্যাটাস নেই
+### Problem
+Currently the "We Accept" section uses generic Lucide icons (CreditCard, Wallet, etc.) for all payment methods. The user wants **original brand logos** — Visa, Mastercard, bKash, Nagad, PayPal, etc.
 
-### সমাধান
+### Approach
+Create inline SVG components for each payment brand with their recognizable colors and shapes. This avoids external image dependencies and keeps everything crisp and scalable.
 
-#### 1. Checkout.tsx — Smart Upsert with Session ID
-- চেকআউট পেজ লোড হলে একটি `sessionId` তৈরি হবে (`crypto.randomUUID()`)
-- প্রথমবার insert করে `incompleteId` state-এ সেভ, পরে সেই ID দিয়ে update (3s debounce)
-- **cart_items enriched**: `product_id`, `image`, `variation` সহ সেভ
-- অর্ডার কমপ্লিট হলে সেই `incompleteId` দিয়ে ডিলিট (গেস্ট+লগড-ইন উভয়)
-- `beforeunload` ইভেন্ট দিয়ে পেজ ছাড়ার আগে শেষবার সেভ
+### Changes
 
-#### 2. DashboardIncompleteOrders.tsx — Full Admin Panel
-- **সার্চ**: নাম, ফোন, ইমেইল দিয়ে ফিল্টার
-- **স্ট্যাটাস ফিল্টার**: Abandoned / Contacted / Converted
-- **CSV এক্সপোর্ট**: সব ডাটা ডাউনলোড
-- **প্রোডাক্ট ইমেজ**: cart_items-এ থাকলে থাম্বনেইল দেখাবে
-- **ভ্যারিয়েশন ব্যাজ**: সাইজ/কালার দেখাবে
-- **"Converted" স্ট্যাটাস**: নতুন স্ট্যাটাস অপশন
-- **Bulk delete/archive**: একাধিক সিলেক্ট করে ডিলিট
-- **Pagination**: ২০ এর বদলে সব দেখানো + load more
+**1. Create `src/components/payment/PaymentIcons.tsx`**
+- Build small SVG-based icon components for each payment method:
+  - **International**: Visa, Mastercard, American Express, UnionPay, PayPal, Apple Pay, Google Pay
+  - **National (Bangladesh)**: bKash, Nagad, Rocket, Upay, SSLCommerz
+  - **Other**: Cash on Delivery
+- Each icon will use the brand's actual colors (e.g., Visa blue/gold, Mastercard red/orange circles, bKash pink, Nagad orange)
+- Standardized size (~40x26px) with proper aspect ratios
 
-#### 3. Database Migration
-- `incomplete_orders` টেবিলে `session_id` (text) কলাম যোগ — গেস্ট ইউজার ট্র্যাকিংয়ের জন্য
-- RLS policy: Anyone can update their own incomplete order (session_id match)
+**2. Update `src/components/layout/Footer.tsx`**
+- Replace the Lucide icon array with the new brand SVG icons
+- Add more payment methods: Apple Pay, Google Pay, JCB, Discover
+- Clean layout: icon-only, no text, white/light background card style for each icon
+- Remove unused Lucide icon imports (Wallet, Banknote, Building2, Globe, Smartphone)
 
-### ফাইল পরিবর্তন
-| ফাইল | পরিবর্তন |
-|---|---|
-| `src/pages/Checkout.tsx` | Session-based upsert, enriched cart_items, cleanup on complete, beforeunload |
-| `src/components/admin/DashboardIncompleteOrders.tsx` | Search, filter, CSV export, product images, variations, converted status, bulk actions |
-| DB Migration | `session_id` কলাম যোগ, update RLS policy |
+**3. Update `src/components/checkout/PaymentMethods.tsx`**
+- Optionally use the same brand icons next to payment method radio buttons for consistency
+
+### Result
+Footer will show ~15 recognizable payment brand logos in a professional row, similar to major e-commerce sites like Daraz or Amazon.
 
