@@ -119,6 +119,10 @@ const defaultSetup: WebsiteSetupState = {
   footerShowSocialLinks: true,
   footerShowNewsletter: true,
   footerShowPaymentIcons: true,
+  footerShowDownloadApp: true,
+  footerShowFeaturesBar: true,
+  footerAppStoreUrl: '#',
+  footerGooglePlayUrl: '#',
   footerColumns: [
     { title: 'Customer Service', links: [{ label: 'Contact Us', url: '/contact' }, { label: 'FAQ', url: '/faq' }, { label: 'Returns', url: '/returns' }] },
     { title: 'Quick Links', links: [{ label: 'About Us', url: '/about' }, { label: 'Privacy Policy', url: '/privacy' }, { label: 'Terms', url: '/terms' }] },
