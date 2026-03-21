@@ -59,6 +59,10 @@ interface WebsiteSetupState {
   footerShowSocialLinks: boolean;
   footerShowNewsletter: boolean;
   footerShowPaymentIcons: boolean;
+  footerShowDownloadApp: boolean;
+  footerShowFeaturesBar: boolean;
+  footerAppStoreUrl: string;
+  footerGooglePlayUrl: string;
   footerColumns: { title: string; links: { label: string; url: string }[] }[];
   footerSocialLinks: { platform: string; url: string }[];
   pages: { id: string; title: string; slug: string; content: string; isPublished: boolean; sortOrder: number }[];
