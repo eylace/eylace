@@ -602,6 +602,8 @@ const AdminWebsiteSetupPage = () => {
                   { key: 'footerShowSocialLinks', label: 'Show Social Links' },
                   { key: 'footerShowNewsletter', label: 'Show Newsletter Signup' },
                   { key: 'footerShowPaymentIcons', label: 'Show Payment Method Icons' },
+                  { key: 'footerShowDownloadApp', label: 'Show Download App Section' },
+                  { key: 'footerShowFeaturesBar', label: 'Show Features/Trust Bar' },
                 ].map(item => (
                   <div key={item.key} className="flex items-center justify-between">
                     <Label className="font-normal">{item.label}</Label>
@@ -611,6 +613,18 @@ const AdminWebsiteSetupPage = () => {
                     />
                   </div>
                 ))}
+                {setup.footerShowDownloadApp && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                    <div className="space-y-2">
+                      <Label>App Store URL</Label>
+                      <Input value={setup.footerAppStoreUrl} placeholder="https://apps.apple.com/..." onChange={e => update('footerAppStoreUrl', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Google Play URL</Label>
+                      <Input value={setup.footerGooglePlayUrl} placeholder="https://play.google.com/..." onChange={e => update('footerGooglePlayUrl', e.target.value)} />
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Footer Columns</Label>
