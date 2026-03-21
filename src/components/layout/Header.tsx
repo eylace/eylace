@@ -147,6 +147,16 @@ export const Header = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/settings" className="flex items-center gap-2"><Settings className="h-4 w-4" />{t('header.settings')}</Link>
                     </DropdownMenuItem>
+                    {sellerProfile && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/seller" className="flex items-center gap-2"><Store className="h-4 w-4" />Seller Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
+                    {!sellerProfile && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/sell" className="flex items-center gap-2"><Store className="h-4 w-4" />Become a Seller</Link>
+                      </DropdownMenuItem>
+                    )}
                     {isAdmin && (
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />{t('header.adminDashboard')}</Link>
