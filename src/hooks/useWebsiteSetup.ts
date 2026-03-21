@@ -52,6 +52,10 @@ export interface WebsiteSetup {
   footerShowSocialLinks: boolean;
   footerShowNewsletter: boolean;
   footerShowPaymentIcons: boolean;
+  footerShowDownloadApp: boolean;
+  footerShowFeaturesBar: boolean;
+  footerAppStoreUrl: string;
+  footerGooglePlayUrl: string;
   footerColumns: { title: string; links: { label: string; url: string }[] }[];
   footerSocialLinks: { platform: string; url: string }[];
   primaryColor: string;
