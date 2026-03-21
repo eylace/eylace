@@ -134,6 +134,7 @@ const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics
 const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
 const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders"));
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
+const Categories = lazy(() => import("./pages/Categories"));
 const CmsPage = lazy(() => import("./pages/CmsPage"));
 
 const AIChatWidget = lazy(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
