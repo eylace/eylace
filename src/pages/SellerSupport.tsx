@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,24 +10,24 @@ import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 const faqs = [
-  { q: 'কিভাবে সেলার অ্যাকাউন্ট খুলবো?', a: '"Start Selling" পেজে গিয়ে ফর্ম পূরণ করুন। অ্যাডমিন অনুমোদনের পর আপনার সেলার ড্যাশবোর্ড অ্যাক্টিভ হবে।' },
-  { q: 'পেমেন্ট কত দিনে পাবো?', a: 'প্রতি সপ্তাহে পেআউট প্রক্রিয়া করা হয়। bKash, Nagad বা ব্যাংক ট্রান্সফারে পেমেন্ট পাবেন।' },
-  { q: 'কমিশন রেট কত?', a: 'ক্যাটাগরি অনুযায়ী ৩-১৫%। বিস্তারিত জানতে সেলার পলিসি পেজ দেখুন।' },
-  { q: 'প্রোডাক্ট আপলোডে সমস্যা হচ্ছে?', a: 'ছবি ৫MB-এর নিচে ও JPG/PNG ফরম্যাটে হতে হবে। সমস্যা চলতে থাকলে ক্যাশ ক্লিয়ার করে আবার চেষ্টা করুন।' },
-  { q: 'রিটার্ন রিকোয়েস্ট কিভাবে হ্যান্ডেল করবো?', a: 'সেলার ড্যাশবোর্ডের অর্ডার সেকশনে রিটার্ন রিকোয়েস্ট দেখা যাবে। ৪৮ ঘণ্টার মধ্যে রেসপন্ড করুন।' },
-  { q: 'একাধিক শপ খোলা যাবে?', a: 'বর্তমানে একটি অ্যাকাউন্টে একটি শপ সমর্থিত। ভবিষ্যতে মাল্টি-শপ ফিচার আসতে পারে।' },
+  { q: 'How do I create a seller account?', a: 'Go to the "Start Selling" page and fill out the form. Your seller dashboard will be activated after admin approval.' },
+  { q: 'How long does it take to receive payment?', a: 'Payouts are processed weekly. You will receive payment via bKash, Nagad, or bank transfer.' },
+  { q: 'What is the commission rate?', a: '3-15% depending on the category. See the Seller Policies page for details.' },
+  { q: 'Having trouble uploading products?', a: 'Images must be under 5MB and in JPG/PNG format. If the issue persists, clear your cache and try again.' },
+  { q: 'How do I handle return requests?', a: 'Return requests can be found in the orders section of your seller dashboard. Respond within 48 hours.' },
+  { q: 'Can I open multiple shops?', a: 'Currently, one shop per account is supported. Multi-shop features may be available in the future.' },
 ];
 
 const channels = [
-  { icon: Mail, title: 'ইমেইল সাপোর্ট', desc: 'seller@eylace.com', sub: 'রেসপন্স টাইম: ২৪ ঘণ্টা' },
-  { icon: Phone, title: 'ফোন সাপোর্ট', desc: '+880 1234-567890', sub: 'সকাল ৯টা - রাত ৯টা' },
-  { icon: MessageCircle, title: 'লাইভ চ্যাট', desc: 'ড্যাশবোর্ড থেকে চ্যাট করুন', sub: 'তাৎক্ষণিক সাপোর্ট' },
+  { icon: Mail, title: 'Email Support', desc: 'seller@eylace.com', sub: 'Response Time: 24 hours' },
+  { icon: Phone, title: 'Phone Support', desc: '+880 1234-567890', sub: '9 AM - 9 PM' },
+  { icon: MessageCircle, title: 'Live Chat', desc: 'Chat from your dashboard', sub: 'Instant Support' },
 ];
 
 const resources = [
-  { icon: BookOpen, title: 'সেলার গাইড', desc: 'ধাপে ধাপে বিক্রি শুরু করুন', to: '/seller-center' },
-  { icon: FileText, title: 'সেলার পলিসি', desc: 'নিয়ম ও শর্তাবলী জানুন', to: '/seller-policies' },
-  { icon: HelpCircle, title: 'সেলার রেজিস্ট্রেশন', desc: 'এখনই আবেদন করুন', to: '/sell' },
+  { icon: BookOpen, title: 'Seller Guide', desc: 'Step-by-step guide to start selling', to: '/seller-center' },
+  { icon: FileText, title: 'Seller Policies', desc: 'Know the terms & conditions', to: '/seller-policies' },
+  { icon: HelpCircle, title: 'Seller Registration', desc: 'Apply now to become a seller', to: '/sell' },
 ];
 
 const SellerSupport = () => {
@@ -36,15 +36,15 @@ const SellerSupport = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: 'বার্তা পাঠানো হয়েছে', description: 'আমরা শীঘ্রই আপনার সাথে যোগাযোগ করবো।' });
+    toast({ title: 'Message Sent', description: 'We will get back to you shortly.' });
     setForm({ name: '', email: '', subject: '', message: '' });
   };
 
   return (
     <Layout>
       <div className="container-main py-12">
-        <h1 className="text-3xl font-bold text-foreground mb-2">সেলার সাপোর্ট</h1>
-        <p className="text-muted-foreground mb-10">যেকোনো প্রশ্ন বা সমস্যায় আমরা আপনার পাশে আছি।</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Seller Support</h1>
+        <p className="text-muted-foreground mb-10">We're here to help you with any questions or issues.</p>
 
         {/* Support Channels */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
@@ -65,7 +65,7 @@ const SellerSupport = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* FAQ */}
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-6">সাধারণ প্রশ্নোত্তর (FAQ)</h2>
+            <h2 className="text-xl font-bold text-foreground mb-6">Frequently Asked Questions</h2>
             <Accordion type="single" collapsible className="space-y-2">
               {faqs.map((f, i) => (
                 <AccordionItem key={i} value={`faq-${i}`} className="border rounded-lg px-4">
@@ -82,17 +82,17 @@ const SellerSupport = () => {
 
           {/* Contact Form */}
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-6">যোগাযোগ করুন</h2>
+            <h2 className="text-xl font-bold text-foreground mb-6">Contact Us</h2>
             <Card>
               <CardContent className="pt-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input placeholder="আপনার নাম" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-                    <Input type="email" placeholder="ইমেইল" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+                    <Input placeholder="Your Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                    <Input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
                   </div>
-                  <Input placeholder="বিষয়" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} required />
-                  <Textarea placeholder="আপনার বার্তা লিখুন..." rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} required />
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">বার্তা পাঠান</Button>
+                  <Input placeholder="Subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} required />
+                  <Textarea placeholder="Write your message..." rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} required />
+                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">Send Message</Button>
                 </form>
               </CardContent>
             </Card>
@@ -101,7 +101,7 @@ const SellerSupport = () => {
 
         {/* Resources */}
         <div className="mt-12">
-          <h2 className="text-xl font-bold text-foreground mb-6">সহায়ক রিসোর্স</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">Helpful Resources</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {resources.map((r) => (
               <Link key={r.to} to={r.to}>
