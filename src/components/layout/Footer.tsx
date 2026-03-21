@@ -102,8 +102,12 @@ export const Footer = () => {
             <div className="text-right">
               <p className="text-sm text-primary-foreground/70">{t('footer.downloadApp')}</p>
               <div className="flex gap-2 mt-2">
-                <div className="px-3 py-1.5 bg-primary-foreground/10 rounded text-xs font-medium cursor-pointer hover:bg-primary-foreground/20 transition-colors">App Store</div>
-                <div className="px-3 py-1.5 bg-primary-foreground/10 rounded text-xs font-medium cursor-pointer hover:bg-primary-foreground/20 transition-colors">Play Store</div>
+                <a href="#" className="block hover:opacity-80 transition-opacity">
+                  <img src={appStoreBadge} alt="Download on App Store" className="h-10 w-auto object-contain" />
+                </a>
+                <a href="#" className="block hover:opacity-80 transition-opacity">
+                  <img src={googlePlayBadge} alt="Get it on Google Play" className="h-10 w-auto object-contain" />
+                </a>
               </div>
             </div>
           </div>
