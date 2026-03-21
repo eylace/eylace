@@ -92,8 +92,8 @@ export const Footer = () => {
         </div>
 
         <div className="mt-12 pt-8 border-t border-primary-foreground/10">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="flex-1">
               <p className="text-sm text-primary-foreground/70 mb-3">{t('footer.weAccept')}</p>
               <div className="flex flex-wrap items-center gap-2">
                 {paymentMethods.map(({ name, Icon }) => (
@@ -103,9 +103,10 @@ export const Footer = () => {
                 ))}
               </div>
             </div>
-            <div className="text-right">
+            <div className="flex flex-col items-end gap-2">
+              <SSLCommerzBadge className="h-8" />
               <p className="text-sm text-primary-foreground/70">{t('footer.downloadApp')}</p>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2">
                 <div className="px-3 py-1.5 bg-primary-foreground/10 rounded text-xs font-medium cursor-pointer hover:bg-primary-foreground/20 transition-colors">App Store</div>
                 <div className="px-3 py-1.5 bg-primary-foreground/10 rounded text-xs font-medium cursor-pointer hover:bg-primary-foreground/20 transition-colors">Play Store</div>
               </div>
