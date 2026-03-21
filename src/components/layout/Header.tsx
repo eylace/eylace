@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, ShoppingCart, User, Menu, X, ChevronDown,
-  MapPin, Heart, LogOut, Package, Settings, ShieldCheck
+  MapPin, Heart, LogOut, Package, Settings, ShieldCheck, Store
 } from 'lucide-react';
+import { useSellerCheck } from '@/hooks/useSellerData';
 import { Button } from '@/components/ui/button';
 import { useMenuConfig } from '@/hooks/useMenuConfig';
 import { Badge } from '@/components/ui/badge';
