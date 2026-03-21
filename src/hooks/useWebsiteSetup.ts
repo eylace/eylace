@@ -52,6 +52,10 @@ export interface WebsiteSetup {
   footerShowSocialLinks: boolean;
   footerShowNewsletter: boolean;
   footerShowPaymentIcons: boolean;
+  footerShowDownloadApp: boolean;
+  footerShowFeaturesBar: boolean;
+  footerAppStoreUrl: string;
+  footerGooglePlayUrl: string;
   footerColumns: { title: string; links: { label: string; url: string }[] }[];
   footerSocialLinks: { platform: string; url: string }[];
   primaryColor: string;
@@ -103,6 +107,10 @@ const defaults: WebsiteSetup = {
   footerShowSocialLinks: true,
   footerShowNewsletter: true,
   footerShowPaymentIcons: true,
+  footerShowDownloadApp: true,
+  footerShowFeaturesBar: true,
+  footerAppStoreUrl: '#',
+  footerGooglePlayUrl: '#',
   footerColumns: [],
   footerSocialLinks: [],
   primaryColor: '#6366f1',

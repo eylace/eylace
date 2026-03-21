@@ -59,6 +59,10 @@ interface WebsiteSetupState {
   footerShowSocialLinks: boolean;
   footerShowNewsletter: boolean;
   footerShowPaymentIcons: boolean;
+  footerShowDownloadApp: boolean;
+  footerShowFeaturesBar: boolean;
+  footerAppStoreUrl: string;
+  footerGooglePlayUrl: string;
   footerColumns: { title: string; links: { label: string; url: string }[] }[];
   footerSocialLinks: { platform: string; url: string }[];
   pages: { id: string; title: string; slug: string; content: string; isPublished: boolean; sortOrder: number }[];
@@ -115,6 +119,10 @@ const defaultSetup: WebsiteSetupState = {
   footerShowSocialLinks: true,
   footerShowNewsletter: true,
   footerShowPaymentIcons: true,
+  footerShowDownloadApp: true,
+  footerShowFeaturesBar: true,
+  footerAppStoreUrl: '#',
+  footerGooglePlayUrl: '#',
   footerColumns: [
     { title: 'Customer Service', links: [{ label: 'Contact Us', url: '/contact' }, { label: 'FAQ', url: '/faq' }, { label: 'Returns', url: '/returns' }] },
     { title: 'Quick Links', links: [{ label: 'About Us', url: '/about' }, { label: 'Privacy Policy', url: '/privacy' }, { label: 'Terms', url: '/terms' }] },
@@ -594,6 +602,8 @@ const AdminWebsiteSetupPage = () => {
                   { key: 'footerShowSocialLinks', label: 'Show Social Links' },
                   { key: 'footerShowNewsletter', label: 'Show Newsletter Signup' },
                   { key: 'footerShowPaymentIcons', label: 'Show Payment Method Icons' },
+                  { key: 'footerShowDownloadApp', label: 'Show Download App Section' },
+                  { key: 'footerShowFeaturesBar', label: 'Show Features/Trust Bar' },
                 ].map(item => (
                   <div key={item.key} className="flex items-center justify-between">
                     <Label className="font-normal">{item.label}</Label>
@@ -603,6 +613,18 @@ const AdminWebsiteSetupPage = () => {
                     />
                   </div>
                 ))}
+                {setup.footerShowDownloadApp && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                    <div className="space-y-2">
+                      <Label>App Store URL</Label>
+                      <Input value={setup.footerAppStoreUrl} placeholder="https://apps.apple.com/..." onChange={e => update('footerAppStoreUrl', e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Google Play URL</Label>
+                      <Input value={setup.footerGooglePlayUrl} placeholder="https://play.google.com/..." onChange={e => update('footerGooglePlayUrl', e.target.value)} />
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Footer Columns</Label>
