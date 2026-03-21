@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, ShoppingCart, User, Menu, X, ChevronDown,
-  MapPin, Heart, LogOut, Package, Settings, ShieldCheck
+  MapPin, Heart, LogOut, Package, Settings, ShieldCheck, Store
 } from 'lucide-react';
+import { useSellerCheck } from '@/hooks/useSellerData';
 import { Button } from '@/components/ui/button';
 import { useMenuConfig } from '@/hooks/useMenuConfig';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ export const Header = () => {
   const cartItemCount = getItemCount();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { isAdmin } = useAdminCheck();
+  const { seller: sellerProfile } = useSellerCheck();
   const { language, setLanguage, t } = useLanguage();
   const setup = useWebsiteSetup();
   const menuItems = useMenuConfig();
@@ -145,6 +147,16 @@ export const Header = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/settings" className="flex items-center gap-2"><Settings className="h-4 w-4" />{t('header.settings')}</Link>
                     </DropdownMenuItem>
+                    {sellerProfile && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/seller" className="flex items-center gap-2"><Store className="h-4 w-4" />Seller Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
+                    {!sellerProfile && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/sell" className="flex items-center gap-2"><Store className="h-4 w-4" />Become a Seller</Link>
+                      </DropdownMenuItem>
+                    )}
                     {isAdmin && (
                       <DropdownMenuItem asChild>
                         <Link to="/admin" className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />{t('header.adminDashboard')}</Link>
@@ -290,6 +302,25 @@ export const Header = () => {
                   )}
                 </div>
               </div>
+
+              {/* Seller Link - Mobile */}
+              {user && (
+                <div className="px-2">
+                  {sellerProfile ? (
+                    <Link to="/seller" className="flex items-center gap-3 px-3 py-2 hover:bg-secondary rounded-lg transition-colors"
+                      onClick={() => setIsMenuOpen(false)}>
+                      <Store className="h-5 w-5 text-accent" />
+                      <span>Seller Dashboard</span>
+                    </Link>
+                  ) : (
+                    <Link to="/sell" className="flex items-center gap-3 px-3 py-2 hover:bg-secondary rounded-lg transition-colors"
+                      onClick={() => setIsMenuOpen(false)}>
+                      <Store className="h-5 w-5 text-accent" />
+                      <span>Become a Seller</span>
+                    </Link>
+                  )}
+                </div>
+              )}
               
               <div className="space-y-1">
                 <h3 className="font-semibold text-sm text-muted-foreground px-2">{t('nav.shopByCategory')}</h3>
