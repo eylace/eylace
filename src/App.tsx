@@ -134,6 +134,7 @@ const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics
 const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
 const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders"));
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
+const Categories = lazy(() => import("./pages/Categories"));
 const CmsPage = lazy(() => import("./pages/CmsPage"));
 
 const AIChatWidget = lazy(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
@@ -182,6 +183,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/category/:slug" element={<Category />} />
+                <Route path="/categories" element={<Categories />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/wishlist" element={<Wishlist />} />
