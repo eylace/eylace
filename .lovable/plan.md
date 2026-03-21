@@ -1,37 +1,56 @@
 
 
-## Plan: Make Entire Frontend Fully Admin-Manageable
+## Plan: Seller Login Option + Professional Seller Dashboard
 
-### Current State
-- **Admin panel** already has controls for header, homepage sections, top bar, footer columns/links/social — all saved to `website_setup_v1` in `system_settings`
-- **Header** already reads most settings from `useWebsiteSetup()` (sticky, search, cart, wishlist, language switcher) — working well
-- **Homepage** already toggles sections via setup flags — working well
-- **Footer is hardcoded** — the 4 link columns, social icons, payment icons, and download app section ignore admin settings entirely
+### Part 1: Add Seller Login Option to Website
 
-### Changes Required
+**Header changes** (`src/components/layout/Header.tsx`):
+- Add a "Seller Login" link in the user dropdown menu (for logged-in users who are sellers, show "Seller Dashboard" link)
+- Add "Seller Login" link in mobile menu
+- Use `useSellerCheck` hook to detect if current user is a seller
 
-**1. Rewrite `src/components/layout/Footer.tsx` to be fully dynamic**
-- Replace hardcoded 4 columns (Customer Service, Quick Links, Sell on Eylace, Partners) with `setup.footerColumns` — admin can add/remove columns and links
-- Use `setup.footerSocialLinks` for social icons instead of hardcoded Facebook/Twitter/Instagram/Youtube
-- Gate payment icons section with `setup.footerShowPaymentIcons`
-- Gate newsletter section with `setup.footerShowNewsletter`
-- Use `setup.footerAboutText` and `setup.footerCopyright` (already partially done)
-- Keep a sensible fallback when no columns are configured (show defaults)
+**Auth page** (`src/pages/Auth.tsx`):
+- Add a "Seller Login" tab/link that redirects to `/auth?mode=seller`, same login form but after login redirects to `/seller` instead of `/`
 
-**2. Add footer "Download App" and "Features Bar" toggles to admin**
-- Add new settings: `footerShowDownloadApp`, `footerShowFeaturesBar`, `footerAppStoreUrl`, `footerGooglePlayUrl`
-- Add these toggles to the Footer Settings tab in `AdminWebsiteSetupPage.tsx`
-- Wire them in Footer.tsx so admin can show/hide download app section and the trust badges bar
+### Part 2: Professional Seller Dashboard Rebuild
 
-**3. Update `useWebsiteSetup.ts` defaults**
-- Add the new footer settings to the `WebsiteSetup` interface and defaults
+Replace the current simple 3-tab layout with a full sidebar-based professional dashboard (similar to the Admin panel pattern) with these modules:
 
-### What This Enables
-- Admin can add/remove/edit footer columns and links from Website Setup → Footer Settings
-- Admin can toggle payment icons, social links, newsletter, download app, and trust badges on/off
-- Admin can set App Store / Google Play URLs
-- All changes reflect instantly on the frontend via the existing `invalidateSetupCache()` mechanism
+**New Layout** (`src/components/seller/SellerLayout.tsx`):
+- Dedicated sidebar navigation (collapsible) with seller branding
+- Top bar with seller name, notifications, profile menu
+- No site header/footer (dedicated seller experience like admin panel)
 
-### No Database Changes Needed
-Everything uses the existing `system_settings` JSON column.
+**Dashboard Tabs/Pages** (all within `/seller` route using internal tab state):
+
+1. **Dashboard Overview** - KPI cards (revenue, orders, conversion rate, avg order value, pending orders, low stock alerts), quick action buttons
+2. **Products Management** - Existing product table enhanced with bulk actions, search/filter, stock alerts, SKU field
+3. **Orders Management** - Order list with status filters, order detail view, status update capability, shipping label info
+4. **Analytics & Reports** - Existing charts enhanced with date range picker, export to CSV, comparison periods
+5. **Finance/Payments** - Earnings summary, commission breakdown, payout history, pending balance
+6. **Reviews & Ratings** - View product reviews, respond to reviews, rating trends
+7. **Promotions** - Create product-level discounts, participate in flash sales
+8. **Store Settings** - Edit store name, logo, description, contact info, shipping policies
+9. **Support** - Link to seller support, FAQs, contact admin
+
+**Technical Details:**
+
+- **Files to create:**
+  - `src/components/seller/SellerLayout.tsx` - Sidebar + topbar layout
+  - `src/components/seller/SellerSidebar.tsx` - Navigation sidebar
+  - `src/components/seller/SellerOverview.tsx` - Dashboard home
+  - `src/components/seller/SellerOrdersTab.tsx` - Orders management
+  - `src/components/seller/SellerFinanceTab.tsx` - Earnings & payouts
+  - `src/components/seller/SellerReviewsTab.tsx` - Reviews management
+  - `src/components/seller/SellerPromotionsTab.tsx` - Discounts management
+  - `src/components/seller/SellerStoreSettings.tsx` - Store profile editor
+
+- **Files to modify:**
+  - `src/pages/SellerDashboard.tsx` - Rebuild with SellerLayout, tab-based routing
+  - `src/components/layout/Header.tsx` - Add Seller Dashboard/Login link
+  - `src/hooks/useSellerData.ts` - Add seller finance/reviews hooks
+
+- **No database changes needed** - Uses existing `sellers`, `products`, `orders`, `order_items`, `product_reviews` tables
+
+- **Existing components reused:** `SellerAnalytics` (enhanced), `ProductFormModal`, Recharts, all UI primitives
 
