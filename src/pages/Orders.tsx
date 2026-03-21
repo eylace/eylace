@@ -278,8 +278,31 @@ const Orders = () => {
 
                       <Separator />
 
-                      {/* Order Summary */}
+                      {/* Contact & Order Summary */}
                       <div className="p-4 bg-secondary/30">
+                        {/* Contact Buttons */}
+                        {order.shipping_address && typeof order.shipping_address === 'object' && (order.shipping_address as any).phone && (
+                          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
+                            <span className="text-sm text-muted-foreground">📞 {(order.shipping_address as any).phone}</span>
+                            <a
+                              href={`tel:${(order.shipping_address as any).phone}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-md transition-colors"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Phone className="h-3.5 w-3.5" /> Call Now
+                            </a>
+                            <a
+                              href={`https://wa.me/${((order.shipping_address as any).phone || '').replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                            </a>
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-4 text-sm max-w-xs ml-auto">
                           <span className="text-muted-foreground">{t('orders.subtotal')}</span>
                           <span className="text-right">৳{order.subtotal.toFixed(2)}</span>
