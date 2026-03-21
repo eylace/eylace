@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCategories } from '@/hooks/useProducts';
 import { Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Layout from '@/components/layout/Layout';
+import { Layout } from '@/components/layout/Layout';
 
 const Categories = () => {
   const { categories, isLoading } = useCategories();
