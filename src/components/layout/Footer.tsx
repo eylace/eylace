@@ -103,10 +103,10 @@ export const Footer = () => {
               <p className="text-sm text-primary-foreground/70">{t('footer.downloadApp')}</p>
               <div className="flex gap-2 mt-2">
                 <a href="#" className="block hover:opacity-80 transition-opacity">
-                  <img src={appStoreBadge} alt="Download on App Store" className="h-10 w-auto object-contain" />
+                  <img src={appStoreBadge} alt="Download on App Store" className="h-12 w-[135px] object-contain" />
                 </a>
                 <a href="#" className="block hover:opacity-80 transition-opacity">
-                  <img src={googlePlayBadge} alt="Get it on Google Play" className="h-10 w-auto object-contain" />
+                  <img src={googlePlayBadge} alt="Get it on Google Play" className="h-12 w-[135px] object-contain" />
                 </a>
               </div>
             </div>
