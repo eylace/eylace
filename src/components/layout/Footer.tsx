@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, CreditCard, Shield, Truck, Headphones } from 'lucide-react';
 import paymentMethodsImg from '@/assets/payment-methods.png';
+import googlePlayBadge from '@/assets/google-play-badge.png';
+import appStoreBadge from '@/assets/app-store-badge.png';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
