@@ -33,6 +33,7 @@ export const Header = () => {
   const cartItemCount = getItemCount();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { isAdmin } = useAdminCheck();
+  const { seller: sellerProfile } = useSellerCheck();
   const { language, setLanguage, t } = useLanguage();
   const setup = useWebsiteSetup();
   const menuItems = useMenuConfig();
