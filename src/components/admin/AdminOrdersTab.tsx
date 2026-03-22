@@ -157,20 +157,27 @@ export const AdminOrdersTab = () => {
     if (!win || !invoiceOrder) return;
     const o = invoiceOrder;
     const addr = o.shipping_address || {};
-    win.document.write(`<!DOCTYPE html><html><head><title>Invoice #${o.order_number}</title>
+    const esc = (s: unknown) =>
+      String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    win.document.write(`<!DOCTYPE html><html><head><title>Invoice #${esc(o.order_number)}</title>
     <style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto}
     .header{display:flex;justify-content:space-between;border-bottom:2px solid #333;padding-bottom:20px;margin-bottom:20px}
     .title{font-size:28px;font-weight:bold}table{width:100%;border-collapse:collapse;margin:20px 0}
     th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}th{background:#f5f5f5;font-weight:600}
     .total-row{font-weight:bold;font-size:16px}.footer{margin-top:40px;text-align:center;color:#888;font-size:12px}</style></head>
-    <body><div class="header"><div><div class="title">INVOICE</div><div>#${o.order_number}</div>
+    <body><div class="header"><div><div class="title">INVOICE</div><div>#${esc(o.order_number)}</div>
     <div>Date: ${format(new Date(o.created_at), 'MMM d, yyyy')}</div></div>
     <div style="text-align:right"><div><strong>Bill To:</strong></div>
-    <div>${o.profile?.first_name || ''} ${o.profile?.last_name || ''}</div>
-    <div>${o.profile?.email || ''}</div>
-    <div>${addr.address || ''} ${addr.city || ''}</div></div></div>
+    <div>${esc(o.profile?.first_name)} ${esc(o.profile?.last_name)}</div>
+    <div>${esc(o.profile?.email)}</div>
+    <div>${esc(addr.address)} ${esc(addr.city)}</div></div></div>
     <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>
-    ${(o.items || []).map((i: any) => `<tr><td>${i.product_name}</td><td>${i.quantity}</td><td>$${i.price.toFixed(2)}</td><td>$${(i.price * i.quantity).toFixed(2)}</td></tr>`).join('')}
+    ${(o.items || []).map((i: any) => `<tr><td>${esc(i.product_name)}</td><td>${esc(i.quantity)}</td><td>$${Number(i.price || 0).toFixed(2)}</td><td>$${(Number(i.price || 0) * Number(i.quantity || 0)).toFixed(2)}</td></tr>`).join('')}
     </tbody></table>
     <div style="text-align:right;margin-top:20px">
     <div>Subtotal: $${o.subtotal?.toFixed(2) || '0.00'}</div>
@@ -178,8 +185,8 @@ export const AdminOrdersTab = () => {
     <div>Tax: $${o.tax?.toFixed(2) || '0.00'}</div>
     ${o.discount > 0 ? `<div>Discount: -$${o.discount.toFixed(2)}</div>` : ''}
     <div class="total-row" style="margin-top:10px;padding-top:10px;border-top:2px solid #333">Total: $${o.total.toFixed(2)}</div>
-    </div><div>Payment: ${o.payment_method?.toUpperCase()}</div>
-    ${o.carrier ? `<div>Carrier: ${o.carrier} | Tracking: ${o.tracking_number || 'N/A'}</div>` : ''}
+    </div><div>Payment: ${esc(o.payment_method)}</div>
+    ${o.carrier ? `<div>Carrier: ${esc(o.carrier)} | Tracking: ${esc(o.tracking_number) || 'N/A'}</div>` : ''}
     <div class="footer">Thank you for your order!</div></body></html>`);
     win.document.close();
     win.print();

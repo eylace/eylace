@@ -101,13 +101,15 @@ const Checkout = () => {
         // Update existing record
         await (supabase.from('incomplete_orders') as any)
           .update({ ...payload, updated_at: new Date().toISOString() } as any)
-          .eq('id', incompleteIdRef.current);
+          .eq('id', incompleteIdRef.current)
+          .setHeader('x-session-id', sessionIdRef.current);
       } else {
         // Insert new record
         const { data: inserted } = await (supabase.from('incomplete_orders') as any)
           .insert(payload as any)
           .select('id')
-          .single();
+          .single()
+          .setHeader('x-session-id', sessionIdRef.current);
         if (inserted?.id) {
           incompleteIdRef.current = inserted.id;
         }
@@ -157,20 +159,28 @@ const Checkout = () => {
 
         // Use sendBeacon for reliable last-chance save
         const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/incomplete_orders`;
-        const headers = {
+        const beaconHeaders = {
           'Content-Type': 'application/json',
           'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          'Prefer': incompleteIdRef.current ? 'return=minimal' : 'return=minimal',
+          'Prefer': 'return=minimal',
+          'x-session-id': sessionIdRef.current,
         };
 
         if (incompleteIdRef.current) {
           // Can't PATCH with sendBeacon, just ensure we saved via debounce
         } else {
-          navigator.sendBeacon(
-            url,
-            new Blob([JSON.stringify(payload)], { type: 'application/json' })
-          );
+          // sendBeacon doesn't support custom headers via Blob, use fetch keepalive instead
+          try {
+            fetch(url, {
+              method: 'POST',
+              headers: beaconHeaders,
+              body: JSON.stringify(payload),
+              keepalive: true,
+            });
+          } catch {
+            // Best effort
+          }
         }
       }
     };
@@ -183,7 +193,10 @@ const Checkout = () => {
   const cleanupIncompleteOrder = useCallback(async () => {
     try {
       if (incompleteIdRef.current) {
-        await (supabase.from('incomplete_orders') as any).delete().eq('id', incompleteIdRef.current);
+        await (supabase.from('incomplete_orders') as any)
+          .delete()
+          .eq('id', incompleteIdRef.current)
+          .setHeader('x-session-id', sessionIdRef.current);
       }
       // Also clean up any other records for this user
       if (user?.id) {
