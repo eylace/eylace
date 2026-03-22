@@ -160,6 +160,24 @@ const PageLoader = () => (
   </div>
 );
 
+// Capture referral code from URL
+const ReferralCapture = () => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      localStorage.setItem('affiliate_ref', JSON.stringify({ code: ref, expiry: Date.now() + 30 * 24 * 60 * 60 * 1000 }));
+      // Track click
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage?action=track-click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({ referral_code: ref, landing_page: window.location.pathname }),
+      }).catch(() => {});
+    }
+  }, []);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
