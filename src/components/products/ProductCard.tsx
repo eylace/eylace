@@ -21,8 +21,10 @@ interface ProductCardProps {
 export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ product, variant = 'default', showWishlistButton = false }, ref) => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
-  const { addItem, removeItem, isInWishlist } = useWishlist();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
+  const { addItem: addToCart } = useCart();
+  const navigate = useNavigate();
   const inCompare = isInCompare(product.id);
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
