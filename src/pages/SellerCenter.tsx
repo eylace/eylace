@@ -101,7 +101,7 @@ const SellerCenter = () => {
                 <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
                   <Package className="h-7 w-7 text-accent" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground">FBM — Fulfilled by Merchant</h3>
+                <h3 className="text-xl font-bold text-foreground">FBS — Fulfilled by Seller</h3>
                 <p className="text-sm text-muted-foreground mt-1">You manage everything yourself</p>
               </div>
               <div className="bg-accent/5 rounded-lg p-4 text-center mb-5">
