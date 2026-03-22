@@ -159,20 +159,28 @@ const Checkout = () => {
 
         // Use sendBeacon for reliable last-chance save
         const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/incomplete_orders`;
-        const headers = {
+        const beaconHeaders = {
           'Content-Type': 'application/json',
           'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          'Prefer': incompleteIdRef.current ? 'return=minimal' : 'return=minimal',
+          'Prefer': 'return=minimal',
+          'x-session-id': sessionIdRef.current,
         };
 
         if (incompleteIdRef.current) {
           // Can't PATCH with sendBeacon, just ensure we saved via debounce
         } else {
-          navigator.sendBeacon(
-            url,
-            new Blob([JSON.stringify(payload)], { type: 'application/json' })
-          );
+          // sendBeacon doesn't support custom headers via Blob, use fetch keepalive instead
+          try {
+            fetch(url, {
+              method: 'POST',
+              headers: beaconHeaders,
+              body: JSON.stringify(payload),
+              keepalive: true,
+            });
+          } catch {
+            // Best effort
+          }
         }
       }
     };
