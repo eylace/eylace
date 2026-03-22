@@ -114,7 +114,7 @@ const SellerCenter = () => {
                 ))}
               </ul>
               <Button asChild variant="outline" className="w-full mt-6">
-                <Link to="/sell">Start with FBM</Link>
+                <Link to="/sell">Start with FBS</Link>
               </Button>
             </CardContent>
           </Card>
