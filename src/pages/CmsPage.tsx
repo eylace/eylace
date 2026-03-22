@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Layout } from '@/components/layout/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
+import DOMPurify from 'dompurify';
 
 const CmsPage = () => {
   const { slug: paramSlug } = useParams<{ slug: string }>();
