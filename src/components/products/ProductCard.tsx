@@ -34,10 +34,24 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
     e.preventDefault();
     e.stopPropagation();
     if (isWishlisted) {
-      removeItem(product.id);
+      removeFromWishlist(product.id);
     } else {
-      addItem(product);
+      addToWishlist(product);
     }
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product, 1);
+    toast.success('Added to cart', { description: product.name });
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product, 1);
+    navigate('/checkout');
   };
 
   if (variant === 'horizontal') {
