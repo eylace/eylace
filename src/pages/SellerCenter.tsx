@@ -94,7 +94,7 @@ const SellerCenter = () => {
             </CardContent>
           </Card>
 
-          {/* FBM Card */}
+          {/* FBS Card */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-8 pb-6">
               <div className="text-center mb-6">
