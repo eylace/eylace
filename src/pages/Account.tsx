@@ -263,6 +263,7 @@ const Account = () => {
   const LevelIcon = levelConfig[memberLevel].icon;
 
   return (
+    <>
     <Layout>
       <div className="container-main py-6">
         <div className="flex gap-6">
