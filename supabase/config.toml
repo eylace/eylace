@@ -41,3 +41,6 @@ project_id = "jmowninkqcfgwldyjeqo"
 
  [functions.verify-otp]
  verify_jwt = false
+
+ [functions.admin-manage-returns]
+ verify_jwt = false

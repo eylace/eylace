@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   User, MapPin, Package, Heart, Settings, Shield, CreditCard,
   Bell, ChevronRight, Loader2, Save, Camera, Mail, Phone,
@@ -70,6 +70,7 @@ const SIDEBAR_ITEMS = [
 
 const Account = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile, loading: authLoading, updateProfile, signOut } = useAuth();
   const { t } = useLanguage();
   const { items: wishlistItems } = useWishlist();
@@ -106,6 +107,13 @@ const Account = () => {
       setAddressData({ address: profile.address || '', apartment: profile.apartment || '', city: profile.city || '', state: profile.state || '', zip_code: profile.zip_code || '', country: profile.country || 'BD' });
     }
   }, [user, profile, authLoading, navigate]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && SIDEBAR_ITEMS.some(item => item.id === tab)) {
+      setActiveSection(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) fetchAllData();

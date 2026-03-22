@@ -7,7 +7,7 @@ import {
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
   Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
-  Brain, Activity, LayoutList, Megaphone as MegaphoneIcon,
+  Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -109,6 +109,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
   const operationsItems = [
     { titleKey: 'admin.courierManagement' as TranslationKey, url: '/admin/couriers', icon: Truck },
     { titleKey: 'admin.shippingProviders' as TranslationKey, url: '/admin/shipping-providers', icon: Package },
+    { titleKey: 'admin.returnsRefunds' as TranslationKey, url: '/admin/returns', icon: RotateCcw },
     { titleKey: 'admin.fraudDetection' as TranslationKey, url: '/admin/fraud', icon: ShieldAlert },
     { titleKey: 'admin.transactions' as TranslationKey, url: '/admin/transactions', icon: CreditCard },
   ];

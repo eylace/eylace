@@ -139,7 +139,7 @@ export const Header = () => {
                       <Link to="/account" className="flex items-center gap-2"><User className="h-4 w-4" />{t('header.myAccount')}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/orders" className="flex items-center gap-2"><Package className="h-4 w-4" />{t('header.myOrders')}</Link>
+                      <Link to="/account?tab=orders" className="flex items-center gap-2"><Package className="h-4 w-4" />{t('header.myOrders')}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/wishlist" className="flex items-center gap-2"><Heart className="h-4 w-4" />{t('header.wishlist')}</Link>
@@ -177,7 +177,7 @@ export const Header = () => {
                 </Link>
               )}
 
-              <Link to="/orders" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
+              <Link to="/account?tab=orders" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
                 <span className="text-xs text-primary-foreground/70">{t('header.returns')}</span>
                 <span className="text-sm font-medium">{t('header.orders')}</span>
               </Link>
