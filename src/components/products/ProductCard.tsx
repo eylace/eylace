@@ -248,7 +248,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
         })()}
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-1.5 pt-1.5 sm:pt-2">
+        <div className="flex flex-row gap-1.5 pt-1.5 sm:pt-2 mt-auto">
           {isOutOfStock ? (
             <Button variant="book-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
               Book Now
