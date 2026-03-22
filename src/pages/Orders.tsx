@@ -83,7 +83,8 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  
+  const [returnModal, setReturnModal] = useState<{ orderId: string; orderNumber: string; items: OrderItem[] } | null>(null);
+  const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
