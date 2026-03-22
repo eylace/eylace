@@ -1,56 +1,29 @@
 
 
-## Plan: Seller Login Option + Professional Seller Dashboard
+## Plan: Fix Mobile Product Card — Buttons & Content Visibility
 
-### Part 1: Add Seller Login Option to Website
+### Problem
+On mobile (390px wide, 2-column grid), the ProductCard content is getting clipped by `overflow-hidden` on `.card-product`. The "Add to Cart" and "Buy Now" buttons are cut off or hidden because the card content overflows the container.
 
-**Header changes** (`src/components/layout/Header.tsx`):
-- Add a "Seller Login" link in the user dropdown menu (for logged-in users who are sellers, show "Seller Dashboard" link)
-- Add "Seller Login" link in mobile menu
-- Use `useSellerCheck` hook to detect if current user is a seller
+### Root Cause
+The `.card-product` class applies `overflow-hidden`, and on narrow mobile screens the buttons and lower content sections overflow the card boundary and become invisible.
 
-**Auth page** (`src/pages/Auth.tsx`):
-- Add a "Seller Login" tab/link that redirects to `/auth?mode=seller`, same login form but after login redirects to `/seller` instead of `/`
+### Fix (2 files)
 
-### Part 2: Professional Seller Dashboard Rebuild
+**1. `src/components/products/ProductCard.tsx`**
+- Make the buttons stack vertically on very small screens instead of side-by-side
+- Reduce button text size and padding on mobile
+- Ensure the actions section is always visible by removing unnecessary spacing
+- Make variation swatches, rating stars, and price text responsive for narrow cards
 
-Replace the current simple 3-tab layout with a full sidebar-based professional dashboard (similar to the Admin panel pattern) with these modules:
+**2. `src/index.css`**
+- Update `.card-product` to use `overflow-visible` or only clip the image area (not the content area), so buttons are never hidden
 
-**New Layout** (`src/components/seller/SellerLayout.tsx`):
-- Dedicated sidebar navigation (collapsible) with seller branding
-- Top bar with seller name, notifications, profile menu
-- No site header/footer (dedicated seller experience like admin panel)
+### Specific Changes
 
-**Dashboard Tabs/Pages** (all within `/seller` route using internal tab state):
-
-1. **Dashboard Overview** - KPI cards (revenue, orders, conversion rate, avg order value, pending orders, low stock alerts), quick action buttons
-2. **Products Management** - Existing product table enhanced with bulk actions, search/filter, stock alerts, SKU field
-3. **Orders Management** - Order list with status filters, order detail view, status update capability, shipping label info
-4. **Analytics & Reports** - Existing charts enhanced with date range picker, export to CSV, comparison periods
-5. **Finance/Payments** - Earnings summary, commission breakdown, payout history, pending balance
-6. **Reviews & Ratings** - View product reviews, respond to reviews, rating trends
-7. **Promotions** - Create product-level discounts, participate in flash sales
-8. **Store Settings** - Edit store name, logo, description, contact info, shipping policies
-9. **Support** - Link to seller support, FAQs, contact admin
-
-**Technical Details:**
-
-- **Files to create:**
-  - `src/components/seller/SellerLayout.tsx` - Sidebar + topbar layout
-  - `src/components/seller/SellerSidebar.tsx` - Navigation sidebar
-  - `src/components/seller/SellerOverview.tsx` - Dashboard home
-  - `src/components/seller/SellerOrdersTab.tsx` - Orders management
-  - `src/components/seller/SellerFinanceTab.tsx` - Earnings & payouts
-  - `src/components/seller/SellerReviewsTab.tsx` - Reviews management
-  - `src/components/seller/SellerPromotionsTab.tsx` - Discounts management
-  - `src/components/seller/SellerStoreSettings.tsx` - Store profile editor
-
-- **Files to modify:**
-  - `src/pages/SellerDashboard.tsx` - Rebuild with SellerLayout, tab-based routing
-  - `src/components/layout/Header.tsx` - Add Seller Dashboard/Login link
-  - `src/hooks/useSellerData.ts` - Add seller finance/reviews hooks
-
-- **No database changes needed** - Uses existing `sellers`, `products`, `orders`, `order_items`, `product_reviews` tables
-
-- **Existing components reused:** `SellerAnalytics` (enhanced), `ProductFormModal`, Recharts, all UI primitives
+- **Buttons**: Change from `flex gap-2` to `flex flex-col sm:flex-row gap-1.5` so they stack on mobile
+- **Button size**: Use `size="xs"` on mobile with shorter text ("Add" → icon only on very small)
+- **Card overflow**: Keep `overflow-hidden` only on the image container, not the entire card
+- **Price section**: Add `text-sm` for mobile to prevent wrapping issues
+- **Variations**: Limit to 3 swatches on mobile instead of 5
 
