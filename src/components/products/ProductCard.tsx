@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Star, Heart, ShoppingCart, Zap, GitCompareArrows } from 'lucide-react';
 import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompare } from '@/contexts/CompareContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useCart } from '@/contexts/CartContext';
+import { toast } from 'sonner';
 
 interface ProductCardProps {
   product: Product;
@@ -19,8 +21,10 @@ interface ProductCardProps {
 export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ product, variant = 'default', showWishlistButton = false }, ref) => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
-  const { addItem, removeItem, isInWishlist } = useWishlist();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
+  const { addItem: addToCart } = useCart();
+  const navigate = useNavigate();
   const inCompare = isInCompare(product.id);
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
@@ -30,10 +34,24 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
     e.preventDefault();
     e.stopPropagation();
     if (isWishlisted) {
-      removeItem(product.id);
+      removeFromWishlist(product.id);
     } else {
-      addItem(product);
+      addToWishlist(product);
     }
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product, 1);
+    toast.success('Added to cart', { description: product.name });
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product, 1);
+    navigate('/checkout');
   };
 
   if (variant === 'horizontal') {
@@ -255,11 +273,11 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
             </Button>
           ) : (
             <>
-              <Button variant="accent" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
+              <Button variant="accent" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm" onClick={handleAddToCart}>
                 <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Add
               </Button>
-              <Button variant="buy-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
+              <Button variant="buy-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm" onClick={handleBuyNow}>
                 Buy Now
               </Button>
             </>
