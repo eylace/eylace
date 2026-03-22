@@ -193,7 +193,10 @@ const Checkout = () => {
   const cleanupIncompleteOrder = useCallback(async () => {
     try {
       if (incompleteIdRef.current) {
-        await (supabase.from('incomplete_orders') as any).delete().eq('id', incompleteIdRef.current);
+        await (supabase.from('incomplete_orders') as any)
+          .delete()
+          .eq('id', incompleteIdRef.current)
+          .setHeader('x-session-id', sessionIdRef.current);
       }
       // Also clean up any other records for this user
       if (user?.id) {
