@@ -7,7 +7,7 @@ import {
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
   Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
-  Brain, Activity, LayoutList, Megaphone as MegaphoneIcon,
+  Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
