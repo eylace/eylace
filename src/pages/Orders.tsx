@@ -320,7 +320,79 @@ const Orders = () => {
                         ))}
                       </div>
 
+                      {/* Return Requests Status */}
+                      {order.return_requests.length > 0 && (
+                        <>
+                          <Separator />
+                          <div className="p-4 space-y-3">
+                            <h4 className="text-sm font-medium flex items-center gap-2">
+                              <RotateCcw className="h-4 w-4" /> Return Requests
+                            </h4>
+                            {order.return_requests.map((ret) => {
+                              const returnedItem = order.order_items.find(i => i.id === ret.order_item_id);
+                              return (
+                                <div key={ret.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                                  {returnedItem && (
+                                    <div className="w-10 h-10 bg-secondary rounded overflow-hidden shrink-0">
+                                      <img src={returnedItem.product_image || '/placeholder.svg'} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{returnedItem?.product_name || 'Item'}</p>
+                                    <p className="text-xs text-muted-foreground">{ret.reason}</p>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <Badge variant="outline" className={cn('capitalize text-xs', getReturnStatusColor(ret.status))}>
+                                      {ret.status}
+                                    </Badge>
+                                    <p className="text-xs text-muted-foreground mt-1">৳{Number(ret.refund_amount).toFixed(2)}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+
                       <Separator />
+
+                      {/* Action Buttons */}
+                      <div className="p-4 flex flex-wrap gap-2 border-b border-border">
+                        {order.status === 'pending' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                            onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.id); }}
+                            disabled={cancellingOrder === order.id}
+                          >
+                            {cancellingOrder === order.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                            ) : (
+                              <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                            )}
+                            Cancel Order
+                          </Button>
+                        )}
+                        {order.status === 'delivered' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-accent border-accent/30 hover:bg-accent/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReturnModal({
+                                orderId: order.id,
+                                orderNumber: order.order_number,
+                                items: order.order_items,
+                              });
+                            }}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                            Request Return
+                          </Button>
+                        )}
+                      </div>
 
                       {/* Contact & Order Summary */}
                       <div className="p-4 bg-secondary/30">
@@ -376,6 +448,28 @@ const Orders = () => {
                           </span>
                         </div>
                       </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Return Request Modal */}
+      {returnModal && user && (
+        <ReturnRequestModal
+          open={!!returnModal}
+          onClose={() => setReturnModal(null)}
+          orderId={returnModal.orderId}
+          orderNumber={returnModal.orderNumber}
+          orderItems={returnModal.items}
+          userId={user.id}
+          onSuccess={fetchOrders}
+        />
+      )}
+    </Layout>
                     </div>
                   )}
                 </div>
