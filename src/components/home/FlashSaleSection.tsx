@@ -28,7 +28,7 @@ export const FlashSaleSection = () => {
   const formatTime = (value: number) => value.toString().padStart(2, '0');
 
   return (
-    <section className="container-main py-[25px]">
+    <section className="container-main py-[20px]">
       <div className="bg-gradient-to-r from-destructive to-accent rounded-xl overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:p-6 px-[15px] py-[13px] text-xs font-sans font-bold text-justify gap-[12px]">
           <div className="flex items-center gap-3">
