@@ -67,7 +67,7 @@ export const translations = {
   'flashSale.noItems': { en: 'No flash sale items available right now.', bn: 'এই মুহূর্তে কোনো ফ্ল্যাশ সেল পণ্য নেই।' },
 
   // Deals
-  'deals.title': { en: "Today's Best Deals", bn: 'আজকের সেরা ডিল' },
+  'deals.title': { en: "Today's Deals", bn: 'আজকের ডিল' },
   'deals.subtitle': { en: 'Save big on top products', bn: 'সেরা পণ্যে বড় সাশ্রয়' },
   'deals.seeAll': { en: 'See All Deals', bn: 'সব ডিল দেখুন' },
   'deals.sold': { en: 'sold', bn: 'বিক্রি হয়েছে' },
