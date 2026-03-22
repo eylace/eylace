@@ -157,6 +157,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Delete a seller application
+    if (action === 'delete-application' && applicationId) {
+      const { error: delError } = await supabaseAdmin
+        .from('seller_applications')
+        .delete()
+        .eq('id', applicationId);
+
+      if (delError) {
+        return new Response(JSON.stringify({ error: 'Failed to delete application: ' + delError.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ error: 'Invalid action' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
