@@ -108,7 +108,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
 
       {/* Image */}
       <Link to={`/product/${product.slug}`}>
-        <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-3">
+        <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-2 sm:mb-3">
           <img 
             src={product.images[0]} 
             alt={product.name}
@@ -147,7 +147,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
       </Link>
 
       {/* Content */}
-      <div className="space-y-2">
+      <div className="space-y-1.5 sm:space-y-2">
         {/* Category */}
         <p className="text-xs text-muted-foreground uppercase tracking-wide">
           {product.category.name}
@@ -184,12 +184,12 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
         </div>
 
         {/* Price */}
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="price-current">{formatPrice(product.price)}</span>
+        <div className="flex items-baseline gap-1 sm:gap-2 flex-wrap">
+          <span className="price-current text-base sm:text-lg">{formatPrice(product.price)}</span>
           {hasDiscount && product.originalPrice && (
             <>
-              <span className="price-original">{formatPrice(product.originalPrice)}</span>
-              <span className="price-discount">Save {formatPrice(product.originalPrice - product.price)}</span>
+              <span className="price-original text-xs sm:text-sm">{formatPrice(product.originalPrice)}</span>
+              <span className="price-discount hidden sm:inline">Save {formatPrice(product.originalPrice - product.price)}</span>
             </>
           )}
         </div>
@@ -216,15 +216,15 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
           };
 
           return (
-            <div className="flex items-center gap-1.5">
-              {opts.slice(0, 5).map((option, i) => {
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              {opts.slice(0, 3).map((option, i) => {
                 const val = option?.value || '';
                 const hex = colorMap[val.toLowerCase().split('/')[0].trim()];
                 return hex ? (
                   <div
                     key={option?.id || i}
                     className={cn(
-                      "w-5 h-5 rounded-full border-2 border-border",
+                      "w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-border",
                       val.toLowerCase() === 'white' && "border-muted-foreground/30"
                     )}
                     style={{ backgroundColor: hex }}
@@ -233,33 +233,33 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
                 ) : (
                   <div
                     key={option?.id || i}
-                    className="px-1.5 py-0.5 rounded border border-border bg-secondary text-[9px] font-medium text-foreground"
+                    className="px-1 sm:px-1.5 py-0.5 rounded border border-border bg-secondary text-[8px] sm:text-[9px] font-medium text-foreground"
                     title={val}
                   >
                     {val}
                   </div>
                 );
               })}
-              {opts.length > 5 && (
-                <span className="text-xs text-muted-foreground">+{opts.length - 5}</span>
+              {opts.length > 3 && (
+                <span className="text-[10px] sm:text-xs text-muted-foreground">+{opts.length - 3}</span>
               )}
             </div>
           );
         })()}
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-col sm:flex-row gap-1.5 pt-1.5 sm:pt-2">
           {isOutOfStock ? (
-            <Button variant="book-now" size="sm" className="flex-1">
+            <Button variant="book-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
               Book Now
             </Button>
           ) : (
             <>
-              <Button variant="accent" size="sm" className="flex-1">
-                <ShoppingCart className="h-4 w-4" />
+              <Button variant="accent" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
+                <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Add
               </Button>
-              <Button variant="buy-now" size="sm" className="flex-1">
+              <Button variant="buy-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
                 Buy Now
               </Button>
             </>
