@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, ChevronRight, ShoppingBag, Loader2, Phone, MessageCircle } from 'lucide-react';
+import { Package, ChevronRight, ShoppingBag, Loader2, Phone, MessageCircle, RotateCcw, XCircle, AlertTriangle } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,8 @@ import { Json } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
+import { ReturnRequestModal } from '@/components/orders/ReturnRequestModal';
+import { toast } from 'sonner';
 
 interface OrderItem {
   id: string;
@@ -29,6 +31,17 @@ interface TrackingEvent {
   location: string | null;
   description: string;
   created_at: string;
+}
+
+interface ReturnRequest {
+  id: string;
+  order_item_id: string | null;
+  reason: string;
+  status: string;
+  refund_amount: number;
+  refund_method: string;
+  created_at: string;
+  resolved_at: string | null;
 }
 
 interface Order {
@@ -50,6 +63,7 @@ interface Order {
   created_at: string;
   order_items: OrderItem[];
   tracking_events: TrackingEvent[];
+  return_requests: ReturnRequest[];
 }
 
 const statusColors: Record<string, string> = {
@@ -69,7 +83,8 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  
+  const [returnModal, setReturnModal] = useState<{ orderId: string; orderNumber: string; items: OrderItem[] } | null>(null);
+  const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -96,7 +111,7 @@ const Orders = () => {
 
     const ordersWithDetails = await Promise.all(
       (ordersData || []).map(async (order) => {
-        const [itemsResult, eventsResult] = await Promise.all([
+        const [itemsResult, eventsResult, returnsResult] = await Promise.all([
           supabase
             .from('order_items')
             .select('*')
@@ -106,18 +121,47 @@ const Orders = () => {
             .select('*')
             .eq('order_id', order.id)
             .order('created_at', { ascending: false }),
+          supabase
+            .from('return_requests' as any)
+            .select('*')
+            .eq('order_id', order.id)
+            .order('created_at', { ascending: false }),
         ]);
         
         return {
           ...order,
           order_items: itemsResult.data || [],
           tracking_events: eventsResult.data || [],
+          return_requests: (returnsResult.data || []) as unknown as ReturnRequest[],
         };
       })
     );
 
     setOrders(ordersWithDetails);
     setLoading(false);
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    setCancellingOrder(orderId);
+    const { data, error } = await supabase.rpc('user_cancel_order', { _order_id: orderId });
+    setCancellingOrder(null);
+    if (error || !data) {
+      toast.error('Failed to cancel order. Only pending orders can be cancelled.');
+      return;
+    }
+    toast.success('Order cancelled successfully');
+    fetchOrders();
+  };
+
+  const getReturnStatusColor = (status: string) => {
+    const map: Record<string, string> = {
+      pending: 'bg-warning/10 text-warning border-warning/20',
+      approved: 'bg-success/10 text-success border-success/20',
+      rejected: 'bg-destructive/10 text-destructive border-destructive/20',
+      refunded: 'bg-primary/10 text-primary border-primary/20',
+      picked_up: 'bg-accent/10 text-accent border-accent/20',
+    };
+    return map[status] || map.pending;
   };
 
   if (authLoading || loading) {
@@ -276,7 +320,79 @@ const Orders = () => {
                         ))}
                       </div>
 
+                      {/* Return Requests Status */}
+                      {order.return_requests.length > 0 && (
+                        <>
+                          <Separator />
+                          <div className="p-4 space-y-3">
+                            <h4 className="text-sm font-medium flex items-center gap-2">
+                              <RotateCcw className="h-4 w-4" /> Return Requests
+                            </h4>
+                            {order.return_requests.map((ret) => {
+                              const returnedItem = order.order_items.find(i => i.id === ret.order_item_id);
+                              return (
+                                <div key={ret.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                                  {returnedItem && (
+                                    <div className="w-10 h-10 bg-secondary rounded overflow-hidden shrink-0">
+                                      <img src={returnedItem.product_image || '/placeholder.svg'} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{returnedItem?.product_name || 'Item'}</p>
+                                    <p className="text-xs text-muted-foreground">{ret.reason}</p>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <Badge variant="outline" className={cn('capitalize text-xs', getReturnStatusColor(ret.status))}>
+                                      {ret.status}
+                                    </Badge>
+                                    <p className="text-xs text-muted-foreground mt-1">৳{Number(ret.refund_amount).toFixed(2)}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+
                       <Separator />
+
+                      {/* Action Buttons */}
+                      <div className="p-4 flex flex-wrap gap-2 border-b border-border">
+                        {order.status === 'pending' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                            onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.id); }}
+                            disabled={cancellingOrder === order.id}
+                          >
+                            {cancellingOrder === order.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                            ) : (
+                              <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                            )}
+                            Cancel Order
+                          </Button>
+                        )}
+                        {order.status === 'delivered' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-accent border-accent/30 hover:bg-accent/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReturnModal({
+                                orderId: order.id,
+                                orderNumber: order.order_number,
+                                items: order.order_items,
+                              });
+                            }}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                            Request Return
+                          </Button>
+                        )}
+                      </div>
 
                       {/* Contact & Order Summary */}
                       <div className="p-4 bg-secondary/30">
@@ -340,6 +456,19 @@ const Orders = () => {
           )}
         </div>
       </div>
+
+      {/* Return Request Modal */}
+      {returnModal && user && (
+        <ReturnRequestModal
+          open={!!returnModal}
+          onClose={() => setReturnModal(null)}
+          orderId={returnModal.orderId}
+          orderNumber={returnModal.orderNumber}
+          orderItems={returnModal.items}
+          userId={user.id}
+          onSuccess={fetchOrders}
+        />
+      )}
     </Layout>
   );
 };
