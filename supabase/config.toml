@@ -44,3 +44,6 @@ project_id = "jmowninkqcfgwldyjeqo"
 
  [functions.admin-manage-returns]
  verify_jwt = false
+
+ [functions.affiliate-manage]
+ verify_jwt = false

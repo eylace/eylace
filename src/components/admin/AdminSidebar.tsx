@@ -126,6 +126,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.marketing.subscribers', url: '/admin/marketing/subscribers', icon: UsersRound },
     { titleKey: 'admin.marketing.visitors', url: '/admin/marketing/visitors', icon: Eye },
     { titleKey: 'admin.marketing.ads', url: '/admin/marketing/ads', icon: LayoutList },
+    { titleKey: 'admin.marketing.affiliate', url: '/admin/affiliate', icon: Link2 },
   ];
 
   const contentItems = [
