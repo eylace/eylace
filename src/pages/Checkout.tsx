@@ -101,13 +101,15 @@ const Checkout = () => {
         // Update existing record
         await (supabase.from('incomplete_orders') as any)
           .update({ ...payload, updated_at: new Date().toISOString() } as any)
-          .eq('id', incompleteIdRef.current);
+          .eq('id', incompleteIdRef.current)
+          .setHeader('x-session-id', sessionIdRef.current);
       } else {
         // Insert new record
         const { data: inserted } = await (supabase.from('incomplete_orders') as any)
           .insert(payload as any)
           .select('id')
-          .single();
+          .single()
+          .setHeader('x-session-id', sessionIdRef.current);
         if (inserted?.id) {
           incompleteIdRef.current = inserted.id;
         }
