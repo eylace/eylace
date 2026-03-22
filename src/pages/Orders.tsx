@@ -141,6 +141,29 @@ const Orders = () => {
     setLoading(false);
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    setCancellingOrder(orderId);
+    const { data, error } = await supabase.rpc('user_cancel_order', { _order_id: orderId });
+    setCancellingOrder(null);
+    if (error || !data) {
+      toast.error('Failed to cancel order. Only pending orders can be cancelled.');
+      return;
+    }
+    toast.success('Order cancelled successfully');
+    fetchOrders();
+  };
+
+  const getReturnStatusColor = (status: string) => {
+    const map: Record<string, string> = {
+      pending: 'bg-warning/10 text-warning border-warning/20',
+      approved: 'bg-success/10 text-success border-success/20',
+      rejected: 'bg-destructive/10 text-destructive border-destructive/20',
+      refunded: 'bg-primary/10 text-primary border-primary/20',
+      picked_up: 'bg-accent/10 text-accent border-accent/20',
+    };
+    return map[status] || map.pending;
+  };
+
   if (authLoading || loading) {
     return (
       <Layout>
