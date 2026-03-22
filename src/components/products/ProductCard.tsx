@@ -216,15 +216,15 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
           };
 
           return (
-            <div className="flex items-center gap-1.5">
-              {opts.slice(0, 5).map((option, i) => {
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              {opts.slice(0, 3).map((option, i) => {
                 const val = option?.value || '';
                 const hex = colorMap[val.toLowerCase().split('/')[0].trim()];
                 return hex ? (
                   <div
                     key={option?.id || i}
                     className={cn(
-                      "w-5 h-5 rounded-full border-2 border-border",
+                      "w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-border",
                       val.toLowerCase() === 'white' && "border-muted-foreground/30"
                     )}
                     style={{ backgroundColor: hex }}
@@ -233,15 +233,15 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
                 ) : (
                   <div
                     key={option?.id || i}
-                    className="px-1.5 py-0.5 rounded border border-border bg-secondary text-[9px] font-medium text-foreground"
+                    className="px-1 sm:px-1.5 py-0.5 rounded border border-border bg-secondary text-[8px] sm:text-[9px] font-medium text-foreground"
                     title={val}
                   >
                     {val}
                   </div>
                 );
               })}
-              {opts.length > 5 && (
-                <span className="text-xs text-muted-foreground">+{opts.length - 5}</span>
+              {opts.length > 3 && (
+                <span className="text-[10px] sm:text-xs text-muted-foreground">+{opts.length - 3}</span>
               )}
             </div>
           );
