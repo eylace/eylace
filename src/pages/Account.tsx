@@ -70,6 +70,7 @@ const SIDEBAR_ITEMS = [
 
 const Account = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile, loading: authLoading, updateProfile, signOut } = useAuth();
   const { t } = useLanguage();
   const { items: wishlistItems } = useWishlist();
