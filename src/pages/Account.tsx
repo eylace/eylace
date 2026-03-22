@@ -127,11 +127,12 @@ const Account = () => {
   }, [user]);
 
   const fetchAllData = async () => {
-    const [ordersRes, reviewsRes, allOrdersRes, couponsRes] = await Promise.all([
+    const [ordersRes, reviewsRes, allOrdersRes, couponsRes, affRes] = await Promise.all([
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),
       supabase.from('product_reviews').select('id', { count: 'exact', head: true }),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
+      supabase.from('affiliates').select('*').eq('user_id', user!.id).maybeSingle(),
     ]);
 
     setRecentOrders(ordersRes.data || []);
@@ -140,6 +141,7 @@ const Account = () => {
     setAllOrders(orders);
     setOrderCount(orders.length);
     setCoupons(couponsRes.data || []);
+    setAffiliateData(affRes.data);
 
     // Calculate spending
     const spent = orders.filter(o => o.status !== 'cancelled').reduce((sum: number, o: any) => sum + (o.total || 0), 0);
@@ -150,7 +152,6 @@ const Account = () => {
     const monthly: {month: string; amount: number}[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = format(d, 'MMM yyyy');
       const monthOrders = orders.filter((o: any) => {
         const od = new Date(o.created_at);
         return od.getMonth() === d.getMonth() && od.getFullYear() === d.getFullYear() && o.status !== 'cancelled';
@@ -158,6 +159,14 @@ const Account = () => {
       monthly.push({ month: format(d, 'MMM'), amount: monthOrders.reduce((s: number, o: any) => s + (o.total || 0), 0) });
     }
     setMonthlySpending(monthly);
+
+    // Build recent activity
+    const activity: {type: string; title: string; time: string; icon: any; color: string}[] = [];
+    orders.slice(0, 3).forEach((o: any) => {
+      activity.push({ type: 'order', title: `Order #${o.order_number} ${o.status}`, time: o.created_at, icon: Package, color: 'text-primary' });
+    });
+    activity.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    setRecentActivity(activity.slice(0, 5));
   };
 
   const handleProfileSave = async () => {
