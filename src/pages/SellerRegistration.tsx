@@ -217,7 +217,7 @@ const SellerRegistration = () => {
                 <CardHeader>
                   <CardTitle>{t('sellerReg.applicationTitle')}</CardTitle>
                   <CardDescription>
-                    {t('sellerReg.applicationDesc')} — নির্বাচিত প্ল্যান: <span className="font-semibold">{fulfillmentType === 'fbe' ? 'FBE (Eylace ম্যানেজড)' : 'FBM (সেলার ম্যানেজড)'}</span>
+                    {t('sellerReg.applicationDesc')} — নির্বাচিত প্ল্যান: <span className="font-semibold">{fulfillmentType === 'fbe' ? 'FBE (Eylace ম্যানেজড)' : 'FBS (সেলার ম্যানেজড)'}</span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

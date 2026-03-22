@@ -127,7 +127,7 @@ const SellerCenter = () => {
               <tr className="border-b">
                 <th className="text-left py-3 px-4 font-semibold text-foreground">Feature</th>
                 <th className="text-center py-3 px-4 font-semibold text-primary">FBE</th>
-                <th className="text-center py-3 px-4 font-semibold text-accent">FBM</th>
+                <th className="text-center py-3 px-4 font-semibold text-accent">FBS</th>
               </tr>
             </thead>
             <tbody>
