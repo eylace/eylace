@@ -12,7 +12,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { DeliveryLocationProvider } from "@/contexts/DeliveryLocationContext";
 import { CompareBar } from "@/components/compare/CompareBar";
 import { CompareModal } from "@/components/compare/CompareModal";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
 // Critical pages - eager load
 import Index from "./pages/Index";
@@ -135,6 +135,7 @@ const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
 const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders"));
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
 const AdminReturnsRefunds = lazy(() => import("./pages/AdminReturnsRefunds"));
+const AdminAffiliateProgram = lazy(() => import("./pages/AdminAffiliateProgram"));
 const Categories = lazy(() => import("./pages/Categories"));
 const CmsPage = lazy(() => import("./pages/CmsPage"));
 
@@ -159,6 +160,24 @@ const PageLoader = () => (
   </div>
 );
 
+// Capture referral code from URL
+const ReferralCapture = () => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      localStorage.setItem('affiliate_ref', JSON.stringify({ code: ref, expiry: Date.now() + 30 * 24 * 60 * 60 * 1000 }));
+      // Track click
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage?action=track-click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({ referral_code: ref, landing_page: window.location.pathname }),
+      }).catch(() => {});
+    }
+  }, []);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
@@ -174,6 +193,7 @@ const App = () => (
             <CompareBar />
             <CompareModal />
             <BrowserRouter>
+              <ReferralCapture />
               <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -265,6 +285,7 @@ const App = () => (
                 <Route path="/admin/incomplete-orders" element={<AdminIncompleteOrders />} />
                 <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
                 <Route path="/admin/returns" element={<AdminReturnsRefunds />} />
+                <Route path="/admin/affiliate" element={<AdminAffiliateProgram />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />

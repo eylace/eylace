@@ -1133,6 +1133,9 @@ export const translations = {
   'location.selectUpazila': { en: 'Upazila/Thana (উপজেলা/থানা)', bn: 'উপজেলা/থানা' },
   'location.streetAddress': { en: 'Street Address (Optional)', bn: 'রাস্তার ঠিকানা (ঐচ্ছিক)' },
   'location.saveAddress': { en: 'Save Address', bn: 'ঠিকানা সংরক্ষণ করুন' },
+
+  // Admin Affiliate
+  'admin.marketing.affiliate': { en: 'Affiliate Program', bn: 'অ্যাফিলিয়েট প্রোগ্রাম' },
 } satisfies Record<string, Record<Language, string>>;
 
 export type TranslationKey = keyof typeof translations;

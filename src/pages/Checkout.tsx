@@ -285,6 +285,22 @@ const Checkout = () => {
       setOrderComplete(true);
       toast.success(t('checkout.orderSuccess'), { description: `Order ID: ${orderNumber}` });
 
+      // Record affiliate conversion if referral code exists
+      const storedRef = localStorage.getItem('affiliate_ref');
+      if (storedRef && createdOrderId) {
+        try {
+          const refData = JSON.parse(storedRef);
+          if (refData.code && refData.expiry > Date.now()) {
+            fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage?action=record-conversion`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+              body: JSON.stringify({ referral_code: refData.code, order_id: createdOrderId, order_total: total }),
+            }).catch(() => {});
+            localStorage.removeItem('affiliate_ref');
+          }
+        } catch {}
+      }
+
       // Send auto confirmation email (non-blocking)
       if (user && createdOrderId) {
         supabase.functions.invoke('send-order-confirmation', {

@@ -7,7 +7,7 @@ import {
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
   Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
-  Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw,
+  Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw, Link2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -126,6 +126,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.marketing.subscribers', url: '/admin/marketing/subscribers', icon: UsersRound },
     { titleKey: 'admin.marketing.visitors', url: '/admin/marketing/visitors', icon: Eye },
     { titleKey: 'admin.marketing.ads', url: '/admin/marketing/ads', icon: LayoutList },
+    { titleKey: 'admin.marketing.affiliate', url: '/admin/affiliate', icon: Link2 },
   ];
 
   const contentItems = [
