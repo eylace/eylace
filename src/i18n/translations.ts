@@ -319,7 +319,11 @@ export const translations = {
   'admin.title.orders': { en: 'Orders', bn: 'অর্ডার' },
   'admin.desc.orders': { en: 'Manage all customer orders', bn: 'সব গ্রাহকের অর্ডার পরিচালনা করুন' },
 
-  // Admin Categories
+  // Admin Returns
+  'admin.title.returns': { en: 'Returns & Refunds', bn: 'রিটার্ন ও রিফান্ড' },
+  'admin.desc.returns': { en: 'Manage return requests and refunds', bn: 'রিটার্ন রিকোয়েস্ট ও রিফান্ড পরিচালনা করুন' },
+  'admin.returnsRefunds': { en: 'Returns & Refunds', bn: 'রিটার্ন ও রিফান্ড' },
+
   'admin.title.categories': { en: 'Categories', bn: 'ক্যাটাগরি' },
   'admin.desc.categories': { en: 'Organize your product catalog with nested categories', bn: 'নেস্টেড ক্যাটাগরিতে আপনার পণ্য তালিকা সংগঠিত করুন' },
   'admin.categoryTree': { en: 'Category Tree', bn: 'ক্যাটাগরি ট্রি' },

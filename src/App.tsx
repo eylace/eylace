@@ -264,6 +264,7 @@ const App = () => (
                 <Route path="/admin/menu-manager" element={<AdminMenuManager />} />
                 <Route path="/admin/incomplete-orders" element={<AdminIncompleteOrders />} />
                 <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
+                <Route path="/admin/returns" element={<AdminReturnsRefunds />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
