@@ -36,11 +36,11 @@ const AdminSizeGuides = () => {
 
   useEffect(() => { fetch(); }, []);
 
-  const openNew = () => { setEditing(null); setForm({ name: '', category_id: '', sizes: [] }); setDialogOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ name: '', category_id: 'all', sizes: [] }); setDialogOpen(true); };
   const openEdit = (g: any) => {
     setEditing(g);
     const sizes = Array.isArray(g.sizes) ? g.sizes : [];
-    setForm({ name: g.name, category_id: g.category_id || '', sizes });
+    setForm({ name: g.name, category_id: g.category_id || 'all', sizes });
     setDialogOpen(true);
   };
 
@@ -49,7 +49,7 @@ const AdminSizeGuides = () => {
   const handleSave = async () => {
     if (!form.name) { toast.error('Name required'); return; }
     setSaving(true);
-    const payload = { name: form.name, category_id: form.category_id || null, sizes: form.sizes };
+    const payload = { name: form.name, category_id: form.category_id === 'all' ? null : form.category_id || null, sizes: form.sizes };
     const { error } = editing
       ? await supabase.from('size_guides').update(payload).eq('id', editing.id)
       : await supabase.from('size_guides').insert(payload);
@@ -103,7 +103,7 @@ const AdminSizeGuides = () => {
             <div><Label>Category</Label>
               <Select value={form.category_id} onValueChange={v => setForm(f => ({ ...f, category_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="All categories" /></SelectTrigger>
-                <SelectContent><SelectItem value="">All</SelectItem>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectContent><SelectItem value="all">All</SelectItem>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
