@@ -26,7 +26,7 @@ export const FeaturedProducts = ({
   products: propProducts,
   limit = 5,
   titleKey,
-  subtitleKey,
+  subtitleKey
 }: FeaturedProductsProps) => {
   const { products: dbProducts, isLoading } = useProducts({ limit });
   const products = propProducts || adaptDBProducts(dbProducts);
@@ -38,7 +38,7 @@ export const FeaturedProducts = ({
   const IconComponent = { trending: TrendingUp, star: Star, sparkles: Sparkles }[icon];
 
   return (
-    <section className="container-main py-8">
+    <section className="container-main py-[30px]">
       <div className="flex items-start md:items-center justify-between gap-4 mb-6 flex-col md:flex-row">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-accent/10 rounded-lg"><IconComponent className="h-5 w-5 text-accent" /></div>
@@ -51,13 +51,13 @@ export const FeaturedProducts = ({
           {t('featured.viewAll')} <ChevronRight className="h-4 w-4" />
         </Link>
       </div>
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
-          {products.slice(0, limit).map((product) => (<ProductCard key={product.id} product={product} />))}
+      {isLoading ?
+      <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div> :
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
+          {products.slice(0, limit).map((product) => <ProductCard key={product.id} product={product} />)}
         </div>
-      )}
-    </section>
-  );
+      }
+    </section>);
+
 };
