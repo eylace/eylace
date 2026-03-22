@@ -65,13 +65,13 @@ export const FlashSaleSection = () => {
             </Link>
           </div>
         </div>
-        <div className="bg-card p-4 md:p-6">
+        <div className="bg-card p-2 sm:p-4 md:p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
           ) : flashSaleProducts.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">{t('flashSale.noItems')}</p>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
               {flashSaleProducts.map((product) => (<ProductCard key={product.id} product={product} />))}
             </div>
           )}

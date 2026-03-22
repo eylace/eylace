@@ -76,9 +76,9 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
   }
 
   return (
-    <div className={cn(
-      "card-product group relative",
-      variant === 'compact' ? 'p-3' : 'p-4'
+    <div ref={ref} className={cn(
+      "card-product group relative flex flex-col h-full",
+      variant === 'compact' ? 'p-2 sm:p-3' : 'p-2 sm:p-4'
     )}>
       {/* Wishlist Button */}
       <button 
@@ -147,7 +147,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
       </Link>
 
       {/* Content */}
-      <div className="space-y-1.5 sm:space-y-2">
+      <div className="space-y-1 sm:space-y-2 flex-1 flex flex-col">
         {/* Category */}
         <p className="text-xs text-muted-foreground uppercase tracking-wide">
           {product.category.name}
@@ -248,7 +248,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
         })()}
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-1.5 pt-1.5 sm:pt-2">
+        <div className="flex flex-row gap-1.5 pt-1.5 sm:pt-2 mt-auto">
           {isOutOfStock ? (
             <Button variant="book-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
               Book Now
