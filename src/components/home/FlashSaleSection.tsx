@@ -36,9 +36,9 @@ export const FlashSaleSection = () => {
             <div>
               <h2 className="text-xl md:text-2xl font-bold text-primary-foreground flex items-center gap-2">
                 {t('flashSale.title')}
-                <span className="text-sm font-normal bg-primary-foreground/20 px-2 py-0.5 rounded">{t('flashSale.limitedTime')}</span>
+                <span className="text-sm bg-primary-foreground/20 px-2 py-0.5 rounded font-bold">{t('flashSale.limitedTime')}</span>
               </h2>
-              <p className="text-primary-foreground/80 text-sm">{t('flashSale.grabDeals')}</p>
+              <p className="text-sm text-primary-foreground">{t('flashSale.grabDeals')}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -52,15 +52,15 @@ export const FlashSaleSection = () => {
                 map((item, i) =>
                 <div key={i} className="flex items-center gap-1">
                     {i > 0 && <span className="text-primary-foreground text-xl font-bold">:</span>}
-                    <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-center min-w-[50px]">
+                    <div className="text-primary-foreground rounded-lg text-center min-w-[50px] bg-primary px-[10px] py-[7px] mx-0">
                       <span className="text-lg font-bold">{formatTime(item.val)}</span>
-                      <p className="text-[10px] text-primary-foreground/70 uppercase">{item.label}</p>
+                      <p className="text-[10px] uppercase text-primary-foreground">{item.label}</p>
                     </div>
                   </div>
                 )}
               </div>
             </div>
-            <Link to="/flash-sale" className="text-primary-foreground font-semibold flex items-center gap-1 hover:underline whitespace-nowrap">
+            <Link to="/flash-sale" className="font-semibold flex items-center gap-1 hover:underline whitespace-nowrap text-primary-foreground">
               {t('flashSale.viewAll')} <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
