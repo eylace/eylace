@@ -108,7 +108,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
 
       {/* Image */}
       <Link to={`/product/${product.slug}`}>
-        <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-3">
+        <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-2 sm:mb-3">
           <img 
             src={product.images[0]} 
             alt={product.name}
