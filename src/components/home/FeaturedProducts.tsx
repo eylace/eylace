@@ -39,7 +39,7 @@ export const FeaturedProducts = ({
 
   return (
     <section className="container-main py-[30px]">
-      <div className="flex items-start md:items-center justify-between gap-4 mb-6 flex-col md:flex-row">
+      <div className="md:items-center mb-6 md:flex-row gap-[10px] items-start justify-between flex flex-row">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-accent/10 rounded-lg"><IconComponent className="h-5 w-5 text-accent" /></div>
           <div>
@@ -47,7 +47,7 @@ export const FeaturedProducts = ({
             {displaySubtitle && <p className="text-sm text-muted-foreground">{displaySubtitle}</p>}
           </div>
         </div>
-        <Link to={link} className="text-sm text-accent font-medium hover:underline flex items-center gap-1">
+        <Link to={link} className="text-sm text-accent font-medium hover:underline flex items-center gap-1 py-[12px]">
           {t('featured.viewAll')} <ChevronRight className="h-4 w-4" />
         </Link>
       </div>
