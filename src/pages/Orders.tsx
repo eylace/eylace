@@ -320,7 +320,7 @@ const Orders = () => {
                         ))}
                       </div>
 
-                      {/* Return Requests Status */}
+                      {/* Return Requests Status with Progress Timeline */}
                       {order.return_requests.length > 0 && (
                         <>
                           <Separator />
@@ -330,23 +330,69 @@ const Orders = () => {
                             </h4>
                             {order.return_requests.map((ret) => {
                               const returnedItem = order.order_items.find(i => i.id === ret.order_item_id);
+                              const steps = [
+                                { key: 'pending', label: 'Requested' },
+                                { key: 'approved', label: 'Approved' },
+                                { key: 'refunded', label: 'Refunded' },
+                              ];
+                              const isRejected = ret.status === 'rejected';
+                              const currentStepIdx = isRejected ? 1 : steps.findIndex(s => s.key === ret.status);
                               return (
-                                <div key={ret.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
-                                  {returnedItem && (
-                                    <div className="w-10 h-10 bg-secondary rounded overflow-hidden shrink-0">
-                                      <img src={returnedItem.product_image || '/placeholder.svg'} alt="" className="w-full h-full object-cover" />
+                                <div key={ret.id} className="p-3 bg-secondary/50 rounded-lg space-y-3">
+                                  <div className="flex items-center gap-3">
+                                    {returnedItem && (
+                                      <div className="w-10 h-10 bg-secondary rounded overflow-hidden shrink-0">
+                                        <img src={returnedItem.product_image || '/placeholder.svg'} alt="" className="w-full h-full object-cover" />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{returnedItem?.product_name || 'Item'}</p>
+                                      <p className="text-xs text-muted-foreground">{ret.reason}</p>
                                     </div>
+                                    <div className="text-right shrink-0">
+                                      <p className="text-xs font-medium text-success">৳{Number(ret.refund_amount).toFixed(2)}</p>
+                                    </div>
+                                  </div>
+                                  {/* Progress Timeline */}
+                                  <div className="flex items-center gap-1">
+                                    {isRejected ? (
+                                      <>
+                                        <div className="flex flex-col items-center flex-1">
+                                          <div className="w-6 h-6 rounded-full bg-success text-success-foreground flex items-center justify-center text-xs">✓</div>
+                                          <span className="text-[10px] text-muted-foreground mt-1">Requested</span>
+                                        </div>
+                                        <div className="h-0.5 flex-1 bg-destructive/50" />
+                                        <div className="flex flex-col items-center flex-1">
+                                          <div className="w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs">✕</div>
+                                          <span className="text-[10px] text-destructive font-medium mt-1">Rejected</span>
+                                        </div>
+                                      </>
+                                    ) : (
+                                      steps.map((step, idx) => (
+                                        <div key={step.key} className="contents">
+                                          {idx > 0 && (
+                                            <div className={cn('h-0.5 flex-1', idx <= currentStepIdx ? 'bg-success' : 'bg-border')} />
+                                          )}
+                                          <div className="flex flex-col items-center flex-1">
+                                            <div className={cn(
+                                              'w-6 h-6 rounded-full flex items-center justify-center text-xs',
+                                              idx < currentStepIdx ? 'bg-success text-success-foreground' :
+                                              idx === currentStepIdx ? 'bg-accent text-accent-foreground ring-2 ring-accent/30' :
+                                              'bg-muted text-muted-foreground'
+                                            )}>
+                                              {idx < currentStepIdx ? '✓' : idx + 1}
+                                            </div>
+                                            <span className={cn('text-[10px] mt-1', idx === currentStepIdx ? 'text-accent font-medium' : 'text-muted-foreground')}>{step.label}</span>
+                                          </div>
+                                        </div>
+                                      ))
+                                    )}
+                                  </div>
+                                  {ret.resolved_at && (
+                                    <p className="text-[10px] text-muted-foreground text-right">
+                                      Resolved: {format(new Date(ret.resolved_at), 'MMM d, yyyy')}
+                                    </p>
                                   )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">{returnedItem?.product_name || 'Item'}</p>
-                                    <p className="text-xs text-muted-foreground">{ret.reason}</p>
-                                  </div>
-                                  <div className="text-right shrink-0">
-                                    <Badge variant="outline" className={cn('capitalize text-xs', getReturnStatusColor(ret.status))}>
-                                      {ret.status}
-                                    </Badge>
-                                    <p className="text-xs text-muted-foreground mt-1">৳{Number(ret.refund_amount).toFixed(2)}</p>
-                                  </div>
                                 </div>
                               );
                             })}
@@ -374,24 +420,29 @@ const Orders = () => {
                             Cancel Order
                           </Button>
                         )}
-                        {order.status === 'delivered' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-accent border-accent/30 hover:bg-accent/10"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setReturnModal({
-                                orderId: order.id,
-                                orderNumber: order.order_number,
-                                items: order.order_items,
-                              });
-                            }}
-                          >
-                            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                            Request Return
-                          </Button>
-                        )}
+                        {order.status === 'delivered' && (() => {
+                          const returnedItemIds = new Set(order.return_requests.map(r => r.order_item_id));
+                          const unreturned = order.order_items.filter(i => !returnedItemIds.has(i.id));
+                          if (unreturned.length === 0) return null;
+                          return (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-accent border-accent/30 hover:bg-accent/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setReturnModal({
+                                  orderId: order.id,
+                                  orderNumber: order.order_number,
+                                  items: unreturned,
+                                });
+                              }}
+                            >
+                              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                              Request Return
+                            </Button>
+                          );
+                        })()}
                       </div>
 
                       {/* Contact & Order Summary */}
