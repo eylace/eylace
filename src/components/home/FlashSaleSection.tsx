@@ -16,9 +16,9 @@ export const FlashSaleSection = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        else if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        else if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };else
+        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };else
+        if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
         return prev;
       });
     }, 1000);
@@ -30,7 +30,7 @@ export const FlashSaleSection = () => {
   return (
     <section className="container-main py-8">
       <div className="bg-gradient-to-r from-destructive to-accent rounded-xl overflow-hidden">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 md:p-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:p-6 px-[15px] py-[13px] text-xs font-sans font-bold text-justify gap-[12px]">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-foreground/20 rounded-lg animate-pulse"><Zap className="h-6 w-6 text-primary-foreground" /></div>
             <div>
@@ -46,18 +46,18 @@ export const FlashSaleSection = () => {
               <span className="text-primary-foreground/80 text-sm hidden sm:inline">{t('flashSale.endsIn')}</span>
               <div className="flex gap-1">
                 {[
-                  { val: timeLeft.hours, label: t('flashSale.hours') },
-                  { val: timeLeft.minutes, label: t('flashSale.mins') },
-                  { val: timeLeft.seconds, label: t('flashSale.secs') },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-1">
+                { val: timeLeft.hours, label: t('flashSale.hours') },
+                { val: timeLeft.minutes, label: t('flashSale.mins') },
+                { val: timeLeft.seconds, label: t('flashSale.secs') }].
+                map((item, i) =>
+                <div key={i} className="flex items-center gap-1">
                     {i > 0 && <span className="text-primary-foreground text-xl font-bold">:</span>}
                     <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-center min-w-[50px]">
                       <span className="text-lg font-bold">{formatTime(item.val)}</span>
                       <p className="text-[10px] text-primary-foreground/70 uppercase">{item.label}</p>
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <Link to="/flash-sale" className="text-primary-foreground font-semibold flex items-center gap-1 hover:underline whitespace-nowrap">
@@ -66,17 +66,17 @@ export const FlashSaleSection = () => {
           </div>
         </div>
         <div className="bg-card p-2 sm:p-4 md:p-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
-          ) : flashSaleProducts.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">{t('flashSale.noItems')}</p>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-              {flashSaleProducts.map((product) => (<ProductCard key={product.id} product={product} />))}
+          {isLoading ?
+          <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div> :
+          flashSaleProducts.length === 0 ?
+          <p className="text-center text-muted-foreground py-8">{t('flashSale.noItems')}</p> :
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+              {flashSaleProducts.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
-          )}
+          }
         </div>
       </div>
-    </section>
-  );
+    </section>);
+
 };
