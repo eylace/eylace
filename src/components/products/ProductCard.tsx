@@ -76,9 +76,9 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
   }
 
   return (
-    <div className={cn(
-      "card-product group relative",
-      variant === 'compact' ? 'p-3' : 'p-4'
+    <div ref={ref} className={cn(
+      "card-product group relative flex flex-col h-full",
+      variant === 'compact' ? 'p-2 sm:p-3' : 'p-2 sm:p-4'
     )}>
       {/* Wishlist Button */}
       <button 
