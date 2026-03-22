@@ -17,23 +17,25 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url)
     const action = url.searchParams.get('action')
-    const body = req.method !== 'GET' ? await req.json() : {}
+    
+    let body = {}
+    if (req.method !== 'GET') {
+      try { body = await req.json() } catch { body = {} }
+    }
 
     // Auth check
     const authHeader = req.headers.get('Authorization')
     let userId: string | null = null
     let isAdmin = false
 
+    const adminClient = createClient(supabaseUrl, serviceKey)
+
     if (authHeader?.startsWith('Bearer ')) {
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-      })
       const token = authHeader.replace('Bearer ', '')
-      const { data: claims } = await userClient.auth.getClaims(token)
-      if (claims?.claims?.sub) {
-        userId = claims.claims.sub as string
+      const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
+      if (user && !userError) {
+        userId = user.id
         // Check admin role
-        const adminClient = createClient(supabaseUrl, serviceKey)
         const { data: roleData } = await adminClient
           .from('user_roles')
           .select('role')
