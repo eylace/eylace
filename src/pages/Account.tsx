@@ -7,10 +7,12 @@ import {
   Gift, Award, Ticket, TrendingUp, Sparkles, Crown, Truck,
   BarChart3, Download, Eye, MessageSquare, RefreshCcw, Wallet,
   FileText, Tag, Copy, ChevronDown, ArrowUpRight, CircleDollarSign,
-  Zap, BadgePercent, Receipt, HelpCircle, Store, ChevronUp
+  Zap, BadgePercent, Receipt, HelpCircle, Store, ChevronUp,
+  RotateCcw, XCircle
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
+import { ReturnRequestModal } from '@/components/orders/ReturnRequestModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -86,6 +88,8 @@ const Account = () => {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [trackingEvents, setTrackingEvents] = useState<Record<string, any[]>>({});
   const [totalSpent, setTotalSpent] = useState(0);
+  const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
+  const [returnModal, setReturnModal] = useState<{ orderId: string; orderNumber: string; items: any[] } | null>(null);
   const [monthlySpending, setMonthlySpending] = useState<{month: string; amount: number}[]>([]);
 
   const [profileData, setProfileData] = useState({ first_name: '', last_name: '', phone: '' });
@@ -111,7 +115,7 @@ const Account = () => {
     const [ordersRes, reviewsRes, allOrdersRes, couponsRes] = await Promise.all([
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),
       supabase.from('product_reviews').select('id', { count: 'exact', head: true }),
-      supabase.from('orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
     ]);
 
@@ -208,6 +212,18 @@ const Account = () => {
     toast.success(`Coupon "${code}" copied!`);
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    setCancellingOrder(orderId);
+    const { data, error } = await supabase.rpc('user_cancel_order', { _order_id: orderId });
+    setCancellingOrder(null);
+    if (error || !data) {
+      toast.error('Failed to cancel order');
+      return;
+    }
+    toast.success('Order cancelled successfully');
+    fetchAllData();
+  };
+
   const initials = `${(profile?.first_name || '')[0] || ''}${(profile?.last_name || '')[0] || ''}`.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Customer';
   const memberSince = user?.created_at ? format(new Date(user.created_at), 'MMMM yyyy') : '';
@@ -247,6 +263,7 @@ const Account = () => {
   const LevelIcon = levelConfig[memberLevel].icon;
 
   return (
+    <>
     <Layout>
       <div className="container-main py-6">
         <div className="flex gap-6">
@@ -590,6 +607,43 @@ const Account = () => {
                               deliveredAt={order.delivered_at}
                               events={trackingEvents[order.id] || []}
                             />
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        {(order.status === 'pending' || order.status === 'delivered') && (
+                          <div className="border-t border-border p-3 flex flex-wrap gap-2">
+                            {order.status === 'pending' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                                onClick={() => handleCancelOrder(order.id)}
+                                disabled={cancellingOrder === order.id}
+                              >
+                                {cancellingOrder === order.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                                ) : (
+                                  <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                                )}
+                                Cancel Order
+                              </Button>
+                            )}
+                            {order.status === 'delivered' && order.order_items && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-accent border-accent/30 hover:bg-accent/10"
+                                onClick={() => setReturnModal({
+                                  orderId: order.id,
+                                  orderNumber: order.order_number,
+                                  items: order.order_items,
+                                })}
+                              >
+                                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                                Request Return
+                              </Button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -971,6 +1025,20 @@ const Account = () => {
         </div>
       </div>
     </Layout>
+
+    {/* Return Request Modal */}
+    {returnModal && user && (
+      <ReturnRequestModal
+        open={!!returnModal}
+        onClose={() => setReturnModal(null)}
+        orderId={returnModal.orderId}
+        orderNumber={returnModal.orderNumber}
+        orderItems={returnModal.items}
+        userId={user.id}
+        onSuccess={fetchAllData}
+      />
+    )}
+    </>
   );
 };
 
