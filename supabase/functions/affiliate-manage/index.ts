@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 Deno.serve(async (req) => {
@@ -12,28 +12,29 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
   try {
     const url = new URL(req.url)
     const action = url.searchParams.get('action')
-    const body = req.method !== 'GET' ? await req.json() : {}
+    
+    let body = {}
+    if (req.method !== 'GET') {
+      try { body = await req.json() } catch { body = {} }
+    }
 
     // Auth check
     const authHeader = req.headers.get('Authorization')
     let userId: string | null = null
     let isAdmin = false
 
+    const adminClient = createClient(supabaseUrl, serviceKey)
+
     if (authHeader?.startsWith('Bearer ')) {
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-      })
       const token = authHeader.replace('Bearer ', '')
-      const { data: claims } = await userClient.auth.getClaims(token)
-      if (claims?.claims?.sub) {
-        userId = claims.claims.sub as string
+      const { data: { user }, error: userError } = await adminClient.auth.getUser(token)
+      if (user && !userError) {
+        userId = user.id
         // Check admin role
-        const adminClient = createClient(supabaseUrl, serviceKey)
         const { data: roleData } = await adminClient
           .from('user_roles')
           .select('role')
@@ -44,7 +45,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    const adminClient = createClient(supabaseUrl, serviceKey)
 
     // ========== JOIN ==========
     if (action === 'join' && req.method === 'POST') {
