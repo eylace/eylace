@@ -248,18 +248,18 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
         })()}
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-col sm:flex-row gap-1.5 pt-1.5 sm:pt-2">
           {isOutOfStock ? (
-            <Button variant="book-now" size="sm" className="flex-1">
+            <Button variant="book-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
               Book Now
             </Button>
           ) : (
             <>
-              <Button variant="accent" size="sm" className="flex-1">
-                <ShoppingCart className="h-4 w-4" />
+              <Button variant="accent" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
+                <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Add
               </Button>
-              <Button variant="buy-now" size="sm" className="flex-1">
+              <Button variant="buy-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
                 Buy Now
               </Button>
             </>
