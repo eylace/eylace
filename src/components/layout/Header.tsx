@@ -177,7 +177,7 @@ export const Header = () => {
                 </Link>
               )}
 
-              <Link to="/orders" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
+              <Link to="/account?tab=orders" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
                 <span className="text-xs text-primary-foreground/70">{t('header.returns')}</span>
                 <span className="text-sm font-medium">{t('header.orders')}</span>
               </Link>

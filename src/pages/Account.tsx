@@ -109,6 +109,13 @@ const Account = () => {
   }, [user, profile, authLoading, navigate]);
 
   useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && SIDEBAR_ITEMS.some(item => item.id === tab)) {
+      setActiveSection(tab);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (user) fetchAllData();
   }, [user]);
 
