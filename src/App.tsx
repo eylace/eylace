@@ -206,7 +206,7 @@ const App = () => (
                 <Route path="/category/:slug" element={<Category />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/orders" element={<Orders />} />
-                <Route path="/settings" element={<Settings />} />
+                <Route path="/settings" element={<Navigate to="/account?tab=settings" replace />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin" element={<Admin />} />
