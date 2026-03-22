@@ -41,7 +41,7 @@ export const FlashSaleSection = () => {
               <p className="text-sm text-primary-foreground">{t('flashSale.grabDeals')}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 px-0">
             <div className="flex items-center gap-2">
               <span className="text-primary-foreground/80 text-sm hidden sm:inline">{t('flashSale.endsIn')}</span>
               <div className="flex gap-1">
@@ -60,7 +60,7 @@ export const FlashSaleSection = () => {
                 )}
               </div>
             </div>
-            <Link to="/flash-sale" className="font-semibold flex items-center gap-1 hover:underline whitespace-nowrap text-primary-foreground">
+            <Link to="/flash-sale" className="font-semibold flex items-center gap-1 hover:underline whitespace-nowrap text-primary-foreground px-[40px] text-sm">
               {t('flashSale.viewAll')} <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
