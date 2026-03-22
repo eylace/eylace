@@ -62,10 +62,10 @@ const SIDEBAR_ITEMS = [
   { id: 'wishlist', icon: Heart, label: 'Wishlist' },
   { id: 'coupons', icon: Tag, label: 'My Coupons' },
   { id: 'wallet', icon: Wallet, label: 'Wallet & Points' },
+  { id: 'affiliate', icon: Link2, label: 'Affiliate' },
   { id: 'profile', icon: User, label: 'Profile' },
   { id: 'addresses', icon: MapPin, label: 'Addresses' },
-  { id: 'security', icon: Shield, label: 'Security' },
-  { id: 'notifications', icon: Bell, label: 'Notifications' },
+  { id: 'settings', icon: Settings, label: 'Settings' },
   { id: 'help', icon: HelpCircle, label: 'Help & Support' },
 ];
 
