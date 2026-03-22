@@ -88,6 +88,8 @@ const Account = () => {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [trackingEvents, setTrackingEvents] = useState<Record<string, any[]>>({});
   const [totalSpent, setTotalSpent] = useState(0);
+  const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
+  const [returnModal, setReturnModal] = useState<{ orderId: string; orderNumber: string; items: any[] } | null>(null);
   const [monthlySpending, setMonthlySpending] = useState<{month: string; amount: number}[]>([]);
 
   const [profileData, setProfileData] = useState({ first_name: '', last_name: '', phone: '' });
