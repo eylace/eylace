@@ -102,7 +102,7 @@ const SellerRegistration = () => {
 
     const status = statusConfig[existingApplication.status] || statusConfig.pending;
     const StatusIcon = status.icon;
-    const planLabel = existingApplication.fulfillment_type === 'fbe' ? 'FBE — Fulfilled by Eylace' : 'FBM — Fulfilled by Merchant';
+    const planLabel = existingApplication.fulfillment_type === 'fbe' ? 'FBE — Fulfilled by Eylace' : 'FBS — Fulfilled by Seller';
 
     return (
       <Layout>
