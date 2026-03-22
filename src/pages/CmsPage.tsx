@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Layout } from '@/components/layout/Layout';
 import { Skeleton } from '@/components/ui/skeleton';
+import DOMPurify from 'dompurify';
 
 const CmsPage = () => {
   const { slug: paramSlug } = useParams<{ slug: string }>();
@@ -56,7 +57,7 @@ const CmsPage = () => {
           prose-headings:text-foreground prose-p:text-muted-foreground prose-li:text-muted-foreground
           prose-a:text-primary prose-strong:text-foreground">
           <h1>{page.title}</h1>
-          <div dangerouslySetInnerHTML={{ __html: page.content }} />
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(page.content) }} />
         </article>
       </div>
     </Layout>
