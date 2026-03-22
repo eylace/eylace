@@ -93,10 +93,16 @@ const Account = () => {
   const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
   const [returnModal, setReturnModal] = useState<{ orderId: string; orderNumber: string; items: any[] } | null>(null);
   const [monthlySpending, setMonthlySpending] = useState<{month: string; amount: number}[]>([]);
+  const [affiliateData, setAffiliateData] = useState<any>(null);
+  const [recentActivity, setRecentActivity] = useState<{type: string; title: string; time: string; icon: any; color: string}[]>([]);
 
   const [profileData, setProfileData] = useState({ first_name: '', last_name: '', phone: '' });
   const [addressData, setAddressData] = useState({ address: '', apartment: '', city: '', state: '', zip_code: '', country: 'BD' });
   const [passwordData, setPasswordData] = useState({ newPassword: '', confirmPassword: '' });
+  const [notifPrefs, setNotifPrefs] = useState({
+    orderUpdates: true, promotions: false, recommendations: false,
+    reviewReminders: true, wishlistAlerts: true, flashSaleAlerts: true,
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
