@@ -509,8 +509,30 @@ const Account = () => {
                     )}
                   </div>
 
-                  {/* Quick Actions */}
+                  {/* Quick Actions + Account Completion */}
                   <div className="space-y-4">
+                    {/* Account Completion */}
+                    {accountCompletion < 100 && (
+                      <div className="bg-card rounded-xl border border-border p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-sm">Complete Your Profile</h3>
+                          <span className="text-xs font-bold text-accent">{accountCompletion}%</span>
+                        </div>
+                        <Progress value={accountCompletion} className="h-2 mb-3" />
+                        <div className="space-y-1.5">
+                          {accountCompletionItems.map(item => (
+                            <div key={item.label} className="flex items-center gap-2 text-xs">
+                              {item.done ? <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--success))]" /> : <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />}
+                              <span className={cn(item.done ? 'text-muted-foreground line-through' : 'text-foreground')}>{item.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full mt-3 text-xs" onClick={() => setActiveSection('profile')}>
+                          Complete Now
+                        </Button>
+                      </div>
+                    )}
+
                     <div className="bg-card rounded-xl border border-border p-5">
                       <h3 className="font-semibold mb-3 text-sm">Quick Actions</h3>
                       <div className="grid grid-cols-2 gap-2">
@@ -518,9 +540,9 @@ const Account = () => {
                           { icon: Package, label: 'Orders', onClick: () => setActiveSection('orders'), bg: 'bg-primary/10', color: 'text-primary' },
                           { icon: Heart, label: 'Wishlist', onClick: () => navigate('/wishlist'), bg: 'bg-destructive/10', color: 'text-destructive' },
                           { icon: Tag, label: 'Coupons', onClick: () => setActiveSection('coupons'), bg: 'bg-accent/10', color: 'text-accent' },
-                          { icon: Store, label: 'Sell', onClick: () => navigate('/sell'), bg: 'bg-[hsl(var(--success))]/10', color: 'text-[hsl(var(--success))]' },
+                          { icon: Link2, label: 'Affiliate', onClick: () => setActiveSection('affiliate'), bg: 'bg-[hsl(var(--success))]/10', color: 'text-[hsl(var(--success))]' },
                           { icon: MapPin, label: 'Address', onClick: () => setActiveSection('addresses'), bg: 'bg-[hsl(var(--prime))]/10', color: 'text-[hsl(var(--prime))]' },
-                          { icon: Shield, label: 'Security', onClick: () => setActiveSection('security'), bg: 'bg-violet-500/10', color: 'text-violet-500' },
+                          { icon: Settings, label: 'Settings', onClick: () => setActiveSection('settings'), bg: 'bg-violet-500/10', color: 'text-violet-500' },
                         ].map((a) => (
                           <button key={a.label} onClick={a.onClick}
                             className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/60 transition-all text-center">
@@ -533,29 +555,47 @@ const Account = () => {
                       </div>
                     </div>
 
-                    {/* Active Coupons Preview */}
-                    {coupons.length > 0 && (
-                      <div className="bg-gradient-to-br from-accent/5 to-primary/5 rounded-xl border border-accent/20 p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <BadgePercent className="h-4 w-4 text-accent" />
-                          <h3 className="text-sm font-semibold">Available Coupons</h3>
+                    {/* Affiliate Quick Card */}
+                    <div className="bg-gradient-to-br from-accent/5 to-primary/5 rounded-xl border border-accent/20 p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Link2 className="h-4 w-4 text-accent" />
+                        <h3 className="text-sm font-semibold">Affiliate Program</h3>
+                      </div>
+                      {affiliateData?.status === 'approved' ? (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Earnings: <span className="font-bold text-accent">৳{(affiliateData.total_earnings || 0).toFixed(0)}</span></p>
+                          <Button variant="outline" size="sm" className="w-full mt-2 text-xs" onClick={() => setActiveSection('affiliate')}>
+                            View Dashboard →
+                          </Button>
                         </div>
-                        <div className="space-y-2">
-                          {coupons.slice(0, 2).map((c: any) => (
-                            <div key={c.id} className="flex items-center justify-between p-2 bg-card rounded-lg border border-border">
-                              <div>
-                                <p className="text-xs font-bold font-mono text-accent">{c.code}</p>
-                                <p className="text-[10px] text-muted-foreground">{c.discount_type === 'percentage' ? `${c.discount_value}% off` : `৳${c.discount_value} off`}</p>
+                      ) : (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Earn commissions by sharing products</p>
+                          <Button variant="outline" size="sm" className="w-full mt-2 text-xs" onClick={() => navigate('/affiliate')}>
+                            {affiliateData?.status === 'pending' ? 'Application Pending' : 'Join Now →'}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Recent Activity */}
+                    {recentActivity.length > 0 && (
+                      <div className="bg-card rounded-xl border border-border p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Activity className="h-4 w-4 text-muted-foreground" />
+                          <h3 className="text-sm font-semibold">Recent Activity</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {recentActivity.map((act, i) => (
+                            <div key={i} className="flex items-start gap-2.5">
+                              <act.icon className={cn('h-3.5 w-3.5 mt-0.5 shrink-0', act.color)} />
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium truncate">{act.title}</p>
+                                <p className="text-[10px] text-muted-foreground">{format(new Date(act.time), 'MMM d, h:mm a')}</p>
                               </div>
-                              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleCopyCoupon(c.code)}>
-                                <Copy className="h-3 w-3" />
-                              </Button>
                             </div>
                           ))}
                         </div>
-                        <Button variant="ghost" size="sm" className="w-full mt-2 text-xs text-accent" onClick={() => setActiveSection('coupons')}>
-                          View All Coupons →
-                        </Button>
                       </div>
                     )}
                   </div>
