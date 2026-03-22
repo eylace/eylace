@@ -999,12 +999,71 @@ const Account = () => {
               </div>
             )}
 
-            {/* ===== SECURITY ===== */}
-            {activeSection === 'security' && (
+            {/* ===== AFFILIATE ===== */}
+            {activeSection === 'affiliate' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold">Security Settings</h2>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold">Affiliate Program</h2>
+                    <p className="text-sm text-muted-foreground">Earn commissions by sharing products</p>
+                  </div>
+                  <Link to="/affiliate"><Button variant="outline" size="sm" className="gap-1.5">Full Dashboard <ArrowUpRight className="h-3.5 w-3.5" /></Button></Link>
+                </div>
+
+                {affiliateData?.status === 'approved' ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      {[
+                        { label: 'Total Clicks', value: affiliateData.total_clicks || 0, color: 'text-primary' },
+                        { label: 'Conversions', value: affiliateData.total_conversions || 0, color: 'text-[hsl(var(--success))]' },
+                        { label: 'Earnings', value: `৳${(affiliateData.total_earnings || 0).toFixed(0)}`, color: 'text-accent' },
+                        { label: 'Pending', value: `৳${((affiliateData.total_earnings || 0) - (affiliateData.total_paid || 0)).toFixed(0)}`, color: 'text-[hsl(var(--warning))]' },
+                      ].map(s => (
+                        <div key={s.label} className="bg-card rounded-xl border border-border p-4 text-center">
+                          <p className={cn('text-xl font-bold', s.color)}>{s.value}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-card rounded-xl border border-border p-5">
+                      <h3 className="font-semibold mb-2">Your Referral Code</h3>
+                      <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                        <code className="text-lg font-mono font-bold text-accent flex-1">{affiliateData.referral_code}</code>
+                        <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}?ref=${affiliateData.referral_code}`); toast.success('Link copied!'); }}>
+                          <Copy className="h-3.5 w-3.5 mr-1.5" /> Copy Link
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">Commission Rate: {affiliateData.commission_rate}%</p>
+                    </div>
+                  </div>
+                ) : affiliateData?.status === 'pending' ? (
+                  <div className="bg-card rounded-xl border border-border p-8 text-center">
+                    <Clock className="h-10 w-10 text-[hsl(var(--warning))] mx-auto mb-3" />
+                    <h3 className="font-semibold">Application Under Review</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Your affiliate application is being reviewed.</p>
+                  </div>
+                ) : (
+                  <div className="bg-card rounded-xl border border-border p-8 text-center">
+                    <Link2 className="h-10 w-10 text-accent mx-auto mb-3" />
+                    <h3 className="font-semibold">Join Our Affiliate Program</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">Earn up to 12% commission by sharing products you love.</p>
+                    <Link to="/affiliate"><Button variant="accent" size="sm" className="mt-4">Join Now — It's Free</Button></Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ===== SETTINGS (Security + Notifications combined) ===== */}
+            {activeSection === 'settings' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-bold">Settings</h2>
+
+                {/* Security */}
                 <div className="bg-card rounded-xl border border-border p-6">
-                  <h3 className="font-semibold mb-4">Change Password</h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-5 w-5 text-accent" />
+                    <h3 className="font-semibold">Security</h3>
+                  </div>
                   <div className="space-y-4 max-w-md">
                     <div className="space-y-2"><Label>New Password</Label><Input type="password" value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} /></div>
                     <div className="space-y-2"><Label>Confirm Password</Label><Input type="password" value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} /></div>
@@ -1014,14 +1073,48 @@ const Account = () => {
                   </div>
                 </div>
 
+                {/* Notification Preferences */}
                 <div className="bg-card rounded-xl border border-border p-6">
-                  <h3 className="font-semibold mb-4">Account Information</h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Bell className="h-5 w-5 text-accent" />
+                    <h3 className="font-semibold">Notification Preferences</h3>
+                  </div>
+                  <div className="space-y-5">
+                    {[
+                      { key: 'orderUpdates', title: 'Order Updates', desc: 'Get notified about order status changes' },
+                      { key: 'promotions', title: 'Promotions & Deals', desc: 'Receive exclusive offers and discounts' },
+                      { key: 'recommendations', title: 'Product Recommendations', desc: 'Personalized product suggestions' },
+                      { key: 'reviewReminders', title: 'Review Reminders', desc: 'Reminders to review purchased products' },
+                      { key: 'wishlistAlerts', title: 'Wishlist Alerts', desc: 'Price drops on wishlist items' },
+                      { key: 'flashSaleAlerts', title: 'Flash Sale Alerts', desc: 'Get notified when flash sales start' },
+                    ].map((pref) => (
+                      <div key={pref.key} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{pref.title}</p>
+                          <p className="text-xs text-muted-foreground">{pref.desc}</p>
+                        </div>
+                        <Switch
+                          checked={(notifPrefs as any)[pref.key]}
+                          onCheckedChange={(v) => setNotifPrefs(prev => ({ ...prev, [pref.key]: v }))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Account Info */}
+                <div className="bg-card rounded-xl border border-border p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="h-5 w-5 text-accent" />
+                    <h3 className="font-semibold">Account Information</h3>
+                  </div>
                   <div className="space-y-3 text-sm">
                     {[
                       { label: 'Email', value: user.email },
                       { label: 'Account Created', value: memberSince },
                       { label: 'Last Sign In', value: user.last_sign_in_at ? format(new Date(user.last_sign_in_at), 'MMM d, yyyy h:mm a') : '—' },
                       { label: 'Member Level', value: levelConfig[memberLevel].label },
+                      { label: 'Profile Completion', value: `${accountCompletion}%` },
                     ].map((r) => (
                       <div key={r.label} className="flex justify-between py-2.5 border-b border-border last:border-0">
                         <span className="text-muted-foreground">{r.label}</span>
@@ -1031,37 +1124,11 @@ const Account = () => {
                   </div>
                 </div>
 
+                {/* Danger Zone */}
                 <div className="bg-destructive/5 rounded-xl border border-destructive/20 p-6">
                   <h3 className="font-semibold text-destructive mb-2">Danger Zone</h3>
                   <p className="text-sm text-muted-foreground mb-4">Sign out of your account on this device.</p>
                   <Button variant="destructive" size="sm" onClick={handleSignOut} className="gap-2"><LogOut className="h-4 w-4" /> Sign Out</Button>
-                </div>
-              </div>
-            )}
-
-            {/* ===== NOTIFICATIONS ===== */}
-            {activeSection === 'notifications' && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold">Notification Preferences</h2>
-                <div className="bg-card rounded-xl border border-border p-6">
-                  <div className="space-y-6">
-                    {[
-                      { title: 'Order Updates', desc: 'Get notified about order status changes', defaultChecked: true },
-                      { title: 'Promotions & Deals', desc: 'Receive exclusive offers and discounts', defaultChecked: false },
-                      { title: 'Product Recommendations', desc: 'Personalized product suggestions', defaultChecked: false },
-                      { title: 'Review Reminders', desc: 'Reminders to review purchased products', defaultChecked: true },
-                      { title: 'Wishlist Alerts', desc: 'Price drops on wishlist items', defaultChecked: true },
-                      { title: 'Flash Sale Alerts', desc: 'Get notified when flash sales start', defaultChecked: true },
-                    ].map((pref) => (
-                      <div key={pref.title} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-sm">{pref.title}</p>
-                          <p className="text-xs text-muted-foreground">{pref.desc}</p>
-                        </div>
-                        <Switch defaultChecked={pref.defaultChecked} />
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
             )}
