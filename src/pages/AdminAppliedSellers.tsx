@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Loader2, CheckCircle, XCircle, Clock, Store, Eye, Phone, Building2, FileText, Calendar } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Clock, Store, Eye, Phone, Building2, FileText, Calendar, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -32,6 +33,7 @@ const AdminAppliedSellers = () => {
   const [actionDialog, setActionDialog] = useState<{ app: SellerApplication; action: 'approve' | 'reject' } | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -60,6 +62,21 @@ const AdminAppliedSellers = () => {
     setProcessing(false);
   };
 
+  const handleDelete = async (appId: string) => {
+    setDeleting(appId);
+    const { error } = await supabase.functions.invoke('admin-manage-sellers', {
+      body: { action: 'delete-application', applicationId: appId },
+    });
+    if (error) {
+      toast.error('Failed to delete application');
+    } else {
+      toast.success('Application deleted successfully');
+      if (selectedApp?.id === appId) setSelectedApp(null);
+      await fetchData();
+    }
+    setDeleting(null);
+  };
+
   const statusBadge = (status: string) => {
     switch (status) {
       case 'approved': return <Badge className="bg-green-500/10 text-green-600 border-green-500/20"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
@@ -67,6 +84,31 @@ const AdminAppliedSellers = () => {
       default: return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
     }
   };
+
+  const DeleteButton = ({ app }: { app: SellerApplication }) => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant="outline" className="gap-1 text-destructive border-destructive/30 hover:bg-destructive/10" disabled={deleting === app.id}>
+          {deleting === app.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+          Delete
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Application</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to permanently delete the application from "{app.store_name}"? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => handleDelete(app.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 
   const pendingApps = applications.filter(a => a.status === 'pending');
   const otherApps = applications.filter(a => a.status !== 'pending');
@@ -111,7 +153,7 @@ const AdminAppliedSellers = () => {
                         <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{new Date(app.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 shrink-0 flex-wrap">
                       <Button size="sm" variant="outline" className="gap-1" onClick={() => setSelectedApp(app)}>
                         <Eye className="h-3.5 w-3.5" /> View Details
                       </Button>
@@ -121,6 +163,7 @@ const AdminAppliedSellers = () => {
                       <Button size="sm" variant="destructive" className="gap-1" onClick={() => { setActionDialog({ app, action: 'reject' }); setAdminNotes(''); }}>
                         <XCircle className="h-3.5 w-3.5" /> Reject
                       </Button>
+                      <DeleteButton app={app} />
                     </div>
                   </div>
                 ))}
@@ -154,9 +197,12 @@ const AdminAppliedSellers = () => {
                         {app.admin_notes && <span className="italic">Note: {app.admin_notes}</span>}
                       </div>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => setSelectedApp(app)}>
-                      <Eye className="h-3.5 w-3.5 mr-1" /> View
-                    </Button>
+                    <div className="flex gap-2 shrink-0">
+                      <Button size="sm" variant="ghost" onClick={() => setSelectedApp(app)}>
+                        <Eye className="h-3.5 w-3.5 mr-1" /> View
+                      </Button>
+                      <DeleteButton app={app} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -218,19 +264,20 @@ const AdminAppliedSellers = () => {
                 </div>
               )}
 
-              {selectedApp.status === 'pending' && (
-                <>
-                  <Separator />
-                  <div className="flex gap-2">
+              <Separator />
+              <div className="flex gap-2">
+                {selectedApp.status === 'pending' && (
+                  <>
                     <Button className="flex-1 gap-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => { setActionDialog({ app: selectedApp, action: 'approve' }); setAdminNotes(''); }}>
                       <CheckCircle className="h-4 w-4" /> Approve Seller
                     </Button>
                     <Button variant="destructive" className="flex-1 gap-1" onClick={() => { setActionDialog({ app: selectedApp, action: 'reject' }); setAdminNotes(''); }}>
                       <XCircle className="h-4 w-4" /> Reject
                     </Button>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+                <DeleteButton app={selectedApp} />
+              </div>
             </div>
           )}
         </DialogContent>
