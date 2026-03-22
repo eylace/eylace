@@ -45,30 +45,7 @@ export const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     const root = document.documentElement;
 
-    // Apply fonts
-    root.style.setProperty('--font-body', setup.fontFamily);
-    root.style.setProperty('--font-heading', setup.headingFont);
-    root.style.fontSize = `${setup.fontSize}px`;
-
-    // Apply theme colors
-    const primaryHSL = hexToHSL(setup.primaryColor);
-    const accentHSL = hexToHSL(setup.accentColor);
-    if (primaryHSL) {
-      root.style.setProperty('--primary', primaryHSL);
-      root.style.setProperty('--primary-foreground', '0 0% 100%');
-    }
-    if (accentHSL) {
-      root.style.setProperty('--accent', accentHSL);
-      root.style.setProperty('--accent-foreground', '0 0% 100%');
-      root.style.setProperty('--ring', accentHSL);
-    }
-
-    // Apply border radius
-    if (setup.borderRadius) {
-      root.style.setProperty('--radius', `${setup.borderRadius}px`);
-    }
-
-    // Load Google Fonts dynamically
+    // Load Google Fonts dynamically (non-blocking, outside rAF)
     const fonts = [setup.fontFamily, setup.headingFont].filter(Boolean);
     const uniqueFonts = [...new Set(fonts)];
     const existingLink = document.getElementById('dynamic-google-fonts');
@@ -81,6 +58,29 @@ export const Layout = ({ children }: LayoutProps) => {
       document.head.appendChild(link);
     }
 
+    // Batch all style mutations in a single rAF to avoid forced reflows
+    const rafId = requestAnimationFrame(() => {
+      root.style.setProperty('--font-body', setup.fontFamily);
+      root.style.setProperty('--font-heading', setup.headingFont);
+      root.style.fontSize = `${setup.fontSize}px`;
+
+      const primaryHSL = hexToHSL(setup.primaryColor);
+      const accentHSL = hexToHSL(setup.accentColor);
+      if (primaryHSL) {
+        root.style.setProperty('--primary', primaryHSL);
+        root.style.setProperty('--primary-foreground', '0 0% 100%');
+      }
+      if (accentHSL) {
+        root.style.setProperty('--accent', accentHSL);
+        root.style.setProperty('--accent-foreground', '0 0% 100%');
+        root.style.setProperty('--ring', accentHSL);
+      }
+
+      if (setup.borderRadius) {
+        root.style.setProperty('--radius', `${setup.borderRadius}px`);
+      }
+    });
+
     // Apply custom CSS
     let styleEl = document.getElementById('website-custom-css') as HTMLStyleElement;
     if (!styleEl) {
@@ -91,6 +91,7 @@ export const Layout = ({ children }: LayoutProps) => {
     styleEl.textContent = setup.customCss || '';
 
     return () => {
+      cancelAnimationFrame(rafId);
       root.style.removeProperty('--font-body');
       root.style.removeProperty('--font-heading');
       root.style.removeProperty('--primary');
