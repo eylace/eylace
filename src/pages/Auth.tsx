@@ -96,30 +96,53 @@ const Auth = () => {
       return;
     }
     setIsSubmitting(true);
-    const { error } = await supabase.auth.signInWithOtp({ phone: phoneNumber });
-    setIsSubmitting(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const res = await supabase.functions.invoke('send-otp', {
+        body: { phone: phoneNumber },
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || res.error?.message || 'Failed to send OTP');
+        setIsSubmitting(false);
+        return;
+      }
+      setOtpSent(true);
+      toast.success('OTP sent to your phone!');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to send OTP');
     }
-    setOtpSent(true);
-    toast.success('OTP sent to your phone!');
+    setIsSubmitting(false);
   };
 
   const handleVerifyOTP = async () => {
-    if (!otpCode || otpCode.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP');
+    if (!otpCode || otpCode.length < 4) {
+      toast.error('Please enter a valid OTP');
       return;
     }
     setIsSubmitting(true);
-    const { error } = await supabase.auth.verifyOtp({ phone: phoneNumber, token: otpCode, type: 'sms' });
-    setIsSubmitting(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const res = await supabase.functions.invoke('verify-otp', {
+        body: { phone: phoneNumber, code: otpCode },
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || res.error?.message || 'Invalid OTP');
+        setIsSubmitting(false);
+        return;
+      }
+      // Set the session from the response
+      if (res.data?.session) {
+        await supabase.auth.setSession({
+          access_token: res.data.session.access_token,
+          refresh_token: res.data.session.refresh_token,
+        });
+        toast.success('Phone verified successfully!');
+        navigate('/');
+      } else {
+        toast.error('Authentication failed. Please try again.');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Verification failed');
     }
-    toast.success('Phone verified successfully!');
-    navigate('/');
+    setIsSubmitting(false);
   };
 
   const handleForgotPassword = async () => {
