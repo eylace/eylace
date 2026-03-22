@@ -46,7 +46,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    const adminClient = createClient(supabaseUrl, serviceKey)
 
     // ========== JOIN ==========
     if (action === 'join' && req.method === 'POST') {
