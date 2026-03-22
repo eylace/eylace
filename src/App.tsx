@@ -193,6 +193,7 @@ const App = () => (
             <CompareBar />
             <CompareModal />
             <BrowserRouter>
+              <ReferralCapture />
               <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
