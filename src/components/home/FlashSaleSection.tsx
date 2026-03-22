@@ -71,7 +71,7 @@ export const FlashSaleSection = () => {
           ) : flashSaleProducts.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">{t('flashSale.noItems')}</p>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {flashSaleProducts.map((product) => (<ProductCard key={product.id} product={product} />))}
             </div>
           )}
