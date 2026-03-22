@@ -1592,6 +1592,72 @@ export type Database = {
         }
         Relationships: []
       }
+      return_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string | null
+          id: string
+          images: string[] | null
+          order_id: string
+          order_item_id: string | null
+          reason: string
+          refund_amount: number | null
+          refund_method: string | null
+          resolved_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          order_id: string
+          order_item_id?: string | null
+          reason: string
+          refund_amount?: number | null
+          refund_method?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          order_id?: string
+          order_item_id?: string | null
+          reason?: string
+          refund_amount?: number | null
+          refund_method?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_requests_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_votes: {
         Row: {
           created_at: string
