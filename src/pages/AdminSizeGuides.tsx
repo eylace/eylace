@@ -124,7 +124,7 @@ const AdminSizeGuides = () => {
       name: form.name,
       category_id: form.category_id === 'all' ? null : form.category_id || null,
       sizes: form.sizes,
-      measurements: measurements as unknown as Record<string, unknown>,
+      measurements: JSON.parse(JSON.stringify(measurements)),
     };
     const { error } = editing
       ? await supabase.from('size_guides').update(payload).eq('id', editing.id)
