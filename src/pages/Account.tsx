@@ -7,7 +7,8 @@ import {
   Gift, Award, Ticket, TrendingUp, Sparkles, Crown, Truck,
   BarChart3, Download, Eye, MessageSquare, RefreshCcw, Wallet,
   FileText, Tag, Copy, ChevronDown, ArrowUpRight, CircleDollarSign,
-  Zap, BadgePercent, Receipt, HelpCircle, Store, ChevronUp,
+  Zap, BadgePercent, Receipt, HelpCircle, Store, ChevronUp, Link2,
+  Globe, Palette, Activity, CheckCircle2, AlertCircle,
   RotateCcw, XCircle
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -61,10 +62,10 @@ const SIDEBAR_ITEMS = [
   { id: 'wishlist', icon: Heart, label: 'Wishlist' },
   { id: 'coupons', icon: Tag, label: 'My Coupons' },
   { id: 'wallet', icon: Wallet, label: 'Wallet & Points' },
+  { id: 'affiliate', icon: Link2, label: 'Affiliate' },
   { id: 'profile', icon: User, label: 'Profile' },
   { id: 'addresses', icon: MapPin, label: 'Addresses' },
-  { id: 'security', icon: Shield, label: 'Security' },
-  { id: 'notifications', icon: Bell, label: 'Notifications' },
+  { id: 'settings', icon: Settings, label: 'Settings' },
   { id: 'help', icon: HelpCircle, label: 'Help & Support' },
 ];
 
@@ -92,10 +93,16 @@ const Account = () => {
   const [cancellingOrder, setCancellingOrder] = useState<string | null>(null);
   const [returnModal, setReturnModal] = useState<{ orderId: string; orderNumber: string; items: any[] } | null>(null);
   const [monthlySpending, setMonthlySpending] = useState<{month: string; amount: number}[]>([]);
+  const [affiliateData, setAffiliateData] = useState<any>(null);
+  const [recentActivity, setRecentActivity] = useState<{type: string; title: string; time: string; icon: any; color: string}[]>([]);
 
   const [profileData, setProfileData] = useState({ first_name: '', last_name: '', phone: '' });
   const [addressData, setAddressData] = useState({ address: '', apartment: '', city: '', state: '', zip_code: '', country: 'BD' });
   const [passwordData, setPasswordData] = useState({ newPassword: '', confirmPassword: '' });
+  const [notifPrefs, setNotifPrefs] = useState({
+    orderUpdates: true, promotions: false, recommendations: false,
+    reviewReminders: true, wishlistAlerts: true, flashSaleAlerts: true,
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -120,11 +127,12 @@ const Account = () => {
   }, [user]);
 
   const fetchAllData = async () => {
-    const [ordersRes, reviewsRes, allOrdersRes, couponsRes] = await Promise.all([
+    const [ordersRes, reviewsRes, allOrdersRes, couponsRes, affRes] = await Promise.all([
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),
       supabase.from('product_reviews').select('id', { count: 'exact', head: true }),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
+      supabase.from('affiliates').select('*').eq('user_id', user!.id).maybeSingle(),
     ]);
 
     setRecentOrders(ordersRes.data || []);
@@ -133,6 +141,7 @@ const Account = () => {
     setAllOrders(orders);
     setOrderCount(orders.length);
     setCoupons(couponsRes.data || []);
+    setAffiliateData(affRes.data);
 
     // Calculate spending
     const spent = orders.filter(o => o.status !== 'cancelled').reduce((sum: number, o: any) => sum + (o.total || 0), 0);
@@ -143,7 +152,6 @@ const Account = () => {
     const monthly: {month: string; amount: number}[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = format(d, 'MMM yyyy');
       const monthOrders = orders.filter((o: any) => {
         const od = new Date(o.created_at);
         return od.getMonth() === d.getMonth() && od.getFullYear() === d.getFullYear() && o.status !== 'cancelled';
@@ -151,6 +159,14 @@ const Account = () => {
       monthly.push({ month: format(d, 'MMM'), amount: monthOrders.reduce((s: number, o: any) => s + (o.total || 0), 0) });
     }
     setMonthlySpending(monthly);
+
+    // Build recent activity
+    const activity: {type: string; title: string; time: string; icon: any; color: string}[] = [];
+    orders.slice(0, 3).forEach((o: any) => {
+      activity.push({ type: 'order', title: `Order #${o.order_number} ${o.status}`, time: o.created_at, icon: Package, color: 'text-primary' });
+    });
+    activity.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    setRecentActivity(activity.slice(0, 5));
   };
 
   const handleProfileSave = async () => {
@@ -239,6 +255,14 @@ const Account = () => {
   const rewardPoints = orderCount * 50;
   const nextLevelPoints = memberLevel === 'silver' ? 500 : memberLevel === 'gold' ? 1000 : 2000;
   const progressToNext = Math.min((rewardPoints / nextLevelPoints) * 100, 100);
+
+  const accountCompletionItems = useMemo(() => [
+    { label: 'Name', done: !!(profile?.first_name && profile?.last_name) },
+    { label: 'Phone', done: !!profile?.phone },
+    { label: 'Address', done: !!profile?.address },
+    { label: 'Avatar', done: !!(profile as any)?.avatar_url },
+  ], [profile]);
+  const accountCompletion = Math.round((accountCompletionItems.filter(i => i.done).length / accountCompletionItems.length) * 100);
 
   const filteredOrders = useMemo(() => {
     if (orderFilter === 'all') return allOrders;
@@ -485,8 +509,30 @@ const Account = () => {
                     )}
                   </div>
 
-                  {/* Quick Actions */}
+                  {/* Quick Actions + Account Completion */}
                   <div className="space-y-4">
+                    {/* Account Completion */}
+                    {accountCompletion < 100 && (
+                      <div className="bg-card rounded-xl border border-border p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-sm">Complete Your Profile</h3>
+                          <span className="text-xs font-bold text-accent">{accountCompletion}%</span>
+                        </div>
+                        <Progress value={accountCompletion} className="h-2 mb-3" />
+                        <div className="space-y-1.5">
+                          {accountCompletionItems.map(item => (
+                            <div key={item.label} className="flex items-center gap-2 text-xs">
+                              {item.done ? <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--success))]" /> : <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />}
+                              <span className={cn(item.done ? 'text-muted-foreground line-through' : 'text-foreground')}>{item.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full mt-3 text-xs" onClick={() => setActiveSection('profile')}>
+                          Complete Now
+                        </Button>
+                      </div>
+                    )}
+
                     <div className="bg-card rounded-xl border border-border p-5">
                       <h3 className="font-semibold mb-3 text-sm">Quick Actions</h3>
                       <div className="grid grid-cols-2 gap-2">
@@ -494,9 +540,9 @@ const Account = () => {
                           { icon: Package, label: 'Orders', onClick: () => setActiveSection('orders'), bg: 'bg-primary/10', color: 'text-primary' },
                           { icon: Heart, label: 'Wishlist', onClick: () => navigate('/wishlist'), bg: 'bg-destructive/10', color: 'text-destructive' },
                           { icon: Tag, label: 'Coupons', onClick: () => setActiveSection('coupons'), bg: 'bg-accent/10', color: 'text-accent' },
-                          { icon: Store, label: 'Sell', onClick: () => navigate('/sell'), bg: 'bg-[hsl(var(--success))]/10', color: 'text-[hsl(var(--success))]' },
+                          { icon: Link2, label: 'Affiliate', onClick: () => setActiveSection('affiliate'), bg: 'bg-[hsl(var(--success))]/10', color: 'text-[hsl(var(--success))]' },
                           { icon: MapPin, label: 'Address', onClick: () => setActiveSection('addresses'), bg: 'bg-[hsl(var(--prime))]/10', color: 'text-[hsl(var(--prime))]' },
-                          { icon: Shield, label: 'Security', onClick: () => setActiveSection('security'), bg: 'bg-violet-500/10', color: 'text-violet-500' },
+                          { icon: Settings, label: 'Settings', onClick: () => setActiveSection('settings'), bg: 'bg-violet-500/10', color: 'text-violet-500' },
                         ].map((a) => (
                           <button key={a.label} onClick={a.onClick}
                             className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/60 transition-all text-center">
@@ -509,29 +555,47 @@ const Account = () => {
                       </div>
                     </div>
 
-                    {/* Active Coupons Preview */}
-                    {coupons.length > 0 && (
-                      <div className="bg-gradient-to-br from-accent/5 to-primary/5 rounded-xl border border-accent/20 p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <BadgePercent className="h-4 w-4 text-accent" />
-                          <h3 className="text-sm font-semibold">Available Coupons</h3>
+                    {/* Affiliate Quick Card */}
+                    <div className="bg-gradient-to-br from-accent/5 to-primary/5 rounded-xl border border-accent/20 p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Link2 className="h-4 w-4 text-accent" />
+                        <h3 className="text-sm font-semibold">Affiliate Program</h3>
+                      </div>
+                      {affiliateData?.status === 'approved' ? (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Earnings: <span className="font-bold text-accent">৳{(affiliateData.total_earnings || 0).toFixed(0)}</span></p>
+                          <Button variant="outline" size="sm" className="w-full mt-2 text-xs" onClick={() => setActiveSection('affiliate')}>
+                            View Dashboard →
+                          </Button>
                         </div>
-                        <div className="space-y-2">
-                          {coupons.slice(0, 2).map((c: any) => (
-                            <div key={c.id} className="flex items-center justify-between p-2 bg-card rounded-lg border border-border">
-                              <div>
-                                <p className="text-xs font-bold font-mono text-accent">{c.code}</p>
-                                <p className="text-[10px] text-muted-foreground">{c.discount_type === 'percentage' ? `${c.discount_value}% off` : `৳${c.discount_value} off`}</p>
+                      ) : (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Earn commissions by sharing products</p>
+                          <Button variant="outline" size="sm" className="w-full mt-2 text-xs" onClick={() => navigate('/affiliate')}>
+                            {affiliateData?.status === 'pending' ? 'Application Pending' : 'Join Now →'}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Recent Activity */}
+                    {recentActivity.length > 0 && (
+                      <div className="bg-card rounded-xl border border-border p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Activity className="h-4 w-4 text-muted-foreground" />
+                          <h3 className="text-sm font-semibold">Recent Activity</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {recentActivity.map((act, i) => (
+                            <div key={i} className="flex items-start gap-2.5">
+                              <act.icon className={cn('h-3.5 w-3.5 mt-0.5 shrink-0', act.color)} />
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium truncate">{act.title}</p>
+                                <p className="text-[10px] text-muted-foreground">{format(new Date(act.time), 'MMM d, h:mm a')}</p>
                               </div>
-                              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleCopyCoupon(c.code)}>
-                                <Copy className="h-3 w-3" />
-                              </Button>
                             </div>
                           ))}
                         </div>
-                        <Button variant="ghost" size="sm" className="w-full mt-2 text-xs text-accent" onClick={() => setActiveSection('coupons')}>
-                          View All Coupons →
-                        </Button>
                       </div>
                     )}
                   </div>
@@ -935,12 +999,71 @@ const Account = () => {
               </div>
             )}
 
-            {/* ===== SECURITY ===== */}
-            {activeSection === 'security' && (
+            {/* ===== AFFILIATE ===== */}
+            {activeSection === 'affiliate' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold">Security Settings</h2>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold">Affiliate Program</h2>
+                    <p className="text-sm text-muted-foreground">Earn commissions by sharing products</p>
+                  </div>
+                  <Link to="/affiliate"><Button variant="outline" size="sm" className="gap-1.5">Full Dashboard <ArrowUpRight className="h-3.5 w-3.5" /></Button></Link>
+                </div>
+
+                {affiliateData?.status === 'approved' ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      {[
+                        { label: 'Total Clicks', value: affiliateData.total_clicks || 0, color: 'text-primary' },
+                        { label: 'Conversions', value: affiliateData.total_conversions || 0, color: 'text-[hsl(var(--success))]' },
+                        { label: 'Earnings', value: `৳${(affiliateData.total_earnings || 0).toFixed(0)}`, color: 'text-accent' },
+                        { label: 'Pending', value: `৳${((affiliateData.total_earnings || 0) - (affiliateData.total_paid || 0)).toFixed(0)}`, color: 'text-[hsl(var(--warning))]' },
+                      ].map(s => (
+                        <div key={s.label} className="bg-card rounded-xl border border-border p-4 text-center">
+                          <p className={cn('text-xl font-bold', s.color)}>{s.value}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-card rounded-xl border border-border p-5">
+                      <h3 className="font-semibold mb-2">Your Referral Code</h3>
+                      <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
+                        <code className="text-lg font-mono font-bold text-accent flex-1">{affiliateData.referral_code}</code>
+                        <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}?ref=${affiliateData.referral_code}`); toast.success('Link copied!'); }}>
+                          <Copy className="h-3.5 w-3.5 mr-1.5" /> Copy Link
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">Commission Rate: {affiliateData.commission_rate}%</p>
+                    </div>
+                  </div>
+                ) : affiliateData?.status === 'pending' ? (
+                  <div className="bg-card rounded-xl border border-border p-8 text-center">
+                    <Clock className="h-10 w-10 text-[hsl(var(--warning))] mx-auto mb-3" />
+                    <h3 className="font-semibold">Application Under Review</h3>
+                    <p className="text-sm text-muted-foreground mt-1">Your affiliate application is being reviewed.</p>
+                  </div>
+                ) : (
+                  <div className="bg-card rounded-xl border border-border p-8 text-center">
+                    <Link2 className="h-10 w-10 text-accent mx-auto mb-3" />
+                    <h3 className="font-semibold">Join Our Affiliate Program</h3>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">Earn up to 12% commission by sharing products you love.</p>
+                    <Link to="/affiliate"><Button variant="accent" size="sm" className="mt-4">Join Now — It's Free</Button></Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ===== SETTINGS (Security + Notifications combined) ===== */}
+            {activeSection === 'settings' && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-bold">Settings</h2>
+
+                {/* Security */}
                 <div className="bg-card rounded-xl border border-border p-6">
-                  <h3 className="font-semibold mb-4">Change Password</h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-5 w-5 text-accent" />
+                    <h3 className="font-semibold">Security</h3>
+                  </div>
                   <div className="space-y-4 max-w-md">
                     <div className="space-y-2"><Label>New Password</Label><Input type="password" value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} /></div>
                     <div className="space-y-2"><Label>Confirm Password</Label><Input type="password" value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} /></div>
@@ -950,14 +1073,48 @@ const Account = () => {
                   </div>
                 </div>
 
+                {/* Notification Preferences */}
                 <div className="bg-card rounded-xl border border-border p-6">
-                  <h3 className="font-semibold mb-4">Account Information</h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Bell className="h-5 w-5 text-accent" />
+                    <h3 className="font-semibold">Notification Preferences</h3>
+                  </div>
+                  <div className="space-y-5">
+                    {[
+                      { key: 'orderUpdates', title: 'Order Updates', desc: 'Get notified about order status changes' },
+                      { key: 'promotions', title: 'Promotions & Deals', desc: 'Receive exclusive offers and discounts' },
+                      { key: 'recommendations', title: 'Product Recommendations', desc: 'Personalized product suggestions' },
+                      { key: 'reviewReminders', title: 'Review Reminders', desc: 'Reminders to review purchased products' },
+                      { key: 'wishlistAlerts', title: 'Wishlist Alerts', desc: 'Price drops on wishlist items' },
+                      { key: 'flashSaleAlerts', title: 'Flash Sale Alerts', desc: 'Get notified when flash sales start' },
+                    ].map((pref) => (
+                      <div key={pref.key} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{pref.title}</p>
+                          <p className="text-xs text-muted-foreground">{pref.desc}</p>
+                        </div>
+                        <Switch
+                          checked={(notifPrefs as any)[pref.key]}
+                          onCheckedChange={(v) => setNotifPrefs(prev => ({ ...prev, [pref.key]: v }))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Account Info */}
+                <div className="bg-card rounded-xl border border-border p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="h-5 w-5 text-accent" />
+                    <h3 className="font-semibold">Account Information</h3>
+                  </div>
                   <div className="space-y-3 text-sm">
                     {[
                       { label: 'Email', value: user.email },
                       { label: 'Account Created', value: memberSince },
                       { label: 'Last Sign In', value: user.last_sign_in_at ? format(new Date(user.last_sign_in_at), 'MMM d, yyyy h:mm a') : '—' },
                       { label: 'Member Level', value: levelConfig[memberLevel].label },
+                      { label: 'Profile Completion', value: `${accountCompletion}%` },
                     ].map((r) => (
                       <div key={r.label} className="flex justify-between py-2.5 border-b border-border last:border-0">
                         <span className="text-muted-foreground">{r.label}</span>
@@ -967,37 +1124,11 @@ const Account = () => {
                   </div>
                 </div>
 
+                {/* Danger Zone */}
                 <div className="bg-destructive/5 rounded-xl border border-destructive/20 p-6">
                   <h3 className="font-semibold text-destructive mb-2">Danger Zone</h3>
                   <p className="text-sm text-muted-foreground mb-4">Sign out of your account on this device.</p>
                   <Button variant="destructive" size="sm" onClick={handleSignOut} className="gap-2"><LogOut className="h-4 w-4" /> Sign Out</Button>
-                </div>
-              </div>
-            )}
-
-            {/* ===== NOTIFICATIONS ===== */}
-            {activeSection === 'notifications' && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold">Notification Preferences</h2>
-                <div className="bg-card rounded-xl border border-border p-6">
-                  <div className="space-y-6">
-                    {[
-                      { title: 'Order Updates', desc: 'Get notified about order status changes', defaultChecked: true },
-                      { title: 'Promotions & Deals', desc: 'Receive exclusive offers and discounts', defaultChecked: false },
-                      { title: 'Product Recommendations', desc: 'Personalized product suggestions', defaultChecked: false },
-                      { title: 'Review Reminders', desc: 'Reminders to review purchased products', defaultChecked: true },
-                      { title: 'Wishlist Alerts', desc: 'Price drops on wishlist items', defaultChecked: true },
-                      { title: 'Flash Sale Alerts', desc: 'Get notified when flash sales start', defaultChecked: true },
-                    ].map((pref) => (
-                      <div key={pref.title} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-sm">{pref.title}</p>
-                          <p className="text-xs text-muted-foreground">{pref.desc}</p>
-                        </div>
-                        <Switch defaultChecked={pref.defaultChecked} />
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
             )}
