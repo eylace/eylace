@@ -58,7 +58,8 @@ serve(async (req) => {
           return new Response("Forbidden", { status: 403 });
         }
       } else {
-        console.warn("FB_APP_SECRET not set — skipping signature verification");
+        console.error("FB_APP_SECRET not set — rejecting request");
+        return new Response("Server misconfiguration", { status: 500 });
       }
 
       const body = JSON.parse(rawBody);
