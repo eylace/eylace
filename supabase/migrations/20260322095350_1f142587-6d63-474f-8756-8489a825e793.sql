@@ -1,0 +1,1 @@
+ALTER TABLE public.size_guides ADD COLUMN measurements jsonb NOT NULL DEFAULT '{"columns":[],"data":{}}'::jsonb;
