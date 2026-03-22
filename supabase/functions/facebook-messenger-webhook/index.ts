@@ -37,7 +37,31 @@ serve(async (req) => {
   // POST = Incoming messages from Facebook
   if (req.method === "POST") {
     try {
-      const body = await req.json();
+      const rawBody = await req.text();
+
+      // Verify Facebook signature if FB_APP_SECRET is configured
+      const FB_APP_SECRET = Deno.env.get("FB_APP_SECRET");
+      if (FB_APP_SECRET) {
+        const sig = req.headers.get("X-Hub-Signature-256");
+        if (!sig) {
+          console.error("Missing X-Hub-Signature-256 header");
+          return new Response("Forbidden", { status: 403 });
+        }
+        const key = await crypto.subtle.importKey(
+          "raw", new TextEncoder().encode(FB_APP_SECRET),
+          { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+        );
+        const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
+        const expected = "sha256=" + [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, "0")).join("");
+        if (sig !== expected) {
+          console.error("Invalid webhook signature");
+          return new Response("Forbidden", { status: 403 });
+        }
+      } else {
+        console.warn("FB_APP_SECRET not set — skipping signature verification");
+      }
+
+      const body = JSON.parse(rawBody);
       console.log("Received webhook:", JSON.stringify(body).slice(0, 500));
 
       if (body.object !== "page") {
