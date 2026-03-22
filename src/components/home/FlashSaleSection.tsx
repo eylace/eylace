@@ -65,7 +65,7 @@ export const FlashSaleSection = () => {
             </Link>
           </div>
         </div>
-        <div className="bg-card p-4 md:p-6">
+        <div className="bg-card p-2 sm:p-4 md:p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
           ) : flashSaleProducts.length === 0 ? (
