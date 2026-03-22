@@ -608,6 +608,43 @@ const Account = () => {
                             />
                           </div>
                         )}
+
+                        {/* Action Buttons */}
+                        {(order.status === 'pending' || order.status === 'delivered') && (
+                          <div className="border-t border-border p-3 flex flex-wrap gap-2">
+                            {order.status === 'pending' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                                onClick={() => handleCancelOrder(order.id)}
+                                disabled={cancellingOrder === order.id}
+                              >
+                                {cancellingOrder === order.id ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                                ) : (
+                                  <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                                )}
+                                Cancel Order
+                              </Button>
+                            )}
+                            {order.status === 'delivered' && order.order_items && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-accent border-accent/30 hover:bg-accent/10"
+                                onClick={() => setReturnModal({
+                                  orderId: order.id,
+                                  orderNumber: order.order_number,
+                                  items: order.order_items,
+                                })}
+                              >
+                                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                                Request Return
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
