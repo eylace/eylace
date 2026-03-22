@@ -470,15 +470,6 @@ const Orders = () => {
         />
       )}
     </Layout>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </Layout>
   );
 };
 
