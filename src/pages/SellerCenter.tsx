@@ -53,7 +53,7 @@ const SellerCenter = () => {
             <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
               <Link to="/sell">Register Now</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+            <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
               <Link to="/seller">Seller Dashboard</Link>
             </Button>
           </div>
