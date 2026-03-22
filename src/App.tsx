@@ -12,7 +12,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { DeliveryLocationProvider } from "@/contexts/DeliveryLocationContext";
 import { CompareBar } from "@/components/compare/CompareBar";
 import { CompareModal } from "@/components/compare/CompareModal";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
 // Critical pages - eager load
 import Index from "./pages/Index";
