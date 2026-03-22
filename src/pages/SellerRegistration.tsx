@@ -102,7 +102,7 @@ const SellerRegistration = () => {
 
     const status = statusConfig[existingApplication.status] || statusConfig.pending;
     const StatusIcon = status.icon;
-    const planLabel = existingApplication.fulfillment_type === 'fbe' ? 'FBE — Fulfilled by Eylace' : 'FBM — Fulfilled by Merchant';
+    const planLabel = existingApplication.fulfillment_type === 'fbe' ? 'FBE — Fulfilled by Eylace' : 'FBS — Fulfilled by Seller';
 
     return (
       <Layout>
@@ -217,7 +217,7 @@ const SellerRegistration = () => {
                 <CardHeader>
                   <CardTitle>{t('sellerReg.applicationTitle')}</CardTitle>
                   <CardDescription>
-                    {t('sellerReg.applicationDesc')} — নির্বাচিত প্ল্যান: <span className="font-semibold">{fulfillmentType === 'fbe' ? 'FBE (Eylace ম্যানেজড)' : 'FBM (সেলার ম্যানেজড)'}</span>
+                    {t('sellerReg.applicationDesc')} — নির্বাচিত প্ল্যান: <span className="font-semibold">{fulfillmentType === 'fbe' ? 'FBE (Eylace ম্যানেজড)' : 'FBS (সেলার ম্যানেজড)'}</span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

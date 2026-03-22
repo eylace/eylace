@@ -94,14 +94,14 @@ const SellerCenter = () => {
             </CardContent>
           </Card>
 
-          {/* FBM Card */}
+          {/* FBS Card */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-8 pb-6">
               <div className="text-center mb-6">
                 <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
                   <Package className="h-7 w-7 text-accent" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground">FBM — Fulfilled by Merchant</h3>
+                <h3 className="text-xl font-bold text-foreground">FBS — Fulfilled by Seller</h3>
                 <p className="text-sm text-muted-foreground mt-1">You manage everything yourself</p>
               </div>
               <div className="bg-accent/5 rounded-lg p-4 text-center mb-5">
@@ -114,7 +114,7 @@ const SellerCenter = () => {
                 ))}
               </ul>
               <Button asChild variant="outline" className="w-full mt-6">
-                <Link to="/sell">Start with FBM</Link>
+                <Link to="/sell">Start with FBS</Link>
               </Button>
             </CardContent>
           </Card>
@@ -127,7 +127,7 @@ const SellerCenter = () => {
               <tr className="border-b">
                 <th className="text-left py-3 px-4 font-semibold text-foreground">Feature</th>
                 <th className="text-center py-3 px-4 font-semibold text-primary">FBE</th>
-                <th className="text-center py-3 px-4 font-semibold text-accent">FBM</th>
+                <th className="text-center py-3 px-4 font-semibold text-accent">FBS</th>
               </tr>
             </thead>
             <tbody>

@@ -34,7 +34,7 @@ const plans = [
   },
   {
     id: 'fbm' as FulfillmentType,
-    name: 'FBM — Fulfilled by Merchant',
+    name: 'FBS — Fulfilled by Seller',
     tagline: 'আপনি নিজে ম্যানেজ করবেন',
     badge: null,
     commission: '৫–১০%',
