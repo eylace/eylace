@@ -57,7 +57,7 @@ export const CurrencySwitcher = () => {
           </DropdownMenuItem>
         )}
         {lastUpdated &&
-        <div className="px-2 py-1.5 text-[10px] text-muted-foreground border-t border-border mt-1">
+        <div className="px-2 py-1.5 border-t border-border mt-1 text-xs text-right text-slate-950">
             🔄 Rate updated: {new Date(lastUpdated).toLocaleTimeString()}
           </div>
         }
