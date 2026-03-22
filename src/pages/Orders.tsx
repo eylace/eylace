@@ -33,6 +33,17 @@ interface TrackingEvent {
   created_at: string;
 }
 
+interface ReturnRequest {
+  id: string;
+  order_item_id: string | null;
+  reason: string;
+  status: string;
+  refund_amount: number;
+  refund_method: string;
+  created_at: string;
+  resolved_at: string | null;
+}
+
 interface Order {
   id: string;
   order_number: string;
@@ -52,6 +63,7 @@ interface Order {
   created_at: string;
   order_items: OrderItem[];
   tracking_events: TrackingEvent[];
+  return_requests: ReturnRequest[];
 }
 
 const statusColors: Record<string, string> = {
