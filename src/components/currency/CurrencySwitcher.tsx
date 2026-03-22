@@ -4,8 +4,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  DropdownMenuTrigger } from
+'@/components/ui/dropdown-menu';
 
 const CURRENCY_FLAGS: Record<string, string> = {
   BDT: '🇧🇩',
@@ -13,7 +13,7 @@ const CURRENCY_FLAGS: Record<string, string> = {
   EUR: '🇪🇺',
   GBP: '🇬🇧',
   INR: '🇮🇳',
-  AED: '🇦🇪',
+  AED: '🇦🇪'
 };
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -22,16 +22,16 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   EUR: '€',
   GBP: '£',
   INR: '₹',
-  AED: 'د.إ',
+  AED: 'د.إ'
 };
 
 export const CurrencySwitcher = () => {
   const { currency, setCurrency, config, rates, lastUpdated } = useCurrency();
 
   // Always show at least BDT + USD
-  const enabledCurrencies = config.enabledCurrencies.length > 1 
-    ? config.enabledCurrencies 
-    : ['BDT', 'USD'];
+  const enabledCurrencies = config.enabledCurrencies.length > 1 ?
+  config.enabledCurrencies :
+  ['BDT', 'USD'];
 
   return (
     <DropdownMenu>
@@ -41,27 +41,27 @@ export const CurrencySwitcher = () => {
         <ChevronDown className="h-3.5 w-3.5 text-primary-foreground/70" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[200px]">
-        {enabledCurrencies.map((code) => (
-          <DropdownMenuItem
-            key={code}
-            onClick={() => setCurrency(code)}
-            className={`cursor-pointer ${currency === code ? 'bg-accent text-accent-foreground font-semibold' : ''}`}
-          >
+        {enabledCurrencies.map((code) =>
+        <DropdownMenuItem
+          key={code}
+          onClick={() => setCurrency(code)}
+          className={`cursor-pointer ${currency === code ? 'bg-accent text-accent-foreground font-semibold' : ''}`}>
+          
             <span className="text-lg mr-2">{CURRENCY_FLAGS[code] || '💱'}</span>
             <span className="font-medium">{CURRENCY_SYMBOLS[code]} {code}</span>
-            {rates[code] && code !== 'USD' && (
-              <span className="ml-auto text-xs text-muted-foreground">
+            {rates[code] && code !== 'USD' &&
+          <span className="ml-auto text-xs text-primary-foreground">
                 1$ = {rates[code]?.toFixed(2)}
               </span>
-            )}
+          }
           </DropdownMenuItem>
-        ))}
-        {lastUpdated && (
-          <div className="px-2 py-1.5 text-[10px] text-muted-foreground border-t border-border mt-1">
+        )}
+        {lastUpdated &&
+        <div className="px-2 py-1.5 text-[10px] text-muted-foreground border-t border-border mt-1">
             🔄 Rate updated: {new Date(lastUpdated).toLocaleTimeString()}
           </div>
-        )}
+        }
       </DropdownMenuContent>
-    </DropdownMenu>
-  );
+    </DropdownMenu>);
+
 };
