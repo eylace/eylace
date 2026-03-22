@@ -111,7 +111,7 @@ const Orders = () => {
 
     const ordersWithDetails = await Promise.all(
       (ordersData || []).map(async (order) => {
-        const [itemsResult, eventsResult] = await Promise.all([
+        const [itemsResult, eventsResult, returnsResult] = await Promise.all([
           supabase
             .from('order_items')
             .select('*')
@@ -121,12 +121,18 @@ const Orders = () => {
             .select('*')
             .eq('order_id', order.id)
             .order('created_at', { ascending: false }),
+          supabase
+            .from('return_requests' as any)
+            .select('*')
+            .eq('order_id', order.id)
+            .order('created_at', { ascending: false }),
         ]);
         
         return {
           ...order,
           order_items: itemsResult.data || [],
           tracking_events: eventsResult.data || [],
+          return_requests: (returnsResult.data || []) as unknown as ReturnRequest[],
         };
       })
     );
