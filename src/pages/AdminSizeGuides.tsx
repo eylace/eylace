@@ -36,11 +36,11 @@ const AdminSizeGuides = () => {
 
   useEffect(() => { fetch(); }, []);
 
-  const openNew = () => { setEditing(null); setForm({ name: '', category_id: '', sizes: [] }); setDialogOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ name: '', category_id: 'all', sizes: [] }); setDialogOpen(true); };
   const openEdit = (g: any) => {
     setEditing(g);
     const sizes = Array.isArray(g.sizes) ? g.sizes : [];
-    setForm({ name: g.name, category_id: g.category_id || '', sizes });
+    setForm({ name: g.name, category_id: g.category_id || 'all', sizes });
     setDialogOpen(true);
   };
 
