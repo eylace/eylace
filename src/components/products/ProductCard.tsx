@@ -147,7 +147,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
       </Link>
 
       {/* Content */}
-      <div className="space-y-2">
+      <div className="space-y-1.5 sm:space-y-2">
         {/* Category */}
         <p className="text-xs text-muted-foreground uppercase tracking-wide">
           {product.category.name}
