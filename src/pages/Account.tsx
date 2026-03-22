@@ -256,6 +256,14 @@ const Account = () => {
   const nextLevelPoints = memberLevel === 'silver' ? 500 : memberLevel === 'gold' ? 1000 : 2000;
   const progressToNext = Math.min((rewardPoints / nextLevelPoints) * 100, 100);
 
+  const accountCompletionItems = useMemo(() => [
+    { label: 'Name', done: !!(profile?.first_name && profile?.last_name) },
+    { label: 'Phone', done: !!profile?.phone },
+    { label: 'Address', done: !!profile?.address },
+    { label: 'Avatar', done: !!(profile as any)?.avatar_url },
+  ], [profile]);
+  const accountCompletion = Math.round((accountCompletionItems.filter(i => i.done).length / accountCompletionItems.length) * 100);
+
   const filteredOrders = useMemo(() => {
     if (orderFilter === 'all') return allOrders;
     return allOrders.filter(o => o.status === orderFilter);
