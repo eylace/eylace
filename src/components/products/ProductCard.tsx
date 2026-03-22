@@ -184,12 +184,12 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
         </div>
 
         {/* Price */}
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="price-current">{formatPrice(product.price)}</span>
+        <div className="flex items-baseline gap-1 sm:gap-2 flex-wrap">
+          <span className="price-current text-base sm:text-lg">{formatPrice(product.price)}</span>
           {hasDiscount && product.originalPrice && (
             <>
-              <span className="price-original">{formatPrice(product.originalPrice)}</span>
-              <span className="price-discount">Save {formatPrice(product.originalPrice - product.price)}</span>
+              <span className="price-original text-xs sm:text-sm">{formatPrice(product.originalPrice)}</span>
+              <span className="price-discount hidden sm:inline">Save {formatPrice(product.originalPrice - product.price)}</span>
             </>
           )}
         </div>
