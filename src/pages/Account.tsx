@@ -115,7 +115,7 @@ const Account = () => {
     const [ordersRes, reviewsRes, allOrdersRes, couponsRes] = await Promise.all([
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),
       supabase.from('product_reviews').select('id', { count: 'exact', head: true }),
-      supabase.from('orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
     ]);
 
