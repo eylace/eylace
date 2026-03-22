@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Loader2, Store, Search, Star, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, Store, Search, Star, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -24,6 +28,7 @@ const AdminAllSellers = () => {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchSellers = useCallback(async () => {
     setIsLoading(true);
@@ -37,6 +42,20 @@ const AdminAllSellers = () => {
   const toggleVerified = async (id: string, current: boolean | null) => {
     const { error } = await supabase.from('sellers').update({ is_verified: !current }).eq('id', id);
     if (!error) { toast.success('Updated'); fetchSellers(); } else toast.error('Failed');
+  };
+
+  const deleteSeller = async (id: string) => {
+    setDeleting(id);
+    const { error } = await supabase.functions.invoke('admin-manage-sellers', {
+      body: { action: 'delete', applicationId: id },
+    });
+    if (error) {
+      toast.error('Failed to delete seller');
+    } else {
+      toast.success('Seller deleted successfully');
+      await fetchSellers();
+    }
+    setDeleting(null);
   };
 
   const filtered = sellers.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
@@ -81,9 +100,33 @@ const AdminAllSellers = () => {
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline" onClick={() => toggleVerified(s.id, s.is_verified)}>
-                        {s.is_verified ? 'Unverify' : 'Verify'}
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => toggleVerified(s.id, s.is_verified)}>
+                          {s.is_verified ? 'Unverify' : 'Verify'}
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive" className="gap-1" disabled={deleting === s.id}>
+                              {deleting === s.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Seller "{s.name}"?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete this seller and cannot be undone. Their products will remain but will no longer be linked to a seller.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteSeller(s.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
