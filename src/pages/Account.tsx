@@ -212,6 +212,18 @@ const Account = () => {
     toast.success(`Coupon "${code}" copied!`);
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    setCancellingOrder(orderId);
+    const { data, error } = await supabase.rpc('user_cancel_order', { _order_id: orderId });
+    setCancellingOrder(null);
+    if (error || !data) {
+      toast.error('Failed to cancel order');
+      return;
+    }
+    toast.success('Order cancelled successfully');
+    fetchAllData();
+  };
+
   const initials = `${(profile?.first_name || '')[0] || ''}${(profile?.last_name || '')[0] || ''}`.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
   const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Customer';
   const memberSince = user?.created_at ? format(new Date(user.created_at), 'MMMM yyyy') : '';
