@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, ChevronRight, ShoppingBag, Loader2, Phone, MessageCircle } from 'lucide-react';
+import { Package, ChevronRight, ShoppingBag, Loader2, Phone, MessageCircle, RotateCcw, XCircle, AlertTriangle } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,8 @@ import { Json } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
+import { ReturnRequestModal } from '@/components/orders/ReturnRequestModal';
+import { toast } from 'sonner';
 
 interface OrderItem {
   id: string;
