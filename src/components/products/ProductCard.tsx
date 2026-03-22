@@ -273,11 +273,11 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
             </Button>
           ) : (
             <>
-              <Button variant="accent" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
+              <Button variant="accent" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm" onClick={handleAddToCart}>
                 <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Add
               </Button>
-              <Button variant="buy-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm">
+              <Button variant="buy-now" size="sm" className="flex-1 h-8 sm:h-9 text-xs sm:text-sm" onClick={handleBuyNow}>
                 Buy Now
               </Button>
             </>
