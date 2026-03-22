@@ -1024,7 +1024,22 @@ const Account = () => {
         </div>
       </div>
     </Layout>
+
+    {/* Return Request Modal */}
+    {returnModal && user && (
+      <ReturnRequestModal
+        open={!!returnModal}
+        onClose={() => setReturnModal(null)}
+        orderId={returnModal.orderId}
+        orderNumber={returnModal.orderNumber}
+        orderItems={returnModal.items}
+        userId={user.id}
+        onSuccess={fetchAllData}
+      />
+    )}
+    </>
   );
+};
 };
 
 export default Account;
