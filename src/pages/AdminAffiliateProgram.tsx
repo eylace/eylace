@@ -13,9 +13,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Users, Link2, DollarSign, Wallet, CheckCircle, XCircle, Trash2, Search, Edit, Eye, Loader2, MousePointerClick, TrendingUp, Phone, Mail, MapPin, User, Calendar, Copy } from 'lucide-react';
+import { Users, Link2, DollarSign, Wallet, CheckCircle, XCircle, Trash2, Search, Edit, Eye, Loader2, MousePointerClick, TrendingUp, Phone, Mail, MapPin, Calendar } from 'lucide-react';
 
-const BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage`;
+const invoke = async (body: Record<string, unknown>) => {
+  const { data, error } = await supabase.functions.invoke('affiliate-manage', { body });
+  if (error) {
+    let msg = 'Request failed';
+    try {
+      const errBody = error instanceof Response ? await error.json() : (typeof error === 'object' && 'message' in error) ? { error: error.message } : { error: String(error) };
+      msg = errBody?.error || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return data;
+};
 
 const AdminAffiliateProgram = () => {
   const [affiliates, setAffiliates] = useState<any[]>([]);
@@ -32,33 +43,13 @@ const AdminAffiliateProgram = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const getAuthHeaders = async () => {
-    const session = (await supabase.auth.getSession()).data.session;
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session?.access_token}`,
-      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    };
-  };
-
-  const apiCall = async (action: string, method: string, body?: any, extraParams?: string) => {
-    const headers = await getAuthHeaders();
-    const url = `${BASE_URL}?action=${action}${extraParams || ''}`;
-    const opts: RequestInit = { method, headers };
-    if (body) opts.body = JSON.stringify(body);
-    const res = await fetch(url, opts);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Request failed');
-    return data;
-  };
-
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [aff, conv, pay] = await Promise.all([
-        apiCall('admin-list', 'GET', undefined, `&status=${statusFilter}`),
-        apiCall('admin-conversions', 'GET'),
-        apiCall('admin-payouts', 'GET'),
+        invoke({ action: 'admin-list', status: statusFilter }),
+        invoke({ action: 'admin-conversions' }),
+        invoke({ action: 'admin-payouts' }),
       ]);
       setAffiliates(Array.isArray(aff) ? aff : []);
       setConversions(Array.isArray(conv) ? conv : []);
@@ -74,7 +65,7 @@ const AdminAffiliateProgram = () => {
   const handleQuickAction = async (id: string, status: string, label: string) => {
     setActionLoading(id + status);
     try {
-      await apiCall('admin-update', 'PUT', { id, status });
+      await invoke({ action: 'admin-update', id, status });
       toast.success(`${label} successfully`);
       fetchData();
     } catch (err: any) { toast.error(err.message); }
@@ -83,8 +74,12 @@ const AdminAffiliateProgram = () => {
 
   const handleUpdateAffiliate = async () => {
     try {
-      await apiCall('admin-update', 'PUT', {
-        id: editModal.id, ...editForm, commission_rate: Number(editForm.commission_rate),
+      await invoke({
+        action: 'admin-update',
+        id: editModal.id,
+        status: editForm.status,
+        commission_rate: Number(editForm.commission_rate),
+        admin_notes: editForm.admin_notes,
       });
       toast.success('Affiliate updated');
       setEditModal(null);
@@ -96,7 +91,7 @@ const AdminAffiliateProgram = () => {
     if (!confirm(`Delete affiliate ${code}? This will remove all their clicks, conversions, and payouts.`)) return;
     setActionLoading(id + 'delete');
     try {
-      await apiCall('admin-delete', 'DELETE', undefined, `&id=${id}`);
+      await invoke({ action: 'admin-delete', id });
       toast.success('Affiliate deleted');
       fetchData();
     } catch (err: any) { toast.error(err.message); }
@@ -105,7 +100,13 @@ const AdminAffiliateProgram = () => {
 
   const handleProcessPayout = async () => {
     try {
-      await apiCall('admin-payout', 'PUT', { payout_id: payoutModal.id, ...payoutForm });
+      await invoke({
+        action: 'admin-payout',
+        payout_id: payoutModal.id,
+        status: payoutForm.status,
+        transaction_id: payoutForm.transaction_id,
+        admin_notes: payoutForm.admin_notes,
+      });
       toast.success('Payout processed');
       setPayoutModal(null);
       fetchData();
@@ -115,7 +116,7 @@ const AdminAffiliateProgram = () => {
   const handleConversionAction = async (conversionId: string, status: string) => {
     setActionLoading(conversionId + status);
     try {
-      await apiCall('admin-update-conversion', 'PUT', { conversion_id: conversionId, status });
+      await invoke({ action: 'admin-update-conversion', conversion_id: conversionId, status });
       toast.success(`Conversion ${status}`);
       fetchData();
     } catch (err: any) { toast.error(err.message); }
@@ -126,7 +127,7 @@ const AdminAffiliateProgram = () => {
     setDetailLoading(true);
     setDetailModal(null);
     try {
-      const data = await apiCall('admin-detail', 'GET', undefined, `&id=${id}`);
+      const data = await invoke({ action: 'admin-detail', id });
       setDetailModal(data);
     } catch (err: any) { toast.error(err.message); }
     setDetailLoading(false);
@@ -445,7 +446,6 @@ const AdminAffiliateProgram = () => {
                   </DialogTitle>
                 </DialogHeader>
 
-                {/* Profile Info */}
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-muted-foreground" /><span>{detailModal.profile?.email || '-'}</span></div>
                   <div className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" /><span>{detailModal.profile?.phone || '-'}</span></div>
@@ -453,7 +453,6 @@ const AdminAffiliateProgram = () => {
                   <div className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4 text-muted-foreground" /><span>Joined {format(new Date(detailModal.affiliate?.created_at), 'dd MMM yyyy')}</span></div>
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-4 gap-3">
                   <div className="text-center p-3 border rounded-lg"><p className="text-2xl font-bold text-foreground">{detailModal.affiliate?.total_clicks || 0}</p><p className="text-xs text-muted-foreground">Clicks</p></div>
                   <div className="text-center p-3 border rounded-lg"><p className="text-2xl font-bold text-foreground">{detailModal.affiliate?.total_conversions || 0}</p><p className="text-xs text-muted-foreground">Conversions</p></div>
@@ -461,7 +460,6 @@ const AdminAffiliateProgram = () => {
                   <div className="text-center p-3 border rounded-lg"><p className="text-2xl font-bold text-foreground">৳{(detailModal.affiliate?.total_paid || 0).toFixed(0)}</p><p className="text-xs text-muted-foreground">Paid</p></div>
                 </div>
 
-                {/* Settings Info */}
                 <div className="grid grid-cols-2 gap-4 p-3 border rounded-lg">
                   <div><p className="text-xs text-muted-foreground">Commission Rate</p><p className="font-bold text-foreground">{detailModal.affiliate?.commission_rate}%</p></div>
                   <div><p className="text-xs text-muted-foreground">Payment Method</p><p className="font-medium capitalize text-foreground">{detailModal.affiliate?.payment_method || '-'}</p></div>
@@ -476,7 +474,6 @@ const AdminAffiliateProgram = () => {
                   </div>
                 )}
 
-                {/* Recent Clicks */}
                 {detailModal.clicks?.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold mb-2 text-foreground">Recent Clicks ({detailModal.clicks.length})</h4>
@@ -497,7 +494,6 @@ const AdminAffiliateProgram = () => {
                   </div>
                 )}
 
-                {/* Recent Conversions */}
                 {detailModal.conversions?.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold mb-2 text-foreground">Conversions ({detailModal.conversions.length})</h4>
@@ -519,7 +515,6 @@ const AdminAffiliateProgram = () => {
                   </div>
                 )}
 
-                {/* Recent Payouts */}
                 {detailModal.payouts?.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold mb-2 text-foreground">Payouts ({detailModal.payouts.length})</h4>
@@ -604,18 +599,19 @@ const AdminAffiliateProgram = () => {
                   <SelectContent>
                     <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="pending">Keep Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Transaction ID</Label>
-                <Input value={payoutForm.transaction_id} onChange={e => setPayoutForm(f => ({ ...f, transaction_id: e.target.value }))} placeholder="TRX-XXXXX" />
+                <Input value={payoutForm.transaction_id} onChange={e => setPayoutForm(f => ({ ...f, transaction_id: e.target.value }))} placeholder="TXN-XXXX" />
               </div>
               <div>
                 <Label>Notes</Label>
                 <Textarea rows={2} value={payoutForm.admin_notes} onChange={e => setPayoutForm(f => ({ ...f, admin_notes: e.target.value }))} />
               </div>
-              <Button onClick={handleProcessPayout} variant="accent" className="w-full">Confirm Payment</Button>
+              <Button onClick={handleProcessPayout} variant="accent" className="w-full">Process Payout</Button>
             </div>
           </DialogContent>
         </Dialog>
