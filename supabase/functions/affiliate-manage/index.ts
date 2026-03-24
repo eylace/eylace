@@ -18,12 +18,16 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url)
-    const action = url.searchParams.get('action')
 
+    // Parse body for non-GET requests
     let body: any = {}
     if (req.method !== 'GET') {
       try { body = await req.json() } catch { body = {} }
     }
+
+    // Action can come from query param OR body
+    const action = url.searchParams.get('action') || body.action
+    if (!action) return json({ error: 'Missing action' }, 400)
 
     // Auth check
     const authHeader = req.headers.get('Authorization')
@@ -127,7 +131,7 @@ Deno.serve(async (req) => {
     }
 
     // ========== GET STATS ==========
-    if (action === 'stats' && req.method === 'GET') {
+    if (action === 'stats') {
       if (!userId) return json({ error: 'Unauthorized' }, 401)
 
       const { data: affiliate } = await adminClient.from('affiliates').select('*').eq('user_id', userId).maybeSingle()
@@ -143,7 +147,7 @@ Deno.serve(async (req) => {
     }
 
     // ========== UPDATE SETTINGS ==========
-    if (action === 'update-settings' && req.method === 'PUT') {
+    if (action === 'update-settings') {
       if (!userId) return json({ error: 'Unauthorized' }, 401)
       const { payment_method, payment_details } = body
       const { error } = await adminClient.from('affiliates').update({
@@ -171,10 +175,10 @@ Deno.serve(async (req) => {
     }
 
     // ========== ADMIN: LIST ALL AFFILIATES ==========
-    if (action === 'admin-list' && req.method === 'GET') {
+    if (action === 'admin-list') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
 
-      const status = url.searchParams.get('status')
+      const status = url.searchParams.get('status') || body.status
       let query = adminClient.from('affiliates').select('*')
       if (status && status !== 'all') query = query.eq('status', status)
       const { data, error } = await query.order('created_at', { ascending: false })
@@ -186,19 +190,17 @@ Deno.serve(async (req) => {
     }
 
     // ========== ADMIN: GET SINGLE AFFILIATE DETAILS ==========
-    if (action === 'admin-detail' && req.method === 'GET') {
+    if (action === 'admin-detail') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
 
-      const id = url.searchParams.get('id')
+      const id = url.searchParams.get('id') || body.id
       if (!id) return json({ error: 'Missing id' }, 400)
 
       const { data: affiliate } = await adminClient.from('affiliates').select('*').eq('id', id).single()
       if (!affiliate) return json({ error: 'Not found' }, 404)
 
-      // Get profile
       const { data: profile } = await adminClient.from('profiles').select('*').eq('user_id', affiliate.user_id).maybeSingle()
 
-      // Get clicks, conversions, payouts
       const [{ data: clicks }, { data: conversions }, { data: payouts }] = await Promise.all([
         adminClient.from('affiliate_clicks').select('*').eq('affiliate_id', id).order('created_at', { ascending: false }).limit(200),
         adminClient.from('affiliate_conversions').select('*').eq('affiliate_id', id).order('created_at', { ascending: false }).limit(200),
@@ -212,10 +214,11 @@ Deno.serve(async (req) => {
     }
 
     // ========== ADMIN: UPDATE AFFILIATE ==========
-    if (action === 'admin-update' && req.method === 'PUT') {
+    if (action === 'admin-update') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
 
       const { id, status, commission_rate, admin_notes } = body
+      if (!id) return json({ error: 'Missing id' }, 400)
       const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
       if (status !== undefined) updateData.status = status
       if (commission_rate !== undefined) updateData.commission_rate = commission_rate
@@ -227,10 +230,12 @@ Deno.serve(async (req) => {
     }
 
     // ========== ADMIN: PROCESS PAYOUT ==========
-    if (action === 'admin-payout' && req.method === 'PUT') {
+    if (action === 'admin-payout') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
 
       const { payout_id, status, transaction_id, admin_notes } = body
+      if (!payout_id) return json({ error: 'Missing payout_id' }, 400)
+      
       await adminClient.from('affiliate_payouts').update({
         status, transaction_id: transaction_id || null, admin_notes: admin_notes || null,
       }).eq('id', payout_id)
@@ -249,12 +254,11 @@ Deno.serve(async (req) => {
     }
 
     // ========== ADMIN: DELETE AFFILIATE ==========
-    if (action === 'admin-delete' && req.method === 'DELETE') {
+    if (action === 'admin-delete') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
-      const id = url.searchParams.get('id')
+      const id = url.searchParams.get('id') || body.id
       if (!id) return json({ error: 'Missing id' }, 400)
 
-      // Delete related records first
       await adminClient.from('affiliate_clicks').delete().eq('affiliate_id', id)
       await adminClient.from('affiliate_conversions').delete().eq('affiliate_id', id)
       await adminClient.from('affiliate_payouts').delete().eq('affiliate_id', id)
@@ -263,23 +267,24 @@ Deno.serve(async (req) => {
     }
 
     // ========== ADMIN: ALL CONVERSIONS ==========
-    if (action === 'admin-conversions' && req.method === 'GET') {
+    if (action === 'admin-conversions') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
       const { data } = await adminClient.from('affiliate_conversions').select('*, affiliates(referral_code, user_id)').order('created_at', { ascending: false }).limit(200)
       return json(data || [])
     }
 
     // ========== ADMIN: ALL PAYOUTS ==========
-    if (action === 'admin-payouts' && req.method === 'GET') {
+    if (action === 'admin-payouts') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
       const { data } = await adminClient.from('affiliate_payouts').select('*, affiliates(referral_code, user_id)').order('created_at', { ascending: false }).limit(200)
       return json(data || [])
     }
 
     // ========== ADMIN: UPDATE CONVERSION STATUS ==========
-    if (action === 'admin-update-conversion' && req.method === 'PUT') {
+    if (action === 'admin-update-conversion') {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
       const { conversion_id, status } = body
+      if (!conversion_id) return json({ error: 'Missing conversion_id' }, 400)
       await adminClient.from('affiliate_conversions').update({ status }).eq('id', conversion_id)
       return json({ success: true })
     }
