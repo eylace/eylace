@@ -21,25 +21,11 @@ export const AffiliatePayoutsTab = ({ payouts, pendingBalance, onRefresh }: Prop
     setRequesting(true);
     try {
       const { data, error } = await supabase.functions.invoke('affiliate-manage', {
-        body: {},
-        headers: { 'Content-Type': 'application/json' },
+        body: { action: 'request-payout' },
       });
-      // Use query param approach
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage?action=request-payout`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({}),
-        }
-      );
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Failed');
-      toast.success(`Payout request submitted for ৳${result.amount}`);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Payout request submitted for ৳${data.amount}`);
       onRefresh();
     } catch (err: any) {
       toast.error(err.message || 'Failed to request payout');

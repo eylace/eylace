@@ -23,22 +23,15 @@ export const AffiliateSettingsTab = ({ affiliate, onRefresh }: Props) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage?action=update-settings`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({
-            payment_method: paymentMethod,
-            payment_details: { account_number: accountNumber, account_name: accountName },
-          }),
-        }
-      );
-      if (!res.ok) throw new Error('Failed to save');
+      const { data, error } = await supabase.functions.invoke('affiliate-manage', {
+        body: {
+          action: 'update-settings',
+          payment_method: paymentMethod,
+          payment_details: { account_number: accountNumber, account_name: accountName },
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success('Settings saved');
       onRefresh();
     } catch {

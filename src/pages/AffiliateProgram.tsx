@@ -33,17 +33,10 @@ const AffiliateProgram = () => {
   const fetchStats = useCallback(async () => {
     if (!user) { setLoading(false); return; }
     try {
-      const session = (await supabase.auth.getSession()).data.session;
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage?action=stats`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-        }
-      );
-      const data = await res.json();
+      const { data, error } = await supabase.functions.invoke('affiliate-manage', {
+        body: { action: 'stats' },
+      });
+      if (error) throw error;
       setAffiliateData(data);
     } catch { /* ignore */ }
     setLoading(false);
@@ -55,21 +48,15 @@ const AffiliateProgram = () => {
     if (!user) { navigate('/auth'); return; }
     setJoining(true);
     try {
-      const session = (await supabase.auth.getSession()).data.session;
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage?action=join`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({}),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed');
+      const { data, error } = await supabase.functions.invoke('affiliate-manage', {
+        body: { action: 'join' },
+      });
+      if (error) {
+        let msg = 'Failed to join';
+        try { const b = typeof error === 'object' && 'message' in error ? error.message : String(error); msg = b || msg; } catch {}
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
       toast.success('Application submitted! You will be notified once approved.');
       fetchStats();
     } catch (err: any) {
@@ -129,7 +116,6 @@ const AffiliateProgram = () => {
     }
   }
 
-  // Loading state
   if (loading && user) {
     return (
       <Layout>
@@ -138,7 +124,6 @@ const AffiliateProgram = () => {
     );
   }
 
-  // Landing page (not logged in or not an affiliate)
   return (
     <Layout>
       <section className="bg-primary text-primary-foreground py-16">
