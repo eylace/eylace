@@ -59,6 +59,8 @@ const passwordSchema = z.object({
 const SIDEBAR_ITEMS = [
   { id: 'overview', icon: BarChart3, label: 'Dashboard' },
   { id: 'orders', icon: Package, label: 'My Orders' },
+  { id: 'reviews', icon: Star, label: 'My Reviews' },
+  { id: 'returns', icon: RotateCcw, label: 'Returns & Cancellations' },
   { id: 'wishlist', icon: Heart, label: 'Wishlist' },
   { id: 'coupons', icon: Tag, label: 'My Coupons' },
   { id: 'wallet', icon: Wallet, label: 'Wallet & Points' },
@@ -95,6 +97,9 @@ const Account = () => {
   const [monthlySpending, setMonthlySpending] = useState<{month: string; amount: number}[]>([]);
   const [affiliateData, setAffiliateData] = useState<any>(null);
   const [recentActivity, setRecentActivity] = useState<{type: string; title: string; time: string; icon: any; color: string}[]>([]);
+  const [myReviews, setMyReviews] = useState<any[]>([]);
+  const [returnRequests, setReturnRequests] = useState<any[]>([]);
+  const [cancelledOrders, setCancelledOrders] = useState<any[]>([]);
 
   const [profileData, setProfileData] = useState({ first_name: '', last_name: '', phone: '' });
   const [addressData, setAddressData] = useState({ address: '', apartment: '', city: '', state: '', zip_code: '', country: 'BD' });
