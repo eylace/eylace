@@ -51,8 +51,6 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // For POST requests, check the body for an "action" field to determine the operation
-    // This handles cases where the client sends POST instead of PUT/DELETE
     if (req.method === 'POST') {
       const body = await req.json();
       const action = body._action || body.action;
@@ -62,7 +60,7 @@ Deno.serve(async (req) => {
       } else if (action === 'delete') {
         return await handleDelete(supabaseAdmin, body);
       }
-      // Fall through to GET-like behavior if no action
+      // Default: treat as GET (fetch all returns)
       return await handleGet(supabaseAdmin);
     }
 
