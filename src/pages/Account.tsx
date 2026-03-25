@@ -132,12 +132,14 @@ const Account = () => {
   }, [user]);
 
   const fetchAllData = async () => {
-    const [ordersRes, reviewsRes, allOrdersRes, couponsRes, affRes] = await Promise.all([
+    const [ordersRes, reviewsRes, allOrdersRes, couponsRes, affRes, myReviewsRes, returnsRes] = await Promise.all([
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),
       supabase.from('product_reviews').select('id', { count: 'exact', head: true }),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
       supabase.from('affiliates').select('*').eq('user_id', user!.id).maybeSingle(),
+      supabase.from('product_reviews').select('*, products:product_id(name, slug, images)').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('return_requests').select('*, orders:order_id(order_number, total, created_at)').eq('user_id', user!.id).order('created_at', { ascending: false }),
     ]);
 
     setRecentOrders(ordersRes.data || []);
@@ -147,6 +149,9 @@ const Account = () => {
     setOrderCount(orders.length);
     setCoupons(couponsRes.data || []);
     setAffiliateData(affRes.data);
+    setMyReviews(myReviewsRes.data || []);
+    setReturnRequests(returnsRes.data || []);
+    setCancelledOrders(orders.filter((o: any) => o.status === 'cancelled'));
 
     // Calculate spending
     const spent = orders.filter(o => o.status !== 'cancelled').reduce((sum: number, o: any) => sum + (o.total || 0), 0);
