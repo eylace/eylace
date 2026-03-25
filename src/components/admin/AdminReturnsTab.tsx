@@ -87,8 +87,7 @@ export const AdminReturnsTab = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this return request?')) return;
     const { error } = await supabase.functions.invoke('admin-manage-returns', {
-      method: 'DELETE',
-      body: { id },
+      body: { _action: 'delete', id },
     });
     if (error) { toast.error('Failed to delete'); return; }
     toast.success('Deleted');
