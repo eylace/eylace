@@ -139,7 +139,7 @@ const Account = () => {
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
       supabase.from('affiliates').select('*').eq('user_id', user!.id).maybeSingle(),
       supabase.from('product_reviews').select('*, products:product_id(name, slug, images)').eq('user_id', user!.id).order('created_at', { ascending: false }),
-      supabase.from('return_requests').select('*, orders:order_id(order_number, total, created_at)').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('return_requests' as any).select('*, orders:order_id(order_number, total, created_at)').eq('user_id', user!.id).order('created_at', { ascending: false }),
     ]);
 
     setRecentOrders(ordersRes.data || []);
@@ -975,29 +975,45 @@ const Account = () => {
                               )}
                             </div>
                             {/* Progress tracker */}
-                            <div className="flex items-center gap-1 mt-3">
-                              {['pending', 'under_review', 'approved', 'refunded'].map((step, i) => {
-                                const steps = ['pending', 'under_review', 'approved', 'refunded'];
-                                const currentIdx = steps.indexOf(req.status);
-                                const isRejected = req.status === 'rejected';
-                                const isActive = i <= currentIdx && !isRejected;
-                                return (
-                                  <div key={step} className="flex-1 flex items-center gap-1">
-                                    <div className={cn(
-                                      'w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0',
-                                      isRejected && i >= 2 ? 'bg-destructive/20 text-destructive' :
-                                      isActive ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground'
-                                    )}>
-                                      {isRejected && i === 2 ? <X className="h-2.5 w-2.5" /> : i + 1}
-                                    </div>
-                                    {i < 3 && <div className={cn('h-0.5 flex-1 rounded', isActive && i < currentIdx ? 'bg-accent' : 'bg-border')} />}
+                            {(() => {
+                              const isRejected = req.status === 'rejected';
+                              const steps = isRejected
+                                ? ['pending', 'approved', 'rejected']
+                                : ['pending', 'approved', 'refunded'];
+                              const stepLabels = isRejected
+                                ? ['Requested', 'Approved', 'Rejected']
+                                : ['Requested', 'Approved', 'Refunded'];
+                              const currentIdx = steps.indexOf(req.status);
+                              return (
+                                <>
+                                  <div className="flex items-center gap-1 mt-3">
+                                    {steps.map((step, i) => {
+                                      const isActive = i <= currentIdx;
+                                      return (
+                                        <div key={step} className="flex-1 flex items-center gap-1">
+                                          <div className={cn(
+                                            'w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 transition-colors',
+                                            isRejected && step === 'rejected' ? 'bg-destructive text-destructive-foreground' :
+                                            isActive ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground'
+                                          )}>
+                                            {isRejected && step === 'rejected' ? <X className="h-3 w-3" /> :
+                                             isActive ? <CheckCircle className="h-3 w-3" /> : i + 1}
+                                          </div>
+                                          {i < steps.length - 1 && (
+                                            <div className={cn('h-0.5 flex-1 rounded transition-colors', isActive && i < currentIdx ? 'bg-accent' : 'bg-border')} />
+                                          )}
+                                        </div>
+                                      );
+                                    })}
                                   </div>
-                                );
-                              })}
-                            </div>
-                            <div className="flex justify-between text-[9px] text-muted-foreground mt-1 px-1">
-                              <span>Requested</span><span>Review</span>
-                              <span>{req.status === 'rejected' ? 'Rejected' : 'Approved'}</span><span>Refunded</span>
+                                  <div className="flex justify-between text-[9px] text-muted-foreground mt-1 px-1">
+                                    {stepLabels.map((label) => (
+                                      <span key={label}>{label}</span>
+                                    ))}
+                                  </div>
+                                </>
+                              );
+                            })()}
                             </div>
                           </div>
                         );
