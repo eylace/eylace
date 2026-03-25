@@ -75,8 +75,7 @@ export const AdminReturnsTab = () => {
     if (!detail) return;
     setSaving(true);
     const { error } = await supabase.functions.invoke('admin-manage-returns', {
-      method: 'PUT',
-      body: { id: detail.id, status: editStatus, admin_notes: editNotes, refund_amount: Number(editAmount) },
+      body: { _action: 'update', id: detail.id, status: editStatus, admin_notes: editNotes, refund_amount: Number(editAmount) },
     });
     setSaving(false);
     if (error) { toast.error('Failed to update'); return; }
