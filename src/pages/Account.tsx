@@ -837,6 +837,224 @@ const Account = () => {
               </div>
             )}
 
+            {/* ===== MY REVIEWS ===== */}
+            {activeSection === 'reviews' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">My Reviews</h2>
+                  <p className="text-sm text-muted-foreground">{myReviews.length} reviews written</p>
+                </div>
+
+                {myReviews.length === 0 ? (
+                  <div className="text-center py-16 bg-card rounded-xl border border-border">
+                    <Star className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-medium">No reviews yet</p>
+                    <p className="text-sm text-muted-foreground mt-1">Purchase and review products to see them here</p>
+                    <Link to="/"><Button variant="accent" size="sm" className="mt-4">Browse Products</Button></Link>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {myReviews.map((review: any) => {
+                      const product = review.products;
+                      return (
+                        <div key={review.id} className="bg-card rounded-xl border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow">
+                          <div className="flex items-start gap-4">
+                            {product?.images?.[0] && (
+                              <Link to={`/product/${product.slug}`} className="shrink-0">
+                                <img src={product.images[0]} alt={product.name} className="w-16 h-16 rounded-lg object-cover border border-border" />
+                              </Link>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <Link to={`/product/${product?.slug || ''}`} className="font-semibold text-sm hover:text-accent transition-colors line-clamp-1">
+                                    {product?.name || 'Product'}
+                                  </Link>
+                                  <div className="flex items-center gap-1 mt-1">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                      <Star key={i} className={cn('h-3.5 w-3.5', i < review.rating ? 'text-[hsl(var(--rating))] fill-[hsl(var(--rating))]' : 'text-muted-foreground/30')} />
+                                    ))}
+                                    <span className="text-xs text-muted-foreground ml-1">{review.rating}/5</span>
+                                  </div>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground shrink-0">
+                                  {format(new Date(review.created_at), 'MMM d, yyyy')}
+                                </span>
+                              </div>
+                              {review.title && <p className="font-medium text-sm mt-2">{review.title}</p>}
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{review.content}</p>
+                              {review.images && review.images.length > 0 && (
+                                <div className="flex gap-2 mt-2">
+                                  {review.images.slice(0, 4).map((img: string, i: number) => (
+                                    <img key={i} src={img} alt="" className="w-12 h-12 rounded-md object-cover border border-border" />
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-3 mt-2">
+                                {review.verified_purchase && (
+                                  <Badge variant="outline" className="text-[10px] text-[hsl(var(--success))] border-[hsl(var(--success))]/30">
+                                    <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> Verified Purchase
+                                  </Badge>
+                                )}
+                                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                  <TrendingUp className="h-2.5 w-2.5" /> {review.helpful_count || 0} found helpful
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ===== RETURNS & CANCELLATIONS ===== */}
+            {activeSection === 'returns' && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold">Returns & Cancellations</h2>
+                  <p className="text-sm text-muted-foreground">{returnRequests.length} return requests · {cancelledOrders.length} cancelled orders</p>
+                </div>
+
+                {/* Return Requests */}
+                <div>
+                  <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <RotateCcw className="h-4 w-4 text-accent" /> Return Requests
+                  </h3>
+                  {returnRequests.length === 0 ? (
+                    <div className="text-center py-10 bg-card rounded-xl border border-border">
+                      <RotateCcw className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                      <p className="font-medium text-sm">No return requests</p>
+                      <p className="text-xs text-muted-foreground mt-1">Return requests will appear here</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {returnRequests.map((req: any) => {
+                        const returnStatusColors: Record<string, string> = {
+                          pending: 'bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]',
+                          under_review: 'bg-primary/10 text-primary',
+                          approved: 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]',
+                          rejected: 'bg-destructive/10 text-destructive',
+                          refunded: 'bg-accent/10 text-accent',
+                        };
+                        return (
+                          <div key={req.id} className="bg-card rounded-xl border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                                  <RotateCcw className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-sm">Order #{req.orders?.order_number || '—'}</p>
+                                  <p className="text-xs text-muted-foreground">{format(new Date(req.created_at), 'MMM d, yyyy')}</p>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className={cn('text-[10px] capitalize', returnStatusColors[req.status] || '')}>
+                                {req.status?.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                            <div className="bg-secondary/30 rounded-lg p-3 space-y-1.5">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Reason</span>
+                                <span className="font-medium capitalize">{req.reason?.replace(/_/g, ' ')}</span>
+                              </div>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Refund Method</span>
+                                <span className="font-medium capitalize">{req.refund_method || '—'}</span>
+                              </div>
+                              {req.refund_amount && (
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground">Refund Amount</span>
+                                  <span className="font-bold text-[hsl(var(--success))]">৳{req.refund_amount}</span>
+                                </div>
+                              )}
+                              {req.description && (
+                                <p className="text-xs text-muted-foreground pt-1 border-t border-border mt-1">{req.description}</p>
+                              )}
+                            </div>
+                            {/* Progress tracker */}
+                            <div className="flex items-center gap-1 mt-3">
+                              {['pending', 'under_review', 'approved', 'refunded'].map((step, i) => {
+                                const steps = ['pending', 'under_review', 'approved', 'refunded'];
+                                const currentIdx = steps.indexOf(req.status);
+                                const isRejected = req.status === 'rejected';
+                                const isActive = i <= currentIdx && !isRejected;
+                                return (
+                                  <div key={step} className="flex-1 flex items-center gap-1">
+                                    <div className={cn(
+                                      'w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0',
+                                      isRejected && i >= 2 ? 'bg-destructive/20 text-destructive' :
+                                      isActive ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground'
+                                    )}>
+                                      {isRejected && i === 2 ? <X className="h-2.5 w-2.5" /> : i + 1}
+                                    </div>
+                                    {i < 3 && <div className={cn('h-0.5 flex-1 rounded', isActive && i < currentIdx ? 'bg-accent' : 'bg-border')} />}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="flex justify-between text-[9px] text-muted-foreground mt-1 px-1">
+                              <span>Requested</span><span>Review</span>
+                              <span>{req.status === 'rejected' ? 'Rejected' : 'Approved'}</span><span>Refunded</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cancelled Orders */}
+                <div>
+                  <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <XCircle className="h-4 w-4 text-destructive" /> Cancelled Orders
+                  </h3>
+                  {cancelledOrders.length === 0 ? (
+                    <div className="text-center py-10 bg-card rounded-xl border border-border">
+                      <XCircle className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                      <p className="font-medium text-sm">No cancelled orders</p>
+                      <p className="text-xs text-muted-foreground mt-1">Cancelled orders will appear here</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {cancelledOrders.map((order: any) => (
+                        <div key={order.id} className="bg-card rounded-xl border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+                                <XCircle className="h-4 w-4 text-destructive" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-sm">Order #{order.order_number}</p>
+                                <p className="text-xs text-muted-foreground">{format(new Date(order.created_at), 'MMM d, yyyy')}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">Cancelled</Badge>
+                              <p className="text-sm font-bold mt-1">৳{order.total?.toFixed(2)}</p>
+                            </div>
+                          </div>
+                          {order.order_items && order.order_items.length > 0 && (
+                            <div className="mt-3 space-y-1.5">
+                              {order.order_items.slice(0, 3).map((item: any) => (
+                                <div key={item.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span className="w-1 h-1 rounded-full bg-muted-foreground shrink-0" />
+                                  <span className="truncate">{item.product_name} × {item.quantity}</span>
+                                  <span className="ml-auto shrink-0 font-medium">৳{(item.price * item.quantity).toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* ===== WISHLIST ===== */}
             {activeSection === 'wishlist' && (
               <div className="space-y-4">
