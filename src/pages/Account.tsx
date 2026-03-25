@@ -131,6 +131,29 @@ const Account = () => {
     if (user) fetchAllData();
   }, [user]);
 
+  // Realtime subscription for return_requests updates
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('customer-return-requests')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'return_requests', filter: `user_id=eq.${user.id}` },
+        () => {
+          // Re-fetch return requests when any change happens
+          supabase.from('return_requests' as any)
+            .select('*, orders:order_id(order_number, total, created_at)')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .then(({ data }) => {
+              if (data) setReturnRequests(data);
+            });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
   const fetchAllData = async () => {
     const [ordersRes, reviewsRes, allOrdersRes, couponsRes, affRes, myReviewsRes, returnsRes] = await Promise.all([
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),

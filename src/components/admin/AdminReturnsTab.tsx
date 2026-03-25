@@ -53,7 +53,9 @@ export const AdminReturnsTab = () => {
 
   const fetchReturns = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke('admin-manage-returns', { method: 'GET' });
+    const { data, error } = await supabase.functions.invoke('admin-manage-returns', {
+      body: { _action: 'get' },
+    });
     if (!error && data?.returns) {
       setReturns(data.returns);
     }
@@ -73,8 +75,7 @@ export const AdminReturnsTab = () => {
     if (!detail) return;
     setSaving(true);
     const { error } = await supabase.functions.invoke('admin-manage-returns', {
-      method: 'PUT',
-      body: { id: detail.id, status: editStatus, admin_notes: editNotes, refund_amount: Number(editAmount) },
+      body: { _action: 'update', id: detail.id, status: editStatus, admin_notes: editNotes, refund_amount: Number(editAmount) },
     });
     setSaving(false);
     if (error) { toast.error('Failed to update'); return; }
@@ -86,8 +87,7 @@ export const AdminReturnsTab = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this return request?')) return;
     const { error } = await supabase.functions.invoke('admin-manage-returns', {
-      method: 'DELETE',
-      body: { id },
+      body: { _action: 'delete', id },
     });
     if (error) { toast.error('Failed to delete'); return; }
     toast.success('Deleted');
