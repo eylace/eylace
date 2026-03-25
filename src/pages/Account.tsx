@@ -997,7 +997,7 @@ const Account = () => {
                                             isActive ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground'
                                           )}>
                                             {isRejected && step === 'rejected' ? <X className="h-3 w-3" /> :
-                                             isActive ? <CheckCircle className="h-3 w-3" /> : i + 1}
+                                             isActive ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
                                           </div>
                                           {i < steps.length - 1 && (
                                             <div className={cn('h-0.5 flex-1 rounded transition-colors', isActive && i < currentIdx ? 'bg-accent' : 'bg-border')} />
