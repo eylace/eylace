@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Loader2, Search, RotateCcw, Trash2, Eye, Save } from 'lucide-react';
+import { Loader2, Search, RotateCcw, Trash2, Eye, Save, CheckCircle2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -206,6 +206,48 @@ export const AdminReturnsTab = () => {
                   </div>
                 </div>
               )}
+
+              {/* Progress Tracker */}
+              {(() => {
+                const isRejected = detail.status === 'rejected';
+                const steps = isRejected
+                  ? ['pending', 'approved', 'rejected']
+                  : ['pending', 'approved', 'refunded'];
+                const stepLabels = isRejected
+                  ? ['Requested', 'Approved', 'Rejected']
+                  : ['Requested', 'Approved', 'Refunded'];
+                const currentIdx = steps.indexOf(detail.status);
+                return (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Progress</Label>
+                    <div className="flex items-center gap-1">
+                      {steps.map((step, i) => {
+                        const isActive = i <= currentIdx;
+                        return (
+                          <div key={step} className="flex-1 flex items-center gap-1">
+                            <div className={cn(
+                              'w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors',
+                              isRejected && step === 'rejected' ? 'bg-destructive text-destructive-foreground' :
+                              isActive ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground'
+                            )}>
+                              {isRejected && step === 'rejected' ? <X className="h-3.5 w-3.5" /> :
+                               isActive ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
+                            </div>
+                            {i < steps.length - 1 && (
+                              <div className={cn('h-0.5 flex-1 rounded transition-colors', isActive && i < currentIdx ? 'bg-accent' : 'bg-border')} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between text-[10px] text-muted-foreground px-1">
+                      {stepLabels.map((label) => (
+                        <span key={label}>{label}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{detail.profile ? `${detail.profile.first_name || ''} ${detail.profile.last_name || ''}`.trim() : '—'}</span></div>
