@@ -53,7 +53,9 @@ export const AdminReturnsTab = () => {
 
   const fetchReturns = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke('admin-manage-returns', { method: 'GET' });
+    const { data, error } = await supabase.functions.invoke('admin-manage-returns', {
+      body: { _action: 'get' },
+    });
     if (!error && data?.returns) {
       setReturns(data.returns);
     }
