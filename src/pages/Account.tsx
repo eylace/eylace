@@ -447,6 +447,57 @@ const Account = () => {
                   ))}
                 </div>
 
+                {/* Feature Cards - My Orders, Login & Security, My Addresses */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    {
+                      icon: Package,
+                      title: 'My Orders',
+                      desc: 'Track, return, cancel an order, download invoice or buy again',
+                      tab: 'orders',
+                      bg: 'bg-primary/10',
+                      color: 'text-primary',
+                      borderHover: 'hover:border-primary/30',
+                    },
+                    {
+                      icon: Shield,
+                      title: 'Login & Security',
+                      desc: 'Edit login, name, and mobile number',
+                      tab: 'settings',
+                      bg: 'bg-accent/10',
+                      color: 'text-accent',
+                      borderHover: 'hover:border-accent/30',
+                    },
+                    {
+                      icon: MapPin,
+                      title: 'My Addresses',
+                      desc: 'Edit, remove or set default address',
+                      tab: 'addresses',
+                      bg: 'bg-[hsl(var(--success))]/10',
+                      color: 'text-[hsl(var(--success))]',
+                      borderHover: 'hover:border-[hsl(var(--success))]/30',
+                    },
+                  ].map((card) => (
+                    <button
+                      key={card.title}
+                      onClick={() => setActiveSection(card.tab)}
+                      className={cn(
+                        'flex items-center gap-4 p-4 bg-card rounded-xl border border-border text-left transition-all hover:shadow-[var(--shadow-card)] group',
+                        card.borderHover
+                      )}
+                    >
+                      <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center shrink-0', card.bg)}>
+                        <card.icon className={cn('h-5 w-5', card.color)} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm">{card.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{card.desc}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
+                    </button>
+                  ))}
+                </div>
+
                 {/* Spending Chart */}
                 <div className="bg-card rounded-xl border border-border p-5">
                   <div className="flex items-center justify-between mb-4">
@@ -701,20 +752,71 @@ const Account = () => {
                                 Cancel Order
                               </Button>
                             )}
-                            {order.status === 'delivered' && order.order_items && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-accent border-accent/30 hover:bg-accent/10"
-                                onClick={() => setReturnModal({
-                                  orderId: order.id,
-                                  orderNumber: order.order_number,
-                                  items: order.order_items,
-                                })}
-                              >
-                                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                                Request Return
-                              </Button>
+                            {order.status === 'delivered' && (
+                              <>
+                                {order.order_items && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-accent border-accent/30 hover:bg-accent/10"
+                                    onClick={() => setReturnModal({
+                                      orderId: order.id,
+                                      orderNumber: order.order_number,
+                                      items: order.order_items,
+                                    })}
+                                  >
+                                    <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                                    Request Return
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-primary border-primary/30 hover:bg-primary/10"
+                                  onClick={() => {
+                                    if (order.order_items?.[0]) {
+                                      navigate(`/product/${order.order_items[0].product_id}`);
+                                    }
+                                  }}
+                                >
+                                  <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
+                                  Buy Again
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-[hsl(var(--success))] border-[hsl(var(--success))]/30 hover:bg-[hsl(var(--success))]/10"
+                                  onClick={() => {
+                                    const lines = [
+                                      `INVOICE - Order #${order.order_number}`,
+                                      `Date: ${format(new Date(order.created_at), 'MMMM d, yyyy')}`,
+                                      `Status: ${order.status}`,
+                                      `Payment: ${order.payment_method}`,
+                                      `---`,
+                                      ...(order.order_items || []).map((item: any) =>
+                                        `${item.product_name} x${item.quantity} - ৳${(item.price * item.quantity).toFixed(2)}`
+                                      ),
+                                      `---`,
+                                      `Subtotal: ৳${order.subtotal?.toFixed(2)}`,
+                                      `Shipping: ৳${order.shipping?.toFixed(2)}`,
+                                      `Tax: ৳${order.tax?.toFixed(2)}`,
+                                      `Discount: -৳${order.discount?.toFixed(2)}`,
+                                      `TOTAL: ৳${order.total?.toFixed(2)}`,
+                                    ];
+                                    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `invoice-${order.order_number}.txt`;
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    toast.success('Invoice downloaded!');
+                                  }}
+                                >
+                                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                                  Download Invoice
+                                </Button>
+                              </>
                             )}
                           </div>
                         )}
