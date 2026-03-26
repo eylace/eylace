@@ -38,12 +38,24 @@ const ProductDetail = () => {
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
+  const location = useLocation();
+  const reviewsRef = useRef<HTMLDivElement>(null);
    
   const { product: dbProduct, isLoading, error } = useProduct(slug || '');
   const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
    
   const product = dbProduct ? adaptDBProduct(dbProduct) : null;
   const relatedProducts = adaptDBProducts(relatedDbProducts);
+
+  // Auto-switch to reviews tab and scroll when #reviews hash is present
+  useEffect(() => {
+    if (location.hash === '#reviews' && product) {
+      setActiveTab('reviews');
+      setTimeout(() => {
+        reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [location.hash, product]);
 
   const handleDigitalDownload = useCallback(async () => {
     if (!user) {
