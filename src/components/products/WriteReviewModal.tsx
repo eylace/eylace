@@ -30,7 +30,7 @@ interface WriteReviewModalProps {
   onOpenChange: (open: boolean) => void;
   productId: string;
   productName: string;
-  onReviewSubmitted?: () => void;
+  onReviewSubmitted?: () => void | Promise<void>;
 }
 
 export const WriteReviewModal = ({
@@ -120,8 +120,8 @@ export const WriteReviewModal = ({
       setContent('');
        setImages([]);
        setImagePreviews([]);
+      await onReviewSubmitted?.();
       onOpenChange(false);
-      onReviewSubmitted?.();
     } catch (err) {
       console.error('Error submitting review:', err);
       toast.error('Failed to submit review');
@@ -171,7 +171,7 @@ export const WriteReviewModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Write a Review</DialogTitle>
         </DialogHeader>

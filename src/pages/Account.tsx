@@ -210,7 +210,7 @@ const Account = () => {
     const uuidRefs = uniqueProductRefs.filter(isUuidLike);
     const slugRefs = uniqueProductRefs.filter((ref) => !isUuidLike(ref));
 
-    const productQueries: Promise<any>[] = [];
+    const productQueries: any[] = [];
     if (uuidRefs.length > 0) {
       productQueries.push(
         supabase

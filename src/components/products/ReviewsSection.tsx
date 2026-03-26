@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Star, ThumbsUp, ThumbsDown, ChevronDown, Image, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -13,9 +13,16 @@ interface ReviewsSectionProps {
   productName?: string;
   rating: number;
   reviewCount: number;
+  onStatsChange?: (stats: { averageRating: number; totalReviews: number }) => void;
 }
 
-export const ReviewsSection = ({ productId, productName = 'Product', rating, reviewCount }: ReviewsSectionProps) => {
+export const ReviewsSection = ({
+  productId,
+  productName = 'Product',
+  rating,
+  reviewCount,
+  onStatsChange,
+}: ReviewsSectionProps) => {
   const { user } = useAuth();
   const [sortBy, setSortBy] = useState<'helpful' | 'recent'>('helpful');
   const [filterRating, setFilterRating] = useState<number | null>(null);
@@ -30,6 +37,13 @@ export const ReviewsSection = ({ productId, productName = 'Product', rating, rev
   // Use stats from database or fallback to props
   const displayRating = stats.totalReviews > 0 ? stats.averageRating : rating;
   const displayReviewCount = stats.totalReviews > 0 ? stats.totalReviews : reviewCount;
+
+  useEffect(() => {
+    onStatsChange?.({
+      averageRating: stats.averageRating,
+      totalReviews: stats.totalReviews,
+    });
+  }, [stats.averageRating, stats.totalReviews, onStatsChange]);
 
   return (
     <div className="space-y-8">

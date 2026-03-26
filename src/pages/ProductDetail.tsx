@@ -40,12 +40,20 @@ const ProductDetail = () => {
   const { t } = useLanguage();
   const location = useLocation();
   const reviewsRef = useRef<HTMLDivElement>(null);
+  const [liveReviewStats, setLiveReviewStats] = useState<{ averageRating: number; totalReviews: number } | null>(null);
    
   const { product: dbProduct, isLoading, error } = useProduct(slug || '');
   const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
    
   const product = dbProduct ? adaptDBProduct(dbProduct) : null;
   const relatedProducts = adaptDBProducts(relatedDbProducts);
+
+  const displayRating = liveReviewStats?.averageRating ?? product?.rating ?? 0;
+  const displayReviewCount = liveReviewStats?.totalReviews ?? product?.reviewCount ?? 0;
+
+  useEffect(() => {
+    setLiveReviewStats(null);
+  }, [slug]);
 
   // Auto-switch to reviews tab and scroll when #reviews hash is present
   useEffect(() => {
@@ -192,17 +200,17 @@ const ProductDetail = () => {
                         key={i}
                         className={cn(
                           "h-4 w-4",
-                          i < Math.floor(product.rating) 
+                            i < Math.floor(displayRating) 
                             ? "fill-rating text-rating" 
                             : "fill-muted text-muted"
                         )}
                       />
                     ))}
                   </div>
-                  <span className="font-medium text-foreground">{product.rating}</span>
+                  <span className="font-medium text-foreground">{displayRating.toFixed(1)}</span>
                 </div>
                 <a href="#reviews" className="text-sm text-accent hover:underline">
-                  {product.reviewCount.toLocaleString()} {t('product.reviews')}
+                  {displayReviewCount.toLocaleString()} {t('product.reviews')}
                 </a>
                 <span className="text-sm text-muted-foreground">
                   5,000+ {t('product.sold')}
@@ -431,7 +439,7 @@ const ProductDetail = () => {
               value="reviews"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent"
             >
-              {t('product.reviews')} ({(product.reviewCount || 0).toLocaleString()})
+              {t('product.reviews')} ({displayReviewCount.toLocaleString()})
             </TabsTrigger>
           </TabsList>
 
@@ -464,8 +472,9 @@ const ProductDetail = () => {
             <ReviewsSection 
               productId={product.id}
               productName={product.name}
-              rating={product.rating}
-              reviewCount={product.reviewCount}
+              rating={displayRating}
+              reviewCount={displayReviewCount}
+              onStatsChange={setLiveReviewStats}
             />
           </TabsContent>
         </Tabs>
