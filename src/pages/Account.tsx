@@ -480,57 +480,6 @@ const Account = () => {
                   ))}
                 </div>
 
-                {/* Feature Cards - My Orders, Login & Security, My Addresses */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    {
-                      icon: Package,
-                      title: 'My Orders',
-                      desc: 'Track, return, cancel an order, download invoice or buy again',
-                      tab: 'orders',
-                      bg: 'bg-primary/10',
-                      color: 'text-primary',
-                      borderHover: 'hover:border-primary/30',
-                    },
-                    {
-                      icon: Shield,
-                      title: 'Login & Security',
-                      desc: 'Edit login, name, and mobile number',
-                      tab: 'settings',
-                      bg: 'bg-accent/10',
-                      color: 'text-accent',
-                      borderHover: 'hover:border-accent/30',
-                    },
-                    {
-                      icon: MapPin,
-                      title: 'My Addresses',
-                      desc: 'Edit, remove or set default address',
-                      tab: 'addresses',
-                      bg: 'bg-[hsl(var(--success))]/10',
-                      color: 'text-[hsl(var(--success))]',
-                      borderHover: 'hover:border-[hsl(var(--success))]/30',
-                    },
-                  ].map((card) => (
-                    <button
-                      key={card.title}
-                      onClick={() => setActiveSection(card.tab)}
-                      className={cn(
-                        'flex items-center gap-4 p-4 bg-card rounded-xl border border-border text-left transition-all hover:shadow-[var(--shadow-card)] group',
-                        card.borderHover
-                      )}
-                    >
-                      <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center shrink-0', card.bg)}>
-                        <card.icon className={cn('h-5 w-5', card.color)} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm">{card.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{card.desc}</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
-                    </button>
-                  ))}
-                </div>
-
                 {/* Spending Chart */}
                 <div className="bg-card rounded-xl border border-border p-5">
                   <div className="flex items-center justify-between mb-4">
@@ -718,76 +667,208 @@ const Account = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {filteredOrders.map((order: any) => (
-                      <div key={order.id} className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-[var(--shadow-card)] transition-shadow">
-                        <div className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
-                                <Receipt className="h-5 w-5 text-muted-foreground" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-sm">Order #{order.order_number}</p>
-                                <p className="text-xs text-muted-foreground">{format(new Date(order.created_at), 'MMM d, yyyy · h:mm a')}</p>
-                              </div>
-                            </div>
-                            <div className="text-right flex items-center gap-3">
-                              <Badge variant="outline" className={cn('capitalize text-[10px]', statusColors[order.status])}>{order.status.replace('_', ' ')}</Badge>
-                              <span className="font-bold">৳{order.total?.toFixed(2)}</span>
-                            </div>
-                          </div>
-                          <Separator className="my-3" />
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <div className="flex gap-4">
-                              <span>Payment: <span className="font-medium text-foreground capitalize">{order.payment_method}</span></span>
-                              {order.tracking_number && <span>Tracking: <span className="font-medium text-foreground">{order.tracking_number}</span></span>}
-                            </div>
-                            <button
-                              onClick={() => toggleOrderTracking(order.id)}
-                              className="text-accent font-medium hover:underline flex items-center gap-1"
-                            >
-                              {expandedOrderId === order.id ? 'Hide' : 'Track'}
-                              {expandedOrderId === order.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                            </button>
-                          </div>
-                        </div>
+                    {filteredOrders.map((order: any) => {
+                      const isExpanded = expandedOrderId === order.id;
+                      const hasReturnRequest = returnRequests.some((r: any) => r.order_id === order.id);
 
-                        {expandedOrderId === order.id && (
-                          <div className="border-t border-border bg-secondary/20 p-4">
-                            <OrderTrackingTimeline
-                              status={order.status}
-                              trackingNumber={order.tracking_number}
-                              carrier={order.carrier}
-                              estimatedDelivery={order.estimated_delivery}
-                              shippedAt={order.shipped_at}
-                              deliveredAt={order.delivered_at}
-                              events={trackingEvents[order.id] || []}
-                            />
-                          </div>
-                        )}
-
-                        {/* Action Buttons */}
-                        {(order.status === 'pending' || order.status === 'delivered') && (
-                          <div className="border-t border-border p-3 flex flex-wrap gap-2">
-                            {order.status === 'pending' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-destructive border-destructive/30 hover:bg-destructive/10"
-                                onClick={() => handleCancelOrder(order.id)}
-                                disabled={cancellingOrder === order.id}
-                              >
-                                {cancellingOrder === order.id ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                                ) : (
-                                  <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                      return (
+                        <div key={order.id} className="bg-card rounded-xl border border-border overflow-hidden hover:shadow-[var(--shadow-card)] transition-shadow">
+                          {/* Order Header - Clickable */}
+                          <button
+                            onClick={() => toggleOrderTracking(order.id)}
+                            className="w-full p-4 text-left hover:bg-secondary/30 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                                  <Receipt className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-sm">Order #{order.order_number}</p>
+                                  <p className="text-xs text-muted-foreground">{format(new Date(order.created_at), 'MMM d, yyyy · h:mm a')}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <Badge variant="outline" className={cn('capitalize text-[10px]', statusColors[order.status])}>{order.status.replace('_', ' ')}</Badge>
+                                <span className="font-bold">৳{order.total?.toFixed(2)}</span>
+                                {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                              </div>
+                            </div>
+                            {/* Items Preview */}
+                            {!isExpanded && order.order_items && (
+                              <div className="flex items-center gap-2 mt-3">
+                                {order.order_items.slice(0, 3).map((item: any) => (
+                                  <img key={item.id} src={item.product_image || '/placeholder.svg'} alt="" className="w-10 h-10 rounded-md object-cover border border-border" />
+                                ))}
+                                {order.order_items.length > 3 && (
+                                  <span className="text-xs text-muted-foreground">+{order.order_items.length - 3} more</span>
                                 )}
-                                Cancel Order
-                              </Button>
+                                <span className="text-xs text-muted-foreground ml-auto">{order.order_items.length} item{order.order_items.length > 1 ? 's' : ''}</span>
+                              </div>
                             )}
-                            {order.status === 'delivered' && (
-                              <>
-                                {order.order_items && (
+                          </button>
+
+                          {/* Expanded Order Details */}
+                          {isExpanded && (
+                            <div className="border-t border-border">
+                              {/* Order Items */}
+                              <div className="p-4 space-y-3">
+                                <h4 className="text-sm font-semibold flex items-center gap-2">
+                                  <Package className="h-4 w-4 text-muted-foreground" /> Order Items
+                                </h4>
+                                {(order.order_items || []).map((item: any) => (
+                                  <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/50">
+                                    <img src={item.product_image || '/placeholder.svg'} alt={item.product_name} className="w-14 h-14 rounded-lg object-cover border border-border" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{item.product_name}</p>
+                                      <p className="text-xs text-muted-foreground">Qty: {item.quantity} · ৳{Number(item.price).toFixed(2)} each</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <p className="text-sm font-bold">৳{(item.price * item.quantity).toFixed(2)}</p>
+                                      {order.status === 'delivered' && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="text-[hsl(var(--rating))] text-xs h-7 px-2 mt-1"
+                                          onClick={(e) => { e.stopPropagation(); navigate(`/product/${item.product_id}#reviews`); }}
+                                        >
+                                          <Star className="h-3 w-3 mr-1" /> Review
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Order Summary */}
+                              <div className="px-4 pb-4">
+                                <div className="bg-secondary/20 rounded-lg p-3 space-y-1.5 text-sm">
+                                  <div className="flex justify-between text-muted-foreground">
+                                    <span>Subtotal</span><span>৳{order.subtotal?.toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex justify-between text-muted-foreground">
+                                    <span>Shipping</span><span>৳{order.shipping?.toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex justify-between text-muted-foreground">
+                                    <span>Tax</span><span>৳{order.tax?.toFixed(2)}</span>
+                                  </div>
+                                  {order.discount > 0 && (
+                                    <div className="flex justify-between text-[hsl(var(--success))]">
+                                      <span>Discount</span><span>-৳{order.discount?.toFixed(2)}</span>
+                                    </div>
+                                  )}
+                                  <Separator />
+                                  <div className="flex justify-between font-bold">
+                                    <span>Total</span><span>৳{order.total?.toFixed(2)}</span>
+                                  </div>
+                                  <div className="flex justify-between text-xs text-muted-foreground pt-1">
+                                    <span>Payment: <span className="capitalize">{order.payment_method}</span></span>
+                                    {order.tracking_number && <span>Tracking: {order.tracking_number}</span>}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Tracking Timeline */}
+                              <div className="border-t border-border bg-secondary/10 p-4">
+                                <OrderTrackingTimeline
+                                  status={order.status}
+                                  trackingNumber={order.tracking_number}
+                                  carrier={order.carrier}
+                                  estimatedDelivery={order.estimated_delivery}
+                                  shippedAt={order.shipped_at}
+                                  deliveredAt={order.delivered_at}
+                                  events={trackingEvents[order.id] || []}
+                                />
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="border-t border-border p-3 flex flex-wrap gap-2">
+                                {/* Download Invoice - always available */}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-[hsl(var(--success))] border-[hsl(var(--success))]/30 hover:bg-[hsl(var(--success))]/10"
+                                  onClick={() => {
+                                    const invoiceHtml = `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Invoice #${order.order_number}</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:40px;color:#333}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;border-bottom:3px solid #f60;padding-bottom:20px}
+.logo{font-size:24px;font-weight:bold;color:#f60}
+.invoice-title{text-align:right}
+.invoice-title h1{margin:0;font-size:28px;color:#333}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px}
+.info-box h3{margin:0 0 8px;font-size:13px;color:#888;text-transform:uppercase}
+.info-box p{margin:2px 0;font-size:14px}
+table{width:100%;border-collapse:collapse;margin-bottom:30px}
+th{background:#f8f8f8;padding:10px 12px;text-align:left;font-size:13px;border-bottom:2px solid #eee}
+td{padding:10px 12px;border-bottom:1px solid #eee;font-size:14px}
+.text-right{text-align:right}
+.summary{margin-left:auto;width:280px}
+.summary .row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.summary .total{border-top:2px solid #333;font-weight:bold;font-size:16px;padding-top:8px;margin-top:4px}
+.footer{text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid #eee;font-size:12px;color:#888}
+</style></head><body>
+<div class="header"><div class="logo">Grand Mall Emporium</div><div class="invoice-title"><h1>INVOICE</h1><p>#${order.order_number}</p><p>${format(new Date(order.created_at), 'MMMM d, yyyy')}</p></div></div>
+<div class="info-grid"><div class="info-box"><h3>Order Info</h3><p>Status: ${order.status}</p><p>Payment: ${order.payment_method}</p>${order.tracking_number ? `<p>Tracking: ${order.tracking_number}</p>` : ''}</div><div class="info-box"><h3>Customer</h3><p>${profile?.first_name || ''} ${profile?.last_name || ''}</p><p>${user?.email || ''}</p>${profile?.phone ? `<p>${profile.phone}</p>` : ''}</div></div>
+<table><thead><tr><th>Product</th><th class="text-right">Qty</th><th class="text-right">Price</th><th class="text-right">Total</th></tr></thead><tbody>
+${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td><td class="text-right">${item.quantity}</td><td class="text-right">৳${Number(item.price).toFixed(2)}</td><td class="text-right">৳${(item.price * item.quantity).toFixed(2)}</td></tr>`).join('')}
+</tbody></table>
+<div class="summary"><div class="row"><span>Subtotal</span><span>৳${order.subtotal?.toFixed(2)}</span></div><div class="row"><span>Shipping</span><span>৳${order.shipping?.toFixed(2)}</span></div><div class="row"><span>Tax</span><span>৳${order.tax?.toFixed(2)}</span></div>${order.discount > 0 ? `<div class="row" style="color:green"><span>Discount</span><span>-৳${order.discount?.toFixed(2)}</span></div>` : ''}<div class="row total"><span>Total</span><span>৳${order.total?.toFixed(2)}</span></div></div>
+<div class="footer"><p>Thank you for shopping with Grand Mall Emporium!</p><p>This is a computer-generated invoice.</p></div>
+</body></html>`;
+                                    const blob = new Blob([invoiceHtml], { type: 'text/html' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `invoice-${order.order_number}.html`;
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+                                    toast.success('Invoice downloaded!');
+                                  }}
+                                >
+                                  <Download className="h-3.5 w-3.5 mr-1.5" />
+                                  Download Invoice
+                                </Button>
+
+                                {/* Cancel - only pending */}
+                                {order.status === 'pending' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                                    onClick={() => handleCancelOrder(order.id)}
+                                    disabled={cancellingOrder === order.id}
+                                  >
+                                    {cancellingOrder === order.id ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                                    ) : (
+                                      <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                                    )}
+                                    Cancel Order
+                                  </Button>
+                                )}
+
+                                {/* Buy Again - delivered */}
+                                {order.status === 'delivered' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-primary border-primary/30 hover:bg-primary/10"
+                                    onClick={() => {
+                                      if (order.order_items?.[0]) {
+                                        navigate(`/product/${order.order_items[0].product_id}`);
+                                      }
+                                    }}
+                                  >
+                                    <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
+                                    Buy Again
+                                  </Button>
+                                )}
+
+                                {/* Return Order - only delivered & no existing return */}
+                                {order.status === 'delivered' && !hasReturnRequest && order.order_items && (
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -799,62 +880,23 @@ const Account = () => {
                                     })}
                                   >
                                     <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                                    Request Return
+                                    Return Order
                                   </Button>
                                 )}
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-primary border-primary/30 hover:bg-primary/10"
-                                  onClick={() => {
-                                    if (order.order_items?.[0]) {
-                                      navigate(`/product/${order.order_items[0].product_id}`);
-                                    }
-                                  }}
-                                >
-                                  <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
-                                  Buy Again
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-[hsl(var(--success))] border-[hsl(var(--success))]/30 hover:bg-[hsl(var(--success))]/10"
-                                  onClick={() => {
-                                    const lines = [
-                                      `INVOICE - Order #${order.order_number}`,
-                                      `Date: ${format(new Date(order.created_at), 'MMMM d, yyyy')}`,
-                                      `Status: ${order.status}`,
-                                      `Payment: ${order.payment_method}`,
-                                      `---`,
-                                      ...(order.order_items || []).map((item: any) =>
-                                        `${item.product_name} x${item.quantity} - ৳${(item.price * item.quantity).toFixed(2)}`
-                                      ),
-                                      `---`,
-                                      `Subtotal: ৳${order.subtotal?.toFixed(2)}`,
-                                      `Shipping: ৳${order.shipping?.toFixed(2)}`,
-                                      `Tax: ৳${order.tax?.toFixed(2)}`,
-                                      `Discount: -৳${order.discount?.toFixed(2)}`,
-                                      `TOTAL: ৳${order.total?.toFixed(2)}`,
-                                    ];
-                                    const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    a.download = `invoice-${order.order_number}.txt`;
-                                    a.click();
-                                    URL.revokeObjectURL(url);
-                                    toast.success('Invoice downloaded!');
-                                  }}
-                                >
-                                  <Download className="h-3.5 w-3.5 mr-1.5" />
-                                  Download Invoice
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+
+                                {/* Show return status if exists */}
+                                {hasReturnRequest && (
+                                  <Badge variant="outline" className="text-xs bg-accent/5 text-accent border-accent/20">
+                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                    Return Requested
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
