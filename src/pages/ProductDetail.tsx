@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { 
   Star, Heart, Share2, ShoppingCart, Zap, Truck, Shield, RotateCcw,
   Check, MessageCircle, ChevronRight, Package, Store, GitCompareArrows, Download
@@ -31,18 +31,31 @@ const ProductDetail = () => {
   const { slug } = useParams();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState('description');
   const { addItem } = useCart();
   const { user } = useAuth();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
+  const location = useLocation();
+  const reviewsRef = useRef<HTMLDivElement>(null);
    
   const { product: dbProduct, isLoading, error } = useProduct(slug || '');
   const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
    
   const product = dbProduct ? adaptDBProduct(dbProduct) : null;
   const relatedProducts = adaptDBProducts(relatedDbProducts);
+
+  // Auto-switch to reviews tab and scroll when #reviews hash is present
+  useEffect(() => {
+    if (location.hash === '#reviews' && product) {
+      setActiveTab('reviews');
+      setTimeout(() => {
+        reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [location.hash, product]);
 
   const handleDigitalDownload = useCallback(async () => {
     if (!user) {
@@ -400,8 +413,8 @@ const ProductDetail = () => {
         </div>
 
         {/* Tabs Section */}
-        <Tabs defaultValue="description" className="mb-12">
-          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-12">
+          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent" ref={reviewsRef}>
             <TabsTrigger 
               value="description"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent"
