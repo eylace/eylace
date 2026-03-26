@@ -413,8 +413,8 @@ const ProductDetail = () => {
         </div>
 
         {/* Tabs Section */}
-        <Tabs defaultValue="description" className="mb-12">
-          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-12">
+          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent" ref={reviewsRef}>
             <TabsTrigger 
               value="description"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:bg-transparent"
