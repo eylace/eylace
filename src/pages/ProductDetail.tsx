@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { 
   Star, Heart, Share2, ShoppingCart, Zap, Truck, Shield, RotateCcw,
   Check, MessageCircle, ChevronRight, Package, Store, GitCompareArrows, Download
@@ -31,6 +31,7 @@ const ProductDetail = () => {
   const { slug } = useParams();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState('description');
   const { addItem } = useCart();
   const { user } = useAuth();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
