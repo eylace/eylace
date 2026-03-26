@@ -56,6 +56,9 @@ const passwordSchema = z.object({
   path: ['confirmPassword'],
 });
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isUuidLike = (value: string) => UUID_REGEX.test(value);
+
 const SIDEBAR_ITEMS = [
   { id: 'overview', icon: BarChart3, label: 'Dashboard' },
   { id: 'orders', icon: Package, label: 'My Orders' },
@@ -155,37 +158,107 @@ const Account = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  // Realtime subscription for user's own product reviews
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('customer-my-reviews')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'product_reviews', filter: `user_id=eq.${user.id}` },
+        () => {
+          fetchAllData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const fetchAllData = async () => {
-    const [ordersRes, reviewsRes, allOrdersRes, couponsRes, affRes, myReviewsRes, returnsRes] = await Promise.all([
-      supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }).limit(5),
-      supabase.from('product_reviews').select('id', { count: 'exact', head: true }),
+    const [allOrdersRes, couponsRes, affRes, myReviewsRes, returnsRes] = await Promise.all([
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
       supabase.from('affiliates').select('*').eq('user_id', user!.id).maybeSingle(),
-      supabase.from('product_reviews').select('*, products:product_id(name, slug, images)').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('product_reviews').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
       supabase.from('return_requests' as any).select('*, orders:order_id(order_number, total, created_at)').eq('user_id', user!.id).order('created_at', { ascending: false }),
     ]);
 
-    setRecentOrders(ordersRes.data || []);
-    setReviewCount(reviewsRes.count || 0);
     const orders = allOrdersRes.data || [];
+    const rawReviews = myReviewsRes.data || [];
+
+    setRecentOrders(orders.slice(0, 5));
     setAllOrders(orders);
     setOrderCount(orders.length);
+    setReviewCount(rawReviews.length);
     setCoupons(couponsRes.data || []);
     setAffiliateData(affRes.data);
-    setMyReviews(myReviewsRes.data || []);
     setReturnRequests(returnsRes.data || []);
     setCancelledOrders(orders.filter((o: any) => o.status === 'cancelled'));
 
-    // Build product slug map for review navigation
-    const allProductIds = [...new Set(orders.flatMap((o: any) => (o.order_items || []).map((i: any) => i.product_id)).filter(Boolean))];
-    if (allProductIds.length > 0) {
-      const { data: slugData } = await supabase.from('products_public').select('id, slug').in('id', allProductIds);
-      if (slugData) {
-        const map: Record<string, string> = {};
-        slugData.forEach((p: any) => { map[p.id] = p.slug; });
-        setProductSlugMap(map);
+    // Build product map for order-review navigation + My Reviews listing
+    const orderProductRefs = orders
+      .flatMap((o: any) => (o.order_items || []).map((i: any) => String(i.product_id || '')))
+      .filter(Boolean);
+    const reviewProductRefs = rawReviews
+      .map((review: any) => String(review.product_id || ''))
+      .filter(Boolean);
+
+    const uniqueProductRefs = [...new Set([...orderProductRefs, ...reviewProductRefs])];
+    const uuidRefs = uniqueProductRefs.filter(isUuidLike);
+    const slugRefs = uniqueProductRefs.filter((ref) => !isUuidLike(ref));
+
+    const productQueries: Promise<any>[] = [];
+    if (uuidRefs.length > 0) {
+      productQueries.push(
+        supabase
+          .from('products_public')
+          .select('id, slug, name, images')
+          .in('id', uuidRefs),
+      );
+    }
+    if (slugRefs.length > 0) {
+      productQueries.push(
+        supabase
+          .from('products_public')
+          .select('id, slug, name, images')
+          .in('slug', slugRefs),
+      );
+    }
+
+    const productResults = await Promise.all(productQueries);
+    const productRows = productResults.flatMap((res: any) => res?.data || []);
+
+    const productByRef: Record<string, any> = {};
+    productRows.forEach((product: any) => {
+      productByRef[String(product.id)] = product;
+      if (product.slug) {
+        productByRef[String(product.slug)] = product;
       }
+    });
+
+    const slugMap: Record<string, string> = {};
+    uniqueProductRefs.forEach((ref) => {
+      const mapped = productByRef[ref];
+      if (mapped?.slug) {
+        slugMap[ref] = mapped.slug;
+      } else if (!isUuidLike(ref)) {
+        slugMap[ref] = ref;
+      }
+    });
+    setProductSlugMap(slugMap);
+
+    const enrichedMyReviews = rawReviews.map((review: any) => ({
+      ...review,
+      product: productByRef[String(review.product_id)] || null,
+    }));
+    setMyReviews(enrichedMyReviews);
+
+    if (uniqueProductRefs.length === 0) {
+      setProductSlugMap({});
+      setMyReviews(rawReviews);
     }
 
     // Calculate spending
@@ -742,7 +815,16 @@ const Account = () => {
                                           variant="ghost"
                                           size="sm"
                                           className="text-[hsl(var(--rating))] text-xs h-7 px-2 mt-1"
-                                          onClick={(e) => { e.stopPropagation(); const s = productSlugMap[item.product_id]; if (s) navigate(`/product/${s}#reviews`); else toast.error('Product not found'); }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const productRef = String(item.product_id || '');
+                                            const slug = productSlugMap[productRef] || (!isUuidLike(productRef) ? productRef : '');
+                                            if (slug) {
+                                              navigate(`/product/${slug}#reviews`);
+                                              return;
+                                            }
+                                            toast.error('Product not found');
+                                          }}
                                         >
                                           <Star className="h-3 w-3 mr-1" /> Review
                                         </Button>
@@ -932,21 +1014,28 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                 ) : (
                   <div className="space-y-3">
                     {myReviews.map((review: any) => {
-                      const product = review.products;
+                      const product = review.product;
+                      const productRef = String(review.product_id || '');
+                      const productSlug = product?.slug || productSlugMap[productRef] || (!isUuidLike(productRef) ? productRef : '');
+                      const productLink = productSlug ? `/product/${productSlug}#reviews` : '';
                       return (
                         <div key={review.id} className="bg-card rounded-xl border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow">
                           <div className="flex items-start gap-4">
-                            {product?.images?.[0] && (
-                              <Link to={`/product/${product.slug}`} className="shrink-0">
+                            {product?.images?.[0] && productLink && (
+                              <Link to={productLink} className="shrink-0">
                                 <img src={product.images[0]} alt={product.name} className="w-16 h-16 rounded-lg object-cover border border-border" />
                               </Link>
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <Link to={`/product/${product?.slug || ''}`} className="font-semibold text-sm hover:text-accent transition-colors line-clamp-1">
-                                    {product?.name || 'Product'}
-                                  </Link>
+                                  {productLink ? (
+                                    <Link to={productLink} className="font-semibold text-sm hover:text-accent transition-colors line-clamp-1">
+                                      {product?.name || review.title || 'Product'}
+                                    </Link>
+                                  ) : (
+                                    <p className="font-semibold text-sm line-clamp-1">{product?.name || review.title || 'Product'}</p>
+                                  )}
                                   <div className="flex items-center gap-1 mt-1">
                                     {Array.from({ length: 5 }).map((_, i) => (
                                       <Star key={i} className={cn('h-3.5 w-3.5', i < review.rating ? 'text-[hsl(var(--rating))] fill-[hsl(var(--rating))]' : 'text-muted-foreground/30')} />
