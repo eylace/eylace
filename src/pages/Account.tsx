@@ -100,6 +100,7 @@ const Account = () => {
   const [myReviews, setMyReviews] = useState<any[]>([]);
   const [returnRequests, setReturnRequests] = useState<any[]>([]);
   const [cancelledOrders, setCancelledOrders] = useState<any[]>([]);
+  const [productSlugMap, setProductSlugMap] = useState<Record<string, string>>({});
 
   const [profileData, setProfileData] = useState({ first_name: '', last_name: '', phone: '' });
   const [addressData, setAddressData] = useState({ address: '', apartment: '', city: '', state: '', zip_code: '', country: 'BD' });
@@ -175,6 +176,17 @@ const Account = () => {
     setMyReviews(myReviewsRes.data || []);
     setReturnRequests(returnsRes.data || []);
     setCancelledOrders(orders.filter((o: any) => o.status === 'cancelled'));
+
+    // Build product slug map for review navigation
+    const allProductIds = [...new Set(orders.flatMap((o: any) => (o.order_items || []).map((i: any) => i.product_id)).filter(Boolean))];
+    if (allProductIds.length > 0) {
+      const { data: slugData } = await supabase.from('products_public').select('id, slug').in('id', allProductIds);
+      if (slugData) {
+        const map: Record<string, string> = {};
+        slugData.forEach((p: any) => { map[p.id] = p.slug; });
+        setProductSlugMap(map);
+      }
+    }
 
     // Calculate spending
     const spent = orders.filter(o => o.status !== 'cancelled').reduce((sum: number, o: any) => sum + (o.total || 0), 0);
@@ -730,7 +742,7 @@ const Account = () => {
                                           variant="ghost"
                                           size="sm"
                                           className="text-[hsl(var(--rating))] text-xs h-7 px-2 mt-1"
-                                          onClick={(e) => { e.stopPropagation(); navigate(`/product/${item.product_id}#reviews`); }}
+                                          onClick={(e) => { e.stopPropagation(); const s = productSlugMap[item.product_id]; if (s) navigate(`/product/${s}#reviews`); else toast.error('Product not found'); }}
                                         >
                                           <Star className="h-3 w-3 mr-1" /> Review
                                         </Button>
