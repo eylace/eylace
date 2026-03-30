@@ -2,6 +2,7 @@ import { ReactNode, useEffect } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { TopBar } from './TopBar';
+import BackToTop from './BackToTop';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
 interface LayoutProps {
@@ -112,6 +113,7 @@ export const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
       <Footer />
+      <BackToTop />
     </div>
   );
 };
