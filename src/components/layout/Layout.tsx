@@ -113,6 +113,7 @@ export const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
       <Footer />
+      <BackToTop />
     </div>
   );
 };
