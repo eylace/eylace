@@ -62,6 +62,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
             <img 
               src={product.images[0]} 
               alt={product.name}
+              loading="lazy"
               className="w-full h-full object-cover"
             />
             {hasDiscount && (
