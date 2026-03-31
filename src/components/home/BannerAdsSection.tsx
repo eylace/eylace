@@ -32,7 +32,7 @@ export const BannerAdsSection = () => {
         {ads.map(ad => (
           <Link key={ad.id} to={ad.linkUrl || '#'} className="block rounded-lg overflow-hidden border border-border hover:shadow-lg transition-shadow">
             {ad.imageUrl ? (
-              <img src={ad.imageUrl} alt={ad.title} className="w-full h-40 md:h-48 object-cover" />
+              <img src={ad.imageUrl} alt={ad.title} loading="lazy" className="w-full h-40 md:h-48 object-cover" />
             ) : (
               <div className="w-full h-40 md:h-48 bg-gradient-to-r from-primary to-accent flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg">{ad.title}</span>
