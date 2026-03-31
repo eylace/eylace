@@ -26,7 +26,7 @@ export const CategoriesSection = () => {
         <Link key={category.id} to={`/category/${category.slug}`} className="group flex flex-col items-center text-center">
             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-secondary flex items-center justify-center mb-2 group-hover:bg-accent/10 group-hover:scale-105 transition-all duration-200 shadow-sm overflow-hidden">
               {category.image ?
-            <img src={category.image} alt={category.name} className="w-full h-full object-cover" /> :
+            <img src={category.image} alt={category.name} loading="lazy" className="w-full h-full object-cover" /> :
 
             <span className="text-2xl md:text-3xl">{category.icon}</span>
             }
