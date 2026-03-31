@@ -177,21 +177,21 @@ const fetchCategoriesOnce = async (): Promise<DBCategory[]> => {
   if (categoriesCache) return categoriesCache;
   if (categoriesFetchPromise) return categoriesFetchPromise;
 
-  categoriesFetchPromise = supabase
-    .from('categories')
-    .select('*')
-    .order('sort_order', { ascending: true })
-    .then(({ data, error }) => {
+  categoriesFetchPromise = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('sort_order', { ascending: true });
       if (!error && data) {
         categoriesCache = data;
         return data;
       }
       return [];
-    })
-    .finally(() => {
-      // Allow refetch after 5 minutes
+    } finally {
       setTimeout(() => { categoriesCache = null; categoriesFetchPromise = null; }, 5 * 60 * 1000);
-    });
+    }
+  })();
 
   return categoriesFetchPromise;
 };
