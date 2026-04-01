@@ -156,6 +156,16 @@ export const AdminReturnsTab = () => {
               filtered.map(r => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium text-sm">#{r.order?.order_number || '—'}</TableCell>
+                  <TableCell>
+                    {r.return_tracking_number ? (
+                      <div className="flex items-center gap-1">
+                        <code className="text-xs font-mono text-accent">{r.return_tracking_number}</code>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { navigator.clipboard.writeText(r.return_tracking_number!); toast.success('Copied!'); }}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="text-sm">
                     {r.profile ? `${r.profile.first_name || ''} ${r.profile.last_name || ''}`.trim() || r.profile.email : '—'}
                   </TableCell>
