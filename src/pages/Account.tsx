@@ -14,6 +14,7 @@ import {
 import { Layout } from '@/components/layout/Layout';
 import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
 import { ReturnRequestModal } from '@/components/orders/ReturnRequestModal';
+import { ReturnReceipt } from '@/components/orders/ReturnReceipt';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
