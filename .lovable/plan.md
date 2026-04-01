@@ -1,38 +1,100 @@
 
 
-## Plan: Enhanced Customer Dashboard Feature Cards
+# Return Tracking System — Plan
 
-### Summary
-Add professional, Amazon-style feature cards to the dashboard Overview section with the three requested sections: My Orders, Login & Security, and My Addresses. Each card will have an icon, title, description, and clickable action that navigates to the correct tab.
+## Summary
+Add a **Return Tracking Number** and **Return Acknowledgement Receipt** system so both customers and admins can track and verify return status using a unique tracking number.
 
----
+## Database Changes
 
-### Changes
+### Migration: Add columns to `return_requests`
+```sql
+ALTER TABLE public.return_requests
+  ADD COLUMN return_tracking_number text UNIQUE,
+  ADD COLUMN acknowledgement_data jsonb DEFAULT '{}'::jsonb;
+```
+- `return_tracking_number`: Auto-generated unique ID like `RTN-20260401-XXXXX`
+- `acknowledgement_data`: Stores receipt metadata (generated_at, collected_by, hub info)
 
-**File: `src/pages/Account.tsx`**
+### Create a DB function to auto-generate tracking number on insert
+```sql
+CREATE OR REPLACE FUNCTION public.generate_return_tracking_number()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.return_tracking_number := 'RTN-' || to_char(now(), 'YYYYMMDD') || '-' || upper(substr(md5(random()::text), 1, 6));
+  RETURN NEW;
+END;
+$$;
 
-1. **Add feature cards section** after the Stats Grid (around line 448) in the Overview tab:
-   - **My Orders** card: Icon (Package), title, description "Track, return, cancel an order, download invoice or buy again" → navigates to `orders` tab
-   - **Login & Security** card: Icon (Shield), title, description "Edit login, name, and mobile number" → navigates to `settings` tab
-   - **My Addresses** card: Icon (MapPin), title, description "Edit, remove or set default address" → navigates to `addresses` tab
+CREATE TRIGGER set_return_tracking_number
+  BEFORE INSERT ON public.return_requests
+  FOR EACH ROW EXECUTE FUNCTION generate_return_tracking_number();
+```
 
-2. Each card styled as a clickable card with:
-   - Left icon in colored container
-   - Title + description text
-   - Right chevron arrow
-   - Hover shadow/border effect
+## Frontend Changes
 
-3. **Add "Buy Again" button** to the orders section for delivered orders (alongside existing Cancel/Return buttons)
+### 1. Customer Side — `src/pages/Account.tsx`
 
-4. **Add "Download Invoice" button** to expanded order details — generates a simple text-based invoice download
+**Returns section** — Show `return_tracking_number` for each return request:
+- Display tracking number prominently in each return card
+- Add a **"Download Receipt"** button that generates a printable Return Acknowledgement Receipt (PDF-style HTML with order details, tracking number, product info, return reason, date)
+- Add a **Copy** button for the tracking number
 
-No database or backend changes needed. This is purely a UI enhancement.
+**Return success** — After submitting a return in `ReturnRequestModal.tsx`:
+- Show the generated tracking number in the success state
+- Provide copy and download receipt options immediately
 
----
+### 2. Admin Side — `src/components/admin/AdminReturnsTab.tsx`
 
-### Files
+- Add `return_tracking_number` column to the table (searchable)
+- Show tracking number in the detail modal
+- Admin can download/print the Return Acknowledgement Receipt
+- Search filter supports tracking number lookup
+
+### 3. Edge Function — `supabase/functions/admin-manage-returns/index.ts`
+
+- Include `return_tracking_number` and `acknowledgement_data` in GET responses (already returned via `select('*')`, no change needed)
+
+### 4. Return Tracking Page — Update `src/pages/TrackOrder.tsx`
+
+Add a **second tab/section** for "Track Return" alongside "Track Order":
+- Customer enters return tracking number (RTN-XXXXXXXX-XXXXXX)
+- Fetches return request details from database
+- Shows return status timeline (Requested → Under Review → Approved → Refunded / Rejected)
+- Shows product info, refund amount, method, admin notes
+- Shows Return Acknowledgement Receipt details
+
+### 5. Return Acknowledgement Receipt Component
+
+Create `src/components/orders/ReturnReceipt.tsx`:
+- Printable receipt layout with:
+  - Eylace branding
+  - Return Tracking Number
+  - Order Number
+  - Product details (name, image, qty, price)
+  - Return reason and description
+  - Refund method and amount
+  - Date submitted
+  - Status
+  - Instructions (keep copy, mention order number)
+- Uses `window.print()` for download/print functionality
+
+## Technical Details
+
+- Tracking number format: `RTN-YYYYMMDD-XXXXXX` (6 random hex chars)
+- Receipt generation is client-side (HTML print), no server PDF needed
+- Customer fetches return by tracking number via direct Supabase query (RLS allows viewing own returns)
+- For public tracking (without login), add a security-definer function that returns limited return info by tracking number
+- Realtime subscription already exists for return_requests — tracking number updates will propagate automatically
+
+## Files to Create/Edit
 
 | File | Action |
 |------|--------|
-| `src/pages/Account.tsx` | Add feature cards to Overview, add Buy Again + Download Invoice buttons to orders |
+| Migration SQL | New — add columns + trigger |
+| `src/components/orders/ReturnReceipt.tsx` | New |
+| `src/pages/Account.tsx` | Edit — show tracking number, receipt download |
+| `src/components/orders/ReturnRequestModal.tsx` | Edit — show tracking number on success |
+| `src/components/admin/AdminReturnsTab.tsx` | Edit — tracking number column, search, receipt |
+| `src/pages/TrackOrder.tsx` | Edit — add return tracking tab |
 
