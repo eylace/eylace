@@ -64,6 +64,7 @@ export const ReturnRequestModal = ({
   const [refundMethod, setRefundMethod] = useState('original');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [returnTrackingNumber, setReturnTrackingNumber] = useState('');
 
   const selectedOrderItem = orderItems.find((i) => i.id === selectedItem);
   const refundAmount = selectedOrderItem
