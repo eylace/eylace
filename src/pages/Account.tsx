@@ -146,13 +146,7 @@ const Account = () => {
         { event: '*', schema: 'public', table: 'return_requests', filter: `user_id=eq.${user.id}` },
         () => {
           // Re-fetch return requests when any change happens
-          supabase.from('return_requests')
-            .select('*, order_id, return_tracking_number')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .then(({ data }) => {
-              if (data) setReturnRequests(data);
-            });
+          fetchAllData();
         }
       )
       .subscribe();
