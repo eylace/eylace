@@ -813,25 +813,32 @@ const Account = () => {
                                     </div>
                                     <div className="text-right shrink-0">
                                       <p className="text-sm font-bold">৳{(item.price * item.quantity).toFixed(2)}</p>
-                                      {order.status === 'delivered' && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-[hsl(var(--rating))] text-xs h-7 px-2 mt-1"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            const productRef = String(item.product_id || '');
-                                            const slug = productSlugMap[productRef] || (!isUuidLike(productRef) ? productRef : '');
-                                            if (slug) {
-                                              navigate(`/product/${slug}#reviews`);
-                                              return;
-                                            }
-                                            toast.error('Product not found');
-                                          }}
-                                        >
-                                          <Star className="h-3 w-3 mr-1" /> Review
-                                        </Button>
-                                      )}
+                                      {order.status === 'delivered' && (() => {
+                                        const productRef = String(item.product_id || '');
+                                        const alreadyReviewed = myReviews.some((r: any) => String(r.product_id) === productRef);
+                                        const slug = productSlugMap[productRef] || (!isUuidLike(productRef) ? productRef : '');
+                                        return alreadyReviewed ? (
+                                          <Badge variant="outline" className="text-[10px] bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20 mt-1">
+                                            <Check className="h-3 w-3 mr-0.5" /> Reviewed
+                                          </Badge>
+                                        ) : (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-[hsl(var(--rating))] text-xs h-7 px-2 mt-1"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (slug) {
+                                                navigate(`/product/${slug}#reviews`);
+                                                return;
+                                              }
+                                              toast.error('Product not found');
+                                            }}
+                                          >
+                                            <Star className="h-3 w-3 mr-1" /> Review
+                                          </Button>
+                                        );
+                                      })()}
                                     </div>
                                   </div>
                                 ))}
@@ -955,7 +962,13 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                                     className="text-primary border-primary/30 hover:bg-primary/10"
                                     onClick={() => {
                                       if (order.order_items?.[0]) {
-                                        navigate(`/product/${order.order_items[0].product_id}`);
+                                        const productRef = String(order.order_items[0].product_id || '');
+                                        const slug = productSlugMap[productRef] || (!isUuidLike(productRef) ? productRef : '');
+                                        if (slug) {
+                                          navigate(`/product/${slug}`);
+                                        } else {
+                                          toast.error('Product not found');
+                                        }
                                       }
                                     }}
                                   >
@@ -982,12 +995,24 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                                 )}
 
                                 {/* Show return status if exists */}
-                                {hasReturnRequest && (
-                                  <Badge variant="outline" className="text-xs bg-accent/5 text-accent border-accent/20">
-                                    <RotateCcw className="h-3 w-3 mr-1" />
-                                    Return Requested
-                                  </Badge>
-                                )}
+                                {hasReturnRequest && (() => {
+                                  const returnReq = returnRequests.find((r: any) => r.order_id === order.id);
+                                  const statusLabel = returnReq?.status === 'approved' ? 'Return Approved' : returnReq?.status === 'refunded' ? 'Refunded' : returnReq?.status === 'rejected' ? 'Return Rejected' : 'Return Requested';
+                                  const statusClass = returnReq?.status === 'refunded' ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20' : returnReq?.status === 'rejected' ? 'bg-destructive/10 text-destructive border-destructive/20' : 'bg-accent/5 text-accent border-accent/20';
+                                  return (
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className={cn('text-xs', statusClass)}>
+                                        <RotateCcw className="h-3 w-3 mr-1" />
+                                        {statusLabel}
+                                      </Badge>
+                                      {returnReq?.return_tracking_number && (
+                                        <Badge variant="outline" className="text-[10px] font-mono">
+                                          {returnReq.return_tracking_number}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
                           )}
