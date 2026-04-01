@@ -209,6 +209,36 @@ export const AdminReturnsTab = () => {
           </DialogHeader>
           {detail && (
             <div className="space-y-4">
+              {/* Tracking Number */}
+              {detail.return_tracking_number && (
+                <div className="bg-accent/5 border border-accent/20 rounded-lg p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Return Tracking Number</p>
+                    <code className="text-base font-bold text-accent">{detail.return_tracking_number}</code>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(detail.return_tracking_number!); toast.success('Copied!'); }}>
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <ReturnReceipt
+                      trackingNumber={detail.return_tracking_number}
+                      orderNumber={detail.order?.order_number || ''}
+                      productName={detail.item?.product_name}
+                      productImage={detail.item?.product_image || undefined}
+                      quantity={detail.item?.quantity}
+                      price={detail.item?.price}
+                      reason={detail.reason}
+                      description={detail.description || undefined}
+                      refundMethod={detail.refund_method || undefined}
+                      refundAmount={detail.refund_amount || undefined}
+                      status={detail.status}
+                      createdAt={detail.created_at}
+                      customerName={detail.profile ? `${detail.profile.first_name || ''} ${detail.profile.last_name || ''}`.trim() : undefined}
+                      customerEmail={detail.profile?.email || undefined}
+                    />
+                  </div>
+                </div>
+              )}
               {detail.item && (
                 <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
                   {detail.item.product_image && (
