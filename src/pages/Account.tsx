@@ -184,7 +184,7 @@ const Account = () => {
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
       supabase.from('affiliates').select('*').eq('user_id', user!.id).maybeSingle(),
       supabase.from('product_reviews').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
-      supabase.from('return_requests' as any).select('*, orders:order_id(order_number, total, created_at)').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('return_requests').select('*, order_id, return_tracking_number').eq('user_id', user!.id).order('created_at', { ascending: false }),
     ]);
 
     const orders = allOrdersRes.data || [];
