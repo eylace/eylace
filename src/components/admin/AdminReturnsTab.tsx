@@ -134,6 +134,7 @@ export const AdminReturnsTab = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Order #</TableHead>
+              <TableHead>RTN</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Item</TableHead>
               <TableHead>Reason</TableHead>
