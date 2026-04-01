@@ -79,7 +79,7 @@ export const ReturnRequestModal = ({
     }
 
     setLoading(true);
-    const { data, error } = await supabase.from('return_requests' as any).insert({
+    const { data, error } = await supabase.from('return_requests').insert({
       order_id: orderId,
       user_id: userId,
       order_item_id: selectedItem,
@@ -88,7 +88,7 @@ export const ReturnRequestModal = ({
       refund_method: refundMethod,
       refund_amount: refundAmount,
       status: 'pending',
-    } as any).select('return_tracking_number').single();
+    }).select('return_tracking_number').single();
 
     setLoading(false);
 
