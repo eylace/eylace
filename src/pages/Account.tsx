@@ -995,12 +995,24 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                                 )}
 
                                 {/* Show return status if exists */}
-                                {hasReturnRequest && (
-                                  <Badge variant="outline" className="text-xs bg-accent/5 text-accent border-accent/20">
-                                    <RotateCcw className="h-3 w-3 mr-1" />
-                                    Return Requested
-                                  </Badge>
-                                )}
+                                {hasReturnRequest && (() => {
+                                  const returnReq = returnRequests.find((r: any) => r.order_id === order.id);
+                                  const statusLabel = returnReq?.status === 'approved' ? 'Return Approved' : returnReq?.status === 'refunded' ? 'Refunded' : returnReq?.status === 'rejected' ? 'Return Rejected' : 'Return Requested';
+                                  const statusClass = returnReq?.status === 'refunded' ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20' : returnReq?.status === 'rejected' ? 'bg-destructive/10 text-destructive border-destructive/20' : 'bg-accent/5 text-accent border-accent/20';
+                                  return (
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className={cn('text-xs', statusClass)}>
+                                        <RotateCcw className="h-3 w-3 mr-1" />
+                                        {statusLabel}
+                                      </Badge>
+                                      {returnReq?.return_tracking_number && (
+                                        <Badge variant="outline" className="text-[10px] font-mono">
+                                          {returnReq.return_tracking_number}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
                           )}
