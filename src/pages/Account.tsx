@@ -813,25 +813,32 @@ const Account = () => {
                                     </div>
                                     <div className="text-right shrink-0">
                                       <p className="text-sm font-bold">৳{(item.price * item.quantity).toFixed(2)}</p>
-                                      {order.status === 'delivered' && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-[hsl(var(--rating))] text-xs h-7 px-2 mt-1"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            const productRef = String(item.product_id || '');
-                                            const slug = productSlugMap[productRef] || (!isUuidLike(productRef) ? productRef : '');
-                                            if (slug) {
-                                              navigate(`/product/${slug}#reviews`);
-                                              return;
-                                            }
-                                            toast.error('Product not found');
-                                          }}
-                                        >
-                                          <Star className="h-3 w-3 mr-1" /> Review
-                                        </Button>
-                                      )}
+                                      {order.status === 'delivered' && (() => {
+                                        const productRef = String(item.product_id || '');
+                                        const alreadyReviewed = myReviews.some((r: any) => String(r.product_id) === productRef);
+                                        const slug = productSlugMap[productRef] || (!isUuidLike(productRef) ? productRef : '');
+                                        return alreadyReviewed ? (
+                                          <Badge variant="outline" className="text-[10px] bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success))]/20 mt-1">
+                                            <Check className="h-3 w-3 mr-0.5" /> Reviewed
+                                          </Badge>
+                                        ) : (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-[hsl(var(--rating))] text-xs h-7 px-2 mt-1"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (slug) {
+                                                navigate(`/product/${slug}#reviews`);
+                                                return;
+                                              }
+                                              toast.error('Product not found');
+                                            }}
+                                          >
+                                            <Star className="h-3 w-3 mr-1" /> Review
+                                          </Button>
+                                        );
+                                      })()}
                                     </div>
                                   </div>
                                 ))}
