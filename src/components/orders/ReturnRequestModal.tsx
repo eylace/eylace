@@ -113,12 +113,44 @@ export const ReturnRequestModal = ({
         </DialogHeader>
 
         {submitted ? (
-          <div className="text-center py-8 space-y-3">
+          <div className="text-center py-6 space-y-4">
             <CheckCircle className="h-16 w-16 text-success mx-auto" />
             <h3 className="text-lg font-semibold">Request Submitted!</h3>
+            {returnTrackingNumber && (
+              <div className="bg-secondary/50 rounded-lg p-4 space-y-2">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Return Tracking Number</p>
+                <div className="flex items-center justify-center gap-2">
+                  <code className="text-lg font-bold text-accent">{returnTrackingNumber}</code>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(returnTrackingNumber); toast.success('Copied!'); }}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">
               We'll review your return request and get back to you within 24-48 hours.
             </p>
+            <div className="flex gap-2 justify-center">
+              {returnTrackingNumber && (
+                <ReturnReceipt
+                  trackingNumber={returnTrackingNumber}
+                  orderNumber={orderNumber}
+                  productName={selectedOrderItem?.product_name}
+                  productImage={selectedOrderItem?.product_image || undefined}
+                  quantity={selectedOrderItem?.quantity}
+                  price={selectedOrderItem?.price}
+                  reason={reason}
+                  description={description}
+                  refundMethod={refundMethod}
+                  refundAmount={refundAmount}
+                  status="pending"
+                  createdAt={new Date().toISOString()}
+                />
+              )}
+              <Button size="sm" onClick={() => { onSuccess(); onClose(); setSubmitted(false); setSelectedItem(''); setReason(''); setDescription(''); setRefundMethod('original'); setReturnTrackingNumber(''); }}>
+                Done
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-5">
