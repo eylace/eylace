@@ -1146,7 +1146,7 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                                   />
                                 </div>
                               </div>
-                            )
+                            )}
                             <div className="bg-secondary/30 rounded-lg p-3 space-y-1.5">
                               <div className="flex justify-between text-xs">
                                 <span className="text-muted-foreground">Reason</span>
