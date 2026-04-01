@@ -97,7 +97,7 @@ export const ReturnRequestModal = ({
       return;
     }
 
-    setReturnTrackingNumber((data as any)?.return_tracking_number || '');
+    setReturnTrackingNumber(data?.return_tracking_number || '');
     setSubmitted(true);
     toast.success('Return request submitted successfully!');
   };
