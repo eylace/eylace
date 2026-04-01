@@ -27,6 +27,7 @@ interface ReturnRequest {
   admin_notes: string | null;
   created_at: string;
   resolved_at: string | null;
+  return_tracking_number?: string | null;
   order?: { id: string; order_number: string; user_id: string } | null;
   item?: { id: string; product_name: string; product_image: string | null; price: number; quantity: number } | null;
   profile?: { user_id: string; first_name: string | null; last_name: string | null; email: string | null } | null;
