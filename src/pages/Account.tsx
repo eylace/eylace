@@ -14,6 +14,7 @@ import {
 import { Layout } from '@/components/layout/Layout';
 import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
 import { ReturnRequestModal } from '@/components/orders/ReturnRequestModal';
+import { ReturnReceipt } from '@/components/orders/ReturnReceipt';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1121,6 +1122,31 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                                 {req.status?.replace('_', ' ')}
                               </Badge>
                             </div>
+
+                            {/* Return Tracking Number */}
+                            {req.return_tracking_number && (
+                              <div className="bg-accent/5 border border-accent/20 rounded-lg p-3 mb-3 flex items-center justify-between">
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Tracking Number</p>
+                                  <code className="text-sm font-bold text-accent">{req.return_tracking_number}</code>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(req.return_tracking_number); toast.success('Copied!'); }}>
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                  <ReturnReceipt
+                                    trackingNumber={req.return_tracking_number}
+                                    orderNumber={req.orders?.order_number || ''}
+                                    reason={req.reason}
+                                    description={req.description}
+                                    refundMethod={req.refund_method}
+                                    refundAmount={req.refund_amount}
+                                    status={req.status}
+                                    createdAt={req.created_at}
+                                  />
+                                </div>
+                              </div>
+                            )}
                             <div className="bg-secondary/30 rounded-lg p-3 space-y-1.5">
                               <div className="flex justify-between text-xs">
                                 <span className="text-muted-foreground">Reason</span>

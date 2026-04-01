@@ -1792,6 +1792,7 @@ export type Database = {
       }
       return_requests: {
         Row: {
+          acknowledgement_data: Json | null
           admin_notes: string | null
           created_at: string
           description: string | null
@@ -1803,11 +1804,13 @@ export type Database = {
           refund_amount: number | null
           refund_method: string | null
           resolved_at: string | null
+          return_tracking_number: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          acknowledgement_data?: Json | null
           admin_notes?: string | null
           created_at?: string
           description?: string | null
@@ -1819,11 +1822,13 @@ export type Database = {
           refund_amount?: number | null
           refund_method?: string | null
           resolved_at?: string | null
+          return_tracking_number?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          acknowledgement_data?: Json | null
           admin_notes?: string | null
           created_at?: string
           description?: string | null
@@ -1835,6 +1840,7 @@ export type Database = {
           refund_amount?: number | null
           refund_method?: string | null
           resolved_at?: string | null
+          return_tracking_number?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -2705,6 +2711,19 @@ export type Database = {
           min_order_amount: number
           usage_limit: number
           used_count: number
+        }[]
+      }
+      lookup_return_by_tracking: {
+        Args: { tracking_number: string }
+        Returns: {
+          created_at: string
+          reason: string
+          refund_amount: number
+          refund_method: string
+          resolved_at: string
+          return_tracking_number: string
+          status: string
+          updated_at: string
         }[]
       }
       record_coupon_usage: {

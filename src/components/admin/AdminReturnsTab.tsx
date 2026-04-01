@@ -8,10 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Loader2, Search, RotateCcw, Trash2, Eye, Save, CheckCircle2, X } from 'lucide-react';
+import { Loader2, Search, RotateCcw, Trash2, Eye, Save, CheckCircle2, X, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ReturnReceipt } from '@/components/orders/ReturnReceipt';
 
 interface ReturnRequest {
   id: string;
@@ -26,6 +27,7 @@ interface ReturnRequest {
   admin_notes: string | null;
   created_at: string;
   resolved_at: string | null;
+  return_tracking_number?: string | null;
   order?: { id: string; order_number: string; user_id: string } | null;
   item?: { id: string; product_name: string; product_image: string | null; price: number; quantity: number } | null;
   profile?: { user_id: string; first_name: string | null; last_name: string | null; email: string | null } | null;
@@ -101,7 +103,8 @@ export const AdminReturnsTab = () => {
       const name = `${r.profile?.first_name || ''} ${r.profile?.last_name || ''}`.toLowerCase();
       const orderNum = r.order?.order_number?.toLowerCase() || '';
       const itemName = r.item?.product_name?.toLowerCase() || '';
-      return name.includes(q) || orderNum.includes(q) || itemName.includes(q) || r.reason.toLowerCase().includes(q);
+      const rtn = r.return_tracking_number?.toLowerCase() || '';
+      return name.includes(q) || orderNum.includes(q) || itemName.includes(q) || r.reason.toLowerCase().includes(q) || rtn.includes(q);
     }
     return true;
   });
@@ -115,7 +118,7 @@ export const AdminReturnsTab = () => {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search by order, customer, item..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Search by order, customer, item, tracking #..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -131,6 +134,7 @@ export const AdminReturnsTab = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Order #</TableHead>
+              <TableHead>RTN</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Item</TableHead>
               <TableHead>Reason</TableHead>
@@ -143,7 +147,7 @@ export const AdminReturnsTab = () => {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   <RotateCcw className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   No return requests found
                 </TableCell>
@@ -152,6 +156,16 @@ export const AdminReturnsTab = () => {
               filtered.map(r => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium text-sm">#{r.order?.order_number || '—'}</TableCell>
+                  <TableCell>
+                    {r.return_tracking_number ? (
+                      <div className="flex items-center gap-1">
+                        <code className="text-xs font-mono text-accent">{r.return_tracking_number}</code>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { navigator.clipboard.writeText(r.return_tracking_number!); toast.success('Copied!'); }}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="text-sm">
                     {r.profile ? `${r.profile.first_name || ''} ${r.profile.last_name || ''}`.trim() || r.profile.email : '—'}
                   </TableCell>
@@ -195,6 +209,36 @@ export const AdminReturnsTab = () => {
           </DialogHeader>
           {detail && (
             <div className="space-y-4">
+              {/* Tracking Number */}
+              {detail.return_tracking_number && (
+                <div className="bg-accent/5 border border-accent/20 rounded-lg p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Return Tracking Number</p>
+                    <code className="text-base font-bold text-accent">{detail.return_tracking_number}</code>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(detail.return_tracking_number!); toast.success('Copied!'); }}>
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <ReturnReceipt
+                      trackingNumber={detail.return_tracking_number}
+                      orderNumber={detail.order?.order_number || ''}
+                      productName={detail.item?.product_name}
+                      productImage={detail.item?.product_image || undefined}
+                      quantity={detail.item?.quantity}
+                      price={detail.item?.price}
+                      reason={detail.reason}
+                      description={detail.description || undefined}
+                      refundMethod={detail.refund_method || undefined}
+                      refundAmount={detail.refund_amount || undefined}
+                      status={detail.status}
+                      createdAt={detail.created_at}
+                      customerName={detail.profile ? `${detail.profile.first_name || ''} ${detail.profile.last_name || ''}`.trim() : undefined}
+                      customerEmail={detail.profile?.email || undefined}
+                    />
+                  </div>
+                </div>
+              )}
               {detail.item && (
                 <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
                   {detail.item.product_image && (

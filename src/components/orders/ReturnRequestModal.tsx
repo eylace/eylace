@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ReturnReceipt } from './ReturnReceipt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -6,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { RotateCcw, Package, Loader2, CheckCircle } from 'lucide-react';
+import { RotateCcw, Package, Loader2, CheckCircle, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Json } from '@/integrations/supabase/types';
@@ -64,6 +65,7 @@ export const ReturnRequestModal = ({
   const [refundMethod, setRefundMethod] = useState('original');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [returnTrackingNumber, setReturnTrackingNumber] = useState('');
 
   const selectedOrderItem = orderItems.find((i) => i.id === selectedItem);
   const refundAmount = selectedOrderItem
@@ -77,7 +79,7 @@ export const ReturnRequestModal = ({
     }
 
     setLoading(true);
-    const { error } = await supabase.from('return_requests' as any).insert({
+    const { data, error } = await supabase.from('return_requests' as any).insert({
       order_id: orderId,
       user_id: userId,
       order_item_id: selectedItem,
@@ -86,7 +88,7 @@ export const ReturnRequestModal = ({
       refund_method: refundMethod,
       refund_amount: refundAmount,
       status: 'pending',
-    } as any);
+    } as any).select('return_tracking_number').single();
 
     setLoading(false);
 
@@ -95,17 +97,9 @@ export const ReturnRequestModal = ({
       return;
     }
 
+    setReturnTrackingNumber((data as any)?.return_tracking_number || '');
     setSubmitted(true);
     toast.success('Return request submitted successfully!');
-    setTimeout(() => {
-      onSuccess();
-      onClose();
-      setSubmitted(false);
-      setSelectedItem('');
-      setReason('');
-      setDescription('');
-      setRefundMethod('original');
-    }, 1500);
   };
 
   return (
@@ -119,12 +113,44 @@ export const ReturnRequestModal = ({
         </DialogHeader>
 
         {submitted ? (
-          <div className="text-center py-8 space-y-3">
+          <div className="text-center py-6 space-y-4">
             <CheckCircle className="h-16 w-16 text-success mx-auto" />
             <h3 className="text-lg font-semibold">Request Submitted!</h3>
+            {returnTrackingNumber && (
+              <div className="bg-secondary/50 rounded-lg p-4 space-y-2">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Return Tracking Number</p>
+                <div className="flex items-center justify-center gap-2">
+                  <code className="text-lg font-bold text-accent">{returnTrackingNumber}</code>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(returnTrackingNumber); toast.success('Copied!'); }}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">
               We'll review your return request and get back to you within 24-48 hours.
             </p>
+            <div className="flex gap-2 justify-center">
+              {returnTrackingNumber && (
+                <ReturnReceipt
+                  trackingNumber={returnTrackingNumber}
+                  orderNumber={orderNumber}
+                  productName={selectedOrderItem?.product_name}
+                  productImage={selectedOrderItem?.product_image || undefined}
+                  quantity={selectedOrderItem?.quantity}
+                  price={selectedOrderItem?.price}
+                  reason={reason}
+                  description={description}
+                  refundMethod={refundMethod}
+                  refundAmount={refundAmount}
+                  status="pending"
+                  createdAt={new Date().toISOString()}
+                />
+              )}
+              <Button size="sm" onClick={() => { onSuccess(); onClose(); setSubmitted(false); setSelectedItem(''); setReason(''); setDescription(''); setRefundMethod('original'); setReturnTrackingNumber(''); }}>
+                Done
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-5">
