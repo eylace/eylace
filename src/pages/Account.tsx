@@ -955,7 +955,13 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                                     className="text-primary border-primary/30 hover:bg-primary/10"
                                     onClick={() => {
                                       if (order.order_items?.[0]) {
-                                        navigate(`/product/${order.order_items[0].product_id}`);
+                                        const productRef = String(order.order_items[0].product_id || '');
+                                        const slug = productSlugMap[productRef] || (!isUuidLike(productRef) ? productRef : '');
+                                        if (slug) {
+                                          navigate(`/product/${slug}`);
+                                        } else {
+                                          toast.error('Product not found');
+                                        }
                                       }
                                     }}
                                   >
