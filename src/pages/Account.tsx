@@ -146,13 +146,7 @@ const Account = () => {
         { event: '*', schema: 'public', table: 'return_requests', filter: `user_id=eq.${user.id}` },
         () => {
           // Re-fetch return requests when any change happens
-          supabase.from('return_requests' as any)
-            .select('*, orders:order_id(order_number, total, created_at)')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .then(({ data }) => {
-              if (data) setReturnRequests(data);
-            });
+          fetchAllData();
         }
       )
       .subscribe();
@@ -184,11 +178,19 @@ const Account = () => {
       supabase.from('coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(10),
       supabase.from('affiliates').select('*').eq('user_id', user!.id).maybeSingle(),
       supabase.from('product_reviews').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
-      supabase.from('return_requests' as any).select('*, orders:order_id(order_number, total, created_at)').eq('user_id', user!.id).order('created_at', { ascending: false }),
+      supabase.from('return_requests').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
     ]);
 
     const orders = allOrdersRes.data || [];
     const rawReviews = myReviewsRes.data || [];
+    const rawReturns = returnsRes.data || [];
+
+    // Build order lookup map for returns enrichment
+    const orderMap = new Map(orders.map((o: any) => [o.id, o]));
+    const enrichedReturns = rawReturns.map((r: any) => {
+      const order = orderMap.get(r.order_id);
+      return { ...r, orders: order ? { order_number: order.order_number, total: order.total, created_at: order.created_at } : null };
+    });
 
     setRecentOrders(orders.slice(0, 5));
     setAllOrders(orders);
@@ -196,7 +198,7 @@ const Account = () => {
     setReviewCount(rawReviews.length);
     setCoupons(couponsRes.data || []);
     setAffiliateData(affRes.data);
-    setReturnRequests(returnsRes.data || []);
+    setReturnRequests(enrichedReturns);
     setCancelledOrders(orders.filter((o: any) => o.status === 'cancelled'));
 
     // Build product map for order-review navigation + My Reviews listing
