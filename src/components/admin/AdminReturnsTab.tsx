@@ -103,7 +103,8 @@ export const AdminReturnsTab = () => {
       const name = `${r.profile?.first_name || ''} ${r.profile?.last_name || ''}`.toLowerCase();
       const orderNum = r.order?.order_number?.toLowerCase() || '';
       const itemName = r.item?.product_name?.toLowerCase() || '';
-      return name.includes(q) || orderNum.includes(q) || itemName.includes(q) || r.reason.toLowerCase().includes(q);
+      const rtn = r.return_tracking_number?.toLowerCase() || '';
+      return name.includes(q) || orderNum.includes(q) || itemName.includes(q) || r.reason.toLowerCase().includes(q) || rtn.includes(q);
     }
     return true;
   });
