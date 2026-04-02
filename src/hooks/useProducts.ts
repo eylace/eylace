@@ -220,18 +220,24 @@ export const useProduct = (slug: string) => {
       setError(null);
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('products_public')
-          .select(`
-            *,
-            category:categories(*),
-            seller:sellers(*)
-          `)
-          .eq('slug', slug)
-          .single();
+        const [{ data, error: fetchError }, categoryDiscounts] = await Promise.all([
+          supabase
+            .from('products_public')
+            .select(`
+              *,
+              category:categories(*),
+              seller:sellers(*)
+            `)
+            .eq('slug', slug)
+            .single(),
+          fetchCategoryDiscountsOnce(),
+        ]);
 
         if (fetchError) throw fetchError;
-        if (!cancelled) setProduct(data);
+        if (!cancelled) {
+          const [withDiscount] = applyCategoryDiscounts(data ? [data] : [], categoryDiscounts);
+          setProduct(withDiscount || data);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err as Error);
