@@ -55,6 +55,82 @@ interface UseProductsOptions {
   searchQuery?: string;
 }
 
+export interface CategoryDiscount {
+  category_id: string;
+  discount_type: string;
+  discount_value: number;
+}
+
+// Singleton cache for category discounts
+let categoryDiscountsCache: CategoryDiscount[] | null = null;
+let categoryDiscountsFetchPromise: Promise<CategoryDiscount[]> | null = null;
+
+const fetchCategoryDiscountsOnce = async (): Promise<CategoryDiscount[]> => {
+  if (categoryDiscountsCache) return categoryDiscountsCache;
+  if (categoryDiscountsFetchPromise) return categoryDiscountsFetchPromise;
+
+  categoryDiscountsFetchPromise = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('category_discounts')
+        .select('category_id, discount_type, discount_value')
+        .eq('is_active', true)
+        .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString());
+      if (!error && data) {
+        categoryDiscountsCache = data;
+        return data;
+      }
+      return [];
+    } finally {
+      setTimeout(() => { categoryDiscountsCache = null; categoryDiscountsFetchPromise = null; }, 2 * 60 * 1000);
+    }
+  })();
+
+  return categoryDiscountsFetchPromise;
+};
+
+const applyCategoryDiscounts = (products: DBProduct[], discounts: CategoryDiscount[]): DBProduct[] => {
+  if (discounts.length === 0) return products;
+  const discountMap = new Map<string, CategoryDiscount>();
+  for (const d of discounts) {
+    // Keep the highest discount per category
+    const existing = discountMap.get(d.category_id);
+    if (!existing || d.discount_value > existing.discount_value) {
+      discountMap.set(d.category_id, d);
+    }
+  }
+
+  return products.map(p => {
+    if (!p.category_id) return p;
+    const catDiscount = discountMap.get(p.category_id);
+    if (!catDiscount) return p;
+
+    // Only apply if product doesn't already have a bigger discount
+    let catDiscountPercent: number;
+    if (catDiscount.discount_type === 'percentage') {
+      catDiscountPercent = catDiscount.discount_value;
+    } else {
+      // fixed amount → convert to percentage based on price
+      catDiscountPercent = p.price > 0 ? Math.round((catDiscount.discount_value / p.price) * 100) : 0;
+    }
+
+    const existingDiscount = p.discount || 0;
+    if (catDiscountPercent > existingDiscount) {
+      const newOriginalPrice = p.original_price || p.price;
+      const newPrice = catDiscount.discount_type === 'percentage'
+        ? Math.round(newOriginalPrice * (1 - catDiscount.discount_value / 100) * 100) / 100
+        : Math.max(0, newOriginalPrice - catDiscount.discount_value);
+      return {
+        ...p,
+        original_price: newOriginalPrice,
+        price: newPrice,
+        discount: catDiscountPercent,
+      };
+    }
+    return p;
+  });
+};
+
 export const useProducts = (options: UseProductsOptions = {}) => {
   const [products, setProducts] = useState<DBProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,10 +182,14 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
       query = query.order('created_at', { ascending: false });
 
-      const { data, error: fetchError } = await query;
+      const [{ data, error: fetchError }, categoryDiscounts] = await Promise.all([
+        query,
+        fetchCategoryDiscountsOnce(),
+      ]);
 
       if (fetchError) throw fetchError;
-      setProducts(data || []);
+      const withDiscounts = applyCategoryDiscounts(data || [], categoryDiscounts);
+      setProducts(withDiscounts);
     } catch (err) {
       setError(err as Error);
       console.error('Error fetching products:', err);
