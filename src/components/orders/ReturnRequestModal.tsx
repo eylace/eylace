@@ -79,27 +79,37 @@ export const ReturnRequestModal = ({
     }
 
     setLoading(true);
-    const { data, error } = await supabase.from('return_requests').insert({
-      order_id: orderId,
-      user_id: userId,
-      order_item_id: selectedItem,
-      reason,
-      description: description || null,
-      refund_method: refundMethod,
-      refund_amount: refundAmount,
-      status: 'pending',
-    }).select('return_tracking_number').single();
+    try {
+      const { data, error } = await supabase.from('return_requests').insert({
+        order_id: orderId,
+        user_id: userId,
+        order_item_id: selectedItem,
+        reason,
+        description: description || null,
+        refund_method: refundMethod,
+        refund_amount: refundAmount,
+        status: 'pending',
+      } as any).select('return_tracking_number').single();
 
-    setLoading(false);
+      if (error) {
+        console.error('Return request error:', error);
+        toast.error(error.message?.includes('row-level security')
+          ? 'Please make sure you are logged in and this is your order.'
+          : 'Failed to submit return request. Please try again.');
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      toast.error('Failed to submit return request');
-      return;
+      const rtn = (data as any)?.return_tracking_number || '';
+      setReturnTrackingNumber(rtn);
+      setSubmitted(true);
+      toast.success('Return request submitted successfully!');
+    } catch (err) {
+      console.error('Return submit error:', err);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setReturnTrackingNumber(data?.return_tracking_number || '');
-    setSubmitted(true);
-    toast.success('Return request submitted successfully!');
   };
 
   return (

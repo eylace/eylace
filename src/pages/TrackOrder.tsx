@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Package, Search, Truck, CheckCircle, Clock, MapPin, RotateCcw, Copy, Printer } from "lucide-react";
+import { Package, Search, Truck, CheckCircle, Clock, MapPin, RotateCcw, Copy, Loader2, ShoppingBag, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,12 +14,13 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ReturnReceipt } from "@/components/orders/ReturnReceipt";
 
-const trackingSteps = [
-  { icon: CheckCircle, label: "Order Confirmed", desc: "Your order has been placed", time: "Jan 15, 10:30 AM", done: true },
-  { icon: Package, label: "Processing", desc: "Order is being prepared", time: "Jan 15, 2:00 PM", done: true },
-  { icon: Truck, label: "Shipped", desc: "On the way to delivery hub", time: "Jan 16, 9:00 AM", done: true },
-  { icon: MapPin, label: "Out for Delivery", desc: "Arriving today", time: "Jan 17, 8:00 AM", done: false },
-  { icon: CheckCircle, label: "Delivered", desc: "Package delivered", time: "", done: false },
+const orderStatusSteps = [
+  { key: 'pending', icon: Clock, label: 'Order Placed', desc: 'Your order has been placed' },
+  { key: 'confirmed', icon: CheckCircle, label: 'Confirmed', desc: 'Order confirmed by seller' },
+  { key: 'processing', icon: Package, label: 'Processing', desc: 'Order is being prepared' },
+  { key: 'shipped', icon: Truck, label: 'Shipped', desc: 'On the way to delivery hub' },
+  { key: 'out_for_delivery', icon: MapPin, label: 'Out for Delivery', desc: 'Arriving today' },
+  { key: 'delivered', icon: CheckCircle, label: 'Delivered', desc: 'Package delivered' },
 ];
 
 const returnStepDefs = [
@@ -31,7 +32,7 @@ const returnStepDefs = [
 const returnStepDefsRejected = [
   { key: 'pending', label: 'Requested', icon: RotateCcw },
   { key: 'approved', label: 'Under Review', icon: Clock },
-  { key: 'rejected', label: 'Rejected', icon: Package },
+  { key: 'rejected', label: 'Rejected', icon: XCircle },
 ];
 
 const statusColors: Record<string, string> = {
@@ -43,16 +44,54 @@ const statusColors: Record<string, string> = {
 
 const TrackOrder = () => {
   const [orderNumber, setOrderNumber] = useState("");
-  const [searched, setSearched] = useState(false);
+  const [orderSearched, setOrderSearched] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderData, setOrderData] = useState<any>(null);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [orderEvents, setOrderEvents] = useState<any[]>([]);
+
   const [returnTrackingNumber, setReturnTrackingNumber] = useState("");
   const [returnSearched, setReturnSearched] = useState(false);
   const [returnData, setReturnData] = useState<any>(null);
   const [returnLoading, setReturnLoading] = useState(false);
   const { user } = useAuth();
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleOrderSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (orderNumber.trim()) setSearched(true);
+    if (!orderNumber.trim()) return;
+    setOrderLoading(true);
+    setOrderSearched(false);
+    setOrderData(null);
+    setOrderItems([]);
+    setOrderEvents([]);
+
+    // Search by order_number
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('order_number', orderNumber.trim())
+      .limit(1);
+
+    if (error || !orders || orders.length === 0) {
+      setOrderSearched(true);
+      setOrderLoading(false);
+      return;
+    }
+
+    const order = orders[0];
+    setOrderData(order);
+    setOrderItems(order.order_items || []);
+
+    // Fetch tracking events
+    const { data: events } = await supabase
+      .from('order_tracking_events')
+      .select('*')
+      .eq('order_id', order.id)
+      .order('created_at', { ascending: true });
+
+    setOrderEvents(events || []);
+    setOrderSearched(true);
+    setOrderLoading(false);
   };
 
   const handleReturnSearch = async (e: React.FormEvent) => {
@@ -78,6 +117,14 @@ const TrackOrder = () => {
     setReturnSearched(true);
   };
 
+  // Determine which steps are done based on order status
+  const getOrderStepStatus = (order: any) => {
+    const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'];
+    const currentIdx = statusOrder.indexOf(order.status);
+    if (order.status === 'cancelled') return -1; // All grey
+    return currentIdx;
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-background">
@@ -99,51 +146,148 @@ const TrackOrder = () => {
 
             {/* Track Order Tab */}
             <TabsContent value="order" className="space-y-6 mt-6">
-              <form onSubmit={handleSearch} className="flex gap-3">
+              <form onSubmit={handleOrderSearch} className="flex gap-3">
                 <div className="relative flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     placeholder="e.g. ORD-2024-XXXXX"
                     className="pl-12 h-12"
                     value={orderNumber}
-                    onChange={(e) => { setOrderNumber(e.target.value); setSearched(false); }}
+                    onChange={(e) => { setOrderNumber(e.target.value); setOrderSearched(false); setOrderData(null); }}
                   />
                 </div>
-                <Button type="submit" className="h-12 px-8">Track</Button>
+                <Button type="submit" className="h-12 px-8" disabled={orderLoading}>
+                  {orderLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Track'}
+                </Button>
               </form>
 
-              {searched && (
+              {orderSearched && orderData && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Package className="h-5 w-5 text-primary" />
-                      Order #{orderNumber}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">Estimated delivery: January 17, 2025</p>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Package className="h-5 w-5 text-primary" />
+                        Order #{orderData.order_number}
+                      </CardTitle>
+                      <Badge variant="outline" className="capitalize">{orderData.status}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Placed on {format(new Date(orderData.created_at), 'MMM d, yyyy')}
+                      {orderData.estimated_delivery && ` · Est. delivery: ${format(new Date(orderData.estimated_delivery), 'MMM d, yyyy')}`}
+                    </p>
                   </CardHeader>
-                  <CardContent>
-                    <div className="relative ml-4">
-                      {trackingSteps.map((step, i) => (
-                        <div key={i} className="flex gap-4 pb-8 last:pb-0 relative">
-                          {i < trackingSteps.length - 1 && (
-                            <div className={`absolute left-[15px] top-8 w-0.5 h-full ${step.done ? "bg-primary" : "bg-border"}`} />
-                          )}
-                          <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${step.done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                            <step.icon className="h-4 w-4" />
+                  <CardContent className="space-y-6">
+                    {/* Order Status Timeline */}
+                    {orderData.status === 'cancelled' ? (
+                      <div className="text-center py-4">
+                        <XCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
+                        <p className="font-semibold text-destructive">Order Cancelled</p>
+                        <p className="text-sm text-muted-foreground mt-1">This order has been cancelled.</p>
+                      </div>
+                    ) : (
+                      <div className="relative ml-4">
+                        {orderStatusSteps.map((step, i) => {
+                          const currentIdx = getOrderStepStatus(orderData);
+                          const isActive = i <= currentIdx;
+                          const isCurrent = i === currentIdx;
+                          const StepIcon = step.icon;
+
+                          // Find matching event for timestamp
+                          const matchingEvent = orderEvents.find(e => e.status?.toLowerCase() === step.key);
+
+                          return (
+                            <div key={step.key} className="flex gap-4 pb-8 last:pb-0 relative">
+                              {i < orderStatusSteps.length - 1 && (
+                                <div className={cn('absolute left-[15px] top-8 w-0.5 h-full', isActive && !isCurrent ? 'bg-primary' : 'bg-border')} />
+                              )}
+                              <div className={cn(
+                                'relative z-10 w-8 h-8 rounded-full flex items-center justify-center shrink-0',
+                                isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                              )}>
+                                <StepIcon className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <p className={cn('font-medium', isActive ? 'text-foreground' : 'text-muted-foreground')}>{step.label}</p>
+                                <p className="text-sm text-muted-foreground">{step.desc}</p>
+                                {matchingEvent && (
+                                  <p className="text-xs text-muted-foreground mt-1">{format(new Date(matchingEvent.created_at), 'MMM d, h:mm a')}</p>
+                                )}
+                                {!matchingEvent && step.key === 'pending' && (
+                                  <p className="text-xs text-muted-foreground mt-1">{format(new Date(orderData.created_at), 'MMM d, h:mm a')}</p>
+                                )}
+                                {!matchingEvent && step.key === 'shipped' && orderData.shipped_at && (
+                                  <p className="text-xs text-muted-foreground mt-1">{format(new Date(orderData.shipped_at), 'MMM d, h:mm a')}</p>
+                                )}
+                                {!matchingEvent && step.key === 'delivered' && orderData.delivered_at && (
+                                  <p className="text-xs text-muted-foreground mt-1">{format(new Date(orderData.delivered_at), 'MMM d, h:mm a')}</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Order Items */}
+                    {orderItems.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-semibold">Order Items</h4>
+                        {orderItems.map((item: any) => (
+                          <div key={item.id} className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
+                            <img src={item.product_image || '/placeholder.svg'} alt={item.product_name} className="w-12 h-12 rounded object-cover" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.product_name}</p>
+                              <p className="text-xs text-muted-foreground">Qty: {item.quantity} · ৳{Number(item.price).toFixed(2)}</p>
+                            </div>
+                            <p className="text-sm font-bold shrink-0">৳{(item.price * item.quantity).toFixed(2)}</p>
                           </div>
-                          <div>
-                            <p className={`font-medium ${step.done ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</p>
-                            <p className="text-sm text-muted-foreground">{step.desc}</p>
-                            {step.time && <p className="text-xs text-muted-foreground mt-1">{step.time}</p>}
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Order Summary */}
+                    <div className="bg-secondary/30 rounded-lg p-4 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Total</span>
+                        <span className="font-bold">৳{Number(orderData.total).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Payment</span>
+                        <span className="font-medium capitalize">{orderData.payment_method}</span>
+                      </div>
+                      {orderData.tracking_number && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Tracking #</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-xs">{orderData.tracking_number}</span>
+                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { navigator.clipboard.writeText(orderData.tracking_number); toast.success('Copied!'); }}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
-                      ))}
+                      )}
+                      {orderData.carrier && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Carrier</span>
+                          <span className="font-medium">{orderData.carrier}</span>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               )}
 
-              {!searched && (
+              {orderSearched && !orderData && (
+                <Card>
+                  <CardContent className="p-8 text-center space-y-4">
+                    <Package className="h-16 w-16 text-muted-foreground/30 mx-auto" />
+                    <h3 className="text-lg font-semibold text-foreground">No order found</h3>
+                    <p className="text-muted-foreground">Please check your order number and try again. Make sure you're using the exact order number from your confirmation email.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {!orderSearched && (
                 <div className="text-center space-y-6">
                   <Card>
                     <CardContent className="p-8 space-y-4">
@@ -151,7 +295,7 @@ const TrackOrder = () => {
                       <h3 className="text-lg font-semibold text-foreground">Enter your order number above</h3>
                       <p className="text-muted-foreground">You can find your order number in the confirmation email or in your account's order history.</p>
                       {user ? (
-                        <Link to="/orders">
+                        <Link to="/account?tab=orders">
                           <Button variant="outline" className="mt-2">View My Orders</Button>
                         </Link>
                       ) : (
@@ -178,7 +322,7 @@ const TrackOrder = () => {
                   />
                 </div>
                 <Button type="submit" className="h-12 px-8" disabled={returnLoading}>
-                  {returnLoading ? 'Searching...' : 'Track'}
+                  {returnLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Track'}
                 </Button>
               </form>
 
@@ -263,6 +407,15 @@ const TrackOrder = () => {
                       <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { navigator.clipboard.writeText(returnData.return_tracking_number); toast.success('Copied!'); }}>
                         <Copy className="h-3.5 w-3.5" /> Copy RTN
                       </Button>
+                      <ReturnReceipt
+                        trackingNumber={returnData.return_tracking_number}
+                        orderNumber=""
+                        reason={returnData.reason}
+                        refundMethod={returnData.refund_method}
+                        refundAmount={returnData.refund_amount}
+                        status={returnData.status}
+                        createdAt={returnData.created_at}
+                      />
                     </div>
                   </CardContent>
                 </Card>
