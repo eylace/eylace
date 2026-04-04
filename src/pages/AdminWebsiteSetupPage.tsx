@@ -244,6 +244,7 @@ const AdminWebsiteSetupPage = () => {
             <TabsTrigger value="footer" className="text-xs">Footer Settings</TabsTrigger>
             <TabsTrigger value="pages" className="text-xs">Pages</TabsTrigger>
             <TabsTrigger value="appearance" className="text-xs">Appearance</TabsTrigger>
+            <TabsTrigger value="checkout" className="text-xs">Checkout Page</TabsTrigger>
           </TabsList>
 
           {/* Select Homepage */}
