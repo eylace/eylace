@@ -843,6 +843,14 @@ const AdminWebsiteSetupPage = () => {
                       descBn: 'সিঙ্গেল কলাম অ্যাকর্ডিয়ন স্টাইল, পরিষ্কার এবং ফোকাসড চেকআউট।',
                       features: ['Accordion steps', 'Progress bar', 'Single column'],
                     },
+                    {
+                      id: 'express',
+                      name: 'Express',
+                      nameBn: 'এক্সপ্রেস',
+                      desc: 'Quick checkout with name, phone & address only. OTP verification before order confirmation.',
+                      descBn: 'শুধু নাম, ফোন ও ঠিকানা দিন। OTP ভেরিফাই করে অর্ডার কনফার্ম করুন।',
+                      features: ['OTP Verification', 'Dhaka In/Out', 'Quick Order'],
+                    },
                   ].map(layout => (
                     <div
                       key={layout.id}

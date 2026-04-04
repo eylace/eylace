@@ -385,6 +385,7 @@ const Checkout = () => {
     switch (websiteSetup.selectedCheckout) {
       case 'modern': return <CheckoutModern {...layoutProps} />;
       case 'minimal': return <CheckoutMinimal {...layoutProps} />;
+      case 'express': return <CheckoutExpress {...layoutProps} />;
       case 'classic':
       default: return <CheckoutClassic {...layoutProps} />;
     }
