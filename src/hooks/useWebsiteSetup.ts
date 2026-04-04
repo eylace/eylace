@@ -66,6 +66,7 @@ export interface WebsiteSetup {
   logoUrl: string;
   faviconUrl: string;
   heroBanners: HeroBanner[];
+  selectedCheckout: string;
 }
 
 const defaults: WebsiteSetup = {
