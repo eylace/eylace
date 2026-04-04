@@ -908,6 +908,17 @@ const AdminWebsiteSetupPage = () => {
                               </div>
                             </div>
                           )}
+                          {layout.id === 'express' && (
+                            <div className="w-full h-full p-3 flex justify-center">
+                              <div className="w-2/3 space-y-1.5">
+                                <div className="h-4 bg-primary/15 rounded flex items-center px-1"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/10 rounded flex-1" /></div>
+                                <div className="h-4 bg-primary/15 rounded flex items-center px-1"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/10 rounded flex-1" /></div>
+                                <div className="h-6 bg-muted-foreground/5 rounded" />
+                                <div className="flex gap-1"><div className="flex-1 h-5 bg-accent/15 rounded text-[6px] flex items-center justify-center text-muted-foreground">ঢাকা</div><div className="flex-1 h-5 bg-accent/15 rounded text-[6px] flex items-center justify-center text-muted-foreground">বাইরে</div></div>
+                                <div className="h-5 bg-primary/30 rounded-lg" />
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <h3 className="font-bold text-foreground">{layout.name} <span className="text-muted-foreground font-normal text-sm">({layout.nameBn})</span></h3>
                         <p className="text-xs text-muted-foreground">{layout.desc}</p>
