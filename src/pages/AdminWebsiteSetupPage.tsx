@@ -75,6 +75,7 @@ interface WebsiteSetupState {
   faviconUrl: string;
   heroBanners: HeroBanner[];
   selectedCheckout: string;
+  checkoutCustomization: Record<string, any>;
 }
 
 const defaultSetup: WebsiteSetupState = {
