@@ -817,7 +817,7 @@ const AdminWebsiteSetupPage = () => {
               <CardHeader><CardTitle className="text-base">Select Checkout Page Layout</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-6">Choose a checkout page design. The selected layout will be used on your live website.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
                     {
                       id: 'classic',
