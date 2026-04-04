@@ -39,6 +39,7 @@ const Checkout = () => {
   const { items, clearCart, getSubtotal, getShipping, getTax, getTotal } = useCart();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const websiteSetup = useWebsiteSetup();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
