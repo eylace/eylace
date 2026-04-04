@@ -817,7 +817,7 @@ const AdminWebsiteSetupPage = () => {
               <CardHeader><CardTitle className="text-base">Select Checkout Page Layout</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-6">Choose a checkout page design. The selected layout will be used on your live website.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
                     {
                       id: 'classic',
@@ -842,6 +842,14 @@ const AdminWebsiteSetupPage = () => {
                       desc: 'Single-column accordion style, clean and focused checkout experience.',
                       descBn: 'সিঙ্গেল কলাম অ্যাকর্ডিয়ন স্টাইল, পরিষ্কার এবং ফোকাসড চেকআউট।',
                       features: ['Accordion steps', 'Progress bar', 'Single column'],
+                    },
+                    {
+                      id: 'express',
+                      name: 'Express',
+                      nameBn: 'এক্সপ্রেস',
+                      desc: 'Quick checkout with name, phone & address only. OTP verification before order confirmation.',
+                      descBn: 'শুধু নাম, ফোন ও ঠিকানা দিন। OTP ভেরিফাই করে অর্ডার কনফার্ম করুন।',
+                      features: ['OTP Verification', 'Dhaka In/Out', 'Quick Order'],
                     },
                   ].map(layout => (
                     <div
@@ -896,6 +904,17 @@ const AdminWebsiteSetupPage = () => {
                                 <div className="h-6 bg-primary/10 rounded-lg flex items-center px-2"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/15 rounded flex-1" /></div>
                                 <div className="h-6 bg-muted-foreground/5 rounded-lg" />
                                 <div className="h-8 bg-accent/20 rounded-lg" />
+                                <div className="h-5 bg-primary/30 rounded-lg" />
+                              </div>
+                            </div>
+                          )}
+                          {layout.id === 'express' && (
+                            <div className="w-full h-full p-3 flex justify-center">
+                              <div className="w-2/3 space-y-1.5">
+                                <div className="h-4 bg-primary/15 rounded flex items-center px-1"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/10 rounded flex-1" /></div>
+                                <div className="h-4 bg-primary/15 rounded flex items-center px-1"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/10 rounded flex-1" /></div>
+                                <div className="h-6 bg-muted-foreground/5 rounded" />
+                                <div className="flex gap-1"><div className="flex-1 h-5 bg-accent/15 rounded text-[6px] flex items-center justify-center text-muted-foreground">ঢাকা</div><div className="flex-1 h-5 bg-accent/15 rounded text-[6px] flex items-center justify-center text-muted-foreground">বাইরে</div></div>
                                 <div className="h-5 bg-primary/30 rounded-lg" />
                               </div>
                             </div>

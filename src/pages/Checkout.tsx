@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { CheckoutClassic } from '@/components/checkout/CheckoutClassic';
 import { CheckoutModern } from '@/components/checkout/CheckoutModern';
 import { CheckoutMinimal } from '@/components/checkout/CheckoutMinimal';
+import { CheckoutExpress } from '@/components/checkout/CheckoutExpress';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -384,6 +385,7 @@ const Checkout = () => {
     switch (websiteSetup.selectedCheckout) {
       case 'modern': return <CheckoutModern {...layoutProps} />;
       case 'minimal': return <CheckoutMinimal {...layoutProps} />;
+      case 'express': return <CheckoutExpress {...layoutProps} />;
       case 'classic':
       default: return <CheckoutClassic {...layoutProps} />;
     }
