@@ -810,6 +810,112 @@ const AdminWebsiteSetupPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Checkout Page Selection */}
+          <TabsContent value="checkout">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Select Checkout Page Layout</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-6">Choose a checkout page design. The selected layout will be used on your live website.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    {
+                      id: 'classic',
+                      name: 'Classic',
+                      nameBn: 'ক্লাসিক',
+                      desc: 'Traditional 2-column layout with shipping, payment and order summary side by side.',
+                      descBn: 'শিপিং, পেমেন্ট এবং অর্ডার সামারি পাশাপাশি দেখায়।',
+                      features: ['2-column grid', 'Breadcrumb navigation', 'Sticky summary'],
+                    },
+                    {
+                      id: 'modern',
+                      name: 'Modern',
+                      nameBn: 'মডার্ন',
+                      desc: 'Sleek design with numbered steps, trust badges and rounded cards.',
+                      descBn: 'নম্বরযুক্ত স্টেপ, ট্রাস্ট ব্যাজ এবং গোলাকার কার্ড সহ আধুনিক ডিজাইন।',
+                      features: ['Trust badges', 'Numbered steps', 'SSL indicator'],
+                    },
+                    {
+                      id: 'minimal',
+                      name: 'Minimal',
+                      nameBn: 'মিনিমাল',
+                      desc: 'Single-column accordion style, clean and focused checkout experience.',
+                      descBn: 'সিঙ্গেল কলাম অ্যাকর্ডিয়ন স্টাইল, পরিষ্কার এবং ফোকাসড চেকআউট।',
+                      features: ['Accordion steps', 'Progress bar', 'Single column'],
+                    },
+                  ].map(layout => (
+                    <div
+                      key={layout.id}
+                      onClick={() => update('selectedCheckout', layout.id)}
+                      className={`relative cursor-pointer rounded-xl border-2 p-5 transition-all hover:shadow-md ${
+                        setup.selectedCheckout === layout.id
+                          ? 'border-primary bg-primary/5 shadow-md'
+                          : 'border-border hover:border-primary/40'
+                      }`}
+                    >
+                      {setup.selectedCheckout === layout.id && (
+                        <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground">Active</Badge>
+                      )}
+                      <div className="space-y-3">
+                        <div className="h-32 bg-muted rounded-lg flex items-center justify-center border border-border">
+                          {layout.id === 'classic' && (
+                            <div className="w-full h-full p-3 flex gap-2">
+                              <div className="flex-[2] space-y-2">
+                                <div className="h-3 bg-primary/20 rounded w-3/4" />
+                                <div className="h-8 bg-primary/10 rounded" />
+                                <div className="h-8 bg-primary/10 rounded" />
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                <div className="h-3 bg-accent/30 rounded" />
+                                <div className="h-12 bg-accent/20 rounded" />
+                                <div className="h-6 bg-primary/30 rounded" />
+                              </div>
+                            </div>
+                          )}
+                          {layout.id === 'modern' && (
+                            <div className="w-full h-full p-3 space-y-2">
+                              <div className="flex gap-2">
+                                {[1,2,3].map(i => <div key={i} className="flex-1 h-4 bg-primary/15 rounded-full" />)}
+                              </div>
+                              <div className="flex gap-2 h-16">
+                                <div className="flex-[7] space-y-1">
+                                  <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full bg-primary/30" /><div className="h-2 bg-primary/15 rounded flex-1" /></div>
+                                  <div className="h-8 bg-primary/10 rounded-lg" />
+                                </div>
+                                <div className="flex-[5] space-y-1">
+                                  <div className="h-6 bg-accent/20 rounded-lg" />
+                                  <div className="h-5 bg-primary/25 rounded-lg" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {layout.id === 'minimal' && (
+                            <div className="w-full h-full p-3 flex justify-center">
+                              <div className="w-2/3 space-y-2">
+                                <div className="flex gap-1"><div className="flex-1 h-1 bg-primary/40 rounded-full" /><div className="flex-1 h-1 bg-muted-foreground/20 rounded-full" /><div className="flex-1 h-1 bg-muted-foreground/20 rounded-full" /></div>
+                                <div className="h-6 bg-primary/10 rounded-lg flex items-center px-2"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/15 rounded flex-1" /></div>
+                                <div className="h-6 bg-muted-foreground/5 rounded-lg" />
+                                <div className="h-8 bg-accent/20 rounded-lg" />
+                                <div className="h-5 bg-primary/30 rounded-lg" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-foreground">{layout.name} <span className="text-muted-foreground font-normal text-sm">({layout.nameBn})</span></h3>
+                        <p className="text-xs text-muted-foreground">{layout.desc}</p>
+                        <p className="text-xs text-muted-foreground">{layout.descBn}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {layout.features.map(f => (
+                            <Badge key={f} variant="secondary" className="text-[10px]">{f}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         {/* Add Page Dialog */}
