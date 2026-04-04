@@ -122,6 +122,7 @@ const defaults: WebsiteSetup = {
   logoUrl: '',
   faviconUrl: '',
   heroBanners: [],
+  selectedCheckout: 'classic',
 };
 
 let cachedSetup: WebsiteSetup | null = null;
