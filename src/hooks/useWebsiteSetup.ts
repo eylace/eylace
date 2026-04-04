@@ -180,6 +180,7 @@ const defaults: WebsiteSetup = {
   faviconUrl: '',
   heroBanners: [],
   selectedCheckout: 'classic',
+  checkoutCustomization: defaultCheckoutCustomization,
 };
 
 let cachedSetup: WebsiteSetup | null = null;
