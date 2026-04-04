@@ -74,6 +74,7 @@ interface WebsiteSetupState {
   logoUrl: string;
   faviconUrl: string;
   heroBanners: HeroBanner[];
+  selectedCheckout: string;
 }
 
 const defaultSetup: WebsiteSetupState = {
