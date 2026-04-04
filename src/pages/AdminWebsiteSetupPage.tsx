@@ -167,8 +167,29 @@ const AdminWebsiteSetupPage = () => {
   const [editPage, setEditPage] = useState<WebsiteSetupState['pages'][0] | null>(null);
   const [addPageOpen, setAddPageOpen] = useState(false);
   const [newPage, setNewPage] = useState({ title: '', slug: '', content: '' });
+  const [editCheckoutVariant, setEditCheckoutVariant] = useState<string | null>(null);
   const activeTab = searchParams.get('tab') || 'homepage';
   const setActiveTab = (tab: string) => setSearchParams({ tab });
+
+  const defaultVariantCfg: CheckoutVariantConfig = {
+    headingText: 'Checkout', buttonText: 'Place Order', processingText: 'Processing...',
+    termsText: 'By placing this order, you agree to our Terms & Conditions',
+    showPromoCode: true, showTrustBadges: true, showBreadcrumb: true, showBackButton: true, showSSLBadge: true,
+    buttonBgColor: '', buttonTextColor: '', cardBorderRadius: '12',
+    trustBadge1Title: 'Secure Payment', trustBadge1Desc: '100% Safe & Secure',
+    trustBadge2Title: 'Fast Delivery', trustBadge2Desc: '2-5 Business Days',
+    trustBadge3Title: 'Easy Returns', trustBadge3Desc: '7 Days Return Policy',
+  };
+
+  const getVariantConfig = (variantId: string): CheckoutVariantConfig => {
+    return { ...defaultVariantCfg, ...(setup.checkoutCustomization?.[variantId] || {}) };
+  };
+
+  const updateVariantConfig = (variantId: string, key: keyof CheckoutVariantConfig, value: any) => {
+    const current = getVariantConfig(variantId);
+    const updated = { ...current, [key]: value };
+    update('checkoutCustomization', { ...setup.checkoutCustomization, [variantId]: updated });
+  };
 
   const update = (key: keyof WebsiteSetupState, value: any) => setSetup(prev => ({ ...prev, [key]: value }));
 
