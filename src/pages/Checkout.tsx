@@ -390,19 +390,7 @@ const Checkout = () => {
     onRemovePromo: () => { setPromoDiscount(0); setAppliedCode(null); setAppliedCouponId(null); },
   };
 
-  const variantId = websiteSetup.selectedCheckout || 'classic';
-  const customization = useMemo(() => {
-    const defaults = {
-      headingText: 'Checkout', buttonText: 'Place Order', processingText: 'Processing...',
-      termsText: 'By placing this order, you agree to our Terms & Conditions',
-      showPromoCode: true, showTrustBadges: true, showBreadcrumb: true, showBackButton: true, showSSLBadge: true,
-      buttonBgColor: '', buttonTextColor: '', cardBorderRadius: '12',
-      trustBadge1Title: 'Secure Payment', trustBadge1Desc: '100% Safe & Secure',
-      trustBadge2Title: 'Fast Delivery', trustBadge2Desc: '2-5 Business Days',
-      trustBadge3Title: 'Easy Returns', trustBadge3Desc: '7 Days Return Policy',
-    };
-    return { ...defaults, ...(websiteSetup.checkoutCustomization?.[variantId] || {}) };
-  }, [websiteSetup.checkoutCustomization, variantId]);
+
 
   const layoutProps = {
     form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode,
