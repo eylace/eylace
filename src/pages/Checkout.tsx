@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ChevronRight, ArrowLeft, Lock, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShippingForm } from '@/components/checkout/ShippingForm';
-import { PaymentMethods } from '@/components/checkout/PaymentMethods';
-import { OrderSummary } from '@/components/checkout/OrderSummary';
-import { PromoCodeInput } from '@/components/checkout/PromoCodeInput';
+import { CheckoutClassic } from '@/components/checkout/CheckoutClassic';
+import { CheckoutModern } from '@/components/checkout/CheckoutModern';
+import { CheckoutMinimal } from '@/components/checkout/CheckoutMinimal';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
