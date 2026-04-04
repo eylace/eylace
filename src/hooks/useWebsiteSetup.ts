@@ -66,6 +66,7 @@ export interface WebsiteSetup {
   logoUrl: string;
   faviconUrl: string;
   heroBanners: HeroBanner[];
+  selectedCheckout: string;
 }
 
 const defaults: WebsiteSetup = {
@@ -121,6 +122,7 @@ const defaults: WebsiteSetup = {
   logoUrl: '',
   faviconUrl: '',
   heroBanners: [],
+  selectedCheckout: 'classic',
 };
 
 let cachedSetup: WebsiteSetup | null = null;
