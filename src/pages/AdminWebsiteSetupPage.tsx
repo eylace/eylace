@@ -10,14 +10,16 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Save, Loader2, Plus, Trash2, Eye, Edit, GripVertical } from 'lucide-react';
+import { Save, Loader2, Plus, Trash2, Eye, Edit, GripVertical, Settings2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { invalidateSetupCache } from '@/hooks/useWebsiteSetup';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
-import type { HeroBanner } from '@/hooks/useWebsiteSetup';
+import type { HeroBanner, CheckoutVariantConfig } from '@/hooks/useWebsiteSetup';
 
 interface WebsiteSetupState {
   selectedHomepage: string;
