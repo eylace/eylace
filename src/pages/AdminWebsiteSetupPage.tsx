@@ -149,6 +149,7 @@ const defaultSetup: WebsiteSetupState = {
   faviconUrl: '',
   heroBanners: [],
   selectedCheckout: 'classic',
+  checkoutCustomization: {},
 };
 
 const fontOptions = [
