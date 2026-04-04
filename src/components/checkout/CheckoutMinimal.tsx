@@ -19,10 +19,13 @@ interface Props {
   appliedCode: string | null;
   onApplyPromo: (d: number, c: string, cid: string) => void;
   onRemovePromo: () => void;
+  customization?: any;
 }
 
-export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode, onApplyPromo, onRemovePromo }: Props) => {
+export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
   const { t } = useLanguage();
+  const cfg = customization;
+  const btnStyle = (cfg.buttonBgColor || cfg.buttonTextColor) ? { backgroundColor: cfg.buttonBgColor || undefined, color: cfg.buttonTextColor || undefined } : undefined;
   const [shippingOpen, setShippingOpen] = useState(true);
   const [paymentOpen, setPaymentOpen] = useState(false);
 

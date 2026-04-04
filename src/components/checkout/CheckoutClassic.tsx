@@ -17,10 +17,13 @@ interface Props {
   appliedCode: string | null;
   onApplyPromo: (d: number, c: string, cid: string) => void;
   onRemovePromo: () => void;
+  customization?: any;
 }
 
-export const CheckoutClassic = ({ form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode, onApplyPromo, onRemovePromo }: Props) => {
+export const CheckoutClassic = ({ form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
   const { t } = useLanguage();
+  const c = customization;
+  const btnStyle = (c.buttonBgColor || c.buttonTextColor) ? { backgroundColor: c.buttonBgColor || undefined, color: c.buttonTextColor || undefined } : undefined;
 
   return (
     <div className="container-main py-6">
