@@ -19,10 +19,13 @@ interface Props {
   appliedCode: string | null;
   onApplyPromo: (d: number, c: string, cid: string) => void;
   onRemovePromo: () => void;
+  customization?: any;
 }
 
-export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode, onApplyPromo, onRemovePromo }: Props) => {
+export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
   const { t } = useLanguage();
+  const cfg = customization;
+  const btnStyle = (cfg.buttonBgColor || cfg.buttonTextColor) ? { backgroundColor: cfg.buttonBgColor || undefined, color: cfg.buttonTextColor || undefined } : undefined;
   const [shippingOpen, setShippingOpen] = useState(true);
   const [paymentOpen, setPaymentOpen] = useState(false);
 
@@ -31,10 +34,12 @@ export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDis
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/cart"><ArrowLeft className="h-4 w-4 mr-2" />Cart</Link>
-          </Button>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Checkout</h1>
+          {cfg.showBackButton !== false ? (
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/cart"><ArrowLeft className="h-4 w-4 mr-2" />Cart</Link>
+            </Button>
+          ) : <div />}
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">{cfg.headingText || 'Checkout'}</h1>
           <div className="w-16" />
         </div>
 
@@ -46,10 +51,9 @@ export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDis
         </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Accordion-style shipping */}
           <Collapsible open={shippingOpen} onOpenChange={setShippingOpen}>
             <CollapsibleTrigger asChild>
-              <button type="button" className="w-full flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:bg-muted/50 transition-colors">
+              <button type="button" className="w-full flex items-center justify-between bg-card border border-border p-5 hover:bg-muted/50 transition-colors" style={{ borderRadius: cfg.cardBorderRadius ? `${cfg.cardBorderRadius}px` : '12px' }}>
                 <div className="flex items-center gap-3">
                   <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">1</span>
                   <span className="font-semibold text-foreground">Shipping Details</span>
@@ -69,10 +73,9 @@ export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDis
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Accordion-style payment */}
           <Collapsible open={paymentOpen} onOpenChange={setPaymentOpen}>
             <CollapsibleTrigger asChild>
-              <button type="button" className="w-full flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:bg-muted/50 transition-colors">
+              <button type="button" className="w-full flex items-center justify-between bg-card border border-border p-5 hover:bg-muted/50 transition-colors" style={{ borderRadius: cfg.cardBorderRadius ? `${cfg.cardBorderRadius}px` : '12px' }}>
                 <div className="flex items-center gap-3">
                   <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">2</span>
                   <span className="font-semibold text-foreground">Payment Method</span>
@@ -87,23 +90,24 @@ export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDis
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Order summary always visible */}
           <div className="mt-6">
             <OrderSummary codFee={codFee} promoDiscount={promoDiscount} />
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-4">
-            <PromoCodeInput onApply={onApplyPromo} onRemove={onRemovePromo} appliedCode={appliedCode} discount={promoDiscount} />
-          </div>
+          {cfg.showPromoCode !== false && (
+            <div className="bg-card border border-border p-4" style={{ borderRadius: cfg.cardBorderRadius ? `${cfg.cardBorderRadius}px` : '12px' }}>
+              <PromoCodeInput onApply={onApplyPromo} onRemove={onRemovePromo} appliedCode={appliedCode} discount={promoDiscount} />
+            </div>
+          )}
 
-          <Button type="submit" variant="buy-now" size="xl" className="w-full rounded-xl" disabled={isProcessing}>
+          <Button type="submit" variant="buy-now" size="xl" className="w-full rounded-xl" disabled={isProcessing} style={btnStyle}>
             {isProcessing ? (
-              <><div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />{t('checkout.processing')}</>
+              <><div className="h-5 w-5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin mr-2" />{cfg.processingText || t('checkout.processing')}</>
             ) : (
-              <><Lock className="h-5 w-5 mr-2" />Complete Order</>
+              <><Lock className="h-5 w-5 mr-2" />{cfg.buttonText || 'Complete Order'}</>
             )}
           </Button>
-          <p className="text-xs text-center text-muted-foreground">{t('checkout.termsAgree')}</p>
+          <p className="text-xs text-center text-muted-foreground">{cfg.termsText || t('checkout.termsAgree')}</p>
         </form>
       </div>
     </div>

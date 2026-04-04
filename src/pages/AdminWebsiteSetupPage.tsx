@@ -10,14 +10,16 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Save, Loader2, Plus, Trash2, Eye, Edit, GripVertical } from 'lucide-react';
+import { Save, Loader2, Plus, Trash2, Eye, Edit, GripVertical, Settings2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { invalidateSetupCache } from '@/hooks/useWebsiteSetup';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
-import type { HeroBanner } from '@/hooks/useWebsiteSetup';
+import type { HeroBanner, CheckoutVariantConfig } from '@/hooks/useWebsiteSetup';
 
 interface WebsiteSetupState {
   selectedHomepage: string;
@@ -75,6 +77,7 @@ interface WebsiteSetupState {
   faviconUrl: string;
   heroBanners: HeroBanner[];
   selectedCheckout: string;
+  checkoutCustomization: Record<string, any>;
 }
 
 const defaultSetup: WebsiteSetupState = {
@@ -148,6 +151,7 @@ const defaultSetup: WebsiteSetupState = {
   faviconUrl: '',
   heroBanners: [],
   selectedCheckout: 'classic',
+  checkoutCustomization: {},
 };
 
 const fontOptions = [
@@ -163,8 +167,29 @@ const AdminWebsiteSetupPage = () => {
   const [editPage, setEditPage] = useState<WebsiteSetupState['pages'][0] | null>(null);
   const [addPageOpen, setAddPageOpen] = useState(false);
   const [newPage, setNewPage] = useState({ title: '', slug: '', content: '' });
+  const [editCheckoutVariant, setEditCheckoutVariant] = useState<string | null>(null);
   const activeTab = searchParams.get('tab') || 'homepage';
   const setActiveTab = (tab: string) => setSearchParams({ tab });
+
+  const defaultVariantCfg: CheckoutVariantConfig = {
+    headingText: 'Checkout', buttonText: 'Place Order', processingText: 'Processing...',
+    termsText: 'By placing this order, you agree to our Terms & Conditions',
+    showPromoCode: true, showTrustBadges: true, showBreadcrumb: true, showBackButton: true, showSSLBadge: true,
+    buttonBgColor: '', buttonTextColor: '', cardBorderRadius: '12',
+    trustBadge1Title: 'Secure Payment', trustBadge1Desc: '100% Safe & Secure',
+    trustBadge2Title: 'Fast Delivery', trustBadge2Desc: '2-5 Business Days',
+    trustBadge3Title: 'Easy Returns', trustBadge3Desc: '7 Days Return Policy',
+  };
+
+  const getVariantConfig = (variantId: string): CheckoutVariantConfig => {
+    return { ...defaultVariantCfg, ...(setup.checkoutCustomization?.[variantId] || {}) };
+  };
+
+  const updateVariantConfig = (variantId: string, key: keyof CheckoutVariantConfig, value: any) => {
+    const current = getVariantConfig(variantId);
+    const updated = { ...current, [key]: value };
+    update('checkoutCustomization', { ...setup.checkoutCustomization, [variantId]: updated });
+  };
 
   const update = (key: keyof WebsiteSetupState, value: any) => setSetup(prev => ({ ...prev, [key]: value }));
 
@@ -811,124 +836,45 @@ const AdminWebsiteSetupPage = () => {
             </Card>
           </TabsContent>
 
-          {/* Checkout Page Selection */}
+          {/* Checkout Page Selection & Customization */}
           <TabsContent value="checkout">
             <Card>
-              <CardHeader><CardTitle className="text-base">Select Checkout Page Layout</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">Select & Customize Checkout Layout</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-6">Choose a checkout page design. The selected layout will be used on your live website.</p>
+                <p className="text-sm text-muted-foreground mb-6">Select a layout and click the ⚙️ icon to customize texts, colors, and features.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    {
-                      id: 'classic',
-                      name: 'Classic',
-                      nameBn: 'ক্লাসিক',
-                      desc: 'Traditional 2-column layout with shipping, payment and order summary side by side.',
-                      descBn: 'শিপিং, পেমেন্ট এবং অর্ডার সামারি পাশাপাশি দেখায়।',
-                      features: ['2-column grid', 'Breadcrumb navigation', 'Sticky summary'],
-                    },
-                    {
-                      id: 'modern',
-                      name: 'Modern',
-                      nameBn: 'মডার্ন',
-                      desc: 'Sleek design with numbered steps, trust badges and rounded cards.',
-                      descBn: 'নম্বরযুক্ত স্টেপ, ট্রাস্ট ব্যাজ এবং গোলাকার কার্ড সহ আধুনিক ডিজাইন।',
-                      features: ['Trust badges', 'Numbered steps', 'SSL indicator'],
-                    },
-                    {
-                      id: 'minimal',
-                      name: 'Minimal',
-                      nameBn: 'মিনিমাল',
-                      desc: 'Single-column accordion style, clean and focused checkout experience.',
-                      descBn: 'সিঙ্গেল কলাম অ্যাকর্ডিয়ন স্টাইল, পরিষ্কার এবং ফোকাসড চেকআউট।',
-                      features: ['Accordion steps', 'Progress bar', 'Single column'],
-                    },
-                    {
-                      id: 'express',
-                      name: 'Express',
-                      nameBn: 'এক্সপ্রেস',
-                      desc: 'Quick checkout with name, phone & address only. OTP verification before order confirmation.',
-                      descBn: 'শুধু নাম, ফোন ও ঠিকানা দিন। OTP ভেরিফাই করে অর্ডার কনফার্ম করুন।',
-                      features: ['OTP Verification', 'Dhaka In/Out', 'Quick Order'],
-                    },
+                    { id: 'classic', name: 'Classic', nameBn: 'ক্লাসিক', desc: 'Traditional 2-column layout.', features: ['2-column', 'Breadcrumb', 'Sticky summary'] },
+                    { id: 'modern', name: 'Modern', nameBn: 'মডার্ন', desc: 'Numbered steps & trust badges.', features: ['Trust badges', 'Steps', 'SSL'] },
+                    { id: 'minimal', name: 'Minimal', nameBn: 'মিনিমাল', desc: 'Single-column accordion style.', features: ['Accordion', 'Progress bar'] },
+                    { id: 'express', name: 'Express', nameBn: 'এক্সপ্রেস', desc: 'Quick checkout with OTP.', features: ['OTP', 'Dhaka In/Out'] },
                   ].map(layout => (
                     <div
                       key={layout.id}
-                      onClick={() => update('selectedCheckout', layout.id)}
                       className={`relative cursor-pointer rounded-xl border-2 p-5 transition-all hover:shadow-md ${
-                        setup.selectedCheckout === layout.id
-                          ? 'border-primary bg-primary/5 shadow-md'
-                          : 'border-border hover:border-primary/40'
+                        setup.selectedCheckout === layout.id ? 'border-primary bg-primary/5 shadow-md' : 'border-border hover:border-primary/40'
                       }`}
                     >
                       {setup.selectedCheckout === layout.id && (
                         <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground">Active</Badge>
                       )}
-                      <div className="space-y-3">
-                        <div className="h-32 bg-muted rounded-lg flex items-center justify-center border border-border">
-                          {layout.id === 'classic' && (
-                            <div className="w-full h-full p-3 flex gap-2">
-                              <div className="flex-[2] space-y-2">
-                                <div className="h-3 bg-primary/20 rounded w-3/4" />
-                                <div className="h-8 bg-primary/10 rounded" />
-                                <div className="h-8 bg-primary/10 rounded" />
-                              </div>
-                              <div className="flex-1 space-y-2">
-                                <div className="h-3 bg-accent/30 rounded" />
-                                <div className="h-12 bg-accent/20 rounded" />
-                                <div className="h-6 bg-primary/30 rounded" />
-                              </div>
-                            </div>
-                          )}
-                          {layout.id === 'modern' && (
-                            <div className="w-full h-full p-3 space-y-2">
-                              <div className="flex gap-2">
-                                {[1,2,3].map(i => <div key={i} className="flex-1 h-4 bg-primary/15 rounded-full" />)}
-                              </div>
-                              <div className="flex gap-2 h-16">
-                                <div className="flex-[7] space-y-1">
-                                  <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full bg-primary/30" /><div className="h-2 bg-primary/15 rounded flex-1" /></div>
-                                  <div className="h-8 bg-primary/10 rounded-lg" />
-                                </div>
-                                <div className="flex-[5] space-y-1">
-                                  <div className="h-6 bg-accent/20 rounded-lg" />
-                                  <div className="h-5 bg-primary/25 rounded-lg" />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          {layout.id === 'minimal' && (
-                            <div className="w-full h-full p-3 flex justify-center">
-                              <div className="w-2/3 space-y-2">
-                                <div className="flex gap-1"><div className="flex-1 h-1 bg-primary/40 rounded-full" /><div className="flex-1 h-1 bg-muted-foreground/20 rounded-full" /><div className="flex-1 h-1 bg-muted-foreground/20 rounded-full" /></div>
-                                <div className="h-6 bg-primary/10 rounded-lg flex items-center px-2"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/15 rounded flex-1" /></div>
-                                <div className="h-6 bg-muted-foreground/5 rounded-lg" />
-                                <div className="h-8 bg-accent/20 rounded-lg" />
-                                <div className="h-5 bg-primary/30 rounded-lg" />
-                              </div>
-                            </div>
-                          )}
-                          {layout.id === 'express' && (
-                            <div className="w-full h-full p-3 flex justify-center">
-                              <div className="w-2/3 space-y-1.5">
-                                <div className="h-4 bg-primary/15 rounded flex items-center px-1"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/10 rounded flex-1" /></div>
-                                <div className="h-4 bg-primary/15 rounded flex items-center px-1"><div className="h-2 w-2 rounded-full bg-primary/30 mr-1" /><div className="h-1.5 bg-primary/10 rounded flex-1" /></div>
-                                <div className="h-6 bg-muted-foreground/5 rounded" />
-                                <div className="flex gap-1"><div className="flex-1 h-5 bg-accent/15 rounded text-[6px] flex items-center justify-center text-muted-foreground">ঢাকা</div><div className="flex-1 h-5 bg-accent/15 rounded text-[6px] flex items-center justify-center text-muted-foreground">বাইরে</div></div>
-                                <div className="h-5 bg-primary/30 rounded-lg" />
-                              </div>
-                            </div>
-                          )}
+                      <div className="space-y-3" onClick={() => update('selectedCheckout', layout.id)}>
+                        <div className="h-24 bg-muted rounded-lg flex items-center justify-center border border-border text-3xl">
+                          {layout.id === 'classic' ? '📋' : layout.id === 'modern' ? '🛡️' : layout.id === 'minimal' ? '📦' : '⚡'}
                         </div>
                         <h3 className="font-bold text-foreground">{layout.name} <span className="text-muted-foreground font-normal text-sm">({layout.nameBn})</span></h3>
                         <p className="text-xs text-muted-foreground">{layout.desc}</p>
-                        <p className="text-xs text-muted-foreground">{layout.descBn}</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {layout.features.map(f => (
-                            <Badge key={f} variant="secondary" className="text-[10px]">{f}</Badge>
-                          ))}
+                        <div className="flex flex-wrap gap-1">
+                          {layout.features.map(f => <Badge key={f} variant="secondary" className="text-[10px]">{f}</Badge>)}
                         </div>
                       </div>
+                      <Button
+                        size="sm" variant="outline"
+                        className="w-full mt-3"
+                        onClick={(e) => { e.stopPropagation(); setEditCheckoutVariant(layout.id); }}
+                      >
+                        <Settings2 className="h-3.5 w-3.5 mr-1" /> Customize
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -936,6 +882,104 @@ const AdminWebsiteSetupPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Checkout Variant Edit Modal */}
+        <Dialog open={!!editCheckoutVariant} onOpenChange={() => setEditCheckoutVariant(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Customize "{editCheckoutVariant?.charAt(0).toUpperCase()}{editCheckoutVariant?.slice(1)}" Checkout</DialogTitle>
+            </DialogHeader>
+            {editCheckoutVariant && (() => {
+              const cfg = getVariantConfig(editCheckoutVariant);
+              const upd = (k: keyof CheckoutVariantConfig, v: any) => updateVariantConfig(editCheckoutVariant, k, v);
+              return (
+                <ScrollArea className="max-h-[65vh] pr-4">
+                  <div className="space-y-6 py-2">
+                    {/* Text Customization */}
+                    <div>
+                      <h4 className="font-semibold text-sm mb-3 text-foreground">📝 Text & Labels</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1"><Label className="text-xs">Heading Text</Label><Input value={cfg.headingText} onChange={e => upd('headingText', e.target.value)} /></div>
+                        <div className="space-y-1"><Label className="text-xs">Button Text</Label><Input value={cfg.buttonText} onChange={e => upd('buttonText', e.target.value)} /></div>
+                        <div className="space-y-1"><Label className="text-xs">Processing Text</Label><Input value={cfg.processingText} onChange={e => upd('processingText', e.target.value)} /></div>
+                        <div className="col-span-2 space-y-1"><Label className="text-xs">Terms Text</Label><Textarea value={cfg.termsText} onChange={e => upd('termsText', e.target.value)} rows={2} /></div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Style Customization */}
+                    <div>
+                      <h4 className="font-semibold text-sm mb-3 text-foreground">🎨 Style & Colors</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Button Background</Label>
+                          <div className="flex gap-2">
+                            <Input type="color" className="w-10 h-9 p-1 cursor-pointer" value={cfg.buttonBgColor || '#6366f1'} onChange={e => upd('buttonBgColor', e.target.value)} />
+                            <Input value={cfg.buttonBgColor} onChange={e => upd('buttonBgColor', e.target.value)} placeholder="Default" className="flex-1" />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Button Text Color</Label>
+                          <div className="flex gap-2">
+                            <Input type="color" className="w-10 h-9 p-1 cursor-pointer" value={cfg.buttonTextColor || '#ffffff'} onChange={e => upd('buttonTextColor', e.target.value)} />
+                            <Input value={cfg.buttonTextColor} onChange={e => upd('buttonTextColor', e.target.value)} placeholder="Default" className="flex-1" />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Card Border Radius (px)</Label>
+                          <Input type="number" value={cfg.cardBorderRadius} onChange={e => upd('cardBorderRadius', e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Feature Toggles */}
+                    <div>
+                      <h4 className="font-semibold text-sm mb-3 text-foreground">⚙️ Feature Toggles</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { key: 'showPromoCode' as const, label: 'Promo Code Section' },
+                          { key: 'showTrustBadges' as const, label: 'Trust Badges' },
+                          { key: 'showBreadcrumb' as const, label: 'Breadcrumb Navigation' },
+                          { key: 'showBackButton' as const, label: 'Back to Cart Button' },
+                          { key: 'showSSLBadge' as const, label: 'SSL Encrypted Badge' },
+                        ].map(toggle => (
+                          <div key={toggle.key} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
+                            <Label className="text-xs">{toggle.label}</Label>
+                            <Switch checked={cfg[toggle.key] as boolean} onCheckedChange={v => upd(toggle.key, v)} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Trust Badges Customization */}
+                    {cfg.showTrustBadges && (
+                      <div>
+                        <h4 className="font-semibold text-sm mb-3 text-foreground">🛡️ Trust Badge Texts</h4>
+                        <div className="space-y-3">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="grid grid-cols-2 gap-2">
+                              <div className="space-y-1"><Label className="text-xs">Badge {i} Title</Label><Input value={(cfg as any)[`trustBadge${i}Title`]} onChange={e => upd(`trustBadge${i}Title` as any, e.target.value)} /></div>
+                              <div className="space-y-1"><Label className="text-xs">Badge {i} Description</Label><Input value={(cfg as any)[`trustBadge${i}Desc`]} onChange={e => upd(`trustBadge${i}Desc` as any, e.target.value)} /></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              );
+            })()}
+            <DialogFooter>
+              <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
+              <Button onClick={() => { setEditCheckoutVariant(null); toast.success('Customization updated! Click "Save All" to apply.'); }}>Done</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Add Page Dialog */}
         <Dialog open={addPageOpen} onOpenChange={setAddPageOpen}>

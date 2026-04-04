@@ -24,10 +24,13 @@ interface Props {
   appliedCode: string | null;
   onApplyPromo: (d: number, c: string, cid: string) => void;
   onRemovePromo: () => void;
+  customization?: any;
 }
 
-export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDiscount }: Props) => {
+export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDiscount, customization = {} }: Props) => {
   const { t } = useLanguage();
+  const cfg = customization;
+  const btnStyle = (cfg.buttonBgColor || cfg.buttonTextColor) ? { backgroundColor: cfg.buttonBgColor || undefined, color: cfg.buttonTextColor || undefined } : undefined;
   const { items } = useCart();
   const { register, formState: { errors }, setValue, getValues, handleSubmit } = form;
 

@@ -67,7 +67,64 @@ export interface WebsiteSetup {
   faviconUrl: string;
   heroBanners: HeroBanner[];
   selectedCheckout: string;
+  checkoutCustomization: CheckoutCustomization;
 }
+
+export interface CheckoutVariantConfig {
+  headingText: string;
+  buttonText: string;
+  processingText: string;
+  termsText: string;
+  showPromoCode: boolean;
+  showTrustBadges: boolean;
+  showBreadcrumb: boolean;
+  showBackButton: boolean;
+  showSSLBadge: boolean;
+  buttonBgColor: string;
+  buttonTextColor: string;
+  cardBorderRadius: string;
+  trustBadge1Title: string;
+  trustBadge1Desc: string;
+  trustBadge2Title: string;
+  trustBadge2Desc: string;
+  trustBadge3Title: string;
+  trustBadge3Desc: string;
+}
+
+export interface CheckoutCustomization {
+  classic: CheckoutVariantConfig;
+  modern: CheckoutVariantConfig;
+  minimal: CheckoutVariantConfig;
+  express: CheckoutVariantConfig;
+}
+
+const defaultVariantConfig: CheckoutVariantConfig = {
+  headingText: 'Checkout',
+  buttonText: 'Place Order',
+  processingText: 'Processing...',
+  termsText: 'By placing this order, you agree to our Terms & Conditions',
+  showPromoCode: true,
+  showTrustBadges: true,
+  showBreadcrumb: true,
+  showBackButton: true,
+  showSSLBadge: true,
+  buttonBgColor: '',
+  buttonTextColor: '',
+  cardBorderRadius: '12',
+  trustBadge1Title: 'Secure Payment',
+  trustBadge1Desc: '100% Safe & Secure',
+  trustBadge2Title: 'Fast Delivery',
+  trustBadge2Desc: '2-5 Business Days',
+  trustBadge3Title: 'Easy Returns',
+  trustBadge3Desc: '7 Days Return Policy',
+};
+
+const defaultCheckoutCustomization: CheckoutCustomization = {
+  classic: { ...defaultVariantConfig, headingText: 'Checkout', showTrustBadges: false },
+  modern: { ...defaultVariantConfig, headingText: 'Secure Checkout', buttonText: 'Place Order Securely' },
+  minimal: { ...defaultVariantConfig, headingText: 'Checkout', buttonText: 'Complete Order', showBreadcrumb: false, showTrustBadges: false },
+  express: { ...defaultVariantConfig, headingText: 'Quick Order', buttonText: 'Confirm Order', showBreadcrumb: false, showTrustBadges: false, showPromoCode: false },
+};
 
 const defaults: WebsiteSetup = {
   selectedHomepage: 'default',
@@ -123,6 +180,7 @@ const defaults: WebsiteSetup = {
   faviconUrl: '',
   heroBanners: [],
   selectedCheckout: 'classic',
+  checkoutCustomization: defaultCheckoutCustomization,
 };
 
 let cachedSetup: WebsiteSetup | null = null;

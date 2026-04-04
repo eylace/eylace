@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { CheckCircle2 } from 'lucide-react';
@@ -64,6 +64,20 @@ const Checkout = () => {
 
   const paymentMethod = form.watch('paymentMethod');
   const codFee = paymentMethod === 'cod' ? 0.50 : 0;
+
+  const variantId = websiteSetup.selectedCheckout || 'classic';
+  const customization = useMemo(() => {
+    const defaults = {
+      headingText: 'Checkout', buttonText: 'Place Order', processingText: 'Processing...',
+      termsText: 'By placing this order, you agree to our Terms & Conditions',
+      showPromoCode: true, showTrustBadges: true, showBreadcrumb: true, showBackButton: true, showSSLBadge: true,
+      buttonBgColor: '', buttonTextColor: '', cardBorderRadius: '12',
+      trustBadge1Title: 'Secure Payment', trustBadge1Desc: '100% Safe & Secure',
+      trustBadge2Title: 'Fast Delivery', trustBadge2Desc: '2-5 Business Days',
+      trustBadge3Title: 'Easy Returns', trustBadge3Desc: '7 Days Return Policy',
+    };
+    return { ...defaults, ...(websiteSetup.checkoutCustomization?.[variantId] || {}) };
+  }, [websiteSetup.checkoutCustomization, variantId]);
 
   // Build enriched cart items with product_id, image, variation
   const buildEnrichedCartItems = useCallback(() => {
@@ -376,13 +390,16 @@ const Checkout = () => {
     onRemovePromo: () => { setPromoDiscount(0); setAppliedCode(null); setAppliedCouponId(null); },
   };
 
+
+
   const layoutProps = {
     form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode,
+    customization,
     ...promoProps,
   };
 
   const renderCheckoutLayout = () => {
-    switch (websiteSetup.selectedCheckout) {
+    switch (variantId) {
       case 'modern': return <CheckoutModern {...layoutProps} />;
       case 'minimal': return <CheckoutMinimal {...layoutProps} />;
       case 'express': return <CheckoutExpress {...layoutProps} />;
