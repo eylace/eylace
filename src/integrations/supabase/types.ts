@@ -2623,35 +2623,29 @@ export type Database = {
         Row: {
           business_type: string | null
           created_at: string | null
+          fulfillment_type: string | null
           id: string | null
-          phone: string | null
           status: string | null
-          store_description: string | null
           store_name: string | null
           updated_at: string | null
-          user_id: string | null
         }
         Insert: {
           business_type?: string | null
           created_at?: string | null
+          fulfillment_type?: string | null
           id?: string | null
-          phone?: string | null
           status?: string | null
-          store_description?: string | null
           store_name?: string | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
           business_type?: string | null
           created_at?: string | null
+          fulfillment_type?: string | null
           id?: string | null
-          phone?: string | null
           status?: string | null
-          store_description?: string | null
           store_name?: string | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
