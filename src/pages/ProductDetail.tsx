@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCompare } from '@/contexts/CompareContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 import { Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
