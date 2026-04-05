@@ -1,28 +1,43 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="dns-prefetch" href="https://jmowninkqcfgwldyjeqo.supabase.co" />
-    <link rel="preconnect" href="https://jmowninkqcfgwldyjeqo.supabase.co" crossorigin />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
     <title>Eylace - Your One-Stop Shopping Destination</title>
     <meta name="description" content="Shop the best products at unbeatable prices on Eylace" />
     <meta name="author" content="Eylace" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="dns-prefetch" href="https://jmowninkqcfgwldyjeqo.supabase.co" />
+    <link rel="preconnect" href="https://jmowninkqcfgwldyjeqo.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" /></noscript>
+
+    <link rel="modulepreload" href="/src/main.tsx" />
 
     <meta property="og:title" content="Eylace - Your One-Stop Shopping Destination" />
     <meta property="og:description" content="Shop the best products at unbeatable prices on Eylace" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Lovable" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <style>
+      /* Critical inline CSS for instant first paint */
+      body{margin:0;font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fafafa;color:#1a2744}
+      #root{min-height:100vh}
+      .initial-loader{display:flex;align-items:center;justify-content:center;min-height:100vh}
+      .initial-loader div{width:32px;height:32px;border:3px solid #1a3a5c;border-top-color:transparent;border-radius:50%;animation:sp .6s linear infinite}
+      @keyframes sp{to{transform:rotate(360deg)}}
+    </style>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="initial-loader"><div></div></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
