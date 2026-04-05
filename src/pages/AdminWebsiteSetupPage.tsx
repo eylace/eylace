@@ -78,6 +78,10 @@ interface WebsiteSetupState {
   heroBanners: HeroBanner[];
   selectedCheckout: string;
   checkoutCustomization: Record<string, any>;
+  ctaCallNumber: string;
+  ctaWhatsappNumber: string;
+  ctaCallEnabled: boolean;
+  ctaWhatsappEnabled: boolean;
 }
 
 const defaultSetup: WebsiteSetupState = {
