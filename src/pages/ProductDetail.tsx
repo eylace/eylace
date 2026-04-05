@@ -314,7 +314,7 @@ const ProductDetail = () => {
                     <Zap className="h-5 w-5 mr-2" />
                     {t('product.buyNow')}
                   </Button>
-                </div>
+               </div>
               )}
 
               {product.isDigital && user && (
@@ -327,6 +327,37 @@ const ProductDetail = () => {
                   <Download className="h-5 w-5 mr-2" />
                   {t('product.downloadDigital')}
                 </Button>
+              )}
+
+              {/* Call & WhatsApp CTA Buttons */}
+              {(websiteSetup.ctaCallEnabled || websiteSetup.ctaWhatsappEnabled) && (
+                <div className="grid grid-cols-2 gap-3">
+                  {websiteSetup.ctaCallEnabled && websiteSetup.ctaCallNumber && (
+                    <Button
+                      variant="outline"
+                      size="xl"
+                      className="w-full bg-primary/10 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                      onClick={() => window.open(`tel:${websiteSetup.ctaCallNumber}`, '_self')}
+                    >
+                      <Phone className="h-5 w-5 mr-2" />
+                      কল করুন 📞 {websiteSetup.ctaCallNumber}
+                    </Button>
+                  )}
+                  {websiteSetup.ctaWhatsappEnabled && websiteSetup.ctaWhatsappNumber && (
+                    <Button
+                      variant="outline"
+                      size="xl"
+                      className="w-full bg-success/10 border-success text-success hover:bg-success hover:text-success-foreground"
+                      onClick={() => {
+                        const num = websiteSetup.ctaWhatsappNumber.replace(/^0/, '88');
+                        window.open(`https://wa.me/${num}?text=Hi, I'm interested in: ${product.name}`, '_blank');
+                      }}
+                    >
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      Whatsapp © {websiteSetup.ctaWhatsappNumber}
+                    </Button>
+                  )}
+                </div>
               )}
 
               <div className="flex gap-3">
@@ -354,14 +385,6 @@ const ProductDetail = () => {
                   {t('product.share')}
                 </Button>
               </div>
-
-              <Button 
-                variant="outline" 
-                className="w-full border-success text-success hover:bg-success hover:text-success-foreground"
-              >
-                <MessageCircle className="h-5 w-5 mr-2" />
-                {t('product.chatWhatsApp')}
-              </Button>
             </div>
 
             <Separator />
