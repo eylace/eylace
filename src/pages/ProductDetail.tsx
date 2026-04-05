@@ -39,6 +39,7 @@ const ProductDetail = () => {
   const { addItem: addToCompare, removeItem: removeFromCompare, isInCompare } = useCompare();
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
+  const websiteSetup = useWebsiteSetup();
   const location = useLocation();
   const reviewsRef = useRef<HTMLDivElement>(null);
   const [liveReviewStats, setLiveReviewStats] = useState<{ averageRating: number; totalReviews: number } | null>(null);
