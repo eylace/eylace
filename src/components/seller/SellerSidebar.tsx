@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Package, ShoppingCart, BarChart3, DollarSign,
-  Star, Tag, Store, HelpCircle, LogOut,
+  Star, Tag, Store, HelpCircle, LogOut, ShieldCheck,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
