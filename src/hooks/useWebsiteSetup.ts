@@ -68,6 +68,10 @@ export interface WebsiteSetup {
   heroBanners: HeroBanner[];
   selectedCheckout: string;
   checkoutCustomization: CheckoutCustomization;
+  ctaCallNumber: string;
+  ctaWhatsappNumber: string;
+  ctaCallEnabled: boolean;
+  ctaWhatsappEnabled: boolean;
 }
 
 export interface CheckoutVariantConfig {
@@ -181,6 +185,10 @@ const defaults: WebsiteSetup = {
   heroBanners: [],
   selectedCheckout: 'classic',
   checkoutCustomization: defaultCheckoutCustomization,
+  ctaCallNumber: '01XXXXXXXXX',
+  ctaWhatsappNumber: '01XXXXXXXXX',
+  ctaCallEnabled: true,
+  ctaWhatsappEnabled: true,
 };
 
 let cachedSetup: WebsiteSetup | null = null;
