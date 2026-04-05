@@ -68,6 +68,10 @@ export interface WebsiteSetup {
   heroBanners: HeroBanner[];
   selectedCheckout: string;
   checkoutCustomization: CheckoutCustomization;
+  ctaCallNumber: string;
+  ctaWhatsappNumber: string;
+  ctaCallEnabled: boolean;
+  ctaWhatsappEnabled: boolean;
 }
 
 export interface CheckoutVariantConfig {
