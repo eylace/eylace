@@ -14,6 +14,7 @@ import { SellerPromotionsTab } from '@/components/seller/SellerPromotionsTab';
 import { SellerStoreSettings } from '@/components/seller/SellerStoreSettings';
 import { SellerSupportTab } from '@/components/seller/SellerSupportTab';
 import { SellerProductsTab } from '@/components/seller/SellerProductsTab';
+import { SellerFraudCheckTab } from '@/components/seller/SellerFraudCheckTab';
 
 const SellerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -74,6 +75,8 @@ const SellerDashboard = () => {
         return <SellerReviewsTab sellerId={seller.id} />;
       case 'promotions':
         return <SellerPromotionsTab />;
+      case 'fraud-check':
+        return <SellerFraudCheckTab sellerId={seller.id} />;
       case 'settings':
         return <SellerStoreSettings seller={seller} onUpdate={refetch} />;
       case 'support':

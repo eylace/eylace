@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Package, ShoppingCart, BarChart3, DollarSign,
-  Star, Tag, Store, HelpCircle, LogOut,
+  Star, Tag, Store, HelpCircle, LogOut, ShieldCheck,
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -20,6 +20,7 @@ const navItems = [
   { id: 'finance', label: 'Finance', icon: DollarSign },
   { id: 'reviews', label: 'Reviews', icon: Star },
   { id: 'promotions', label: 'Promotions', icon: Tag },
+  { id: 'fraud-check', label: 'Fraud Check', icon: ShieldCheck },
   { id: 'settings', label: 'Store Settings', icon: Store },
   { id: 'support', label: 'Support', icon: HelpCircle },
 ];
