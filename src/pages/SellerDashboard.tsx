@@ -75,6 +75,8 @@ const SellerDashboard = () => {
         return <SellerReviewsTab sellerId={seller.id} />;
       case 'promotions':
         return <SellerPromotionsTab />;
+      case 'fraud-check':
+        return <SellerFraudCheckTab sellerId={seller.id} />;
       case 'settings':
         return <SellerStoreSettings seller={seller} onUpdate={refetch} />;
       case 'support':
