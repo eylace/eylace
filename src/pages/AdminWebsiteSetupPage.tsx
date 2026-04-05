@@ -888,6 +888,38 @@ const AdminWebsiteSetupPage = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* CTA Buttons Management */}
+            <Card className="mt-6">
+              <CardHeader><CardTitle className="text-base">📞 Product Page CTA Buttons (Call & WhatsApp)</CardTitle></CardHeader>
+              <CardContent className="space-y-5">
+                <p className="text-sm text-muted-foreground">
+                  Add to Cart ও Buy Now বাটনের নিচে Call ও WhatsApp বাটন দেখাবে। এখান থেকে নম্বর ও on/off করুন।
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3 p-4 border border-border rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <Label className="font-semibold">📞 Call Button</Label>
+                      <Switch checked={setup.ctaCallEnabled} onCheckedChange={v => update('ctaCallEnabled', v)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">Phone Number</Label>
+                      <Input value={setup.ctaCallNumber} onChange={e => update('ctaCallNumber', e.target.value)} placeholder="01XXXXXXXXX" />
+                    </div>
+                  </div>
+                  <div className="space-y-3 p-4 border border-border rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <Label className="font-semibold">💬 WhatsApp Button</Label>
+                      <Switch checked={setup.ctaWhatsappEnabled} onCheckedChange={v => update('ctaWhatsappEnabled', v)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">WhatsApp Number</Label>
+                      <Input value={setup.ctaWhatsappNumber} onChange={e => update('ctaWhatsappNumber', e.target.value)} placeholder="01XXXXXXXXX" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
