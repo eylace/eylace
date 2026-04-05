@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { 
   Star, Heart, Share2, ShoppingCart, Zap, Truck, Shield, RotateCcw,
-  Check, MessageCircle, ChevronRight, Package, Store, GitCompareArrows, Download
+  Check, MessageCircle, ChevronRight, Package, Store, GitCompareArrows, Download, Phone
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
