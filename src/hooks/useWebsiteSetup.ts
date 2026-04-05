@@ -185,6 +185,10 @@ const defaults: WebsiteSetup = {
   heroBanners: [],
   selectedCheckout: 'classic',
   checkoutCustomization: defaultCheckoutCustomization,
+  ctaCallNumber: '01XXXXXXXXX',
+  ctaWhatsappNumber: '01XXXXXXXXX',
+  ctaCallEnabled: true,
+  ctaWhatsappEnabled: true,
 };
 
 let cachedSetup: WebsiteSetup | null = null;
