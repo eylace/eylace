@@ -33,6 +33,7 @@ export const useProductReviews = ({
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userHasReviewed, setUserHasReviewed] = useState(false);
   const [stats, setStats] = useState({
     averageRating: 0,
     totalReviews: 0,
