@@ -201,9 +201,9 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
         <span className="text-xs text-muted-foreground">
             ({product.reviewCount.toLocaleString()})
           </span>
-          {product.soldCount > 0 && (
+          {(product.soldCount ?? 0) > 0 && (
             <span className="text-xs text-muted-foreground ml-1">
-              · {product.soldCount.toLocaleString()} sold
+              · {(product.soldCount ?? 0).toLocaleString()} sold
             </span>
           )}
         </div>
