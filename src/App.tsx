@@ -279,6 +279,7 @@ const App = () => (
                 <Route path="/admin/system/server-status" element={<AdminSystemServerStatus />} />
                 <Route path="/admin/system/sitemap" element={<AdminSystemSitemap />} />
                 <Route path="/admin/shipping-providers" element={<AdminShippingProviders />} />
+                <Route path="/admin/payment-gateways" element={<AdminPaymentGateways />} />
                 <Route path="/admin/ai-analyzer" element={<AdminAIAnalyzer />} />
                 <Route path="/admin/ai-settings" element={<AdminAISettings />} />
                 <Route path="/admin/tracking" element={<AdminTrackingAnalytics />} />
