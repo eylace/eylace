@@ -33,6 +33,7 @@ export const useProductReviews = ({
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userHasReviewed, setUserHasReviewed] = useState(false);
   const [stats, setStats] = useState({
     averageRating: 0,
     totalReviews: 0,
@@ -133,12 +134,20 @@ export const useProductReviews = ({
       });
 
       setReviews(enrichedReviews);
+
+      // Check if current user already reviewed
+      if (user) {
+        const alreadyReviewed = enrichedReviews.some((r) => r.user_id === user.id);
+        setUserHasReviewed(alreadyReviewed);
+      } else {
+        setUserHasReviewed(false);
+      }
     } catch (err) {
       console.error('Error fetching reviews:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [productId, sortBy, filterRating]);
+  }, [productId, sortBy, filterRating, user]);
 
   useEffect(() => {
     fetchReviews();
@@ -201,6 +210,7 @@ export const useProductReviews = ({
     reviews,
     isLoading,
     stats,
+    userHasReviewed,
     voteReview,
     refetch: fetchReviews,
   };

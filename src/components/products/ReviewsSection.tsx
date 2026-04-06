@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Star, ThumbsUp, ThumbsDown, ChevronDown, Image, CheckCircle } from 'lucide-react';
+import { Star, ThumbsUp, ThumbsDown, ChevronDown, Image, CheckCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -28,7 +28,7 @@ export const ReviewsSection = ({
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
 
-  const { reviews, isLoading, stats, voteReview, refetch } = useProductReviews({
+  const { reviews, isLoading, stats, userHasReviewed, voteReview, refetch } = useProductReviews({
     productId,
     sortBy,
     filterRating,
@@ -96,19 +96,26 @@ export const ReviewsSection = ({
         </div>
 
         {/* Write Review Button */}
-        <Button 
-          variant="accent" 
-          size="lg"
-          onClick={() => {
-            if (!user) {
-              window.location.href = '/auth';
-              return;
-            }
-            setIsWriteModalOpen(true);
-          }}
-        >
-          Write a Review
-        </Button>
+        {user && userHasReviewed ? (
+          <Button variant="outline" size="lg" disabled className="gap-2 opacity-70">
+            <Check className="w-4 h-4" />
+            Already Reviewed
+          </Button>
+        ) : (
+          <Button 
+            variant="accent" 
+            size="lg"
+            onClick={() => {
+              if (!user) {
+                window.location.href = '/auth';
+                return;
+              }
+              setIsWriteModalOpen(true);
+            }}
+          >
+            Write a Review
+          </Button>
+        )}
       </div>
 
       {/* Write Review Modal */}
