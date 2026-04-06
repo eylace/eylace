@@ -128,6 +128,7 @@ const AdminSystemUpdate = lazy(() => import("./pages/AdminSystemUpdate"));
 const AdminSystemServerStatus = lazy(() => import("./pages/AdminSystemServerStatus"));
 const AdminSystemSitemap = lazy(() => import("./pages/AdminSystemSitemap"));
 const AdminShippingProviders = lazy(() => import("./pages/AdminShippingProviders"));
+const AdminPaymentGateways = lazy(() => import("./pages/AdminPaymentGateways"));
 const AdminAIAnalyzer = lazy(() => import("./pages/AdminAIAnalyzer"));
 const AdminAISettings = lazy(() => import("./pages/AdminAISettings"));
 const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics"));

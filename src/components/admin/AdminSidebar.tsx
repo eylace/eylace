@@ -112,6 +112,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.returnsRefunds' as TranslationKey, url: '/admin/returns', icon: RotateCcw },
     { titleKey: 'admin.fraudDetection' as TranslationKey, url: '/admin/fraud', icon: ShieldAlert },
     { titleKey: 'admin.transactions' as TranslationKey, url: '/admin/transactions', icon: CreditCard },
+    { titleKey: 'admin.paymentGateways' as TranslationKey, url: '/admin/payment-gateways', icon: Wallet },
   ];
 
   const marketingItems: NavItem[] = [
