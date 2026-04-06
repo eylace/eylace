@@ -1637,6 +1637,7 @@ export type Database = {
           review_count: number | null
           seller_id: string | null
           slug: string
+          sold_count: number
           stock: number | null
           updated_at: string
           variations: Json | null
@@ -1666,6 +1667,7 @@ export type Database = {
           review_count?: number | null
           seller_id?: string | null
           slug: string
+          sold_count?: number
           stock?: number | null
           updated_at?: string
           variations?: Json | null
@@ -1695,6 +1697,7 @@ export type Database = {
           review_count?: number | null
           seller_id?: string | null
           slug?: string
+          sold_count?: number
           stock?: number | null
           updated_at?: string
           variations?: Json | null

@@ -136,6 +136,7 @@ export const adaptDBProduct = (dbProduct: DBProduct): Product => {
     isPrime: dbProduct.is_prime || false,
     isFreeShipping: dbProduct.is_free_shipping || false,
     isDigital: (dbProduct as any).is_digital || false,
+    soldCount: (dbProduct as any).sold_count || 0,
     createdAt: new Date(dbProduct.created_at),
     updatedAt: new Date(dbProduct.updated_at),
   };

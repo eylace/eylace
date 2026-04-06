@@ -241,6 +241,24 @@ const Checkout = () => {
   const onSubmit = async (data: CheckoutFormData) => {
     setIsProcessing(true);
     try {
+      // Pre-checkout stock validation
+      if (user) {
+        const productIds = items.map(i => i.product.id);
+        const { data: stockData } = await supabase
+          .from('products')
+          .select('id, name, stock')
+          .in('id', productIds);
+        if (stockData) {
+          for (const item of items) {
+            const dbItem = stockData.find(p => p.id === item.product.id);
+            if (dbItem && (dbItem.stock ?? 0) < item.quantity) {
+              toast.error(`"${dbItem.name}" has only ${dbItem.stock ?? 0} items in stock`);
+              setIsProcessing(false);
+              return;
+            }
+          }
+        }
+      }
       const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       const subtotal = getSubtotal();
       const shipping = getShipping();
