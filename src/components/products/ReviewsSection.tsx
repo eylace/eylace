@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Star, ThumbsUp, ThumbsDown, ChevronDown, Image, CheckCircle } from 'lucide-react';
+import { Star, ThumbsUp, ThumbsDown, ChevronDown, Image, CheckCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
