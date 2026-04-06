@@ -104,7 +104,7 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Write product d
 
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '', false);
+      editor.commands.setContent(value || '');
     }
   }, [value, editor]);
 
