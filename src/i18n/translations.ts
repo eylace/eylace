@@ -194,6 +194,7 @@ export const translations = {
   'admin.shippingProviders': { en: 'Shipping Providers', bn: 'শিপিং প্রোভাইডার' },
   'admin.fraudDetection': { en: 'Fraud Detection', bn: 'জালিয়াতি সনাক্তকরণ' },
   'admin.transactions': { en: 'Transactions', bn: 'লেনদেন' },
+  'admin.paymentGateways': { en: 'Payment Gateways', bn: 'পেমেন্ট গেটওয়ে' },
   'admin.marketing': { en: 'Marketing', bn: 'মার্কেটিং' },
   'admin.reports': { en: 'Reports', bn: 'রিপোর্ট' },
   'admin.trackingAnalytics': { en: 'Tracking & Analytics', bn: 'ট্র্যাকিং ও অ্যানালিটিক্স' },

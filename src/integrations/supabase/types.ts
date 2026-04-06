@@ -1070,6 +1070,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateways: {
+        Row: {
+          created_at: string
+          credentials: Json
+          display_name: string
+          gateway_key: string
+          id: string
+          is_enabled: boolean
+          is_sandbox: boolean
+          settings: Json
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credentials?: Json
+          display_name: string
+          gateway_key: string
+          id?: string
+          is_enabled?: boolean
+          is_sandbox?: boolean
+          settings?: Json
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credentials?: Json
+          display_name?: string
+          gateway_key?: string
+          id?: string
+          is_enabled?: boolean
+          is_sandbox?: boolean
+          settings?: Json
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       permissions: {
         Row: {
           created_at: string
@@ -2412,6 +2451,36 @@ export type Database = {
       }
     }
     Views: {
+      payment_gateways_public: {
+        Row: {
+          display_name: string | null
+          gateway_key: string | null
+          id: string | null
+          is_enabled: boolean | null
+          is_sandbox: boolean | null
+          settings: Json | null
+          sort_order: number | null
+        }
+        Insert: {
+          display_name?: string | null
+          gateway_key?: string | null
+          id?: string | null
+          is_enabled?: boolean | null
+          is_sandbox?: boolean | null
+          settings?: Json | null
+          sort_order?: number | null
+        }
+        Update: {
+          display_name?: string | null
+          gateway_key?: string | null
+          id?: string | null
+          is_enabled?: boolean | null
+          is_sandbox?: boolean | null
+          settings?: Json | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       preorder_reviews_public: {
         Row: {
           content: string | null

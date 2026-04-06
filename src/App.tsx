@@ -128,6 +128,7 @@ const AdminSystemUpdate = lazy(() => import("./pages/AdminSystemUpdate"));
 const AdminSystemServerStatus = lazy(() => import("./pages/AdminSystemServerStatus"));
 const AdminSystemSitemap = lazy(() => import("./pages/AdminSystemSitemap"));
 const AdminShippingProviders = lazy(() => import("./pages/AdminShippingProviders"));
+const AdminPaymentGateways = lazy(() => import("./pages/AdminPaymentGateways"));
 const AdminAIAnalyzer = lazy(() => import("./pages/AdminAIAnalyzer"));
 const AdminAISettings = lazy(() => import("./pages/AdminAISettings"));
 const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics"));
@@ -278,6 +279,7 @@ const App = () => (
                 <Route path="/admin/system/server-status" element={<AdminSystemServerStatus />} />
                 <Route path="/admin/system/sitemap" element={<AdminSystemSitemap />} />
                 <Route path="/admin/shipping-providers" element={<AdminShippingProviders />} />
+                <Route path="/admin/payment-gateways" element={<AdminPaymentGateways />} />
                 <Route path="/admin/ai-analyzer" element={<AdminAIAnalyzer />} />
                 <Route path="/admin/ai-settings" element={<AdminAISettings />} />
                 <Route path="/admin/tracking" element={<AdminTrackingAnalytics />} />
