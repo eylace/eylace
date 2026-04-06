@@ -147,7 +147,7 @@ export const useProductReviews = ({
     } finally {
       setIsLoading(false);
     }
-  }, [productId, sortBy, filterRating]);
+  }, [productId, sortBy, filterRating, user]);
 
   useEffect(() => {
     fetchReviews();
