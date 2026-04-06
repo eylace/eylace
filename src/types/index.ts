@@ -20,7 +20,7 @@ export interface Product {
   isPrime?: boolean;
   isFreeShipping?: boolean;
   isDigital?: boolean;
-  soldCount: number;
+  soldCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
