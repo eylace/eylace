@@ -28,7 +28,7 @@ export const ReviewsSection = ({
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
 
-  const { reviews, isLoading, stats, voteReview, refetch } = useProductReviews({
+  const { reviews, isLoading, stats, userHasReviewed, voteReview, refetch } = useProductReviews({
     productId,
     sortBy,
     filterRating,
