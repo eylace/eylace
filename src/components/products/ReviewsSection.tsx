@@ -96,19 +96,26 @@ export const ReviewsSection = ({
         </div>
 
         {/* Write Review Button */}
-        <Button 
-          variant="accent" 
-          size="lg"
-          onClick={() => {
-            if (!user) {
-              window.location.href = '/auth';
-              return;
-            }
-            setIsWriteModalOpen(true);
-          }}
-        >
-          Write a Review
-        </Button>
+        {user && userHasReviewed ? (
+          <Button variant="outline" size="lg" disabled className="gap-2 opacity-70">
+            <Check className="w-4 h-4" />
+            Already Reviewed
+          </Button>
+        ) : (
+          <Button 
+            variant="accent" 
+            size="lg"
+            onClick={() => {
+              if (!user) {
+                window.location.href = '/auth';
+                return;
+              }
+              setIsWriteModalOpen(true);
+            }}
+          >
+            Write a Review
+          </Button>
+        )}
       </div>
 
       {/* Write Review Modal */}

@@ -210,6 +210,7 @@ export const useProductReviews = ({
     reviews,
     isLoading,
     stats,
+    userHasReviewed,
     voteReview,
     refetch: fetchReviews,
   };
