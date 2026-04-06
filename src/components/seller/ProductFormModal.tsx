@@ -241,7 +241,7 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
                 AI Generate
               </Button>
             </div>
-            <Textarea id="p-desc" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={4} maxLength={5000} />
+            <RichTextEditor value={form.description} onChange={v => setForm(f => ({ ...f, description: v }))} placeholder="Write product description..." />
           </div>
 
           {/* Price & Original Price */}
