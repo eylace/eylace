@@ -214,9 +214,11 @@ const ProductDetail = () => {
                 <a href="#reviews" className="text-sm text-accent hover:underline">
                   {displayReviewCount.toLocaleString()} {t('product.reviews')}
                 </a>
-                <span className="text-sm text-muted-foreground">
-                  5,000+ {t('product.sold')}
-                </span>
+                {product.soldCount > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    {product.soldCount.toLocaleString()} {t('product.sold')}
+                  </span>
+                )}
               </div>
             </div>
 

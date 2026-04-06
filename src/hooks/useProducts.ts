@@ -23,6 +23,7 @@ export interface DBProduct {
   is_free_shipping: boolean | null;
   is_active: boolean | null;
   is_digital: boolean | null;
+  sold_count: number | null;
   created_at: string;
   updated_at: string;
   category?: DBCategory | null;
