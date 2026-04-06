@@ -134,6 +134,14 @@ export const useProductReviews = ({
       });
 
       setReviews(enrichedReviews);
+
+      // Check if current user already reviewed
+      if (user) {
+        const alreadyReviewed = enrichedReviews.some((r) => r.user_id === user.id);
+        setUserHasReviewed(alreadyReviewed);
+      } else {
+        setUserHasReviewed(false);
+      }
     } catch (err) {
       console.error('Error fetching reviews:', err);
     } finally {
