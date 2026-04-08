@@ -8,6 +8,8 @@ import {
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
   Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
   Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw, Link2,
+  UploadCloud, LifeBuoy, Ticket, MessageCircle, Contact, Award, PenSquare, FolderOpen, BookOpen,
+  Receipt, Undo2, FileCheck, FolderCog,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -128,6 +130,46 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.marketing.visitors', url: '/admin/marketing/visitors', icon: Eye },
     { titleKey: 'admin.marketing.ads', url: '/admin/marketing/ads', icon: LayoutList },
     { titleKey: 'admin.marketing.affiliate', url: '/admin/affiliate', icon: Link2 },
+  ];
+
+  const uploadItems: NavItem[] = [
+    { titleKey: 'Upload Files', url: '/admin/upload-files', icon: UploadCloud },
+  ];
+
+  const supportItems: NavItem[] = [
+    { titleKey: 'Tickets', url: '/admin/support/tickets', icon: Ticket },
+    { titleKey: 'Product Conversations', url: '/admin/support/conversations', icon: MessageCircle },
+    { titleKey: 'Product Queries', url: '/admin/support/queries', icon: HelpCircle },
+    { titleKey: 'Contacts', url: '/admin/support/contacts', icon: Contact },
+  ];
+
+  const affiliateItems: NavItem[] = [
+    { titleKey: 'Registration Form', url: '/admin/affiliate/registration', icon: FileText },
+    { titleKey: 'Configurations', url: '/admin/affiliate/config', icon: Settings },
+    { titleKey: 'Affiliate Users', url: '/admin/affiliate/users', icon: Users },
+    { titleKey: 'Referral Users', url: '/admin/affiliate/referrals', icon: UsersRound },
+    { titleKey: 'Withdraw Requests', url: '/admin/affiliate/withdrawals', icon: Wallet },
+    { titleKey: 'Affiliate Logs', url: '/admin/affiliate/logs', icon: Activity },
+  ];
+
+  const clubPointItems: NavItem[] = [
+    { titleKey: 'Club Point Config', url: '/admin/club-point/config', icon: Settings },
+    { titleKey: 'Set Product Point', url: '/admin/club-point/products', icon: Award },
+    { titleKey: 'User Points', url: '/admin/club-point/users', icon: Users },
+  ];
+
+  const blogItems: NavItem[] = [
+    { titleKey: 'Add New Post', url: '/admin/blog/add', icon: PenSquare },
+    { titleKey: 'All Posts', url: '/admin/blog/posts', icon: FolderOpen },
+    { titleKey: 'Categories', url: '/admin/blog/categories', icon: BookOpen },
+  ];
+
+  const refundItems: NavItem[] = [
+    { titleKey: 'Refund Requests', url: '/admin/refunds/requests', icon: Receipt },
+    { titleKey: 'Approved Refunds', url: '/admin/refunds/approved', icon: FileCheck },
+    { titleKey: 'Rejected Refunds', url: '/admin/refunds/rejected', icon: Undo2 },
+    { titleKey: 'Refund Configuration', url: '/admin/refunds/config', icon: FolderCog },
+    { titleKey: 'Category Based Refund', url: '/admin/refunds/category', icon: Layers },
   ];
 
   const contentItems = [
@@ -288,6 +330,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('otp', 'admin.otp.section', Smartphone, otpItems)}
         {canAccess('operations') && renderGroup('admin.group.operations', operationsItems)}
         {renderCollapsible('marketing', 'admin.marketing.section', Megaphone, marketingItems)}
+        {renderCollapsible('uploadFiles', 'Upload Files', UploadCloud, uploadItems)}
+        {renderCollapsible('support', 'Support', LifeBuoy, supportItems)}
+        {renderCollapsible('affiliateSystem', 'Affiliate System', Link2, affiliateItems)}
+        {renderCollapsible('clubPoint', 'Club Point System', Award, clubPointItems)}
+        {renderCollapsible('blogSystem', 'Blog System', BookOpen, blogItems)}
+        {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
         {canAccess('system') && renderGroup('admin.group.system', systemItems)}
         {renderCollapsible('websiteSetup', 'admin.websiteSetup', Monitor, websiteSetupItems)}

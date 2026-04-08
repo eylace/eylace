@@ -137,6 +137,26 @@ const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders")
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
 const AdminReturnsRefunds = lazy(() => import("./pages/AdminReturnsRefunds"));
 const AdminAffiliateProgram = lazy(() => import("./pages/AdminAffiliateProgram"));
+const AdminUploadFiles = lazy(() => import("./pages/AdminUploadFiles"));
+const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
+const AdminSupportConversations = lazy(() => import("./pages/AdminSupportConversations"));
+const AdminSupportQueries = lazy(() => import("./pages/AdminSupportQueries"));
+const AdminSupportContacts = lazy(() => import("./pages/AdminSupportContacts"));
+const AdminAffiliateRegistration = lazy(() => import("./pages/AdminAffiliateRegistration"));
+const AdminAffiliateConfig = lazy(() => import("./pages/AdminAffiliateConfig"));
+const AdminAffiliateUsers = lazy(() => import("./pages/AdminAffiliateUsers"));
+const AdminAffiliateReferrals = lazy(() => import("./pages/AdminAffiliateReferrals"));
+const AdminAffiliateWithdrawals = lazy(() => import("./pages/AdminAffiliateWithdrawals"));
+const AdminAffiliateLogs = lazy(() => import("./pages/AdminAffiliateLogs"));
+const AdminClubPointConfig = lazy(() => import("./pages/AdminClubPointConfig"));
+const AdminClubPointProducts = lazy(() => import("./pages/AdminClubPointProducts"));
+const AdminClubPointUsers = lazy(() => import("./pages/AdminClubPointUsers"));
+const AdminBlogAddPost = lazy(() => import("./pages/AdminBlogAddPost"));
+const AdminBlogPosts = lazy(() => import("./pages/AdminBlogPosts"));
+const AdminBlogCategories = lazy(() => import("./pages/AdminBlogCategories"));
+const AdminRefundRequests = lazy(() => import("./pages/AdminRefundRequests"));
+const AdminRefundConfig = lazy(() => import("./pages/AdminRefundConfig"));
+const AdminRefundCategoryBased = lazy(() => import("./pages/AdminRefundCategoryBased"));
 const Categories = lazy(() => import("./pages/Categories"));
 const CmsPage = lazy(() => import("./pages/CmsPage"));
 
@@ -288,6 +308,28 @@ const App = () => (
                 <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
                 <Route path="/admin/returns" element={<AdminReturnsRefunds />} />
                 <Route path="/admin/affiliate" element={<AdminAffiliateProgram />} />
+                <Route path="/admin/upload-files" element={<AdminUploadFiles />} />
+                <Route path="/admin/support/tickets" element={<AdminSupportTickets />} />
+                <Route path="/admin/support/conversations" element={<AdminSupportConversations />} />
+                <Route path="/admin/support/queries" element={<AdminSupportQueries />} />
+                <Route path="/admin/support/contacts" element={<AdminSupportContacts />} />
+                <Route path="/admin/affiliate/registration" element={<AdminAffiliateRegistration />} />
+                <Route path="/admin/affiliate/config" element={<AdminAffiliateConfig />} />
+                <Route path="/admin/affiliate/users" element={<AdminAffiliateUsers />} />
+                <Route path="/admin/affiliate/referrals" element={<AdminAffiliateReferrals />} />
+                <Route path="/admin/affiliate/withdrawals" element={<AdminAffiliateWithdrawals />} />
+                <Route path="/admin/affiliate/logs" element={<AdminAffiliateLogs />} />
+                <Route path="/admin/club-point/config" element={<AdminClubPointConfig />} />
+                <Route path="/admin/club-point/products" element={<AdminClubPointProducts />} />
+                <Route path="/admin/club-point/users" element={<AdminClubPointUsers />} />
+                <Route path="/admin/blog/add" element={<AdminBlogAddPost />} />
+                <Route path="/admin/blog/posts" element={<AdminBlogPosts />} />
+                <Route path="/admin/blog/categories" element={<AdminBlogCategories />} />
+                <Route path="/admin/refunds/requests" element={<AdminRefundRequests />} />
+                <Route path="/admin/refunds/approved" element={<AdminRefundRequests />} />
+                <Route path="/admin/refunds/rejected" element={<AdminRefundRequests />} />
+                <Route path="/admin/refunds/config" element={<AdminRefundConfig />} />
+                <Route path="/admin/refunds/category" element={<AdminRefundCategoryBased />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
