@@ -308,6 +308,28 @@ const App = () => (
                 <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
                 <Route path="/admin/returns" element={<AdminReturnsRefunds />} />
                 <Route path="/admin/affiliate" element={<AdminAffiliateProgram />} />
+                <Route path="/admin/upload-files" element={<AdminUploadFiles />} />
+                <Route path="/admin/support/tickets" element={<AdminSupportTickets />} />
+                <Route path="/admin/support/conversations" element={<AdminSupportConversations />} />
+                <Route path="/admin/support/queries" element={<AdminSupportQueries />} />
+                <Route path="/admin/support/contacts" element={<AdminSupportContacts />} />
+                <Route path="/admin/affiliate/registration" element={<AdminAffiliateRegistration />} />
+                <Route path="/admin/affiliate/config" element={<AdminAffiliateConfig />} />
+                <Route path="/admin/affiliate/users" element={<AdminAffiliateUsers />} />
+                <Route path="/admin/affiliate/referrals" element={<AdminAffiliateReferrals />} />
+                <Route path="/admin/affiliate/withdrawals" element={<AdminAffiliateWithdrawals />} />
+                <Route path="/admin/affiliate/logs" element={<AdminAffiliateLogs />} />
+                <Route path="/admin/club-point/config" element={<AdminClubPointConfig />} />
+                <Route path="/admin/club-point/products" element={<AdminClubPointProducts />} />
+                <Route path="/admin/club-point/users" element={<AdminClubPointUsers />} />
+                <Route path="/admin/blog/add" element={<AdminBlogAddPost />} />
+                <Route path="/admin/blog/posts" element={<AdminBlogPosts />} />
+                <Route path="/admin/blog/categories" element={<AdminBlogCategories />} />
+                <Route path="/admin/refunds/requests" element={<AdminRefundRequests />} />
+                <Route path="/admin/refunds/approved" element={<AdminRefundRequests />} />
+                <Route path="/admin/refunds/rejected" element={<AdminRefundRequests />} />
+                <Route path="/admin/refunds/config" element={<AdminRefundConfig />} />
+                <Route path="/admin/refunds/category" element={<AdminRefundCategoryBased />} />
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
