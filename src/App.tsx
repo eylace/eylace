@@ -137,6 +137,26 @@ const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders")
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
 const AdminReturnsRefunds = lazy(() => import("./pages/AdminReturnsRefunds"));
 const AdminAffiliateProgram = lazy(() => import("./pages/AdminAffiliateProgram"));
+const AdminUploadFiles = lazy(() => import("./pages/AdminUploadFiles"));
+const AdminSupportTickets = lazy(() => import("./pages/AdminSupportTickets"));
+const AdminSupportConversations = lazy(() => import("./pages/AdminSupportConversations"));
+const AdminSupportQueries = lazy(() => import("./pages/AdminSupportQueries"));
+const AdminSupportContacts = lazy(() => import("./pages/AdminSupportContacts"));
+const AdminAffiliateRegistration = lazy(() => import("./pages/AdminAffiliateRegistration"));
+const AdminAffiliateConfig = lazy(() => import("./pages/AdminAffiliateConfig"));
+const AdminAffiliateUsers = lazy(() => import("./pages/AdminAffiliateUsers"));
+const AdminAffiliateReferrals = lazy(() => import("./pages/AdminAffiliateReferrals"));
+const AdminAffiliateWithdrawals = lazy(() => import("./pages/AdminAffiliateWithdrawals"));
+const AdminAffiliateLogs = lazy(() => import("./pages/AdminAffiliateLogs"));
+const AdminClubPointConfig = lazy(() => import("./pages/AdminClubPointConfig"));
+const AdminClubPointProducts = lazy(() => import("./pages/AdminClubPointProducts"));
+const AdminClubPointUsers = lazy(() => import("./pages/AdminClubPointUsers"));
+const AdminBlogAddPost = lazy(() => import("./pages/AdminBlogAddPost"));
+const AdminBlogPosts = lazy(() => import("./pages/AdminBlogPosts"));
+const AdminBlogCategories = lazy(() => import("./pages/AdminBlogCategories"));
+const AdminRefundRequests = lazy(() => import("./pages/AdminRefundRequests"));
+const AdminRefundConfig = lazy(() => import("./pages/AdminRefundConfig"));
+const AdminRefundCategoryBased = lazy(() => import("./pages/AdminRefundCategoryBased"));
 const Categories = lazy(() => import("./pages/Categories"));
 const CmsPage = lazy(() => import("./pages/CmsPage"));
 
