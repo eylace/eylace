@@ -15,10 +15,10 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect, useCallback, useState } from 'react';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
-  List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  List, ListOrdered, AlignLeft, AlignCenter, AlignRight,
   Link as LinkIcon, Image as ImageIcon, Table as TableIcon,
   Undo, Redo, Highlighter, Type, Maximize2, Minimize2,
-  Heading1, Heading2, Heading3, Code, Quote, Minus,
+  Video, ChevronDown,
 } from 'lucide-react';
 import { Button } from './button';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
@@ -38,18 +38,15 @@ const COLORS = [
   '#ff0066', '#ff6633', '#ccff00', '#00cccc', '#3366ff', '#cc33ff',
 ];
 
-const ToolbarButton = ({
-  onClick,
-  active,
-  disabled,
-  children,
-  title,
+const HIGHLIGHT_COLORS = [
+  '#ffc078', '#ffd43b', '#a9e34b', '#63e6be', '#74c0fc', '#b197fc',
+  '#f783ac', '#ff8787', '#ffffff',
+];
+
+const ToolbarBtn = ({
+  onClick, active, disabled, children, title,
 }: {
-  onClick: () => void;
-  active?: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-  title?: string;
+  onClick: () => void; active?: boolean; disabled?: boolean; children: React.ReactNode; title?: string;
 }) => (
   <button
     type="button"
@@ -57,27 +54,26 @@ const ToolbarButton = ({
     disabled={disabled}
     title={title}
     className={cn(
-      'p-1.5 rounded hover:bg-muted transition-colors',
-      active && 'bg-muted text-primary',
-      disabled && 'opacity-40 cursor-not-allowed'
+      'p-2 rounded-md hover:bg-muted transition-colors flex items-center justify-center',
+      active && 'bg-primary/10 text-primary',
+      disabled && 'opacity-30 cursor-not-allowed'
     )}
   >
     {children}
   </button>
 );
 
-const Divider = () => <div className="w-px h-6 bg-border mx-0.5" />;
+const Divider = () => <div className="w-px h-7 bg-border mx-1" />;
 
 export const RichTextEditor = ({ value, onChange, placeholder = 'Write product description...', className }: RichTextEditorProps) => {
   const [fullscreen, setFullscreen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyle,
@@ -92,12 +88,10 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Write product d
       Placeholder.configure({ placeholder }),
     ],
     content: value || '',
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
-    },
+    onUpdate: ({ editor: e }) => onChange(e.getHTML()),
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none dark:prose-invert focus:outline-none min-h-[120px] px-3 py-2',
+        class: 'prose prose-sm max-w-none dark:prose-invert focus:outline-none min-h-[160px] px-4 py-3',
       },
     },
   });
@@ -120,180 +114,226 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Write product d
     setImageUrl('');
   }, [editor, imageUrl]);
 
+  const addVideo = useCallback(() => {
+    if (!editor || !videoUrl) return;
+    const iframe = `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;max-width:100%;"><iframe src="${videoUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>`;
+    editor.chain().focus().insertContent(iframe).run();
+    setVideoUrl('');
+  }, [editor, videoUrl]);
+
   const insertTable = useCallback(() => {
     editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }, [editor]);
 
   if (!editor) return null;
 
-  const Toolbar = () => (
-    <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b border-border bg-muted/30">
-      {/* Text style */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">
-        <Bold className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline">
-        <UnderlineIcon className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic">
-        <Italic className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough">
-        <Strikethrough className="h-4 w-4" />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Headings */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} title="Heading 1">
-        <Heading1 className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2">
-        <Heading2 className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} title="Heading 3">
-        <Heading3 className="h-4 w-4" />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Lists */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet List">
-        <List className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered List">
-        <ListOrdered className="h-4 w-4" />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Alignment */}
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} title="Align Left">
-        <AlignLeft className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} title="Align Center">
-        <AlignCenter className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} title="Align Right">
-        <AlignRight className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} active={editor.isActive({ textAlign: 'justify' })} title="Justify">
-        <AlignJustify className="h-4 w-4" />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Color */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <button type="button" className="p-1.5 rounded hover:bg-muted transition-colors" title="Text Color">
-            <Type className="h-4 w-4" style={{ color: editor.getAttributes('textStyle').color || 'currentColor' }} />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-2" align="start">
-          <div className="grid grid-cols-6 gap-1">
-            {COLORS.map(color => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => editor.chain().focus().setColor(color).run()}
-                className="w-6 h-6 rounded border border-border hover:scale-110 transition-transform"
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
-          <button type="button" onClick={() => editor.chain().focus().unsetColor().run()} className="mt-2 text-xs text-muted-foreground hover:text-foreground">
-            Reset color
-          </button>
-        </PopoverContent>
-      </Popover>
-
-      {/* Highlight */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleHighlight({ color: '#ffc078' }).run()} active={editor.isActive('highlight')} title="Highlight">
-        <Highlighter className="h-4 w-4" />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Link */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <button type="button" className={cn('p-1.5 rounded hover:bg-muted transition-colors', editor.isActive('link') && 'bg-muted text-primary')} title="Link">
-            <LinkIcon className="h-4 w-4" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-3" align="start">
-          <div className="flex gap-2">
-            <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://..." className="h-8 text-sm" />
-            <Button type="button" size="sm" className="h-8" onClick={addLink}>Add</Button>
-          </div>
-          {editor.isActive('link') && (
-            <button type="button" onClick={() => editor.chain().focus().unsetLink().run()} className="mt-2 text-xs text-destructive hover:underline">
-              Remove link
-            </button>
-          )}
-        </PopoverContent>
-      </Popover>
-
-      {/* Image */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <button type="button" className="p-1.5 rounded hover:bg-muted transition-colors" title="Insert Image">
-            <ImageIcon className="h-4 w-4" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-3" align="start">
-          <div className="flex gap-2">
-            <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Image URL..." className="h-8 text-sm" />
-            <Button type="button" size="sm" className="h-8" onClick={addImage}>Add</Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      {/* Table */}
-      <ToolbarButton onClick={insertTable} title="Insert Table">
-        <TableIcon className="h-4 w-4" />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Blockquote & Code & HR */}
-      <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Quote">
-        <Quote className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} title="Code Block">
-        <Code className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Rule">
-        <Minus className="h-4 w-4" />
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Fullscreen */}
-      <ToolbarButton onClick={() => setFullscreen(f => !f)} title="Fullscreen">
-        {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-      </ToolbarButton>
-
-      <Divider />
-
-      {/* Undo/Redo */}
-      <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo">
-        <Undo className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo">
-        <Redo className="h-4 w-4" />
-      </ToolbarButton>
-    </div>
-  );
+  const iconSize = "h-5 w-5";
+  const boldIconClass = `${iconSize} stroke-[2.5]`;
 
   return (
     <div className={cn(
-      'border border-border rounded-lg overflow-hidden bg-background',
-      fullscreen && 'fixed inset-4 z-50 flex flex-col shadow-2xl',
+      'border-2 border-dashed border-border rounded-lg overflow-hidden bg-background',
+      fullscreen && 'fixed inset-4 z-50 flex flex-col shadow-2xl border-solid',
       className,
     )}>
-      <Toolbar />
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-border bg-muted/20">
+        {/* Bold / Underline / Italic / Strikethrough */}
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold (Ctrl+B)">
+          <Bold className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline (Ctrl+U)">
+          <UnderlineIcon className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic (Ctrl+I)">
+          <Italic className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough">
+          <Strikethrough className={boldIconClass} />
+        </ToolbarBtn>
+
+        <Divider />
+
+        {/* Lists */}
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet List">
+          <List className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered List">
+          <ListOrdered className={boldIconClass} />
+        </ToolbarBtn>
+
+        {/* Alignment Dropdown */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="p-2 rounded-md hover:bg-muted transition-colors flex items-center gap-0.5" title="Text Alignment">
+              {editor.isActive({ textAlign: 'center' }) ? <AlignCenter className={boldIconClass} /> :
+               editor.isActive({ textAlign: 'right' }) ? <AlignRight className={boldIconClass} /> :
+               <AlignLeft className={boldIconClass} />}
+              <ChevronDown className="h-3 w-3 stroke-[2.5]" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-1.5 flex gap-1" align="start">
+            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} title="Left">
+              <AlignLeft className={boldIconClass} />
+            </ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('center').run()} active={editor.isActive({ textAlign: 'center' })} title="Center">
+              <AlignCenter className={boldIconClass} />
+            </ToolbarBtn>
+            <ToolbarBtn onClick={() => editor.chain().focus().setTextAlign('right').run()} active={editor.isActive({ textAlign: 'right' })} title="Right">
+              <AlignRight className={boldIconClass} />
+            </ToolbarBtn>
+          </PopoverContent>
+        </Popover>
+
+        <Divider />
+
+        {/* Highlight */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className={cn('p-2 rounded-md hover:bg-muted transition-colors flex items-center gap-0.5', editor.isActive('highlight') && 'bg-primary/10 text-primary')} title="Highlight">
+              <Highlighter className={boldIconClass} />
+              <ChevronDown className="h-3 w-3 stroke-[2.5]" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2" align="start">
+            <div className="grid grid-cols-3 gap-1.5">
+              {HIGHLIGHT_COLORS.map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => editor.chain().focus().toggleHighlight({ color }).run()}
+                  className="w-7 h-7 rounded border border-border hover:scale-110 transition-transform"
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+            <button type="button" onClick={() => editor.chain().focus().unsetHighlight().run()} className="mt-2 text-xs text-muted-foreground hover:text-foreground w-full text-left">
+              Remove highlight
+            </button>
+          </PopoverContent>
+        </Popover>
+
+        {/* Text Color */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="p-2 rounded-md hover:bg-muted transition-colors flex items-center gap-0.5" title="Text Color">
+              <span className="relative">
+                <Type className={boldIconClass} />
+                <span className="absolute -bottom-0.5 left-0 right-0 h-1 rounded" style={{ backgroundColor: editor.getAttributes('textStyle').color || '#000' }} />
+              </span>
+              <ChevronDown className="h-3 w-3 stroke-[2.5]" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2" align="start">
+            <div className="grid grid-cols-6 gap-1.5">
+              {COLORS.map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => editor.chain().focus().setColor(color).run()}
+                  className="w-7 h-7 rounded border border-border hover:scale-110 transition-transform"
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+            <button type="button" onClick={() => editor.chain().focus().unsetColor().run()} className="mt-2 text-xs text-muted-foreground hover:text-foreground">
+              Reset color
+            </button>
+          </PopoverContent>
+        </Popover>
+
+        {/* Table Dropdown */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="p-2 rounded-md hover:bg-muted transition-colors flex items-center gap-0.5" title="Table">
+              <TableIcon className={boldIconClass} />
+              <ChevronDown className="h-3 w-3 stroke-[2.5]" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2 space-y-1.5" align="start">
+            <Button type="button" variant="ghost" size="sm" className="w-full justify-start text-sm font-semibold" onClick={insertTable}>
+              Insert 3×3 Table
+            </Button>
+            {editor.isActive('table') && (
+              <>
+                <Button type="button" variant="ghost" size="sm" className="w-full justify-start text-sm" onClick={() => editor.chain().focus().addColumnAfter().run()}>Add Column</Button>
+                <Button type="button" variant="ghost" size="sm" className="w-full justify-start text-sm" onClick={() => editor.chain().focus().addRowAfter().run()}>Add Row</Button>
+                <Button type="button" variant="ghost" size="sm" className="w-full justify-start text-sm text-destructive" onClick={() => editor.chain().focus().deleteTable().run()}>Delete Table</Button>
+              </>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        <Divider />
+
+        {/* Link */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className={cn('p-2 rounded-md hover:bg-muted transition-colors', editor.isActive('link') && 'bg-primary/10 text-primary')} title="Insert Link">
+              <LinkIcon className={boldIconClass} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3" align="start">
+            <div className="flex gap-2">
+              <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://..." className="h-8 text-sm" />
+              <Button type="button" size="sm" className="h-8 font-semibold" onClick={addLink}>Add</Button>
+            </div>
+            {editor.isActive('link') && (
+              <button type="button" onClick={() => editor.chain().focus().unsetLink().run()} className="mt-2 text-xs text-destructive hover:underline">
+                Remove link
+              </button>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* Image */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="p-2 rounded-md hover:bg-muted transition-colors" title="Insert Image">
+              <ImageIcon className={boldIconClass} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3" align="start">
+            <div className="flex gap-2">
+              <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Image URL..." className="h-8 text-sm" />
+              <Button type="button" size="sm" className="h-8 font-semibold" onClick={addImage}>Add</Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Video Embed */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="p-2 rounded-md hover:bg-muted transition-colors" title="Embed Video">
+              <Video className={boldIconClass} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-3" align="start">
+            <p className="text-xs text-muted-foreground mb-2 font-medium">YouTube / Vimeo embed URL</p>
+            <div className="flex gap-2">
+              <Input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/embed/..." className="h-8 text-sm" />
+              <Button type="button" size="sm" className="h-8 font-semibold" onClick={addVideo}>Add</Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <Divider />
+
+        {/* Fullscreen */}
+        <ToolbarBtn onClick={() => setFullscreen(f => !f)} title="Fullscreen">
+          {fullscreen ? <Minimize2 className={boldIconClass} /> : <Maximize2 className={boldIconClass} />}
+        </ToolbarBtn>
+
+        {/* Undo / Redo */}
+        <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo">
+          <Undo className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo">
+          <Redo className={boldIconClass} />
+        </ToolbarBtn>
+      </div>
+
+      {/* Editor Area */}
       <div className={cn('overflow-y-auto', fullscreen ? 'flex-1' : 'max-h-[400px]')}>
         <EditorContent editor={editor} />
       </div>
