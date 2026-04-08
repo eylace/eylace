@@ -330,6 +330,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('otp', 'admin.otp.section', Smartphone, otpItems)}
         {canAccess('operations') && renderGroup('admin.group.operations', operationsItems)}
         {renderCollapsible('marketing', 'admin.marketing.section', Megaphone, marketingItems)}
+        {renderCollapsible('uploadFiles', 'Upload Files', UploadCloud, uploadItems)}
+        {renderCollapsible('support', 'Support', LifeBuoy, supportItems)}
+        {renderCollapsible('affiliateSystem', 'Affiliate System', Link2, affiliateItems)}
+        {renderCollapsible('clubPoint', 'Club Point System', Award, clubPointItems)}
+        {renderCollapsible('blogSystem', 'Blog System', BookOpen, blogItems)}
+        {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
         {canAccess('system') && renderGroup('admin.group.system', systemItems)}
         {renderCollapsible('websiteSetup', 'admin.websiteSetup', Monitor, websiteSetupItems)}
