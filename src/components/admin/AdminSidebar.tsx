@@ -132,6 +132,46 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.marketing.affiliate', url: '/admin/affiliate', icon: Link2 },
   ];
 
+  const uploadItems: NavItem[] = [
+    { titleKey: 'Upload Files', url: '/admin/upload-files', icon: UploadCloud },
+  ];
+
+  const supportItems: NavItem[] = [
+    { titleKey: 'Tickets', url: '/admin/support/tickets', icon: Ticket },
+    { titleKey: 'Product Conversations', url: '/admin/support/conversations', icon: MessageCircle },
+    { titleKey: 'Product Queries', url: '/admin/support/queries', icon: HelpCircle },
+    { titleKey: 'Contacts', url: '/admin/support/contacts', icon: Contact },
+  ];
+
+  const affiliateItems: NavItem[] = [
+    { titleKey: 'Registration Form', url: '/admin/affiliate/registration', icon: FileText },
+    { titleKey: 'Configurations', url: '/admin/affiliate/config', icon: Settings },
+    { titleKey: 'Affiliate Users', url: '/admin/affiliate/users', icon: Users },
+    { titleKey: 'Referral Users', url: '/admin/affiliate/referrals', icon: UsersRound },
+    { titleKey: 'Withdraw Requests', url: '/admin/affiliate/withdrawals', icon: Wallet },
+    { titleKey: 'Affiliate Logs', url: '/admin/affiliate/logs', icon: Activity },
+  ];
+
+  const clubPointItems: NavItem[] = [
+    { titleKey: 'Club Point Config', url: '/admin/club-point/config', icon: Settings },
+    { titleKey: 'Set Product Point', url: '/admin/club-point/products', icon: Award },
+    { titleKey: 'User Points', url: '/admin/club-point/users', icon: Users },
+  ];
+
+  const blogItems: NavItem[] = [
+    { titleKey: 'Add New Post', url: '/admin/blog/add', icon: PenSquare },
+    { titleKey: 'All Posts', url: '/admin/blog/posts', icon: FolderOpen },
+    { titleKey: 'Categories', url: '/admin/blog/categories', icon: BookOpen },
+  ];
+
+  const refundItems: NavItem[] = [
+    { titleKey: 'Refund Requests', url: '/admin/refunds/requests', icon: Receipt },
+    { titleKey: 'Approved Refunds', url: '/admin/refunds/approved', icon: FileCheck },
+    { titleKey: 'Rejected Refunds', url: '/admin/refunds/rejected', icon: Undo2 },
+    { titleKey: 'Refund Configuration', url: '/admin/refunds/config', icon: FolderCog },
+    { titleKey: 'Category Based Refund', url: '/admin/refunds/category', icon: Layers },
+  ];
+
   const contentItems = [
     { titleKey: 'admin.reports' as TranslationKey, url: '/admin/reports', icon: BarChart3 },
     { titleKey: 'admin.trackingAnalytics' as TranslationKey, url: '/admin/tracking', icon: Activity },
