@@ -8,6 +8,8 @@ import {
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
   Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
   Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw, Link2,
+  UploadCloud, LifeBuoy, Ticket, MessageCircle, Contact, Award, PenSquare, FolderOpen, BookOpen,
+  Receipt, Undo2, FileCheck, FolderCog,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
