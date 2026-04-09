@@ -82,6 +82,9 @@ interface WebsiteSetupState {
   ctaWhatsappNumber: string;
   ctaCallEnabled: boolean;
   ctaWhatsappEnabled: boolean;
+  prepaymentOfferEnabled: boolean;
+  prepaymentOfferText: string;
+  prepaymentOfferPercent: number;
 }
 
 const defaultSetup: WebsiteSetupState = {
