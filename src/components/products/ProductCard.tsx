@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCompare } from '@/contexts/CompareContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
+import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { toast } from 'sonner';
 
 interface ProductCardProps {
@@ -50,8 +51,8 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, 1);
-    navigate('/checkout');
+    setBuyNowCheckoutItem({ product, quantity: 1 });
+    navigate('/checkout?source=buy-now');
   };
 
   if (variant === 'horizontal') {

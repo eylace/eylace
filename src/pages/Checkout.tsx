@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { CheckCircle2 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -14,6 +14,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 import { supabase } from '@/integrations/supabase/client';
+import { CartItem } from '@/types';
+import { clearBuyNowCheckout, getBuyNowCheckoutItems, setBuyNowCheckoutItems } from '@/lib/checkoutSession';
 import { toast } from 'sonner';
 
 interface CheckoutFormData {
@@ -39,7 +41,8 @@ interface CheckoutFormData {
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, clearCart, getSubtotal, getShipping, getTax, getTotal } = useCart();
+  const location = useLocation();
+  const { items: cartItems, clearCart, updateQuantity, removeItem } = useCart();
   const { user } = useAuth();
   const { t } = useLanguage();
   const websiteSetup = useWebsiteSetup();
@@ -50,6 +53,7 @@ const Checkout = () => {
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(15);
+  const [buyNowItems, setBuyNowItems] = useState<CartItem[]>(() => getBuyNowCheckoutItems());
 
   // Session-based incomplete order tracking
   const sessionIdRef = useRef<string>(crypto.randomUUID());
@@ -67,6 +71,84 @@ const Checkout = () => {
   const variantId = websiteSetup.selectedCheckout || 'classic';
   const paymentMethod = form.watch('paymentMethod');
   const watchedShippingCharge = form.watch('shippingCharge');
+  const checkoutSource = useMemo(() => new URLSearchParams(location.search).get('source') ?? 'cart', [location.search]);
+  const isBuyNowMode = checkoutSource === 'buy-now';
+  const checkoutItems = isBuyNowMode ? buyNowItems : cartItems;
+
+  useEffect(() => {
+    if (isBuyNowMode) {
+      setBuyNowItems(getBuyNowCheckoutItems());
+      return;
+    }
+
+    clearBuyNowCheckout();
+    setBuyNowItems([]);
+  }, [isBuyNowMode]);
+
+  const getVariationKey = useCallback((selectedVariations?: Record<string, string>) => {
+    if (!selectedVariations) return '';
+
+    return Object.entries(selectedVariations)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}:${value}`)
+      .join('|');
+  }, []);
+
+  const persistBuyNowItems = useCallback((nextItems: CartItem[]) => {
+    setBuyNowItems(nextItems);
+
+    if (nextItems.length > 0) {
+      setBuyNowCheckoutItems(nextItems);
+      return;
+    }
+
+    clearBuyNowCheckout();
+  }, []);
+
+  const handleCheckoutQuantityChange = useCallback((productId: string, quantity: number, selectedVariations?: Record<string, string>) => {
+    if (!isBuyNowMode) {
+      updateQuantity(productId, quantity, selectedVariations);
+      return;
+    }
+
+    if (quantity <= 0) {
+      const variationKey = getVariationKey(selectedVariations);
+      const nextItems = buyNowItems.filter((item) => !(item.product.id === productId && getVariationKey(item.selectedVariations) === variationKey));
+      persistBuyNowItems(nextItems);
+      return;
+    }
+
+    const variationKey = getVariationKey(selectedVariations);
+    const nextItems = buyNowItems.map((item) => (
+      item.product.id === productId && getVariationKey(item.selectedVariations) === variationKey
+        ? { ...item, quantity }
+        : item
+    ));
+
+    persistBuyNowItems(nextItems);
+  }, [isBuyNowMode, updateQuantity, buyNowItems, getVariationKey, persistBuyNowItems]);
+
+  const handleCheckoutItemRemove = useCallback((productId: string, selectedVariations?: Record<string, string>) => {
+    if (!isBuyNowMode) {
+      removeItem(productId, selectedVariations);
+      return;
+    }
+
+    const variationKey = getVariationKey(selectedVariations);
+    const nextItems = buyNowItems.filter((item) => !(item.product.id === productId && getVariationKey(item.selectedVariations) === variationKey));
+    persistBuyNowItems(nextItems);
+  }, [isBuyNowMode, removeItem, buyNowItems, getVariationKey, persistBuyNowItems]);
+
+  const itemCount = useMemo(() => checkoutItems.reduce((total, item) => total + item.quantity, 0), [checkoutItems]);
+  const subtotal = useMemo(() => checkoutItems.reduce((total, item) => total + item.product.price * item.quantity, 0), [checkoutItems]);
+  const defaultShipping = useMemo(() => {
+    if (subtotal >= 50 || checkoutItems.some((item) => item.product.isFreeShipping)) {
+      return 0;
+    }
+
+    return 5.99;
+  }, [subtotal, checkoutItems]);
+  const taxAmount = useMemo(() => subtotal * 0.08, [subtotal]);
 
   const getCheckoutPricing = (selectedPaymentMethod: string, couponDiscount: number, shippingChargeOverride?: number) => {
     const normalizedPaymentMethod = (selectedPaymentMethod || '').toLowerCase();
@@ -74,9 +156,8 @@ const Checkout = () => {
     const expressShippingCharge = Number(shippingChargeOverride ?? watchedShippingCharge);
     const shipping = variantId === 'express' && Number.isFinite(expressShippingCharge)
       ? expressShippingCharge
-      : getShipping();
-    const subtotal = getSubtotal();
-    const tax = variantId === 'express' ? 0 : getTax();
+      : defaultShipping;
+    const tax = variantId === 'express' ? 0 : taxAmount;
     const codFee = isCashOnDelivery ? 0.5 : 0;
     const baseTotal = Math.max(0, subtotal + shipping + tax + codFee - couponDiscount);
     const onlinePaymentDiscount = !isCashOnDelivery && websiteSetup.prepaymentOfferEnabled
@@ -94,7 +175,8 @@ const Checkout = () => {
     };
   };
 
-  const { codFee, onlinePaymentDiscount } = getCheckoutPricing(paymentMethod, promoDiscount);
+  const pricing = getCheckoutPricing(paymentMethod, promoDiscount, watchedShippingCharge);
+  const { codFee, onlinePaymentDiscount } = pricing;
   const customization = useMemo(() => {
     const defaults = {
       headingText: 'Checkout', buttonText: 'Place Order', processingText: 'Processing...',
@@ -110,7 +192,7 @@ const Checkout = () => {
 
   // Build enriched cart items with product_id, image, variation
   const buildEnrichedCartItems = useCallback(() => {
-    return items.map(i => ({
+    return checkoutItems.map(i => ({
       product_id: i.product.id,
       name: i.product.name,
       qty: i.quantity,
@@ -118,11 +200,17 @@ const Checkout = () => {
       image: i.product.images?.[0] || null,
       variation: i.selectedVariations || null,
     }));
-  }, [items]);
+  }, [checkoutItems]);
 
   // Save or update incomplete order
   const saveIncompleteOrder = useCallback(async (data: Partial<CheckoutFormData>) => {
     if (!data.firstName && !data.phone && !data.email) return;
+
+    const currentPricing = getCheckoutPricing(
+      data.paymentMethod || form.getValues('paymentMethod') || paymentMethod,
+      promoDiscount,
+      data.shippingCharge ?? form.getValues('shippingCharge')
+    );
 
     const payload = {
       session_id: sessionIdRef.current,
@@ -137,7 +225,7 @@ const Checkout = () => {
       zip_code: data.zipCode || null,
       country: data.country || null,
       cart_items: buildEnrichedCartItems(),
-      cart_total: getTotal(),
+      cart_total: currentPricing.total,
       status: 'abandoned',
     };
 
@@ -162,7 +250,7 @@ const Checkout = () => {
     } catch (err) {
       console.error('Failed to save incomplete order:', err);
     }
-  }, [user, buildEnrichedCartItems, getTotal]);
+  }, [user, buildEnrichedCartItems, form, paymentMethod, promoDiscount]);
 
   // Debounced form watcher — saves incomplete order 3s after last change
   useEffect(() => {
@@ -185,6 +273,7 @@ const Checkout = () => {
     const handleBeforeUnload = () => {
       const data = form.getValues();
       if (data.firstName || data.phone || data.email) {
+        const currentPricing = getCheckoutPricing(data.paymentMethod, promoDiscount, data.shippingCharge);
         const payload = {
           session_id: sessionIdRef.current,
           user_id: user?.id || null,
@@ -198,7 +287,7 @@ const Checkout = () => {
           zip_code: data.zipCode || null,
           country: data.country || null,
           cart_items: buildEnrichedCartItems(),
-          cart_total: getTotal(),
+          cart_total: currentPricing.total,
           status: 'abandoned',
         };
 
@@ -232,7 +321,7 @@ const Checkout = () => {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [form, user, buildEnrichedCartItems, getTotal]);
+  }, [form, user, buildEnrichedCartItems, promoDiscount]);
 
   // Cleanup incomplete order after successful purchase
   const cleanupIncompleteOrder = useCallback(async () => {
@@ -272,13 +361,13 @@ const Checkout = () => {
     try {
       // Pre-checkout stock validation
       if (user) {
-        const productIds = items.map(i => i.product.id);
+        const productIds = checkoutItems.map(i => i.product.id);
         const { data: stockData } = await supabase
           .from('products')
           .select('id, name, stock')
           .in('id', productIds);
         if (stockData) {
-          for (const item of items) {
+          for (const item of checkoutItems) {
             const dbItem = stockData.find(p => p.id === item.product.id);
             if (dbItem && (dbItem.stock ?? 0) < item.quantity) {
               toast.error(`"${dbItem.name}" has only ${dbItem.stock ?? 0} items in stock`);
@@ -320,7 +409,7 @@ const Checkout = () => {
 
         createdOrderId = orderData.id;
 
-        const orderItems = items.map(item => ({
+        const orderItems = checkoutItems.map(item => ({
           order_id: orderData.id, product_id: item.product.id, product_name: item.product.name,
           product_image: item.product.images[0] || null, price: item.product.price,
           quantity: item.quantity, variations: item.selectedVariations || null,
@@ -347,7 +436,12 @@ const Checkout = () => {
 
       await new Promise(resolve => setTimeout(resolve, 1000));
       setOrderId(orderNumber);
-      clearCart();
+      if (isBuyNowMode) {
+        clearBuyNowCheckout();
+        setBuyNowItems([]);
+      } else {
+        clearCart();
+      }
       setOrderComplete(true);
       toast.success(t('checkout.orderSuccess'), { description: `Order ID: ${orderNumber}` });
 
@@ -381,7 +475,7 @@ const Checkout = () => {
     }
   };
 
-  if (items.length === 0 && !orderComplete) {
+  if (checkoutItems.length === 0 && !orderComplete) {
     return (
       <Layout>
         <div className="container-main py-12">
@@ -443,7 +537,7 @@ const Checkout = () => {
 
 
   const layoutProps = {
-    form, onSubmit, isProcessing, codFee, promoDiscount, onlinePaymentDiscount, appliedCode,
+    form, onSubmit, isProcessing, items: checkoutItems, itemCount, subtotal: pricing.subtotal, shipping: pricing.shipping, tax: pricing.tax, total: pricing.total, isBuyNowMode, onUpdateQuantity: handleCheckoutQuantityChange, onRemoveItem: handleCheckoutItemRemove, codFee, promoDiscount, onlinePaymentDiscount, appliedCode,
     customization,
     ...promoProps,
   };

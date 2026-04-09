@@ -3,29 +3,40 @@ import { ChevronDown, ChevronUp, Edit2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useCart } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { CartItem } from '@/types';
 
 interface OrderSummaryProps {
+  items: CartItem[];
+  itemCount: number;
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
   promoDiscount?: number;
   codFee?: number;
   onlinePaymentDiscount?: number;
+  showEditCart?: boolean;
 }
 
-export const OrderSummary = ({ promoDiscount = 0, codFee = 0, onlinePaymentDiscount = 0 }: OrderSummaryProps) => {
-  const { items, getSubtotal, getShipping, getTax, getTotal, getItemCount } = useCart();
+export const OrderSummary = ({
+  items,
+  itemCount,
+  subtotal,
+  shipping,
+  tax,
+  total,
+  promoDiscount = 0,
+  codFee = 0,
+  onlinePaymentDiscount = 0,
+  showEditCart = true,
+}: OrderSummaryProps) => {
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(true);
-
-  const subtotal = getSubtotal();
-  const shipping = getShipping();
-  const tax = getTax();
-  const total = Math.max(0, getTotal() - promoDiscount - onlinePaymentDiscount + codFee);
-  const itemCount = getItemCount();
 
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden lg:sticky lg:top-24">
@@ -52,10 +63,14 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0, onlinePaymentDisco
             </div>
           ))}
         </div>
-        <div className="p-4 border-t border-border">
-          <Button variant="ghost" size="sm" className="w-full text-accent" asChild><Link to="/cart"><Edit2 className="h-4 w-4 mr-2" />{t('orderSummary.editCart')}</Link></Button>
-        </div>
-        <Separator />
+        {showEditCart && (
+          <>
+            <div className="p-4 border-t border-border">
+              <Button variant="ghost" size="sm" className="w-full text-accent" asChild><Link to="/cart"><Edit2 className="h-4 w-4 mr-2" />{t('orderSummary.editCart')}</Link></Button>
+            </div>
+            <Separator />
+          </>
+        )}
         <div className="p-4 space-y-3">
           <div className="flex justify-between text-sm"><span className="text-muted-foreground">{t('orderSummary.subtotal')}</span><span className="text-foreground">{formatPrice(subtotal)}</span></div>
           <div className="flex justify-between text-sm"><span className="text-muted-foreground">{t('orderSummary.shipping')}</span>{shipping === 0 ? <span className="text-success font-medium">{t('orderSummary.free')}</span> : <span className="text-foreground">{formatPrice(shipping)}</span>}</div>
