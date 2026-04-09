@@ -926,6 +926,32 @@ const AdminWebsiteSetupPage = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Prepayment Offer Settings */}
+            <Card className="mt-6">
+              <CardHeader><CardTitle className="text-base">🏷️ Online Payment Offer (অনলাইন পেমেন্ট অফার)</CardTitle></CardHeader>
+              <CardContent className="space-y-5">
+                <p className="text-sm text-muted-foreground">
+                  অনলাইন পেমেন্ট করলে ছাড়ের অফার দেখাবে চেকআউট পেজে। এখান থেকে on/off, টেক্সট ও ডিসকাউন্ট পার্সেন্ট সেট করুন।
+                </p>
+                <div className="flex items-center justify-between p-4 border border-border rounded-xl">
+                  <Label className="font-semibold">Enable Offer Banner</Label>
+                  <Switch checked={setup.prepaymentOfferEnabled} onCheckedChange={v => update('prepaymentOfferEnabled', v)} />
+                </div>
+                {setup.prepaymentOfferEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-sm">Offer Text (বাংলায়/ইংরেজিতে)</Label>
+                      <Input value={setup.prepaymentOfferText} onChange={e => update('prepaymentOfferText', e.target.value)} placeholder="পেমেন্ট করে অর্ডার করলেই 10% ছাড়!" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm">Discount Percent (%)</Label>
+                      <Input type="number" min={0} max={100} value={setup.prepaymentOfferPercent} onChange={e => update('prepaymentOfferPercent', Number(e.target.value))} />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
