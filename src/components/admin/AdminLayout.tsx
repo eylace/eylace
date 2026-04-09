@@ -131,9 +131,9 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
               <button
                 onClick={handleClearCache}
                 title="Clear Cache"
-                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-accent hover:text-accent hover:bg-accent/10 transition-colors"
               >
-                <Trash2 className="h-4 w-4" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M13 3l-1.5 9h5L11 21l1.5-9h-5L13 3z"/><path d="M3 21h18"/><path d="M7 21v-4l3-2"/><path d="M17 21v-4l-3-2"/></svg>
               </button>
               <ThemeToggle />
               <AdminNotificationBell />
