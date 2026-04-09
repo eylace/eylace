@@ -61,7 +61,7 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
           icon: ICON_MAP[g.gateway_key] || Globe,
           needsCard: g.gateway_key === 'stripe' || g.gateway_key === 'authorizenet',
           needsRedirect: ['bkash', 'nagad', 'rocket', 'upay', 'paypal', 'sslcommerz', 'razorpay', 'paystack', 'aamarpay'].includes(g.gateway_key),
-          isCOD: g.gateway_key === 'cash',
+          isCOD: ['cash', 'cod'].includes(g.gateway_key),
         }));
         setGateways(options);
         setSelectedMethod(options[0]?.id || '');
@@ -91,6 +91,7 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
       nagad: 'Nagad ডিজিটাল পেমেন্ট',
       rocket: 'DBBL Rocket',
       cash: 'ডেলিভারির সময় পেমেন্ট করুন',
+      cod: 'ডেলিভারির সময় পেমেন্ট করুন',
       sslcommerz: 'SSLCommerz Payment',
       razorpay: 'Razorpay Payment',
       upay: 'Upay মোবাইল ব্যাংকিং',

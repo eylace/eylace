@@ -769,6 +769,7 @@ export const translations = {
   'orderSummary.free': { en: 'FREE', bn: 'ফ্রি' },
   'orderSummary.tax': { en: 'Tax', bn: 'ট্যাক্স' },
   'orderSummary.promoDiscount': { en: 'Promo Discount', bn: 'প্রোমো ডিসকাউন্ট' },
+  'orderSummary.onlinePaymentDiscount': { en: 'Online Payment Discount', bn: 'অনলাইন পেমেন্ট ছাড়' },
   'orderSummary.codFee': { en: 'COD Fee', bn: 'COD ফি' },
   'orderSummary.total': { en: 'Total', bn: 'মোট' },
   'orderSummary.item': { en: 'item', bn: 'আইটেম' },
