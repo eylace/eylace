@@ -75,7 +75,7 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
       await Promise.all(names.map((name) => caches.delete(name)));
     }
 
-    toast.success('Only unnecessary cache cleared. You stay logged in.', { duration: 2000 });
+    toast.success('Cache cleared successfully', { duration: 2500, position: 'bottom-right' });
   };
 
   if (authLoading || adminLoading) {

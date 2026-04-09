@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { CreditCard, Wallet, Banknote, Building2, Smartphone, Globe, ShieldCheck } from 'lucide-react';
+import { CreditCard, Wallet, Banknote, Building2, Smartphone, Globe, ShieldCheck, Tag } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
 interface PaymentMethodsProps {
   form: UseFormReturn<any>;
@@ -42,6 +43,7 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
   const [loading, setLoading] = useState(true);
   const { register, formState: { errors }, setValue } = form;
   const { t } = useLanguage();
+  const setup = useWebsiteSetup();
 
   useEffect(() => {
     const fetchGateways = async () => {
@@ -65,17 +67,16 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
         setSelectedMethod(options[0]?.id || '');
         setValue('paymentMethod', options[0]?.id || '');
       } else {
-        // Fallback defaults
         const fallback: GatewayOption[] = [
-          { id: 'card', name: t('payment.creditDebit'), description: t('payment.creditDebitDesc'), icon: CreditCard, needsCard: true, needsRedirect: false, isCOD: false },
-          { id: 'bkash', name: 'bKash', description: t('payment.mobileBanking'), icon: Smartphone, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'nagad', name: 'Nagad', description: t('payment.digitalPayment'), icon: Smartphone, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'rocket', name: 'Rocket', description: t('payment.dblMobile'), icon: Building2, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'cod', name: t('payment.cod'), description: t('payment.codDesc'), icon: Banknote, needsCard: false, needsRedirect: false, isCOD: true },
+          { id: 'cod', name: 'Cash on Delivery (COD)', description: 'ডেলিভারির সময় পেমেন্ট করুন', icon: Banknote, needsCard: false, needsRedirect: false, isCOD: true },
+          { id: 'bkash', name: 'bKash', description: 'bKash মোবাইল ব্যাংকিং', icon: Smartphone, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'nagad', name: 'Nagad', description: 'Nagad ডিজিটাল পেমেন্ট', icon: Smartphone, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'rocket', name: 'Rocket', description: 'DBBL Rocket', icon: Building2, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'card', name: 'Credit/Debit Card', description: t('payment.creditDebitDesc'), icon: CreditCard, needsCard: true, needsRedirect: false, isCOD: false },
         ];
         setGateways(fallback);
-        setSelectedMethod('card');
-        setValue('paymentMethod', 'card');
+        setSelectedMethod('cod');
+        setValue('paymentMethod', 'cod');
       }
       setLoading(false);
     };
@@ -86,13 +87,13 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
     const map: Record<string, string> = {
       stripe: 'Credit/Debit Card',
       paypal: 'PayPal Payment',
-      bkash: 'bKash Mobile Banking',
-      nagad: 'Nagad Digital Payment',
-      rocket: 'Rocket DBBL Mobile',
-      cash: 'Pay on Delivery',
+      bkash: 'bKash মোবাইল ব্যাংকিং',
+      nagad: 'Nagad ডিজিটাল পেমেন্ট',
+      rocket: 'DBBL Rocket',
+      cash: 'ডেলিভারির সময় পেমেন্ট করুন',
       sslcommerz: 'SSLCommerz Payment',
       razorpay: 'Razorpay Payment',
-      upay: 'Upay Mobile Banking',
+      upay: 'Upay মোবাইল ব্যাংকিং',
       aamarpay: 'AamarPay Payment',
     };
     return map[key] || 'Online Payment';
@@ -100,38 +101,82 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
 
   if (loading) return <div className="animate-pulse h-40 bg-muted rounded-lg" />;
 
-  return (
-    <div className="space-y-6">
-      <h2 className="text-lg font-bold text-foreground">{t('payment.title')}</h2>
-      <RadioGroup value={selectedMethod} onValueChange={(value) => { setSelectedMethod(value); setValue('paymentMethod', value); }} className="space-y-3">
-        {gateways.map((method) => (
-          <div key={method.id}>
-            <label htmlFor={method.id} className={cn("flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all", selectedMethod === method.id ? "border-accent bg-accent/5" : "border-border hover:border-accent/50")}>
-              <RadioGroupItem value={method.id} id={method.id} />
-              <method.icon className="h-6 w-6 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="font-medium text-foreground">{method.name}</p>
-                <p className="text-sm text-muted-foreground">{method.description}</p>
-              </div>
-            </label>
-            {selectedMethod === method.id && method.needsCard && (
-              <div className="mt-4 ml-12 space-y-4 p-4 bg-secondary/50 rounded-lg">
-                <div className="space-y-2"><Label htmlFor="cardNumber">{t('payment.cardNumber')} *</Label><Input id="cardNumber" placeholder="1234 5678 9012 3456" {...register('cardNumber', { required: selectedMethod === method.id })} className={errors.cardNumber ? 'border-destructive' : ''} /></div>
-                <div className="space-y-2"><Label htmlFor="cardName">{t('payment.nameOnCard')} *</Label><Input id="cardName" {...register('cardName', { required: selectedMethod === method.id })} className={errors.cardName ? 'border-destructive' : ''} /></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label htmlFor="cardExpiry">{t('payment.expiryDate')} *</Label><Input id="cardExpiry" placeholder="MM/YY" {...register('cardExpiry', { required: selectedMethod === method.id })} className={errors.cardExpiry ? 'border-destructive' : ''} /></div>
-                  <div className="space-y-2"><Label htmlFor="cardCvv">{t('payment.cvv')} *</Label><Input id="cardCvv" type="password" placeholder="123" maxLength={4} {...register('cardCvv', { required: selectedMethod === method.id })} className={errors.cardCvv ? 'border-destructive' : ''} /></div>
-                </div>
-              </div>
-            )}
-            {selectedMethod === method.id && method.needsRedirect && (
-              <div className="mt-4 ml-12 p-4 bg-secondary/50 rounded-lg"><p className="text-sm text-muted-foreground">{t('payment.redirectMsg')}</p></div>
-            )}
-            {selectedMethod === method.id && method.isCOD && (
-              <div className="mt-4 ml-12 p-4 bg-warning/10 border border-warning/30 rounded-lg"><p className="text-sm text-foreground">{t('payment.codNote')}</p></div>
-            )}
+  const codGateways = gateways.filter(g => g.isCOD);
+  const onlineGateways = gateways.filter(g => !g.isCOD);
+
+  const handleSelect = (value: string) => {
+    setSelectedMethod(value);
+    setValue('paymentMethod', value);
+  };
+
+  const renderGateway = (method: GatewayOption) => (
+    <div key={method.id}>
+      <label htmlFor={method.id} className={cn(
+        "flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all",
+        selectedMethod === method.id ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
+      )}>
+        <RadioGroupItem value={method.id} id={method.id} />
+        <method.icon className="h-5 w-5 text-muted-foreground shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm text-foreground">{method.name}</p>
+          <p className="text-xs text-muted-foreground truncate">{method.description}</p>
+        </div>
+      </label>
+      {selectedMethod === method.id && method.needsCard && (
+        <div className="mt-3 ml-10 space-y-3 p-3 bg-secondary/50 rounded-lg">
+          <div className="space-y-1"><Label htmlFor="cardNumber" className="text-xs">{t('payment.cardNumber')} *</Label><Input id="cardNumber" placeholder="1234 5678 9012 3456" {...register('cardNumber', { required: selectedMethod === method.id })} className={cn("h-8 text-sm", errors.cardNumber && 'border-destructive')} /></div>
+          <div className="space-y-1"><Label htmlFor="cardName" className="text-xs">{t('payment.nameOnCard')} *</Label><Input id="cardName" {...register('cardName', { required: selectedMethod === method.id })} className={cn("h-8 text-sm", errors.cardName && 'border-destructive')} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1"><Label htmlFor="cardExpiry" className="text-xs">{t('payment.expiryDate')} *</Label><Input id="cardExpiry" placeholder="MM/YY" {...register('cardExpiry', { required: selectedMethod === method.id })} className={cn("h-8 text-sm", errors.cardExpiry && 'border-destructive')} /></div>
+            <div className="space-y-1"><Label htmlFor="cardCvv" className="text-xs">{t('payment.cvv')} *</Label><Input id="cardCvv" type="password" placeholder="123" maxLength={4} {...register('cardCvv', { required: selectedMethod === method.id })} className={cn("h-8 text-sm", errors.cardCvv && 'border-destructive')} /></div>
           </div>
-        ))}
+        </div>
+      )}
+      {selectedMethod === method.id && method.needsRedirect && (
+        <div className="mt-3 ml-10 p-3 bg-secondary/50 rounded-lg"><p className="text-xs text-muted-foreground">{t('payment.redirectMsg')}</p></div>
+      )}
+      {selectedMethod === method.id && method.isCOD && (
+        <div className="mt-3 ml-10 p-3 bg-warning/10 border border-warning/30 rounded-lg"><p className="text-xs text-foreground">{t('payment.codNote')}</p></div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-bold text-foreground">{t('payment.title')}</h2>
+
+      <RadioGroup value={selectedMethod} onValueChange={handleSelect} className="space-y-2">
+        {/* COD Section */}
+        {codGateways.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Banknote className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cash on Delivery</span>
+            </div>
+            {codGateways.map(renderGateway)}
+          </div>
+        )}
+
+        {/* Offer Banner */}
+        {setup.prepaymentOfferEnabled && onlineGateways.length > 0 && (
+          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+            <Tag className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+            <p className="text-xs font-semibold text-green-700 dark:text-green-300">
+              {setup.prepaymentOfferText || `পেমেন্ট করে অর্ডার করলেই ${setup.prepaymentOfferPercent}% ছাড়!`}
+            </p>
+          </div>
+        )}
+
+        {/* Online Payment Section */}
+        {onlineGateways.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Online Payment</span>
+            </div>
+            {onlineGateways.map(renderGateway)}
+          </div>
+        )}
       </RadioGroup>
     </div>
   );
