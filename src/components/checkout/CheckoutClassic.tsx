@@ -14,13 +14,14 @@ interface Props {
   isProcessing: boolean;
   codFee: number;
   promoDiscount: number;
+  onlinePaymentDiscount: number;
   appliedCode: string | null;
   onApplyPromo: (d: number, c: string, cid: string) => void;
   onRemovePromo: () => void;
   customization?: any;
 }
 
-export const CheckoutClassic = ({ form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
+export const CheckoutClassic = ({ form, onSubmit, isProcessing, codFee, promoDiscount, onlinePaymentDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
   const { t } = useLanguage();
   const c = customization;
   const btnStyle = (c.buttonBgColor || c.buttonTextColor) ? { backgroundColor: c.buttonBgColor || undefined, color: c.buttonTextColor || undefined } : undefined;
@@ -62,7 +63,7 @@ export const CheckoutClassic = ({ form, onSubmit, isProcessing, codFee, promoDis
             </div>
           </div>
           <div className="space-y-4">
-            <OrderSummary codFee={codFee} promoDiscount={promoDiscount} />
+            <OrderSummary codFee={codFee} promoDiscount={promoDiscount} onlinePaymentDiscount={onlinePaymentDiscount} />
             {c.showPromoCode !== false && (
               <div className="bg-card border border-border rounded-lg p-4" style={{ borderRadius: c.cardBorderRadius ? `${c.cardBorderRadius}px` : undefined }}>
                 <PromoCodeInput onApply={onApplyPromo} onRemove={onRemovePromo} appliedCode={appliedCode} discount={promoDiscount} />

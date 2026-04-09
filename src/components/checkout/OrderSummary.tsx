@@ -12,9 +12,10 @@ import { cn } from '@/lib/utils';
 interface OrderSummaryProps {
   promoDiscount?: number;
   codFee?: number;
+  onlinePaymentDiscount?: number;
 }
 
-export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProps) => {
+export const OrderSummary = ({ promoDiscount = 0, codFee = 0, onlinePaymentDiscount = 0 }: OrderSummaryProps) => {
   const { items, getSubtotal, getShipping, getTax, getTotal, getItemCount } = useCart();
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
@@ -23,7 +24,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
   const subtotal = getSubtotal();
   const shipping = getShipping();
   const tax = getTax();
-  const total = getTotal() - promoDiscount + codFee;
+  const total = Math.max(0, getTotal() - promoDiscount - onlinePaymentDiscount + codFee);
   const itemCount = getItemCount();
 
   return (
@@ -60,6 +61,7 @@ export const OrderSummary = ({ promoDiscount = 0, codFee = 0 }: OrderSummaryProp
           <div className="flex justify-between text-sm"><span className="text-muted-foreground">{t('orderSummary.shipping')}</span>{shipping === 0 ? <span className="text-success font-medium">{t('orderSummary.free')}</span> : <span className="text-foreground">{formatPrice(shipping)}</span>}</div>
           <div className="flex justify-between text-sm"><span className="text-muted-foreground">{t('orderSummary.tax')}</span><span className="text-foreground">{formatPrice(tax)}</span></div>
           {promoDiscount > 0 && (<div className="flex justify-between text-sm text-success"><span>{t('orderSummary.promoDiscount')}</span><span>-{formatPrice(promoDiscount)}</span></div>)}
+          {onlinePaymentDiscount > 0 && (<div className="flex justify-between text-sm text-success"><span>{t('orderSummary.onlinePaymentDiscount')}</span><span>-{formatPrice(onlinePaymentDiscount)}</span></div>)}
           {codFee > 0 && (<div className="flex justify-between text-sm text-warning"><span>{t('orderSummary.codFee')}</span><span>+{formatPrice(codFee)}</span></div>)}
           <Separator />
           <div className="flex justify-between"><span className="text-lg font-bold text-foreground">{t('orderSummary.total')}</span><span className="text-xl font-bold text-foreground">{formatPrice(total)}</span></div>

@@ -16,13 +16,14 @@ interface Props {
   isProcessing: boolean;
   codFee: number;
   promoDiscount: number;
+  onlinePaymentDiscount: number;
   appliedCode: string | null;
   onApplyPromo: (d: number, c: string, cid: string) => void;
   onRemovePromo: () => void;
   customization?: any;
 }
 
-export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
+export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDiscount, onlinePaymentDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
   const { t } = useLanguage();
   const cfg = customization;
   const btnStyle = (cfg.buttonBgColor || cfg.buttonTextColor) ? { backgroundColor: cfg.buttonBgColor || undefined, color: cfg.buttonTextColor || undefined } : undefined;
@@ -91,7 +92,7 @@ export const CheckoutMinimal = ({ form, onSubmit, isProcessing, codFee, promoDis
           </Collapsible>
 
           <div className="mt-6">
-            <OrderSummary codFee={codFee} promoDiscount={promoDiscount} />
+            <OrderSummary codFee={codFee} promoDiscount={promoDiscount} onlinePaymentDiscount={onlinePaymentDiscount} />
           </div>
 
           {cfg.showPromoCode !== false && (

@@ -29,6 +29,8 @@ interface CheckoutFormData {
   country: string;
   saveAddress: boolean;
   paymentMethod: string;
+  deliveryZone?: string;
+  shippingCharge?: number;
   cardNumber?: string;
   cardName?: string;
   cardExpiry?: string;
@@ -62,10 +64,37 @@ const Checkout = () => {
     },
   });
 
-  const paymentMethod = form.watch('paymentMethod');
-  const codFee = paymentMethod === 'cod' ? 0.50 : 0;
-
   const variantId = websiteSetup.selectedCheckout || 'classic';
+  const paymentMethod = form.watch('paymentMethod');
+  const watchedShippingCharge = form.watch('shippingCharge');
+
+  const getCheckoutPricing = (selectedPaymentMethod: string, couponDiscount: number, shippingChargeOverride?: number) => {
+    const normalizedPaymentMethod = (selectedPaymentMethod || '').toLowerCase();
+    const isCashOnDelivery = normalizedPaymentMethod === 'cod' || normalizedPaymentMethod === 'cash';
+    const expressShippingCharge = Number(shippingChargeOverride ?? watchedShippingCharge);
+    const shipping = variantId === 'express' && Number.isFinite(expressShippingCharge)
+      ? expressShippingCharge
+      : getShipping();
+    const subtotal = getSubtotal();
+    const tax = variantId === 'express' ? 0 : getTax();
+    const codFee = isCashOnDelivery ? 0.5 : 0;
+    const baseTotal = Math.max(0, subtotal + shipping + tax + codFee - couponDiscount);
+    const onlinePaymentDiscount = !isCashOnDelivery && websiteSetup.prepaymentOfferEnabled
+      ? Number(((baseTotal * (Number(websiteSetup.prepaymentOfferPercent) || 0)) / 100).toFixed(2))
+      : 0;
+
+    return {
+      subtotal,
+      shipping,
+      tax,
+      codFee,
+      onlinePaymentDiscount,
+      totalDiscount: couponDiscount + onlinePaymentDiscount,
+      total: Math.max(0, Number((baseTotal - onlinePaymentDiscount).toFixed(2))),
+    };
+  };
+
+  const { codFee, onlinePaymentDiscount } = getCheckoutPricing(paymentMethod, promoDiscount);
   const customization = useMemo(() => {
     const defaults = {
       headingText: 'Checkout', buttonText: 'Place Order', processingText: 'Processing...',
@@ -260,10 +289,13 @@ const Checkout = () => {
         }
       }
       const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      const subtotal = getSubtotal();
-      const shipping = getShipping();
-      const tax = getTax();
-      const total = getTotal() + codFee - promoDiscount;
+      const {
+        subtotal,
+        shipping,
+        tax,
+        total,
+        totalDiscount,
+      } = getCheckoutPricing(data.paymentMethod, promoDiscount, data.shippingCharge);
       let createdOrderId: string | null = null;
 
       if (user) {
@@ -276,7 +308,7 @@ const Checkout = () => {
         const { data: orderData, error: orderError } = await supabase
           .from('orders').insert({
             user_id: user.id, order_number: orderNumber, status: 'pending',
-            subtotal, shipping, tax, discount: promoDiscount, total,
+            subtotal, shipping, tax, discount: totalDiscount, total,
             payment_method: data.paymentMethod, shipping_address: shippingAddress,
           }).select().single();
 
@@ -411,7 +443,7 @@ const Checkout = () => {
 
 
   const layoutProps = {
-    form, onSubmit, isProcessing, codFee, promoDiscount, appliedCode,
+    form, onSubmit, isProcessing, codFee, promoDiscount, onlinePaymentDiscount, appliedCode,
     customization,
     ...promoProps,
   };

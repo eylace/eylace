@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { ArrowLeft, Phone, MapPin, User, ShieldCheck, Loader2, Minus, Plus, Trash2 } from 'lucide-react';
 import { PaymentMethods } from '@/components/checkout/PaymentMethods';
@@ -24,13 +24,14 @@ interface Props {
   isProcessing: boolean;
   codFee: number;
   promoDiscount: number;
+  onlinePaymentDiscount: number;
   appliedCode: string | null;
   onApplyPromo: (d: number, c: string, cid: string) => void;
   onRemovePromo: () => void;
   customization?: any;
 }
 
-export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDiscount, customization = {} }: Props) => {
+export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDiscount, onlinePaymentDiscount, customization = {} }: Props) => {
   const { t } = useLanguage();
   const { formatPrice } = useCurrency();
   const { items, updateQuantity, removeItem, getSubtotal, getShipping, getTotal } = useCart();
@@ -46,12 +47,13 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
 
   const deliveryCharge = deliveryZone === 'inside_dhaka' ? 80 : 150;
   const subtotal = getSubtotal();
-  const total = subtotal + deliveryCharge - promoDiscount;
+  const total = Math.max(0, subtotal + deliveryCharge - promoDiscount - onlinePaymentDiscount);
 
-  useState(() => {
-    setValue('paymentMethod', 'cod');
+  useEffect(() => {
     setValue('country', 'BD');
-  });
+    setValue('deliveryZone', deliveryZone);
+    setValue('shippingCharge', deliveryCharge);
+  }, [deliveryCharge, deliveryZone, setValue]);
 
   const handleOrderClick = async (data: any) => {
     const phone = data.phone?.trim();
@@ -172,6 +174,8 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
                   value={deliveryZone}
                   onValueChange={(val) => {
                     setDeliveryZone(val);
+                     setValue('deliveryZone', val);
+                     setValue('shippingCharge', val === 'inside_dhaka' ? 80 : 150);
                     if (val === 'inside_dhaka') {
                       setValue('city', 'Dhaka');
                       setValue('state', 'Dhaka');
@@ -298,22 +302,28 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
             <div className="mt-5 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground font-semibold">Subtotal:</span>
-                <span className="font-semibold text-foreground">৳{subtotal.toLocaleString()}</span>
+                <span className="font-semibold text-foreground">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground font-semibold">Delivery Charge:</span>
-                <span className="font-semibold text-foreground">৳{deliveryCharge}</span>
+                <span className="font-semibold text-foreground">{formatPrice(deliveryCharge)}</span>
               </div>
               {promoDiscount > 0 && (
                 <div className="flex justify-between text-sm text-success">
                   <span className="font-semibold">Discount:</span>
-                  <span className="font-semibold">-৳{promoDiscount}</span>
+                  <span className="font-semibold">-{formatPrice(promoDiscount)}</span>
+                </div>
+              )}
+              {onlinePaymentDiscount > 0 && (
+                <div className="flex justify-between text-sm text-success">
+                  <span className="font-semibold">অনলাইন পেমেন্ট ছাড়:</span>
+                  <span className="font-semibold">-{formatPrice(onlinePaymentDiscount)}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between">
                 <span className="text-lg font-bold text-foreground">Total:</span>
-                <span className="text-xl font-bold text-foreground">৳{total.toLocaleString()}</span>
+                <span className="text-xl font-bold text-foreground">{formatPrice(total)}</span>
               </div>
             </div>
           </div>
