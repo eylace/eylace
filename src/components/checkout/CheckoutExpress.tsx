@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { ArrowLeft, Phone, MapPin, User, ShieldCheck, Loader2, Minus, Plus, Trash2 } from 'lucide-react';
+import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -214,13 +215,7 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
               </div>
 
               {/* Payment Method */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold text-foreground">পেমেন্ট মেথড সিলেক্ট করুন:</Label>
-                <div className="flex items-center gap-3 p-3 border border-border rounded-lg bg-secondary/30">
-                  <div className="h-4 w-4 rounded-full border-4 border-primary" />
-                  <span className="font-medium text-foreground">ক্যাশ অন ডেলিভারি (Cash on Delivery)</span>
-                </div>
-              </div>
+              <PaymentMethods form={form} />
 
               {/* Submit */}
               <Button
