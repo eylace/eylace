@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { ArrowLeft, Phone, MapPin, User, ShieldCheck, Loader2, Minus, Plus, Trash2 } from 'lucide-react';
+import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
