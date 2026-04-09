@@ -1,5 +1,5 @@
 import { Navigate, Link, useLocation } from 'react-router-dom';
-import { Loader2, ShieldAlert, Globe, ClipboardList, SlidersHorizontal, Plus, Trash2, LayoutDashboard } from 'lucide-react';
+import { Loader2, ShieldAlert, Globe, ClipboardList, SlidersHorizontal, Plus, LayoutDashboard } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminNotificationBell } from './AdminNotificationBell';
@@ -75,7 +75,7 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
       await Promise.all(names.map((name) => caches.delete(name)));
     }
 
-    toast.success('Only unnecessary cache cleared. You stay logged in.', { duration: 2000 });
+    toast.success('Cache cleared successfully', { duration: 2500, position: 'bottom-right' });
   };
 
   if (authLoading || adminLoading) {
@@ -131,9 +131,9 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
               <button
                 onClick={handleClearCache}
                 title="Clear Cache"
-                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-accent hover:text-accent hover:bg-accent/10 transition-colors"
               >
-                <Trash2 className="h-4 w-4" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M13 3l-1.5 9h5L11 21l1.5-9h-5L13 3z"/><path d="M3 21h18"/><path d="M7 21v-4l3-2"/><path d="M17 21v-4l-3-2"/></svg>
               </button>
               <ThemeToggle />
               <AdminNotificationBell />
@@ -197,9 +197,9 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
                 <button
                   onClick={handleClearCache}
                   title="Clear Cache"
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-accent hover:text-accent hover:bg-accent/10 transition-colors"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M14 2l-4 9h5l-3 11"/><path d="M5 21h14"/><path d="M8 21v-3"/><path d="M16 21v-3"/></svg>
                 </button>
               </div>
 
