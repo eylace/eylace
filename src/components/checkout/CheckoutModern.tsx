@@ -8,11 +8,19 @@ import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { PromoCodeInput } from '@/components/checkout/PromoCodeInput';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Separator } from '@/components/ui/separator';
+import { CartItem } from '@/types';
 
 interface Props {
   form: UseFormReturn<any>;
   onSubmit: (data: any) => void;
   isProcessing: boolean;
+  items: CartItem[];
+  itemCount: number;
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+  isBuyNowMode: boolean;
   codFee: number;
   promoDiscount: number;
   onlinePaymentDiscount: number;
@@ -22,7 +30,7 @@ interface Props {
   customization?: any;
 }
 
-export const CheckoutModern = ({ form, onSubmit, isProcessing, codFee, promoDiscount, onlinePaymentDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
+export const CheckoutModern = ({ form, onSubmit, isProcessing, items, itemCount, subtotal, shipping, tax, total, isBuyNowMode, codFee, promoDiscount, onlinePaymentDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
   const { t } = useLanguage();
   const cfg = customization;
   const btnStyle = (cfg.buttonBgColor || cfg.buttonTextColor) ? { backgroundColor: cfg.buttonBgColor || undefined, color: cfg.buttonTextColor || undefined } : undefined;
@@ -93,7 +101,7 @@ export const CheckoutModern = ({ form, onSubmit, isProcessing, codFee, promoDisc
 
             <div className="lg:col-span-5 space-y-4">
               <div className="lg:sticky lg:top-6 space-y-4">
-                <OrderSummary codFee={codFee} promoDiscount={promoDiscount} onlinePaymentDiscount={onlinePaymentDiscount} />
+                <OrderSummary items={items} itemCount={itemCount} subtotal={subtotal} shipping={shipping} tax={tax} total={total} codFee={codFee} promoDiscount={promoDiscount} onlinePaymentDiscount={onlinePaymentDiscount} showEditCart={!isBuyNowMode} />
                 {cfg.showPromoCode !== false && (
                   <div className="bg-card border border-border rounded-2xl p-4" style={{ borderRadius: cfg.cardBorderRadius ? `${cfg.cardBorderRadius}px` : undefined }}>
                     <PromoCodeInput onApply={onApplyPromo} onRemove={onRemovePromo} appliedCode={appliedCode} discount={promoDiscount} />

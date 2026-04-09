@@ -7,11 +7,19 @@ import { PaymentMethods } from '@/components/checkout/PaymentMethods';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { PromoCodeInput } from '@/components/checkout/PromoCodeInput';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CartItem } from '@/types';
 
 interface Props {
   form: UseFormReturn<any>;
   onSubmit: (data: any) => void;
   isProcessing: boolean;
+  items: CartItem[];
+  itemCount: number;
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+  isBuyNowMode: boolean;
   codFee: number;
   promoDiscount: number;
   onlinePaymentDiscount: number;
@@ -21,7 +29,7 @@ interface Props {
   customization?: any;
 }
 
-export const CheckoutClassic = ({ form, onSubmit, isProcessing, codFee, promoDiscount, onlinePaymentDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
+export const CheckoutClassic = ({ form, onSubmit, isProcessing, items, itemCount, subtotal, shipping, tax, total, isBuyNowMode, codFee, promoDiscount, onlinePaymentDiscount, appliedCode, onApplyPromo, onRemovePromo, customization = {} }: Props) => {
   const { t } = useLanguage();
   const c = customization;
   const btnStyle = (c.buttonBgColor || c.buttonTextColor) ? { backgroundColor: c.buttonBgColor || undefined, color: c.buttonTextColor || undefined } : undefined;
@@ -63,7 +71,7 @@ export const CheckoutClassic = ({ form, onSubmit, isProcessing, codFee, promoDis
             </div>
           </div>
           <div className="space-y-4">
-            <OrderSummary codFee={codFee} promoDiscount={promoDiscount} onlinePaymentDiscount={onlinePaymentDiscount} />
+            <OrderSummary items={items} itemCount={itemCount} subtotal={subtotal} shipping={shipping} tax={tax} total={total} codFee={codFee} promoDiscount={promoDiscount} onlinePaymentDiscount={onlinePaymentDiscount} showEditCart={!isBuyNowMode} />
             {c.showPromoCode !== false && (
               <div className="bg-card border border-border rounded-lg p-4" style={{ borderRadius: c.cardBorderRadius ? `${c.cardBorderRadius}px` : undefined }}>
                 <PromoCodeInput onApply={onApplyPromo} onRemove={onRemovePromo} appliedCode={appliedCode} discount={promoDiscount} />

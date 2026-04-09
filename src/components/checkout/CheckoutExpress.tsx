@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { ArrowLeft, Phone, MapPin, User, ShieldCheck, Loader2, Minus, Plus, Trash2 } from 'lucide-react';
+import { Phone, ShieldCheck, Loader2, Minus, Plus, Trash2 } from 'lucide-react';
 import { PaymentMethods } from '@/components/checkout/PaymentMethods';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,15 +12,21 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useCart } from '@/contexts/CartContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CartItem } from '@/types';
 
 interface Props {
   form: UseFormReturn<any>;
   onSubmit: (data: any) => void;
   isProcessing: boolean;
+  items: CartItem[];
+  subtotal: number;
+  shipping: number;
+  total: number;
+  onUpdateQuantity: (productId: string, quantity: number, selectedVariations?: Record<string, string>) => void;
+  onRemoveItem: (productId: string, selectedVariations?: Record<string, string>) => void;
   codFee: number;
   promoDiscount: number;
   onlinePaymentDiscount: number;
@@ -31,10 +36,9 @@ interface Props {
   customization?: any;
 }
 
-export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDiscount, onlinePaymentDiscount, customization = {} }: Props) => {
+export const CheckoutExpress = ({ form, onSubmit, isProcessing, items, subtotal, shipping, total, onUpdateQuantity, onRemoveItem, codFee, promoDiscount, onlinePaymentDiscount, customization = {} }: Props) => {
   const { t } = useLanguage();
   const { formatPrice } = useCurrency();
-  const { items, updateQuantity, removeItem, getSubtotal, getShipping, getTotal } = useCart();
   const { register, formState: { errors }, setValue, handleSubmit } = form;
 
   const [deliveryZone, setDeliveryZone] = useState('inside_dhaka');
@@ -46,8 +50,6 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
   const [pendingFormData, setPendingFormData] = useState<any>(null);
 
   const deliveryCharge = deliveryZone === 'inside_dhaka' ? 80 : 150;
-  const subtotal = getSubtotal();
-  const total = Math.max(0, subtotal + deliveryCharge - promoDiscount - onlinePaymentDiscount);
 
   useEffect(() => {
     setValue('country', 'BD');
@@ -271,7 +273,7 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
                     <div className="flex items-center justify-center gap-0.5">
                       <button
                         type="button"
-                        onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
+                        onClick={() => onUpdateQuantity(item.product.id, Math.max(1, item.quantity - 1), item.selectedVariations)}
                         className="h-6 w-6 rounded border border-border flex items-center justify-center hover:bg-secondary"
                       >
                         <Minus className="h-3 w-3" />
@@ -279,7 +281,7 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
                       <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
                       <button
                         type="button"
-                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                        onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1, item.selectedVariations)}
                         className="h-6 w-6 rounded border border-border flex items-center justify-center hover:bg-secondary"
                       >
                         <Plus className="h-3 w-3" />
@@ -288,7 +290,7 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
                     <span className="text-sm font-bold text-foreground text-right">৳{(item.product.price * item.quantity).toLocaleString()}</span>
                     <button
                       type="button"
-                      onClick={() => removeItem(item.product.id)}
+                      onClick={() => onRemoveItem(item.product.id, item.selectedVariations)}
                       className="h-6 w-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center hover:bg-destructive/20"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -306,7 +308,7 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground font-semibold">Delivery Charge:</span>
-                <span className="font-semibold text-foreground">{formatPrice(deliveryCharge)}</span>
+                <span className="font-semibold text-foreground">{formatPrice(shipping)}</span>
               </div>
               {promoDiscount > 0 && (
                 <div className="flex justify-between text-sm text-success">
@@ -318,6 +320,12 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, codFee, promoDis
                 <div className="flex justify-between text-sm text-success">
                   <span className="font-semibold">অনলাইন পেমেন্ট ছাড়:</span>
                   <span className="font-semibold">-{formatPrice(onlinePaymentDiscount)}</span>
+                </div>
+              )}
+              {codFee > 0 && (
+                <div className="flex justify-between text-sm text-warning">
+                  <span className="font-semibold">COD Fee:</span>
+                  <span className="font-semibold">+{formatPrice(codFee)}</span>
                 </div>
               )}
               <Separator />

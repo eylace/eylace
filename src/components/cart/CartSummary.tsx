@@ -61,7 +61,7 @@ export const CartSummary = ({ showCheckoutButton = true }: CartSummaryProps) => 
         <Separator />
         <div className="flex justify-between"><span className="text-lg font-bold text-foreground">{t('cartSummary.total')}</span><span className="text-xl font-bold text-foreground">{formatPrice(appliedPromo ? total * 0.9 : total)}</span></div>
       </div>
-      {showCheckoutButton && (<Button variant="buy-now" size="xl" className="w-full" asChild><Link to="/checkout"><ShoppingBag className="h-5 w-5 mr-2" />{t('cartSummary.proceedToCheckout')}</Link></Button>)}
+      {showCheckoutButton && (<Button variant="buy-now" size="xl" className="w-full" asChild><Link to="/checkout?source=cart"><ShoppingBag className="h-5 w-5 mr-2" />{t('cartSummary.proceedToCheckout')}</Link></Button>)}
       <div className="space-y-3 pt-4 border-t border-border">
         <div className="flex items-center gap-3 text-sm text-muted-foreground"><Truck className="h-5 w-5 text-accent shrink-0" /><span>{t('cartSummary.freeShippingMsg')}</span></div>
         <div className="flex items-center gap-3 text-sm text-muted-foreground"><Shield className="h-5 w-5 text-accent shrink-0" /><span>{t('cartSummary.secureCheckout')}</span></div>

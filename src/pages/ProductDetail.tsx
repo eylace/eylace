@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Star, Heart, Share2, ShoppingCart, Zap, Truck, Shield, RotateCcw,
   Check, MessageCircle, ChevronRight, Package, Store, GitCompareArrows, Download, Phone
@@ -26,6 +26,7 @@ import { useCompare } from '@/contexts/CompareContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
+import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { Loader2 } from 'lucide-react';
 
 const ProductDetail = () => {
@@ -41,6 +42,7 @@ const ProductDetail = () => {
   const { t } = useLanguage();
   const websiteSetup = useWebsiteSetup();
   const location = useLocation();
+  const navigate = useNavigate();
   const reviewsRef = useRef<HTMLDivElement>(null);
   const [liveReviewStats, setLiveReviewStats] = useState<{ averageRating: number; totalReviews: number } | null>(null);
    
@@ -136,11 +138,11 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    addItem(product, quantity, selectedVariations);
+    setBuyNowCheckoutItem({ product, quantity, selectedVariations });
     toast.success(t('product.redirectCheckout'), {
       description: 'Your order is being prepared',
     });
-    window.location.href = '/checkout';
+    navigate('/checkout?source=buy-now');
   };
 
   const handleBookNow = () => {
