@@ -192,6 +192,9 @@ const defaults: WebsiteSetup = {
   ctaWhatsappNumber: '01XXXXXXXXX',
   ctaCallEnabled: true,
   ctaWhatsappEnabled: true,
+  prepaymentOfferEnabled: true,
+  prepaymentOfferText: 'পেমেন্ট করে অর্ডার করলেই 10% ছাড়!',
+  prepaymentOfferPercent: 10,
 };
 
 let cachedSetup: WebsiteSetup | null = null;
