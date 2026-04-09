@@ -72,6 +72,9 @@ export interface WebsiteSetup {
   ctaWhatsappNumber: string;
   ctaCallEnabled: boolean;
   ctaWhatsappEnabled: boolean;
+  prepaymentOfferEnabled: boolean;
+  prepaymentOfferText: string;
+  prepaymentOfferPercent: number;
 }
 
 export interface CheckoutVariantConfig {
