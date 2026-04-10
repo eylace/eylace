@@ -239,3 +239,15 @@
   from { width: 100%; }
   to { width: 0%; }
 }
+
+/* TopBar marquee scrolling */
+@keyframes topbar-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.topbar-marquee {
+  display: inline-flex;
+  animation: topbar-scroll linear infinite;
+  will-change: transform;
+}

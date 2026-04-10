@@ -1,40 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
+import { supabase } from '@/integrations/supabase/client';
+
+interface TopBarConfig {
+  enabled: boolean;
+  headlines: string[];
+  bg_color: string;
+  text_color: string;
+  speed: number; // seconds for one full scroll
+}
 
 export const TopBar = () => {
-  const setup = useWebsiteSetup();
+  const [config, setConfig] = useState<TopBarConfig | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
-  if (!setup.topBarEnabled || dismissed || !setup.topBarText) return null;
+  useEffect(() => {
+    supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'top_bar_headlines')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.value) {
+          const val = data.value as unknown as TopBarConfig;
+          if (val.enabled && val.headlines?.length > 0) setConfig(val);
+        }
+      });
+  }, []);
+
+  if (!config || dismissed) return null;
+
+  const separator = '  ★  ';
+  const fullText = config.headlines.join(separator) + separator;
+  const duration = config.speed || 30;
 
   return (
     <div
-      className="relative flex items-center justify-center gap-4 px-4 py-2 text-sm font-medium"
-      style={{ backgroundColor: setup.topBarBgColor, color: setup.topBarTextColor }}
+      className="relative overflow-hidden"
+      style={{
+        backgroundColor: config.bg_color || '#1a1a2e',
+        color: config.text_color || '#ffffff',
+        height: '40px',
+      }}
     >
-      <span>{setup.topBarText}</span>
-      {setup.topBarLinks?.length > 0 && (
-        <div className="hidden md:flex items-center gap-3 ml-4">
-          {setup.topBarLinks.map((link, i) => (
-            <Link
-              key={i}
-              to={link.url}
-              className="text-xs underline underline-offset-2 opacity-80 hover:opacity-100 transition-opacity"
-              style={{ color: setup.topBarTextColor }}
-            >
-              {link.label}
-            </Link>
-          ))}
+      <div className="absolute inset-0 flex items-center">
+        <div
+          className="topbar-marquee whitespace-nowrap text-sm font-medium"
+          style={{
+            animationDuration: `${duration}s`,
+          }}
+        >
+          <span>{fullText}</span>
+          <span>{fullText}</span>
         </div>
-      )}
+      </div>
+
       <button
         onClick={() => setDismissed(true)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 transition-opacity"
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-10 opacity-60 hover:opacity-100 transition-opacity bg-black/20 rounded-full p-1"
         aria-label="Dismiss"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5" />
       </button>
     </div>
   );
