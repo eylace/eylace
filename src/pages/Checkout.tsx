@@ -580,6 +580,12 @@ const Checkout = () => {
   return (
     <Layout>
       {renderCheckoutLayout()}
+      <CodOtpVerificationModal
+        open={showCodOtp}
+        onClose={() => { setShowCodOtp(false); setPendingCodData(null); }}
+        onVerified={handleCodOtpVerified}
+        phone={pendingCodData?.phone || form.getValues('phone') || ''}
+      />
     </Layout>
   );
 };
