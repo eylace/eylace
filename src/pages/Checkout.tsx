@@ -52,6 +52,8 @@ const Checkout = () => {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [showCodOtp, setShowCodOtp] = useState(false);
+  const [pendingCodData, setPendingCodData] = useState<CheckoutFormData | null>(null);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(15);
   const [buyNowItems, setBuyNowItems] = useState<CartItem[]>(() => getBuyNowCheckoutItems());
