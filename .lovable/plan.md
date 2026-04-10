@@ -1,56 +1,46 @@
 
-## Plan: Stock & Inventory Management System
 
-### Problem
-1. Stock is never decremented when orders are placed
-2. "5,000+ sold" is hardcoded on product detail page (line 219)
-3. No `sold_count` column exists on products table
-4. No real-time stock display updates
-5. Seller/Admin dashboards show stock but no dedicated inventory management view
+## Plan: Conditional Order Flow — COD with OTP vs Online Payment Gateway
 
-### Changes
+### Current State
+- The Express checkout **always** shows the OTP popup on "Order Confirm", regardless of payment method selected.
+- Online payment gateways (bKash, Nagad, SSLCommerz, etc.) show a "you will be redirected" text but no actual redirect or payment processing happens.
 
-#### 1. Database Migration
-- Add `sold_count` column (integer, default 0) to `products` table
-- Create a `decrement_stock_on_order` database function (SECURITY DEFINER) that:
-  - Takes an order_id, loops through its `order_items`
-  - Decrements `stock` by quantity for each product
-  - Increments `sold_count` by quantity for each product
-  - Skips if stock is already 0 (prevents negative stock)
-- Create a trigger `trg_decrement_stock_after_order_insert` on `order_items` table that fires AFTER INSERT and calls the stock decrement logic per row
+### What Will Change
 
-#### 2. Checkout Flow (src/pages/Checkout.tsx)
-- No code change needed if using a trigger approach — stock will auto-decrement when order_items are inserted
-- Add a pre-checkout stock validation: before placing order, verify each item's current stock >= requested quantity; show error if insufficient
+**Flow 1: COD Selected → OTP Verification**
+- Customer selects Cash on Delivery → clicks "Order Confirm" → OTP popup appears → verifies phone → order confirmed. *(This already works — no changes needed.)*
 
-#### 3. Product Detail Page (src/pages/ProductDetail.tsx)
-- Replace hardcoded "5,000+ sold" with actual `sold_count` from database (via the adapted product)
-- Show real-time stock count with color coding (green >10, yellow 1-10, red 0)
-- Subscribe to Supabase Realtime on the product row to update stock/sold_count live
+**Flow 2: Online Payment Selected → Payment Gateway Popup**
+- Customer selects an online method (bKash, Nagad, Rocket, Card, SSLCommerz, etc.) → clicks "Order Confirm" → Instead of OTP popup, a **Payment Gateway Dialog** opens showing:
+  - Selected gateway name & logo
+  - For bKash/Nagad/Rocket: A simulated payment form (merchant number, transaction ID input) — since live API integration requires admin-configured API keys
+  - For Card (Stripe/SSLCommerz): Card details form
+  - A "Pay Now" button that processes payment
+- After successful payment → order is confirmed automatically (no OTP needed)
 
-#### 4. Product Adapter (src/lib/productAdapter.ts)
-- Map `sold_count` from DB product to the adapted Product type
+### Technical Changes
 
-#### 5. Types (src/types/index.ts)
-- Add `soldCount` field to Product interface
+**1. `CheckoutExpress.tsx`** — Split `handleOrderClick` logic:
+- Check `form.getValues('paymentMethod')` 
+- If COD/cash → show OTP dialog (existing flow)
+- If online payment → show new Payment Gateway dialog
+- Add new state: `paymentDialogOpen`, `paymentProcessing`
+- Add new `PaymentGatewayDialog` component inline with payment form fields
+- On successful payment simulation → call `onSubmit(pendingFormData)` directly
 
-#### 6. useProducts Hook (src/hooks/useProducts.ts)
-- Include `sold_count` in DBProduct interface
+**2. `CheckoutExpress.tsx`** — Add Payment Gateway Dialog:
+- Dialog shows selected gateway info
+- For mobile banking (bKash/Nagad/Rocket): show merchant number field + transaction ID input
+- For card gateways: reuse card input fields
+- "Pay & Confirm Order" button processes and submits
 
-#### 7. ProductCard (src/components/products/ProductCard.tsx)
-- Show "X sold" badge on cards when soldCount > 0
-- Show "Out of Stock" overlay when stock is 0
+**3. `PaymentMethods.tsx`** — No changes needed (already correctly categorizes COD vs Online)
 
-#### 8. Enable Realtime
-- Add products table to `supabase_realtime` publication for live stock updates
+**4. Other checkout variants** (Classic, Modern, Minimal) — Apply same conditional logic if they have submit handlers
 
-### Files to Change
-| File | Change |
-|------|--------|
-| Migration SQL | Add `sold_count`, create trigger for stock decrement |
-| `src/types/index.ts` | Add `soldCount` to Product |
-| `src/hooks/useProducts.ts` | Add `sold_count` to DBProduct |
-| `src/lib/productAdapter.ts` | Map `sold_count` → `soldCount` |
-| `src/pages/ProductDetail.tsx` | Real sold count, real-time subscription, stock validation |
-| `src/components/products/ProductCard.tsx` | Show sold count badge |
-| `src/pages/Checkout.tsx` | Pre-checkout stock validation |
+### Important Notes
+- Live bKash/SSLCommerz API integration requires admin-configured API credentials (account SID, secret keys). The system will use a **payment confirmation form** where customers enter their transaction details, which the admin can verify.
+- If admin later configures live API keys, the system can be upgraded to actual redirect-based payment.
+- The payment flow stores the payment method and transaction reference in the order record for admin verification.
+
