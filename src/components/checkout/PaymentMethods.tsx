@@ -33,11 +33,16 @@ const LOGO_MAP: Record<string, string> = {
   paystack: paystackLogo,
 };
 
+interface PaymentMethodsProps {
+  form: UseFormReturn<any>;
+}
+
 interface GatewayOption {
   id: string;
   name: string;
   description: string;
-  icon: React.ElementType;
+  logo?: string;
+  fallbackIcon?: React.ElementType;
   needsCard: boolean;
   needsRedirect: boolean;
   isCOD: boolean;
@@ -64,7 +69,8 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
           id: g.gateway_key,
           name: g.display_name,
           description: (g.settings as any)?.description || getDefaultDesc(g.gateway_key),
-          icon: ICON_MAP[g.gateway_key] || Globe,
+          logo: LOGO_MAP[g.gateway_key],
+          fallbackIcon: ['cash', 'cod'].includes(g.gateway_key) ? Banknote : (!LOGO_MAP[g.gateway_key] ? Globe : undefined),
           needsCard: g.gateway_key === 'stripe' || g.gateway_key === 'authorizenet',
           needsRedirect: ['bkash', 'nagad', 'rocket', 'upay', 'paypal', 'sslcommerz', 'razorpay', 'paystack', 'aamarpay'].includes(g.gateway_key),
           isCOD: ['cash', 'cod'].includes(g.gateway_key),
@@ -74,11 +80,11 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
         setValue('paymentMethod', options[0]?.id || '');
       } else {
         const fallback: GatewayOption[] = [
-          { id: 'cod', name: 'Cash on Delivery (COD)', description: 'ডেলিভারির সময় পেমেন্ট করুন', icon: Banknote, needsCard: false, needsRedirect: false, isCOD: true },
-          { id: 'bkash', name: 'bKash', description: 'bKash মোবাইল ব্যাংকিং', icon: Smartphone, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'nagad', name: 'Nagad', description: 'Nagad ডিজিটাল পেমেন্ট', icon: Smartphone, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'rocket', name: 'Rocket', description: 'DBBL Rocket', icon: Building2, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'card', name: 'Credit/Debit Card', description: t('payment.creditDebitDesc'), icon: CreditCard, needsCard: true, needsRedirect: false, isCOD: false },
+          { id: 'cod', name: 'Cash on Delivery (COD)', description: 'ডেলিভারির সময় পেমেন্ট করুন', fallbackIcon: Banknote, needsCard: false, needsRedirect: false, isCOD: true },
+          { id: 'bkash', name: 'bKash', description: 'bKash মোবাইল ব্যাংকিং', logo: bkashLogo, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'nagad', name: 'Nagad', description: 'Nagad ডিজিটাল পেমেন্ট', logo: nagadLogo, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'rocket', name: 'Rocket', description: 'DBBL Rocket', logo: rocketLogo, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'card', name: 'Credit/Debit Card', description: t('payment.creditDebitDesc'), fallbackIcon: CreditCard, needsCard: true, needsRedirect: false, isCOD: false },
         ];
         setGateways(fallback);
         setSelectedMethod('cod');
@@ -123,7 +129,13 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
         selectedMethod === method.id ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
       )}>
         <RadioGroupItem value={method.id} id={method.id} />
-        <method.icon className="h-5 w-5 text-muted-foreground shrink-0" />
+        {method.logo ? (
+          <img src={method.logo} alt={method.name} className="h-7 w-7 object-contain shrink-0 rounded" loading="lazy" />
+        ) : method.fallbackIcon ? (
+          <method.fallbackIcon className="h-5 w-5 text-muted-foreground shrink-0" />
+        ) : (
+          <Globe className="h-5 w-5 text-muted-foreground shrink-0" />
+        )}
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm text-foreground">{method.name}</p>
           <p className="text-xs text-muted-foreground truncate">{method.description}</p>
