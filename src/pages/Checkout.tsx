@@ -359,7 +359,7 @@ const Checkout = () => {
     return () => clearInterval(timer);
   }, [orderComplete, navigate]);
 
-  const onSubmit = async (data: CheckoutFormData) => {
+  const processOrder = async (data: CheckoutFormData) => {
     setIsProcessing(true);
     try {
       // Pre-checkout stock validation
