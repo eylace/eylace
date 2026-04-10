@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { CreditCard, Wallet, Banknote, Building2, Smartphone, Globe, ShieldCheck, Tag } from 'lucide-react';
+import { CreditCard, Banknote, Globe, Tag } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -9,29 +9,40 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
+import bkashLogo from '@/assets/payment/bkash-logo.png';
+import nagadLogo from '@/assets/payment/nagad-logo.png';
+import rocketLogo from '@/assets/payment/rocket-logo.png';
+import upayLogo from '@/assets/payment/upay-logo.png';
+import sslcommerzLogo from '@/assets/payment/sslcommerz-logo.png';
+import aamarpayLogo from '@/assets/payment/aamarpay-logo.png';
+import paypalLogo from '@/assets/payment/paypal-logo.png';
+import stripeLogo from '@/assets/payment/stripe-logo.png';
+import razorpayLogo from '@/assets/payment/razorpay-logo.png';
+import paystackLogo from '@/assets/payment/paystack-logo.png';
+
+const LOGO_MAP: Record<string, string> = {
+  bkash: bkashLogo,
+  nagad: nagadLogo,
+  rocket: rocketLogo,
+  upay: upayLogo,
+  sslcommerz: sslcommerzLogo,
+  aamarpay: aamarpayLogo,
+  paypal: paypalLogo,
+  stripe: stripeLogo,
+  razorpay: razorpayLogo,
+  paystack: paystackLogo,
+};
+
 interface PaymentMethodsProps {
   form: UseFormReturn<any>;
 }
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  stripe: CreditCard,
-  paypal: Wallet,
-  sslcommerz: ShieldCheck,
-  razorpay: CreditCard,
-  paystack: CreditCard,
-  bkash: Smartphone,
-  nagad: Smartphone,
-  rocket: Building2,
-  upay: Smartphone,
-  cash: Banknote,
-  aamarpay: CreditCard,
-};
 
 interface GatewayOption {
   id: string;
   name: string;
   description: string;
-  icon: React.ElementType;
+  logo?: string;
+  fallbackIcon?: React.ElementType;
   needsCard: boolean;
   needsRedirect: boolean;
   isCOD: boolean;
@@ -58,7 +69,8 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
           id: g.gateway_key,
           name: g.display_name,
           description: (g.settings as any)?.description || getDefaultDesc(g.gateway_key),
-          icon: ICON_MAP[g.gateway_key] || Globe,
+          logo: LOGO_MAP[g.gateway_key],
+          fallbackIcon: ['cash', 'cod'].includes(g.gateway_key) ? Banknote : (!LOGO_MAP[g.gateway_key] ? Globe : undefined),
           needsCard: g.gateway_key === 'stripe' || g.gateway_key === 'authorizenet',
           needsRedirect: ['bkash', 'nagad', 'rocket', 'upay', 'paypal', 'sslcommerz', 'razorpay', 'paystack', 'aamarpay'].includes(g.gateway_key),
           isCOD: ['cash', 'cod'].includes(g.gateway_key),
@@ -68,11 +80,11 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
         setValue('paymentMethod', options[0]?.id || '');
       } else {
         const fallback: GatewayOption[] = [
-          { id: 'cod', name: 'Cash on Delivery (COD)', description: 'ডেলিভারির সময় পেমেন্ট করুন', icon: Banknote, needsCard: false, needsRedirect: false, isCOD: true },
-          { id: 'bkash', name: 'bKash', description: 'bKash মোবাইল ব্যাংকিং', icon: Smartphone, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'nagad', name: 'Nagad', description: 'Nagad ডিজিটাল পেমেন্ট', icon: Smartphone, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'rocket', name: 'Rocket', description: 'DBBL Rocket', icon: Building2, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'card', name: 'Credit/Debit Card', description: t('payment.creditDebitDesc'), icon: CreditCard, needsCard: true, needsRedirect: false, isCOD: false },
+          { id: 'cod', name: 'Cash on Delivery (COD)', description: 'ডেলিভারির সময় পেমেন্ট করুন', fallbackIcon: Banknote, needsCard: false, needsRedirect: false, isCOD: true },
+          { id: 'bkash', name: 'bKash', description: 'bKash মোবাইল ব্যাংকিং', logo: bkashLogo, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'nagad', name: 'Nagad', description: 'Nagad ডিজিটাল পেমেন্ট', logo: nagadLogo, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'rocket', name: 'Rocket', description: 'DBBL Rocket', logo: rocketLogo, needsCard: false, needsRedirect: true, isCOD: false },
+          { id: 'card', name: 'Credit/Debit Card', description: t('payment.creditDebitDesc'), fallbackIcon: CreditCard, needsCard: true, needsRedirect: false, isCOD: false },
         ];
         setGateways(fallback);
         setSelectedMethod('cod');
@@ -117,7 +129,13 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
         selectedMethod === method.id ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
       )}>
         <RadioGroupItem value={method.id} id={method.id} />
-        <method.icon className="h-5 w-5 text-muted-foreground shrink-0" />
+        {method.logo ? (
+          <img src={method.logo} alt={method.name} className="h-7 w-7 object-contain shrink-0 rounded" loading="lazy" />
+        ) : method.fallbackIcon ? (
+          <method.fallbackIcon className="h-5 w-5 text-muted-foreground shrink-0" />
+        ) : (
+          <Globe className="h-5 w-5 text-muted-foreground shrink-0" />
+        )}
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm text-foreground">{method.name}</p>
           <p className="text-xs text-muted-foreground truncate">{method.description}</p>
