@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/types';
 import { clearBuyNowCheckout, getBuyNowCheckoutItems, setBuyNowCheckoutItems } from '@/lib/checkoutSession';
 import { toast } from 'sonner';
+import { CodOtpVerificationModal } from '@/components/checkout/CodOtpVerificationModal';
 
 interface CheckoutFormData {
   firstName: string;
