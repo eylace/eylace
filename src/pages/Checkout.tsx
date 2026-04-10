@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CartItem } from '@/types';
 import { clearBuyNowCheckout, getBuyNowCheckoutItems, setBuyNowCheckoutItems } from '@/lib/checkoutSession';
 import { toast } from 'sonner';
+import { CodOtpVerificationModal } from '@/components/checkout/CodOtpVerificationModal';
 
 interface CheckoutFormData {
   firstName: string;
@@ -51,6 +52,8 @@ const Checkout = () => {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [showCodOtp, setShowCodOtp] = useState(false);
+  const [pendingCodData, setPendingCodData] = useState<CheckoutFormData | null>(null);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(15);
   const [buyNowItems, setBuyNowItems] = useState<CartItem[]>(() => getBuyNowCheckoutItems());
@@ -356,7 +359,7 @@ const Checkout = () => {
     return () => clearInterval(timer);
   }, [orderComplete, navigate]);
 
-  const onSubmit = async (data: CheckoutFormData) => {
+  const processOrder = async (data: CheckoutFormData) => {
     setIsProcessing(true);
     try {
       // Pre-checkout stock validation
@@ -534,6 +537,28 @@ const Checkout = () => {
     onRemovePromo: () => { setPromoDiscount(0); setAppliedCode(null); setAppliedCouponId(null); },
   };
 
+  const onSubmit = (data: CheckoutFormData) => {
+    const pm = (data.paymentMethod || '').toLowerCase();
+    if (pm === 'cod' || pm === 'cash') {
+      if (!data.phone) {
+        toast.error('COD অর্ডারের জন্য ফোন নম্বর দিন');
+        return;
+      }
+      setPendingCodData(data);
+      setShowCodOtp(true);
+      return;
+    }
+    processOrder(data);
+  };
+
+  const handleCodOtpVerified = () => {
+    setShowCodOtp(false);
+    if (pendingCodData) {
+      processOrder(pendingCodData);
+      setPendingCodData(null);
+    }
+  };
+
 
 
   const layoutProps = {
@@ -555,6 +580,12 @@ const Checkout = () => {
   return (
     <Layout>
       {renderCheckoutLayout()}
+      <CodOtpVerificationModal
+        open={showCodOtp}
+        onClose={() => { setShowCodOtp(false); setPendingCodData(null); }}
+        onVerified={handleCodOtpVerified}
+        phone={pendingCodData?.phone || form.getValues('phone') || ''}
+      />
     </Layout>
   );
 };
