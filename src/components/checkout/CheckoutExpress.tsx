@@ -177,7 +177,7 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, items, subtotal,
   };
 
   const selectedPaymentMethod = form.watch('paymentMethod') || '';
-  const gwInfo = GATEWAY_INFO[selectedPaymentMethod] || { label: selectedPaymentMethod, color: '#333' };
+  const gwInfo = GATEWAY_INFO[selectedPaymentMethod] || { label: selectedPaymentMethod, color: '#333', merchant: '' };
 
   return (
     <div className="container-main py-6 md:py-10">
