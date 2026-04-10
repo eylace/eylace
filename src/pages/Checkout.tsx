@@ -537,6 +537,28 @@ const Checkout = () => {
     onRemovePromo: () => { setPromoDiscount(0); setAppliedCode(null); setAppliedCouponId(null); },
   };
 
+  const onSubmit = (data: CheckoutFormData) => {
+    const pm = (data.paymentMethod || '').toLowerCase();
+    if (pm === 'cod' || pm === 'cash') {
+      if (!data.phone) {
+        toast.error('COD অর্ডারের জন্য ফোন নম্বর দিন');
+        return;
+      }
+      setPendingCodData(data);
+      setShowCodOtp(true);
+      return;
+    }
+    processOrder(data);
+  };
+
+  const handleCodOtpVerified = () => {
+    setShowCodOtp(false);
+    if (pendingCodData) {
+      processOrder(pendingCodData);
+      setPendingCodData(null);
+    }
+  };
+
 
 
   const layoutProps = {
