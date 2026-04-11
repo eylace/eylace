@@ -94,7 +94,7 @@ export const CompareModal = () => {
                       </span>
                       {product.originalPrice && (
                         <span className="block text-sm text-muted-foreground line-through">
-                          ${product.originalPrice.toFixed(2)}
+                          ৳{product.originalPrice.toFixed(2)}
                         </span>
                       )}
                       {product.discount && product.discount > 0 && (
