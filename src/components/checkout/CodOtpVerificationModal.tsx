@@ -13,8 +13,14 @@ interface CodOtpVerificationModalProps {
   phone: string;
 }
 
-const OTP_LENGTH = 4;
+const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60;
+
+const formatPhone = (phone: string) => {
+  const cleaned = phone.trim();
+  if (cleaned.startsWith('+')) return cleaned;
+  return `+88${cleaned.replace(/^0/, '')}`;
+};
 
 export const CodOtpVerificationModal = ({ open, onClose, onVerified, phone }: CodOtpVerificationModalProps) => {
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
@@ -54,7 +60,8 @@ export const CodOtpVerificationModal = ({ open, onClose, onVerified, phone }: Co
     if (!phone) { toast.error('ফোন নম্বর পাওয়া যায়নি'); return; }
     setIsSending(true);
     try {
-      const res = await supabase.functions.invoke('send-otp', { body: { phone } });
+      const formattedPhone = formatPhone(phone);
+      const res = await supabase.functions.invoke('send-otp', { body: { phone: formattedPhone } });
       if (res.error || res.data?.error) {
         toast.error(res.data?.error || 'OTP পাঠানো যায়নি');
         setIsSending(false);
@@ -110,8 +117,9 @@ export const CodOtpVerificationModal = ({ open, onClose, onVerified, phone }: Co
     }
     setIsVerifying(true);
     try {
+      const formattedPhone = formatPhone(phone);
       const res = await supabase.functions.invoke('verify-otp', {
-        body: { phone, code },
+        body: { phone: formattedPhone, code },
       });
       if (res.error || res.data?.error) {
         toast.error(res.data?.error || 'OTP যাচাই ব্যর্থ');
@@ -170,7 +178,7 @@ export const CodOtpVerificationModal = ({ open, onClose, onVerified, phone }: Co
           {!verified && (
             <>
               {/* OTP Input Boxes */}
-              <div className="flex justify-center gap-3 mb-6" onPaste={handlePaste}>
+              <div className="flex justify-center gap-2 mb-6" onPaste={handlePaste}>
                 {otp.map((digit, i) => (
                   <input
                     key={i}
@@ -182,7 +190,7 @@ export const CodOtpVerificationModal = ({ open, onClose, onVerified, phone }: Co
                     onChange={(e) => handleInputChange(i, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(i, e)}
                     className={cn(
-                      "w-14 h-16 text-center text-2xl font-bold rounded-xl border-2 transition-all duration-200 outline-none bg-background text-foreground",
+                      "w-12 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all duration-200 outline-none bg-background text-foreground",
                       digit
                         ? "border-accent shadow-[0_0_0_3px_hsl(var(--accent)/0.15)]"
                         : "border-border hover:border-accent/50",
@@ -207,7 +215,6 @@ export const CodOtpVerificationModal = ({ open, onClose, onVerified, phone }: Co
 
               {/* Resend Section with Timer */}
               <div className="mt-5 text-center space-y-3">
-                {/* Circular Progress Timer */}
                 <div className="flex flex-col items-center gap-2">
                   {resendTimer > 0 ? (
                     <div className="relative">
