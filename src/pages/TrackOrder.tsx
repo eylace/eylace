@@ -301,16 +301,7 @@ const TrackOrder = () => {
                     <CardContent className="p-8 space-y-4">
                       <Clock className="h-16 w-16 text-muted-foreground/30 mx-auto" />
                       <h3 className="text-lg font-semibold text-foreground">Enter your order number above</h3>
-                      <p className="text-muted-foreground">You can find your order number in the confirmation email or in your account's order history.</p>
-                      {user ? (
-                        <Link to="/account?tab=orders">
-                          <Button variant="outline" className="mt-2">View My Orders</Button>
-                        </Link>
-                      ) : (
-                        <Link to="/auth">
-                          <Button variant="outline" className="mt-2">Sign in to view orders</Button>
-                        </Link>
-                      )}
+                      <p className="text-muted-foreground">You can find your order number in the confirmation email you received after placing your order.</p>
                     </CardContent>
                   </Card>
                 </div>
