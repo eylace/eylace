@@ -190,11 +190,11 @@ export const AdminCouponsTab = () => {
                     {copiedId === c.id ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
                   </button>
                   <Badge variant={c.is_active ? 'default' : 'secondary'} className="text-[10px] md:text-xs">{c.is_active ? t('admin.active' as any) : t('admin.inactive' as any)}</Badge>
-                  <Badge variant="outline" className="text-[10px] md:text-xs">{c.discount_type === 'percentage' ? `${c.discount_value}%` : `$${c.discount_value}`} {t('admin.off' as any)}</Badge>
+                  <Badge variant="outline" className="text-[10px] md:text-xs">{c.discount_type === 'percentage' ? `${c.discount_value}%` : `৳${c.discount_value}`} {t('admin.off' as any)}</Badge>
                 </div>
                 <p className="text-[10px] md:text-sm text-muted-foreground mt-1 break-words">
                   {c.description || t('admin.noDescription' as any)}
-                  {c.min_order_amount && c.min_order_amount > 0 ? ` • ${t('admin.min' as any)} $${c.min_order_amount}` : ''}
+                  {c.min_order_amount && c.min_order_amount > 0 ? ` • ${t('admin.min' as any)} ৳${c.min_order_amount}` : ''}
                   {c.usage_limit ? ` • ${c.used_count}/${c.usage_limit} ${t('admin.used' as any)}` : ` • ${c.used_count} ${t('admin.used' as any)}`}
                   {c.expires_at ? ` • ${t('admin.expires' as any)} ${format(new Date(c.expires_at), 'MMM d, yyyy')}` : ''}
                 </p>

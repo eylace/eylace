@@ -91,7 +91,7 @@ export const AdminNotificationBell = () => {
             id: `new-order-${order.id}`,
             type: 'new_order',
             title: '🛒 New Order Received!',
-            message: `Order #${order.order_number} — $${Number(order.total).toFixed(2)}`,
+            message: `Order #${order.order_number} — ৳${Number(order.total).toFixed(2)}`,
             timestamp: new Date().toISOString(),
             read: false,
             meta: { orderId: order.id, orderNumber: order.order_number },
