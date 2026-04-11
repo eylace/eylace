@@ -80,7 +80,7 @@ const AdminProducts = () => {
                         <div><p className="font-medium text-sm truncate max-w-[200px]">{product.name}</p><p className="text-xs text-muted-foreground">{product.slug}</p></div>
                       </div>
                     </TableCell>
-                    <TableCell><span className="font-medium">${product.price}</span>{product.original_price && (<span className="text-xs text-muted-foreground line-through ml-1">${product.original_price}</span>)}</TableCell>
+                    <TableCell><span className="font-medium">৳{product.price}</span>{product.original_price && (<span className="text-xs text-muted-foreground line-through ml-1">৳{product.original_price}</span>)}</TableCell>
                     <TableCell><Badge variant={product.stock > 10 ? 'secondary' : 'destructive'} className="text-xs">{product.stock || 0}</Badge></TableCell>
                     <TableCell className="text-sm text-muted-foreground">{(product as any).categories?.name || t('admin.uncategorized')}</TableCell>
                     <TableCell><Badge className={product.is_active ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-muted text-muted-foreground'}>{product.is_active ? t('admin.active') : t('admin.inactive')}</Badge></TableCell>

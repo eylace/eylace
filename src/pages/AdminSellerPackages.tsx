@@ -77,7 +77,7 @@ const AdminSellerPackages = () => {
                 {packages.map(p => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell>${p.price}</TableCell>
+                    <TableCell>৳{p.price}</TableCell>
                     <TableCell>{p.duration_days} days</TableCell>
                     <TableCell>{p.product_limit}</TableCell>
                     <TableCell>{p.commission_rate}%</TableCell>

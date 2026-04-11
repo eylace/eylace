@@ -75,7 +75,7 @@ const AdminSellerProducts = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{(product as any).sellers?.name || 'Unknown'}</TableCell>
-                    <TableCell>${product.price}</TableCell>
+                    <TableCell>৳{product.price}</TableCell>
                     <TableCell><Badge variant={product.stock > 10 ? 'secondary' : 'destructive'}>{product.stock || 0}</Badge></TableCell>
                     <TableCell><Badge variant={product.is_active ? 'default' : 'secondary'}>{product.is_active ? 'Active' : 'Inactive'}</Badge></TableCell>
                     <TableCell>
