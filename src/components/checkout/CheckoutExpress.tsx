@@ -92,22 +92,8 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, items, subtotal,
     const paymentMethod = data.paymentMethod || form.getValues('paymentMethod') || '';
 
     if (isCodMethod(paymentMethod)) {
-      // COD → OTP verification
-      setOtpDialogOpen(true);
-      setOtpSending(true);
-      setOtpSent(false);
-      setOtpValue('');
-      try {
-        const formattedPhone = phone.startsWith('+') ? phone : `+88${phone.replace(/^0/, '')}`;
-        const { error } = await supabase.functions.invoke('send-otp', { body: { phone: formattedPhone } });
-        if (error) throw error;
-        setOtpSent(true);
-        toast.success('OTP পাঠানো হয়েছে');
-      } catch {
-        toast.error('OTP পাঠাতে ব্যর্থ। আবার চেষ্টা করুন।');
-      } finally {
-        setOtpSending(false);
-      }
+      // COD → let parent handle OTP verification via CodOtpVerificationModal
+      onSubmit(data);
     } else {
       // Online payment → Payment Gateway dialog
       setTransactionId('');
