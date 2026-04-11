@@ -50,7 +50,7 @@ const AdminSellerPayoutRequests = () => {
                 {requests.map(r => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{(r.seller as any)?.name || 'N/A'}</TableCell>
-                    <TableCell>${r.amount}</TableCell>
+                    <TableCell>৳{r.amount}</TableCell>
                     <TableCell><Badge variant="outline">{r.payment_method}</Badge></TableCell>
                     <TableCell>{statusBadge(r.status)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</TableCell>

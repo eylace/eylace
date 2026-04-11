@@ -28,7 +28,7 @@ const AdminMarketingPage = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([
     { id: '1', name: 'Summer Sale Announcement', type: 'email', status: 'active', audience: 'All Customers', content: 'Get up to 50% off on summer collection!', createdAt: new Date().toISOString() },
     { id: '2', name: 'Flash Sale Alert', type: 'push', status: 'draft', audience: 'Active Users', content: 'Flash sale starts in 1 hour!', createdAt: new Date().toISOString() },
-    { id: '3', name: 'Homepage Banner', type: 'banner', status: 'active', audience: 'All Visitors', content: 'Free shipping on orders over $50', createdAt: new Date().toISOString() },
+    { id: '3', name: 'Homepage Banner', type: 'banner', status: 'active', audience: 'All Visitors', content: 'Free shipping on orders over ৳5000', createdAt: new Date().toISOString() },
   ]);
   const [addOpen, setAddOpen] = useState(false);
   const [newCampaign, setNewCampaign] = useState({ name: '', type: 'email' as const, audience: 'All Customers', content: '' });
