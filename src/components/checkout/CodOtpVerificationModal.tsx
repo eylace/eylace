@@ -62,8 +62,18 @@ export const CodOtpVerificationModal = ({ open, onClose, onVerified, phone }: Co
     try {
       const formattedPhone = formatPhone(phone);
       const res = await supabase.functions.invoke('send-otp', { body: { phone: formattedPhone } });
-      if (res.error || res.data?.error) {
-        toast.error(res.data?.error || 'OTP পাঠানো যায়নি');
+      if (res.data?.error) {
+        // If rate-limited (429), still show OTP input — a code was already sent
+        if (res.data.error.includes('wait') || res.data.error.includes('Please wait')) {
+          setOtpSent(true);
+          const match = res.data.error.match(/(\d+)\s*seconds?/);
+          setResendTimer(match ? parseInt(match[1]) : 30);
+          toast.info('আগের OTP এখনও বৈধ আছে। অনুগ্রহ করে সেটি ব্যবহার করুন।');
+          setTimeout(() => inputRefs.current[0]?.focus(), 200);
+          setIsSending(false);
+          return;
+        }
+        toast.error(res.data.error || 'OTP পাঠানো যায়নি');
         setIsSending(false);
         return;
       }
