@@ -93,7 +93,7 @@ const AdminMarketingSellAlert = () => {
                 ) : alerts.map(a => (
                   <TableRow key={a.id}>
                     <TableCell className="font-medium">{a.title}</TableCell>
-                    <TableCell>${a.min_amount}</TableCell>
+                    <TableCell>৳{a.min_amount}</TableCell>
                     <TableCell><Badge variant="outline">{a.discount_code || '—'}</Badge></TableCell>
                     <TableCell><Switch checked={a.is_active} onCheckedChange={() => toggleActive(a.id, a.is_active)} /></TableCell>
                     <TableCell className="text-right"><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteAlert(a.id)}><Trash2 className="h-4 w-4" /></Button></TableCell>

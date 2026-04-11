@@ -76,7 +76,7 @@ const AdminInHouseProducts = () => {
                         <div><p className="font-medium text-sm truncate max-w-[200px]">{product.name}</p></div>
                       </div>
                     </TableCell>
-                    <TableCell>${product.price}</TableCell>
+                    <TableCell>৳{product.price}</TableCell>
                     <TableCell><Badge variant={product.stock > 10 ? 'secondary' : 'destructive'}>{product.stock || 0}</Badge></TableCell>
                     <TableCell className="text-sm text-muted-foreground">{(product as any).categories?.name || 'Uncategorized'}</TableCell>
                     <TableCell><Badge variant={product.is_active ? 'default' : 'secondary'}>{product.is_active ? 'Active' : 'Inactive'}</Badge></TableCell>

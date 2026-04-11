@@ -132,7 +132,7 @@ export const FraudDetectionModal = ({ open, onOpenChange, order }: FraudDetectio
               {/* Order quick info */}
               <div className="p-3 flex items-center justify-between text-sm border-t">
                 <div className="flex items-center gap-4">
-                  <span className="text-muted-foreground">Amount: <span className="font-bold text-foreground">${order?.total?.toFixed(2)}</span></span>
+                  <span className="text-muted-foreground">Amount: <span className="font-bold text-foreground">৳{order?.total?.toFixed(2)}</span></span>
                   <span className="text-muted-foreground">Payment: <Badge variant="outline" className="text-[10px]">{order?.payment_method?.toUpperCase()}</Badge></span>
                 </div>
                 <span className="text-muted-foreground">Items: {order?.items?.length || 0}</span>

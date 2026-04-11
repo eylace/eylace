@@ -203,7 +203,7 @@ const AdminSmartBar = () => {
 
             <div>
               <Label>Promotional Text *</Label>
-              <Input value={smartBar.text} onChange={e => setSmartBar(f => ({ ...f, text: e.target.value }))} placeholder="🔥 Free Shipping on orders over $50!" />
+              <Input value={smartBar.text} onChange={e => setSmartBar(f => ({ ...f, text: e.target.value }))} placeholder="🔥 Free Shipping on orders over ৳5000!" />
             </div>
 
             <div>
