@@ -54,7 +54,15 @@ const TrackOrder = () => {
   const [returnSearched, setReturnSearched] = useState(false);
   const [returnData, setReturnData] = useState<any>(null);
   const [returnLoading, setReturnLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect logged-in users to their account orders tab
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/account?tab=orders', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleOrderSearch = async (e: React.FormEvent) => {
     e.preventDefault();
