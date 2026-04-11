@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Package, Search, Truck, CheckCircle, Clock, MapPin, RotateCcw, Copy, Loader2, ShoppingBag, XCircle } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -54,7 +54,15 @@ const TrackOrder = () => {
   const [returnSearched, setReturnSearched] = useState(false);
   const [returnData, setReturnData] = useState<any>(null);
   const [returnLoading, setReturnLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect logged-in users to their account orders tab
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/account?tab=orders', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleOrderSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -293,16 +301,7 @@ const TrackOrder = () => {
                     <CardContent className="p-8 space-y-4">
                       <Clock className="h-16 w-16 text-muted-foreground/30 mx-auto" />
                       <h3 className="text-lg font-semibold text-foreground">Enter your order number above</h3>
-                      <p className="text-muted-foreground">You can find your order number in the confirmation email or in your account's order history.</p>
-                      {user ? (
-                        <Link to="/account?tab=orders">
-                          <Button variant="outline" className="mt-2">View My Orders</Button>
-                        </Link>
-                      ) : (
-                        <Link to="/auth">
-                          <Button variant="outline" className="mt-2">Sign in to view orders</Button>
-                        </Link>
-                      )}
+                      <p className="text-muted-foreground">You can find your order number in the confirmation email you received after placing your order.</p>
                     </CardContent>
                   </Card>
                 </div>
