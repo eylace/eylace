@@ -90,7 +90,7 @@ export const CompareModal = () => {
                         "text-xl font-bold",
                         product.price === bestPrice && "text-success"
                       )}>
-                        ${product.price.toFixed(2)}
+                        ৳{product.price.toFixed(2)}
                       </span>
                       {product.originalPrice && (
                         <span className="block text-sm text-muted-foreground line-through">

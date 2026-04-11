@@ -60,7 +60,7 @@ const AdminSellerPayouts = () => {
                 {payouts.map(p => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{(p.seller as any)?.name || 'N/A'}</TableCell>
-                    <TableCell>${p.amount}</TableCell>
+                    <TableCell>৳{p.amount}</TableCell>
                     <TableCell><Badge variant="secondary">{p.payment_method}</Badge></TableCell>
                     <TableCell className="text-xs text-muted-foreground">{p.reference_number || '-'}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{new Date(p.paid_at).toLocaleDateString()}</TableCell>

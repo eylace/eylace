@@ -206,7 +206,7 @@ export const SearchModal = ({ open, onOpenChange }: SearchModalProps) => {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{product.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {product.category.name} · ${product.price.toFixed(2)}
+                        {product.category.name} · ৳{product.price.toFixed(2)}
                         {product.isFlashSale && (
                           <Badge className="ml-2 badge-flash text-[10px] h-4">Flash Sale</Badge>
                         )}
