@@ -57,9 +57,9 @@ const AdminTransactionsPage = () => {
       {loading ? (<div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center"><ArrowUpRight className="h-5 w-5 text-green-500" /></div><div><p className="text-xs text-muted-foreground">{t('admin.completed')}</p><p className="text-xl font-bold text-foreground">${totalCompleted.toFixed(2)}</p></div></CardContent></Card>
-            <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center"><DollarSign className="h-5 w-5 text-muted-foreground" /></div><div><p className="text-xs text-muted-foreground">{t('admin.pending')}</p><p className="text-xl font-bold text-foreground">${totalPending.toFixed(2)}</p></div></CardContent></Card>
-            <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center"><ArrowDownRight className="h-5 w-5 text-destructive" /></div><div><p className="text-xs text-muted-foreground">{t('admin.refunded')}</p><p className="text-xl font-bold text-foreground">${totalRefunded.toFixed(2)}</p></div></CardContent></Card>
+            <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center"><ArrowUpRight className="h-5 w-5 text-green-500" /></div><div><p className="text-xs text-muted-foreground">{t('admin.completed')}</p><p className="text-xl font-bold text-foreground">৳{totalCompleted.toFixed(2)}</p></div></CardContent></Card>
+            <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center"><DollarSign className="h-5 w-5 text-muted-foreground" /></div><div><p className="text-xs text-muted-foreground">{t('admin.pending')}</p><p className="text-xl font-bold text-foreground">৳{totalPending.toFixed(2)}</p></div></CardContent></Card>
+            <Card className="border border-border"><CardContent className="p-4 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center"><ArrowDownRight className="h-5 w-5 text-destructive" /></div><div><p className="text-xs text-muted-foreground">{t('admin.refunded')}</p><p className="text-xl font-bold text-foreground">৳{totalRefunded.toFixed(2)}</p></div></CardContent></Card>
           </div>
 
           <Card className="border border-border">
@@ -87,7 +87,7 @@ const AdminTransactionsPage = () => {
                       <TableCell className="font-mono text-sm">{tr.orderNumber}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{tr.customer}</TableCell>
                       <TableCell><Badge variant="outline" className="capitalize">{tr.method}</Badge></TableCell>
-                      <TableCell className="font-medium">${tr.amount.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">৳{tr.amount.toFixed(2)}</TableCell>
                       <TableCell>{getStatusBadge(tr.status)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{format(new Date(tr.date), 'MMM d, yyyy')}</TableCell>
                     </TableRow>

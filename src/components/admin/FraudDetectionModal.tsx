@@ -229,7 +229,7 @@ export const FraudDetectionModal = ({ open, onOpenChange, order }: FraudDetectio
                   <h4 className="font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Order Pattern</h4>
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { label: 'Avg Order', value: `$${analysis.order_pattern_analysis.avg_order_value?.toFixed(2) || '0.00'}`, icon: TrendingUp },
+                      { label: 'Avg Order', value: `৳${analysis.order_pattern_analysis.avg_order_value?.toFixed(2) || '0.00'}`, icon: TrendingUp },
                       { label: 'Frequency', value: analysis.order_pattern_analysis.order_frequency || 'N/A', icon: Clock },
                       { label: 'Address', value: analysis.order_pattern_analysis.address_consistency || 'N/A', icon: MapPin },
                       { label: 'Categories', value: analysis.order_pattern_analysis.common_categories?.join(', ') || 'N/A', icon: Package },

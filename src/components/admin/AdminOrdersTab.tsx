@@ -177,14 +177,14 @@ export const AdminOrdersTab = () => {
     <div>${esc(o.profile?.email)}</div>
     <div>${esc(addr.address)} ${esc(addr.city)}</div></div></div>
     <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>
-    ${(o.items || []).map((i: any) => `<tr><td>${esc(i.product_name)}</td><td>${esc(i.quantity)}</td><td>$${Number(i.price || 0).toFixed(2)}</td><td>$${(Number(i.price || 0) * Number(i.quantity || 0)).toFixed(2)}</td></tr>`).join('')}
+    ${(o.items || []).map((i: any) => `<tr><td>${esc(i.product_name)}</td><td>${esc(i.quantity)}</td><td>৳${Number(i.price || 0).toFixed(2)}</td><td>৳${(Number(i.price || 0) * Number(i.quantity || 0)).toFixed(2)}</td></tr>`).join('')}
     </tbody></table>
     <div style="text-align:right;margin-top:20px">
-    <div>Subtotal: $${o.subtotal?.toFixed(2) || '0.00'}</div>
-    <div>Shipping: $${o.shipping?.toFixed(2) || '0.00'}</div>
-    <div>Tax: $${o.tax?.toFixed(2) || '0.00'}</div>
-    ${o.discount > 0 ? `<div>Discount: -$${o.discount.toFixed(2)}</div>` : ''}
-    <div class="total-row" style="margin-top:10px;padding-top:10px;border-top:2px solid #333">Total: $${o.total.toFixed(2)}</div>
+    <div>Subtotal: ৳${o.subtotal?.toFixed(2) || '0.00'}</div>
+    <div>Shipping: ৳${o.shipping?.toFixed(2) || '0.00'}</div>
+    <div>Tax: ৳${o.tax?.toFixed(2) || '0.00'}</div>
+    ${o.discount > 0 ? `<div>Discount: -৳${o.discount.toFixed(2)}</div>` : ''}
+    <div class="total-row" style="margin-top:10px;padding-top:10px;border-top:2px solid #333">Total: ৳${o.total.toFixed(2)}</div>
     </div><div>Payment: ${esc(o.payment_method)}</div>
     ${o.carrier ? `<div>Carrier: ${esc(o.carrier)} | Tracking: ${esc(o.tracking_number) || 'N/A'}</div>` : ''}
     <div class="footer">Thank you for your order!</div></body></html>`);
@@ -205,7 +205,7 @@ export const AdminOrdersTab = () => {
           { label: 'Shipped', value: stats.shipped, icon: Truck, color: 'text-purple-500' },
           { label: 'Delivered', value: stats.delivered, icon: CheckCircle, color: 'text-green-500' },
           { label: 'Cancelled', value: stats.cancelled, icon: XCircle, color: 'text-red-500' },
-          { label: 'Revenue', value: `$${stats.totalRevenue.toFixed(0)}`, icon: DollarSign, color: 'text-accent' },
+          { label: 'Revenue', value: `৳${stats.totalRevenue.toFixed(0)}`, icon: DollarSign, color: 'text-accent' },
         ].map((s, i) => (
           <Card key={i} className="border border-border">
             <CardContent className="p-3 flex items-center gap-2">
@@ -316,7 +316,7 @@ export const AdminOrdersTab = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
-                        <span className="font-bold text-sm">${order.total.toFixed(2)}</span>
+                        <span className="font-bold text-sm">৳{order.total.toFixed(2)}</span>
                         <span className="text-[10px] text-muted-foreground hidden sm:inline">{format(new Date(order.created_at), 'MMM d, yyyy')}</span>
                         <div className="flex items-center gap-0.5">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); setInvoiceOrder(order); }} title="Invoice">
@@ -345,20 +345,20 @@ export const AdminOrdersTab = () => {
                                   {item.product_image && <img src={item.product_image} alt="" className="w-10 h-10 rounded object-cover" />}
                                   <div className="flex-1 min-w-0">
                                     <p className="font-medium text-sm truncate">{item.product_name}</p>
-                                    <p className="text-xs text-muted-foreground">{item.quantity} × ${item.price.toFixed(2)}</p>
+                                    <p className="text-xs text-muted-foreground">{item.quantity} × ৳{item.price.toFixed(2)}</p>
                                   </div>
-                                  <span className="text-sm font-semibold">${(item.quantity * item.price).toFixed(2)}</span>
+                                  <span className="text-sm font-semibold">৳{(item.quantity * item.price).toFixed(2)}</span>
                                 </div>
                               ))}
                             </div>
                             {/* Order Summary */}
                             <div className="mt-3 p-3 bg-background rounded-lg space-y-1 text-sm">
-                              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${order.subtotal?.toFixed(2)}</span></div>
-                              <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${order.shipping?.toFixed(2)}</span></div>
-                              <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${order.tax?.toFixed(2)}</span></div>
-                              {order.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-${order.discount.toFixed(2)}</span></div>}
+                              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>৳{order.subtotal?.toFixed(2)}</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>৳{order.shipping?.toFixed(2)}</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>৳{order.tax?.toFixed(2)}</span></div>
+                              {order.discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-৳{order.discount.toFixed(2)}</span></div>}
                               <Separator />
-                              <div className="flex justify-between font-bold"><span>Total</span><span>${order.total.toFixed(2)}</span></div>
+                              <div className="flex justify-between font-bold"><span>Total</span><span>৳{order.total.toFixed(2)}</span></div>
                             </div>
                           </div>
 
@@ -469,16 +469,16 @@ export const AdminOrdersTab = () => {
                 <TableHeader><TableRow><TableHead>Item</TableHead><TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {invoiceOrder.items?.map((item: any) => (
-                    <TableRow key={item.id}><TableCell>{item.product_name}</TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">${item.price.toFixed(2)}</TableCell><TableCell className="text-right">${(item.quantity * item.price).toFixed(2)}</TableCell></TableRow>
+                    <TableRow key={item.id}><TableCell>{item.product_name}</TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">৳{item.price.toFixed(2)}</TableCell><TableCell className="text-right">৳{(item.quantity * item.price).toFixed(2)}</TableCell></TableRow>
                   ))}
                 </TableBody>
               </Table>
               <div className="text-right space-y-1 text-sm">
-                <div>Subtotal: ${invoiceOrder.subtotal?.toFixed(2)}</div>
-                <div>Shipping: ${invoiceOrder.shipping?.toFixed(2)}</div>
-                <div>Tax: ${invoiceOrder.tax?.toFixed(2)}</div>
-                {invoiceOrder.discount > 0 && <div className="text-green-600">Discount: -${invoiceOrder.discount.toFixed(2)}</div>}
-                <div className="text-lg font-bold border-t pt-2">Total: ${invoiceOrder.total.toFixed(2)}</div>
+                <div>Subtotal: ৳{invoiceOrder.subtotal?.toFixed(2)}</div>
+                <div>Shipping: ৳{invoiceOrder.shipping?.toFixed(2)}</div>
+                <div>Tax: ৳{invoiceOrder.tax?.toFixed(2)}</div>
+                {invoiceOrder.discount > 0 && <div className="text-green-600">Discount: -৳{invoiceOrder.discount.toFixed(2)}</div>}
+                <div className="text-lg font-bold border-t pt-2">Total: ৳{invoiceOrder.total.toFixed(2)}</div>
               </div>
               <Button onClick={printInvoice} className="w-full gap-2"><Printer className="h-4 w-4" /> Print Invoice</Button>
             </div>

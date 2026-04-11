@@ -128,9 +128,9 @@ const AdminReportsPage = () => {
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'text-green-500' },
+              { label: 'Total Revenue', value: `৳${totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'text-green-500' },
               { label: 'Total Orders', value: totalOrders, icon: ShoppingCart, color: 'text-accent' },
-              { label: 'Avg Order Value', value: `$${avgOrderValue.toFixed(2)}`, icon: TrendingUp, color: 'text-orange-500' },
+              { label: 'Avg Order Value', value: `৳${avgOrderValue.toFixed(2)}`, icon: TrendingUp, color: 'text-orange-500' },
               { label: 'Unique Customers', value: uniqueCustomers, icon: Users, color: 'text-blue-500' },
             ].map(kpi => (
               <Card key={kpi.label} className="border border-border">
@@ -210,7 +210,7 @@ const AdminReportsPage = () => {
                       <td className="p-3 font-medium text-foreground">{c.name}</td>
                       <td className="p-3 text-sm text-muted-foreground">{c.email}</td>
                       <td className="p-3"><Badge variant="secondary">{c.orders}</Badge></td>
-                      <td className="p-3 font-medium text-foreground">${c.total.toFixed(2)}</td>
+                      <td className="p-3 font-medium text-foreground">৳{c.total.toFixed(2)}</td>
                     </tr>
                   ))}
                   {topCustomers.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No data</td></tr>}

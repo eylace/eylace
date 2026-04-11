@@ -76,7 +76,7 @@ const AdminFraudPage = () => {
                     <TableRow key={alert.id}>
                       <TableCell className="font-mono text-sm">{alert.orderNumber}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{alert.customer}</TableCell>
-                      <TableCell className="font-medium">${alert.amount.toFixed(2)}</TableCell>
+                      <TableCell className="font-medium">৳{alert.amount.toFixed(2)}</TableCell>
                       <TableCell>{getRiskBadge(alert.riskLevel)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{alert.reason}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{format(new Date(alert.date), 'MMM d, yyyy')}</TableCell>
@@ -101,7 +101,7 @@ const AdminFraudPage = () => {
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div><span className="text-muted-foreground">{t('admin.order')}:</span> <span className="font-mono">{selectedAlert.orderNumber}</span></div>
                     <div><span className="text-muted-foreground">{t('admin.customer')}:</span> {selectedAlert.customer}</div>
-                    <div><span className="text-muted-foreground">{t('admin.amount')}:</span> <span className="font-bold">${selectedAlert.amount.toFixed(2)}</span></div>
+                    <div><span className="text-muted-foreground">{t('admin.amount')}:</span> <span className="font-bold">৳{selectedAlert.amount.toFixed(2)}</span></div>
                     <div><span className="text-muted-foreground">{t('admin.riskLevel')}:</span> {getRiskBadge(selectedAlert.riskLevel)}</div>
                   </div>
                   <div className="p-3 bg-muted rounded-lg"><p className="text-sm"><strong>{t('admin.reason')}:</strong> {selectedAlert.reason}</p></div>

@@ -74,7 +74,7 @@ const AdminCategoryDiscount = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm">{(d as any).categories?.name || 'Unknown'}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">{d.discount_type === 'percentage' ? `${d.discount_value}%` : `$${d.discount_value}`} off</Badge>
+                      <Badge variant="outline" className="text-xs">{d.discount_type === 'percentage' ? `${d.discount_value}%` : `৳${d.discount_value}`} off</Badge>
                       {d.expires_at && <span className="text-xs text-muted-foreground">Expires: {format(new Date(d.expires_at), 'MMM d, yyyy')}</span>}
                       <Badge variant={d.is_active ? 'default' : 'secondary'} className="text-xs">{d.is_active ? 'Active' : 'Inactive'}</Badge>
                     </div>
