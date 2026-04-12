@@ -473,7 +473,7 @@ const Checkout = () => {
       }
 
       // Send auto confirmation email (non-blocking)
-      if (user && createdOrderId) {
+      if (createdOrderId) {
         supabase.functions.invoke('send-order-confirmation', {
           body: { order_id: createdOrderId },
         }).catch(err => console.error('Confirmation email error:', err));
