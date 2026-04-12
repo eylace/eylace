@@ -948,6 +948,8 @@ export type Database = {
           delivered_at: string | null
           discount: number
           estimated_delivery: string | null
+          guest_email: string | null
+          guest_phone: string | null
           id: string
           order_number: string
           payment_method: string
@@ -960,7 +962,7 @@ export type Database = {
           total: number
           tracking_number: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           carrier?: string | null
@@ -968,6 +970,8 @@ export type Database = {
           delivered_at?: string | null
           discount?: number
           estimated_delivery?: string | null
+          guest_email?: string | null
+          guest_phone?: string | null
           id?: string
           order_number: string
           payment_method: string
@@ -980,7 +984,7 @@ export type Database = {
           total: number
           tracking_number?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           carrier?: string | null
@@ -988,6 +992,8 @@ export type Database = {
           delivered_at?: string | null
           discount?: number
           estimated_delivery?: string | null
+          guest_email?: string | null
+          guest_phone?: string | null
           id?: string
           order_number?: string
           payment_method?: string
@@ -1000,7 +1006,7 @@ export type Database = {
           total?: number
           tracking_number?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -18,15 +18,16 @@ const AdminCustomers = () => {
   useEffect(() => {
     const fetch = async () => {
       const { data: ordersData } = await supabase.functions.invoke('admin-get-orders');
-      const orders = ordersData?.orders || [];
-      const customerMap: Record<string, any> = {};
-      orders.forEach((o: any) => {
-        if (!customerMap[o.user_id]) {
-          customerMap[o.user_id] = { id: o.user_id, name: `${o.profile?.first_name || ''} ${o.profile?.last_name || ''}`.trim() || 'Unknown', email: o.profile?.email || 'N/A', totalOrders: 0, totalSpent: 0, lastOrder: o.created_at };
-        }
-        customerMap[o.user_id].totalOrders++;
-        customerMap[o.user_id].totalSpent += o.total || 0;
-        if (new Date(o.created_at) > new Date(customerMap[o.user_id].lastOrder)) customerMap[o.user_id].lastOrder = o.created_at;
+       const orders = ordersData?.orders || [];
+       const customerMap: Record<string, any> = {};
+       orders.forEach((o: any) => {
+         const odKey = o.user_id || `guest-${o.guest_email || o.id}`;
+         if (!customerMap[odKey]) {
+           customerMap[odKey] = { id: odKey, name: `${o.profile?.first_name || ''} ${o.profile?.last_name || ''}`.trim() || 'Guest', email: o.profile?.email || o.guest_email || 'N/A', totalOrders: 0, totalSpent: 0, lastOrder: o.created_at, isGuest: !o.user_id };
+         }
+         customerMap[odKey].totalOrders++;
+         customerMap[odKey].totalSpent += o.total || 0;
+         if (new Date(o.created_at) > new Date(customerMap[odKey].lastOrder)) customerMap[odKey].lastOrder = o.created_at;
       });
       setProfiles(Object.values(customerMap).sort((a, b) => b.totalSpent - a.totalSpent));
       setLoading(false);

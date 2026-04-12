@@ -363,23 +363,22 @@ const Checkout = () => {
     setIsProcessing(true);
     try {
       // Pre-checkout stock validation
-      if (user) {
-        const productIds = checkoutItems.map(i => i.product.id);
-        const { data: stockData } = await supabase
-          .from('products')
-          .select('id, name, stock')
-          .in('id', productIds);
-        if (stockData) {
-          for (const item of checkoutItems) {
-            const dbItem = stockData.find(p => p.id === item.product.id);
-            if (dbItem && (dbItem.stock ?? 0) < item.quantity) {
-              toast.error(`"${dbItem.name}" has only ${dbItem.stock ?? 0} items in stock`);
-              setIsProcessing(false);
-              return;
-            }
+      const productIds = checkoutItems.map(i => i.product.id);
+      const { data: stockData } = await supabase
+        .from('products')
+        .select('id, name, stock')
+        .in('id', productIds);
+      if (stockData) {
+        for (const item of checkoutItems) {
+          const dbItem = stockData.find(p => p.id === item.product.id);
+          if (dbItem && (dbItem.stock ?? 0) < item.quantity) {
+            toast.error(`"${dbItem.name}" has only ${dbItem.stock ?? 0} items in stock`);
+            setIsProcessing(false);
+            return;
           }
         }
       }
+
       const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       const {
         subtotal,
@@ -390,48 +389,57 @@ const Checkout = () => {
       } = getCheckoutPricing(data.paymentMethod, promoDiscount, data.shippingCharge);
       let createdOrderId: string | null = null;
 
+      const shippingAddress = {
+        firstName: data.firstName, lastName: data.lastName, email: data.email,
+        phone: data.phone, address: data.address, apartment: data.apartment,
+        city: data.city, state: data.state, zipCode: data.zipCode, country: data.country,
+      };
+
+      const orderPayload: any = {
+        order_number: orderNumber, status: 'pending',
+        subtotal, shipping, tax, discount: totalDiscount, total,
+        payment_method: data.paymentMethod, shipping_address: shippingAddress,
+      };
+
       if (user) {
-        const shippingAddress = {
-          firstName: data.firstName, lastName: data.lastName, email: data.email,
-          phone: data.phone, address: data.address, apartment: data.apartment,
-          city: data.city, state: data.state, zipCode: data.zipCode, country: data.country,
-        };
+        orderPayload.user_id = user.id;
+      } else {
+        // Guest order - store contact info
+        orderPayload.guest_email = data.email || null;
+        orderPayload.guest_phone = data.phone || null;
+      }
 
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders').insert({
-            user_id: user.id, order_number: orderNumber, status: 'pending',
-            subtotal, shipping, tax, discount: totalDiscount, total,
-            payment_method: data.paymentMethod, shipping_address: shippingAddress,
-          }).select().single();
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders').insert(orderPayload).select().single();
 
-        if (orderError) {
-          toast.error('Failed to create order. Please try again.');
-          setIsProcessing(false);
-          return;
-        }
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        toast.error('Failed to create order. Please try again.');
+        setIsProcessing(false);
+        return;
+      }
 
-        createdOrderId = orderData.id;
+      createdOrderId = orderData.id;
 
-        const orderItems = checkoutItems.map(item => ({
-          order_id: orderData.id, product_id: item.product.id, product_name: item.product.name,
-          product_image: item.product.images[0] || null, price: item.product.price,
-          quantity: item.quantity, variations: item.selectedVariations || null,
-        }));
-        await supabase.from('order_items').insert(orderItems);
+      const orderItems = checkoutItems.map(item => ({
+        order_id: orderData.id, product_id: item.product.id, product_name: item.product.name,
+        product_image: item.product.images[0] || null, price: item.product.price,
+        quantity: item.quantity, variations: item.selectedVariations || null,
+      }));
+      await supabase.from('order_items').insert(orderItems);
 
-        if (appliedCouponId && orderData) {
-          await supabase.functions.invoke('apply-coupon', {
-            body: { coupon_id: appliedCouponId, order_id: orderData.id, discount_amount: promoDiscount },
-          });
-        }
+      if (appliedCouponId && orderData) {
+        await supabase.functions.invoke('apply-coupon', {
+          body: { coupon_id: appliedCouponId, order_id: orderData.id, discount_amount: promoDiscount },
+        });
+      }
 
-        if (data.saveAddress) {
-          await supabase.from('profiles').update({
-            first_name: data.firstName, last_name: data.lastName, phone: data.phone,
-            address: data.address, apartment: data.apartment, city: data.city,
-            state: data.state, zip_code: data.zipCode, country: data.country,
-          }).eq('user_id', user.id);
-        }
+      if (user && data.saveAddress) {
+        await supabase.from('profiles').update({
+          first_name: data.firstName, last_name: data.lastName, phone: data.phone,
+          address: data.address, apartment: data.apartment, city: data.city,
+          state: data.state, zip_code: data.zipCode, country: data.country,
+        }).eq('user_id', user.id);
       }
 
       // Cleanup incomplete order for both guest and logged-in
@@ -465,7 +473,7 @@ const Checkout = () => {
       }
 
       // Send auto confirmation email (non-blocking)
-      if (user && createdOrderId) {
+      if (createdOrderId) {
         supabase.functions.invoke('send-order-confirmation', {
           body: { order_id: createdOrderId },
         }).catch(err => console.error('Confirmation email error:', err));
