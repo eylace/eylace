@@ -71,19 +71,32 @@
        throw ordersError;
      }
  
-     // Fetch profiles for orders
-     const userIds = [...new Set(orders?.map(o => o.user_id) || [])];
-     const { data: profiles } = await supabaseAdmin
-       .from('profiles')
-       .select('user_id, first_name, last_name, email')
-       .in('user_id', userIds);
- 
-     const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
- 
-     const ordersWithProfiles = orders?.map(order => ({
-       ...order,
-       profile: profileMap.get(order.user_id) || null
-     }));
+      // Fetch profiles for orders (only for non-guest orders)
+      const userIds = [...new Set(orders?.filter(o => o.user_id).map(o => o.user_id) || [])];
+      let profileMap = new Map();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabaseAdmin
+          .from('profiles')
+          .select('user_id, first_name, last_name, email')
+          .in('user_id', userIds);
+        profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      }
+
+      const ordersWithProfiles = orders?.map(order => {
+        if (order.user_id) {
+          return { ...order, profile: profileMap.get(order.user_id) || null };
+        }
+        // Guest order - build profile from shipping_address and guest fields
+        const addr = order.shipping_address as any;
+        return {
+          ...order,
+          profile: {
+            first_name: addr?.firstName || 'Guest',
+            last_name: addr?.lastName || '',
+            email: order.guest_email || addr?.email || 'N/A',
+          },
+        };
+      });
  
      console.log(`Fetched ${orders?.length || 0} orders for admin`);
  
