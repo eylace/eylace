@@ -414,14 +414,13 @@ const TrackOrder = () => {
                     })()}
 
                     <ReturnReceipt
-                      returnData={{
-                        return_tracking_number: returnData.return_tracking_number,
-                        status: returnData.status,
-                        reason: returnData.reason,
-                        created_at: returnData.created_at,
-                        refund_amount: returnData.refund_amount,
-                        refund_method: returnData.refund_method,
-                      }}
+                      trackingNumber={returnData.return_tracking_number}
+                      orderNumber=""
+                      reason={returnData.reason}
+                      status={returnData.status}
+                      createdAt={returnData.created_at}
+                      refundAmount={returnData.refund_amount}
+                      refundMethod={returnData.refund_method}
                     />
                   </CardContent>
                 </Card>
