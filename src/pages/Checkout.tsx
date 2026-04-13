@@ -426,12 +426,38 @@ const Checkout = () => {
         orderPayload.guest_phone = normalizedGuestPhone;
       }
 
-      const { data: orderData, error: orderError } = await supabase
+      console.log('[Checkout] Inserting order, isGuest:', !user, 'payload:', JSON.stringify(orderPayload));
+
+      let orderData: any = null;
+      let orderError: any = null;
+
+      // Attempt insert
+      const result = await supabase
         .from('orders').insert(orderPayload).select().single();
+      orderData = result.data;
+      orderError = result.error;
+
+      // If guest order fails with RLS error, retry with a fresh anon client
+      if (orderError && !user) {
+        console.warn('[Checkout] Guest order insert failed, retrying with anon client:', orderError.message);
+        const { createClient } = await import('@supabase/supabase-js');
+        const anonClient = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          { auth: { persistSession: false, autoRefreshToken: false } }
+        );
+        await anonClient.auth.signOut(); // ensure no stale session
+        const retryResult = await anonClient.from('orders').insert(orderPayload).select().single();
+        orderData = retryResult.data;
+        orderError = retryResult.error;
+        if (orderError) {
+          console.error('[Checkout] Guest order RETRY also failed:', orderError);
+        }
+      }
 
       if (orderError) {
-        console.error('Order creation error:', orderError, orderPayload);
-        toast.error('Failed to create order. Please try again.');
+        console.error('[Checkout] Order creation error:', orderError, orderPayload);
+        toast.error(`Failed to create order: ${orderError.message || 'Unknown error'}`);
         setIsProcessing(false);
         return;
       }
@@ -443,10 +469,24 @@ const Checkout = () => {
         product_image: item.product.images?.[0] || null, price: item.product.price,
         quantity: item.quantity, variations: item.selectedVariations || null,
       }));
-      const { error: orderItemsError } = await supabase.from('order_items').insert(orderItems);
-      if (orderItemsError) {
-        console.error('Order items creation error:', orderItemsError, orderItems);
-        toast.error('Failed to save order items. Please try again.');
+      // For guest orders, use same client that succeeded for the order insert
+      let itemsResult;
+      if (!user) {
+        // Use a fresh anon client for consistency
+        const { createClient } = await import('@supabase/supabase-js');
+        const anonClient = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          { auth: { persistSession: false, autoRefreshToken: false } }
+        );
+        await anonClient.auth.signOut();
+        itemsResult = await anonClient.from('order_items').insert(orderItems);
+      } else {
+        itemsResult = await supabase.from('order_items').insert(orderItems);
+      }
+      if (itemsResult.error) {
+        console.error('[Checkout] Order items error:', itemsResult.error, orderItems);
+        toast.error(`Failed to save order items: ${itemsResult.error.message}`);
         setIsProcessing(false);
         return;
       }
@@ -534,15 +574,25 @@ const Checkout = () => {
             <h1 className="text-3xl font-bold text-foreground">{t('checkout.orderConfirmed')}</h1>
             <p className="text-muted-foreground">{t('checkout.orderThankYou')}</p>
             <div className="p-6 bg-card border border-border rounded-lg text-left space-y-4">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">{t('checkout.orderNumber')}</span>
-                <span className="font-mono font-bold text-foreground">{orderId}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-foreground">{orderId}</span>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText(orderId || ''); toast.success('Order number copied!'); }}>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
               <Separator />
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('checkout.estimatedDelivery')}</span>
                 <span className="font-medium text-foreground">{t('checkout.businessDays')}</span>
               </div>
+              {!user && (
+                <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg">
+                  <p className="text-sm text-warning font-medium">⚠️ Save this order number & your phone number to track your order later at <Link to="/track-order" className="underline font-bold">Track Order</Link></p>
+                </div>
+              )}
             </div>
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
               <p className="text-sm text-muted-foreground">

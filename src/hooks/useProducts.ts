@@ -171,6 +171,10 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
       if (opts.flashSaleOnly) {
         query = query.eq('is_flash_sale', true);
+        // Filter: only show flash sales that haven't ended yet
+        query = query.or('flash_sale_ends.is.null,flash_sale_ends.gt.' + new Date().toISOString());
+        // Filter: only show flash sales that have started (or have no start date)
+        query = query.or('flash_sale_starts.is.null,flash_sale_starts.lte.' + new Date().toISOString());
       }
 
       if (opts.searchQuery) {

@@ -37,6 +37,7 @@ const defaultForm = {
   meta_title: '', meta_description: '', meta_keywords: '',
   weight: '', length: '', width: '', height: '',
   flash_sale_ends: '',
+  flash_sale_starts: '',
 };
 
 export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: ProductFormModalProps) => {
@@ -77,6 +78,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
         weight: String(product.weight || ''), length: String(product.length || ''),
         width: String(product.width || ''), height: String(product.height || ''),
         flash_sale_ends: product.flash_sale_ends ? product.flash_sale_ends.slice(0, 16) : '',
+        flash_sale_starts: product.flash_sale_starts ? product.flash_sale_starts.slice(0, 16) : '',
       });
     } else {
       setForm({ ...defaultForm });
@@ -173,6 +175,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
       variations: form.variations.length > 0 ? form.variations : [],
       attributes: form.attributes.filter(a => a.name.trim()) || [],
       flash_sale_ends: form.is_flash_sale && form.flash_sale_ends ? form.flash_sale_ends : null,
+      flash_sale_starts: form.is_flash_sale && form.flash_sale_starts ? form.flash_sale_starts : null,
     };
 
     let error;
@@ -320,9 +323,15 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
             </div>
 
             {form.is_flash_sale && (
-              <div>
-                <Label>Flash Sale Ends</Label>
-                <Input type="datetime-local" value={form.flash_sale_ends} onChange={e => setForm(f => ({ ...f, flash_sale_ends: e.target.value }))} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Flash Sale Starts</Label>
+                  <Input type="datetime-local" value={form.flash_sale_starts} onChange={e => setForm(f => ({ ...f, flash_sale_starts: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Flash Sale Ends</Label>
+                  <Input type="datetime-local" value={form.flash_sale_ends} onChange={e => setForm(f => ({ ...f, flash_sale_ends: e.target.value }))} />
+                </div>
               </div>
             )}
 

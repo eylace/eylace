@@ -31,6 +31,9 @@ interface ProductFormData {
   stock: number;
   category_id: string | null;
   is_active: boolean;
+  is_flash_sale: boolean;
+  flash_sale_starts: string;
+  flash_sale_ends: string;
   images: string[];
 }
 
@@ -50,6 +53,9 @@ const emptyForm: ProductFormData = {
   stock: 0,
   category_id: null,
   is_active: true,
+  is_flash_sale: false,
+  flash_sale_starts: '',
+  flash_sale_ends: '',
   images: [],
 };
 
@@ -66,7 +72,13 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
 
   useEffect(() => {
     if (product) {
-      setForm(product);
+      setForm({
+        ...emptyForm,
+        ...product,
+        is_flash_sale: (product as any).is_flash_sale ?? false,
+        flash_sale_starts: (product as any).flash_sale_starts ? (product as any).flash_sale_starts.slice(0, 16) : '',
+        flash_sale_ends: (product as any).flash_sale_ends ? (product as any).flash_sale_ends.slice(0, 16) : '',
+      });
     } else {
       setForm(emptyForm);
     }
@@ -135,7 +147,7 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
 
     setIsSaving(true);
 
-    const payload = {
+    const payload: any = {
       name: form.name.trim(),
       slug: isEditing ? undefined : generateSlug(form.name),
       description: form.description || null,
@@ -144,6 +156,9 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
       stock: form.stock,
       category_id: form.category_id || null,
       is_active: form.is_active,
+      is_flash_sale: form.is_flash_sale,
+      flash_sale_starts: form.is_flash_sale && form.flash_sale_starts ? form.flash_sale_starts : null,
+      flash_sale_ends: form.is_flash_sale && form.flash_sale_ends ? form.flash_sale_ends : null,
       images: form.images,
       seller_id: sellerId,
     };
@@ -280,11 +295,29 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
             </div>
           </div>
 
-          {/* Active toggle */}
+          {/* Active & Flash Sale toggles */}
           <div className="flex items-center gap-3">
             <Switch checked={form.is_active} onCheckedChange={v => setForm(f => ({ ...f, is_active: v }))} />
             <Label>Active (visible to customers)</Label>
           </div>
+
+          <div className="flex items-center gap-3">
+            <Switch checked={form.is_flash_sale} onCheckedChange={v => setForm(f => ({ ...f, is_flash_sale: v }))} />
+            <Label>Flash Sale</Label>
+          </div>
+
+          {form.is_flash_sale && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Flash Sale Starts</Label>
+                <Input type="datetime-local" value={form.flash_sale_starts} onChange={e => setForm(f => ({ ...f, flash_sale_starts: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Flash Sale Ends</Label>
+                <Input type="datetime-local" value={form.flash_sale_ends} onChange={e => setForm(f => ({ ...f, flash_sale_ends: e.target.value }))} />
+              </div>
+            </div>
+          )}
 
           {/* Submit */}
           <div className="flex gap-3 justify-end pt-2">
