@@ -40,6 +40,12 @@ interface CheckoutFormData {
   cardCvv?: string;
 }
 
+const normalizeOptionalText = (value?: string) => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -390,14 +396,20 @@ const Checkout = () => {
       } = getCheckoutPricing(data.paymentMethod, promoDiscount, data.shippingCharge);
       let createdOrderId: string | null = null;
 
+      const normalizedGuestEmail = normalizeOptionalText(data.email);
+      const normalizedGuestPhone = normalizeOptionalText(data.phone);
       const shippingAddress = {
-        firstName: data.firstName, lastName: data.lastName, email: data.email,
-        phone: data.phone, address: data.address, apartment: data.apartment,
-        city: data.city, state: data.state, zipCode: data.zipCode, country: data.country,
+        firstName: normalizeOptionalText(data.firstName) || '',
+        lastName: normalizeOptionalText(data.lastName) || '',
+        email: normalizedGuestEmail || '',
+        phone: normalizedGuestPhone || '',
+        address: normalizeOptionalText(data.address) || '',
+        apartment: normalizeOptionalText(data.apartment) || '',
+        city: normalizeOptionalText(data.city) || '',
+        state: normalizeOptionalText(data.state) || '',
+        zipCode: normalizeOptionalText(data.zipCode) || '',
+        country: normalizeOptionalText(data.country) || 'BD',
       };
-
-      const normalizedGuestEmail = data.email.trim() || null;
-      const normalizedGuestPhone = data.phone.trim() || null;
 
       const orderPayload: any = {
         order_number: orderNumber, status: 'pending',
@@ -428,7 +440,7 @@ const Checkout = () => {
 
       const orderItems = checkoutItems.map(item => ({
         order_id: orderData.id, product_id: item.product.id, product_name: item.product.name,
-        product_image: item.product.images[0] || null, price: item.product.price,
+        product_image: item.product.images?.[0] || null, price: item.product.price,
         quantity: item.quantity, variations: item.selectedVariations || null,
       }));
       const { error: orderItemsError } = await supabase.from('order_items').insert(orderItems);

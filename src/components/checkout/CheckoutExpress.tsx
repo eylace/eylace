@@ -108,7 +108,7 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, items, subtotal,
       const phone = pendingFormData.phone.trim();
       const formattedPhone = phone.startsWith('+') ? phone : `+88${phone.replace(/^0/, '')}`;
       const { data: verifyData, error } = await supabase.functions.invoke('verify-otp', {
-        body: { phone: formattedPhone, code: otpValue },
+        body: { phone: formattedPhone, code: otpValue, purpose: 'checkout' },
       });
       if (error || !verifyData?.success) {
         toast.error(verifyData?.error || 'OTP ভেরিফিকেশন ব্যর্থ');

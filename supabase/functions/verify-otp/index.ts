@@ -12,7 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    const { phone, code } = await req.json();
+    const { phone, code, purpose } = await req.json();
+    const verificationPurpose = purpose === 'checkout' ? 'checkout' : 'auth';
     if (!phone || !code) {
       return new Response(JSON.stringify({ error: "Phone and code are required" }), {
         status: 400,
@@ -77,6 +78,16 @@ serve(async (req) => {
 
     // Mark OTP as used
     await supabase.from("otp_codes").update({ is_used: true }).eq("id", otpRecord.id);
+
+    if (verificationPurpose === 'checkout') {
+      return new Response(JSON.stringify({
+        success: true,
+        verified: true,
+        purpose: verificationPurpose,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Check if user exists with this phone
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
