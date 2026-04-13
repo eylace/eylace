@@ -396,6 +396,9 @@ const Checkout = () => {
         city: data.city, state: data.state, zipCode: data.zipCode, country: data.country,
       };
 
+      const normalizedGuestEmail = data.email.trim() || null;
+      const normalizedGuestPhone = data.phone.trim() || null;
+
       const orderPayload: any = {
         order_number: orderNumber, status: 'pending',
         subtotal, shipping, tax, discount: totalDiscount, total,
@@ -406,15 +409,16 @@ const Checkout = () => {
         orderPayload.user_id = user.id;
       } else {
         // Guest order - store contact info
-        orderPayload.guest_email = data.email || null;
-        orderPayload.guest_phone = data.phone || null;
+        orderPayload.user_id = null;
+        orderPayload.guest_email = normalizedGuestEmail;
+        orderPayload.guest_phone = normalizedGuestPhone;
       }
 
       const { data: orderData, error: orderError } = await supabase
         .from('orders').insert(orderPayload).select().single();
 
       if (orderError) {
-        console.error('Order creation error:', orderError);
+        console.error('Order creation error:', orderError, orderPayload);
         toast.error('Failed to create order. Please try again.');
         setIsProcessing(false);
         return;
@@ -427,7 +431,13 @@ const Checkout = () => {
         product_image: item.product.images[0] || null, price: item.product.price,
         quantity: item.quantity, variations: item.selectedVariations || null,
       }));
-      await supabase.from('order_items').insert(orderItems);
+      const { error: orderItemsError } = await supabase.from('order_items').insert(orderItems);
+      if (orderItemsError) {
+        console.error('Order items creation error:', orderItemsError, orderItems);
+        toast.error('Failed to save order items. Please try again.');
+        setIsProcessing(false);
+        return;
+      }
 
       if (appliedCouponId && orderData) {
         await supabase.functions.invoke('apply-coupon', {

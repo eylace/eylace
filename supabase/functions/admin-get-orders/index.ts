@@ -64,15 +64,19 @@ const normalizeShippingAddress = (shippingAddress: unknown) => {
 
       const userId = user.id;
  
-     // Check if user is admin
-      const { data: roleData, error: roleError } = await supabaseClient
-       .from('user_roles')
-       .select('role')
-       .eq('user_id', userId)
+      // Check if user has at least one allowed admin role
+      const { data: roleRows, error: roleError } = await supabaseClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
         .in('role', ORDER_ACCESS_ROLES)
-        .maybeSingle();
- 
-     if (roleError || !roleData) {
+        .limit(1);
+
+      if (roleError) {
+        console.error('Error checking admin order access role:', roleError);
+      }
+
+      if (roleError || !roleRows || roleRows.length === 0) {
        return new Response(
          JSON.stringify({ error: 'Forbidden - Admin access required' }),
          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
