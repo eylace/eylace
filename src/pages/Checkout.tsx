@@ -82,6 +82,15 @@ const getRestErrorMessage = (payload: unknown, fallback: string) => {
   return fallback;
 };
 
+const isPhoneAliasEmail = (value: string | null | undefined) => typeof value === 'string' && /^phone_\d+@phone\.local$/i.test(value.trim());
+
+const isImplicitGuestSession = (currentUser: { email?: string | null; user_metadata?: Record<string, unknown> | null } | null) => {
+  if (!currentUser) return false;
+
+  const loginMethod = currentUser.user_metadata?.login_method;
+  return isPhoneAliasEmail(currentUser.email) || loginMethod === 'phone_otp';
+};
+
 const isPrivilegedGuestCheckoutUser = async (userId: string) => {
   const { data, error } = await supabase
     .from('user_roles')
@@ -512,7 +521,12 @@ const Checkout = () => {
         payment_method: data.paymentMethod, shipping_address: shippingAddress,
       };
 
-      const shouldCreateGuestOrder = !user || await isPrivilegedGuestCheckoutUser(user.id);
+      const hasImplicitGuestSession = isImplicitGuestSession(user);
+      const shouldCreateGuestOrder = !user
+        ? true
+        : hasImplicitGuestSession
+          ? true
+          : await isPrivilegedGuestCheckoutUser(user.id);
 
       if (!shouldCreateGuestOrder && user) {
         orderPayload.user_id = user.id;
@@ -525,6 +539,7 @@ const Checkout = () => {
       console.log('[Checkout] Inserting order', {
         hasSessionUser: !!user,
         shouldCreateGuestOrder,
+        hasImplicitGuestSession,
         order_number: orderPayload.order_number,
         guest_phone: orderPayload.guest_phone,
       });
