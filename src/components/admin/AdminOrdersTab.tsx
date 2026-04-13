@@ -31,6 +31,37 @@ const statusConfig: Record<string, { labelKey: string; color: string; icon: Reac
   cancelled: { labelKey: 'admin.statusCancelled', color: 'bg-red-500/10 text-red-600 dark:text-red-400', icon: XCircle },
 };
 
+const normalizeShippingAddress = (shippingAddress: any = {}) => ({
+  first_name: shippingAddress?.first_name || shippingAddress?.firstName || '',
+  last_name: shippingAddress?.last_name || shippingAddress?.lastName || '',
+  email: shippingAddress?.email || '',
+  phone: shippingAddress?.phone || '',
+  address: shippingAddress?.address || '',
+  apartment: shippingAddress?.apartment || '',
+  city: shippingAddress?.city || '',
+  state: shippingAddress?.state || '',
+  zip_code: shippingAddress?.zip_code || shippingAddress?.zipCode || '',
+  country: shippingAddress?.country || '',
+});
+
+const getOrderCustomerName = (order: any) => {
+  const shippingAddress = normalizeShippingAddress(order?.shipping_address);
+  const firstName = order?.profile?.first_name || shippingAddress.first_name || 'Guest';
+  const lastName = order?.profile?.last_name || shippingAddress.last_name || '';
+
+  return `${firstName} ${lastName}`.trim() || 'Guest';
+};
+
+const getOrderCustomerEmail = (order: any) => {
+  const shippingAddress = normalizeShippingAddress(order?.shipping_address);
+  return order?.profile?.email || order?.guest_email || shippingAddress.email || 'N/A';
+};
+
+const getOrderCustomerPhone = (order: any) => {
+  const shippingAddress = normalizeShippingAddress(order?.shipping_address);
+  return order?.profile?.phone || order?.guest_phone || shippingAddress.phone || '';
+};
+
 export const AdminOrdersTab = () => {
   const { orders, isLoading, updateOrderStatus } = useAdminOrders();
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
@@ -68,9 +99,9 @@ export const AdminOrdersTab = () => {
       const q = searchQuery.toLowerCase();
       result = result.filter(o =>
         o.order_number?.toLowerCase().includes(q) ||
-        o.profile?.email?.toLowerCase().includes(q) ||
-        o.profile?.first_name?.toLowerCase().includes(q) ||
-        o.profile?.last_name?.toLowerCase().includes(q) ||
+        getOrderCustomerEmail(o).toLowerCase().includes(q) ||
+        getOrderCustomerName(o).toLowerCase().includes(q) ||
+        getOrderCustomerPhone(o).toLowerCase().includes(q) ||
         o.tracking_number?.toLowerCase().includes(q)
       );
     }
@@ -117,15 +148,17 @@ export const AdminOrdersTab = () => {
     setDispatching(true);
     try {
       const order = courierDispatchOrder;
-      const addr = order.shipping_address || {};
+      const addr = normalizeShippingAddress(order.shipping_address);
+      const customerName = getOrderCustomerName(order);
+      const customerPhone = getOrderCustomerPhone(order);
       const { data, error } = await supabase.functions.invoke('shipping-provider', {
         body: {
           action: 'create_order',
           provider: dispatchProvider,
           payload: {
             order_id: order.order_number,
-            recipient_name: `${order.profile?.first_name || ''} ${order.profile?.last_name || ''}`.trim() || 'Customer',
-            recipient_phone: addr.phone || order.profile?.phone || '01700000000',
+            recipient_name: customerName,
+            recipient_phone: customerPhone || '01700000000',
             recipient_address: `${addr.address || ''} ${addr.apartment || ''} ${addr.city || ''} ${addr.state || ''} ${addr.zip_code || ''}`.trim(),
             amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
             item_description: order.items?.map((i: any) => `${i.product_name} x${i.quantity}`).join(', ') || 'Products',
@@ -156,7 +189,9 @@ export const AdminOrdersTab = () => {
     const win = window.open('', '_blank');
     if (!win || !invoiceOrder) return;
     const o = invoiceOrder;
-    const addr = o.shipping_address || {};
+    const addr = normalizeShippingAddress(o.shipping_address);
+    const customerName = getOrderCustomerName(o);
+    const customerEmail = getOrderCustomerEmail(o);
     const esc = (s: unknown) =>
       String(s ?? '')
         .replace(/&/g, '&amp;')
@@ -173,9 +208,9 @@ export const AdminOrdersTab = () => {
     <body><div class="header"><div><div class="title">INVOICE</div><div>#${esc(o.order_number)}</div>
     <div>Date: ${format(new Date(o.created_at), 'MMM d, yyyy')}</div></div>
     <div style="text-align:right"><div><strong>Bill To:</strong></div>
-    <div>${esc(o.profile?.first_name)} ${esc(o.profile?.last_name)}</div>
-    <div>${esc(o.profile?.email)}</div>
-    <div>${esc(addr.address)} ${esc(addr.city)}</div></div></div>
+    <div>${esc(customerName)}</div>
+    <div>${esc(customerEmail)}</div>
+    <div>${esc([addr.address, addr.apartment, addr.city, addr.state, addr.zip_code].filter(Boolean).join(', '))}</div></div></div>
     <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>
     ${(o.items || []).map((i: any) => `<tr><td>${esc(i.product_name)}</td><td>${esc(i.quantity)}</td><td>৳${Number(i.price || 0).toFixed(2)}</td><td>৳${(Number(i.price || 0) * Number(i.quantity || 0)).toFixed(2)}</td></tr>`).join('')}
     </tbody></table>
@@ -249,8 +284,8 @@ export const AdminOrdersTab = () => {
               </Select>
               <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => exportToCSV(
                 orders.map(o => ({
-                  order_number: o.order_number, customer: `${o.profile?.first_name || ''} ${o.profile?.last_name || ''}`.trim(),
-                  email: o.profile?.email || '', status: o.status, total: o.total?.toFixed(2), carrier: o.carrier || '',
+                  order_number: o.order_number, customer: getOrderCustomerName(o),
+                  email: getOrderCustomerEmail(o), status: o.status, total: o.total?.toFixed(2), carrier: o.carrier || '',
                   tracking: o.tracking_number || '', date: format(new Date(o.created_at), 'yyyy-MM-dd'),
                 })),
                 [{ key: 'order_number', label: 'Order #' }, { key: 'customer', label: 'Customer' }, { key: 'email', label: 'Email' },
@@ -297,6 +332,10 @@ export const AdminOrdersTab = () => {
                 const StatusIcon = status.icon;
                 const isExpanded = expandedOrder === order.id;
                 const isSelected = selectedOrders.has(order.id);
+                const customerName = getOrderCustomerName(order);
+                const customerEmail = getOrderCustomerEmail(order);
+                const customerPhone = getOrderCustomerPhone(order);
+                const shippingAddress = normalizeShippingAddress(order.shipping_address);
 
                 return (
                   <div key={order.id} className={cn("border rounded-lg overflow-hidden transition-all", isSelected && "border-accent/50 bg-accent/5")}>
@@ -311,7 +350,7 @@ export const AdminOrdersTab = () => {
                             </Badge>
                           </div>
                           <p className="text-xs text-muted-foreground truncate">
-                            {order.profile?.first_name} {order.profile?.last_name} • {order.profile?.email}
+                            {customerName} • {customerEmail}
                           </p>
                         </div>
                       </div>
@@ -367,20 +406,21 @@ export const AdminOrdersTab = () => {
                             <div>
                               <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><MapPin className="h-4 w-4" /> Shipping Address</h4>
                               <div className="p-3 bg-background rounded-lg text-sm space-y-1">
-                                <p className="font-medium">{order.profile?.first_name} {order.profile?.last_name}</p>
-                                <p className="text-muted-foreground">{order.shipping_address?.address || 'N/A'}</p>
-                                {order.shipping_address?.apartment && <p className="text-muted-foreground">{order.shipping_address.apartment}</p>}
+                                <p className="font-medium">{customerName}</p>
+                                <p className="text-muted-foreground">{customerEmail}</p>
+                                <p className="text-muted-foreground">{shippingAddress.address || 'N/A'}</p>
+                                {shippingAddress.apartment && <p className="text-muted-foreground">{shippingAddress.apartment}</p>}
                                 <p className="text-muted-foreground">
-                                  {order.shipping_address?.city}{order.shipping_address?.state ? `, ${order.shipping_address.state}` : ''} {order.shipping_address?.zip_code}
+                                  {shippingAddress.city}{shippingAddress.state ? `, ${shippingAddress.state}` : ''} {shippingAddress.zip_code}
                                 </p>
-                                <p className="text-muted-foreground">{order.shipping_address?.country}</p>
-                                {order.shipping_address?.phone && (
+                                <p className="text-muted-foreground">{shippingAddress.country}</p>
+                                {customerPhone && (
                                   <div className="flex items-center gap-2">
-                                    <p className="text-muted-foreground flex items-center gap-1">📞 {order.shipping_address.phone}</p>
-                                    <a href={`tel:${order.shipping_address.phone}`} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-md transition-colors" title="Call Customer">
+                                    <p className="text-muted-foreground flex items-center gap-1">📞 {customerPhone}</p>
+                                    <a href={`tel:${customerPhone}`} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded-md transition-colors" title="Call Customer">
                                       <Phone className="h-3 w-3" /> Call
                                     </a>
-                                    <a href={`https://wa.me/${(order.shipping_address.phone || '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="WhatsApp">
+                                    <a href={`https://wa.me/${customerPhone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors" title="WhatsApp">
                                       <MessageCircle className="h-3 w-3" /> WhatsApp
                                     </a>
                                   </div>
@@ -494,8 +534,8 @@ export const AdminOrdersTab = () => {
             <div className="space-y-4">
               <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">Order</span><span className="font-semibold">#{courierDispatchOrder.order_number}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Customer</span><span>{courierDispatchOrder.profile?.first_name} {courierDispatchOrder.profile?.last_name}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className="font-bold">${courierDispatchOrder.total.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Customer</span><span>{getOrderCustomerName(courierDispatchOrder)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className="font-bold">৳{courierDispatchOrder.total.toFixed(2)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Payment</span><Badge variant="outline" className="text-xs">{courierDispatchOrder.payment_method?.toUpperCase()}</Badge></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Items</span><span>{courierDispatchOrder.items?.length || 0} items</span></div>
               </div>

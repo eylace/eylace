@@ -4,6 +4,33 @@
    'Access-Control-Allow-Origin': '*',
    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
  };
+
+const ORDER_ACCESS_ROLES = ['super_admin', 'admin', 'order_manager', 'support_manager', 'moderator'];
+
+const normalizeText = (value: unknown) => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeShippingAddress = (shippingAddress: unknown) => {
+  const address = typeof shippingAddress === 'object' && shippingAddress !== null
+    ? shippingAddress as Record<string, unknown>
+    : {};
+
+  return {
+    first_name: normalizeText(address.first_name ?? address.firstName),
+    last_name: normalizeText(address.last_name ?? address.lastName),
+    email: normalizeText(address.email),
+    phone: normalizeText(address.phone),
+    address: normalizeText(address.address),
+    apartment: normalizeText(address.apartment),
+    city: normalizeText(address.city),
+    state: normalizeText(address.state),
+    zip_code: normalizeText(address.zip_code ?? address.zipCode),
+    country: normalizeText(address.country),
+  };
+};
  
  Deno.serve(async (req) => {
    if (req.method === 'OPTIONS') {
@@ -38,12 +65,12 @@
       const userId = user.id;
  
      // Check if user is admin
-     const { data: roleData, error: roleError } = await supabaseClient
+      const { data: roleData, error: roleError } = await supabaseClient
        .from('user_roles')
        .select('role')
        .eq('user_id', userId)
-       .eq('role', 'admin')
-       .single();
+        .in('role', ORDER_ACCESS_ROLES)
+        .maybeSingle();
  
      if (roleError || !roleData) {
        return new Response(
@@ -77,26 +104,26 @@
       if (userIds.length > 0) {
         const { data: profiles } = await supabaseAdmin
           .from('profiles')
-          .select('user_id, first_name, last_name, email')
+           .select('user_id, first_name, last_name, email, phone')
           .in('user_id', userIds);
         profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
       }
 
-      const ordersWithProfiles = orders?.map(order => {
-        if (order.user_id) {
-          return { ...order, profile: profileMap.get(order.user_id) || null };
-        }
-        // Guest order - build profile from shipping_address and guest fields
-        const addr = order.shipping_address as any;
-        return {
-          ...order,
-          profile: {
-            first_name: addr?.firstName || 'Guest',
-            last_name: addr?.lastName || '',
-            email: order.guest_email || addr?.email || 'N/A',
-          },
-        };
-      });
+       const ordersWithProfiles = orders?.map(order => {
+         const profile = order.user_id ? profileMap.get(order.user_id) : null;
+         const shippingAddress = normalizeShippingAddress(order.shipping_address);
+
+         return {
+           ...order,
+           shipping_address: shippingAddress,
+           profile: {
+             first_name: profile?.first_name || shippingAddress.first_name || 'Guest',
+             last_name: profile?.last_name || shippingAddress.last_name || '',
+             email: profile?.email || order.guest_email || shippingAddress.email || 'N/A',
+             phone: profile?.phone || order.guest_phone || shippingAddress.phone || null,
+           },
+         };
+       });
  
      console.log(`Fetched ${orders?.length || 0} orders for admin`);
  

@@ -49,7 +49,7 @@ export const SECTION_PERMISSION_MAP: Record<string, string> = {
 export interface AdminOrder {
   id: string;
   order_number: string;
-  user_id: string;
+  user_id: string | null;
   status: string;
   total: number;
   subtotal: number;
@@ -58,6 +58,8 @@ export interface AdminOrder {
   discount: number;
   payment_method: string;
   shipping_address: any;
+  guest_email?: string | null;
+  guest_phone?: string | null;
   carrier: string | null;
   tracking_number: string | null;
   estimated_delivery: string | null;
@@ -70,6 +72,7 @@ export interface AdminOrder {
     first_name: string | null;
     last_name: string | null;
     email: string | null;
+    phone?: string | null;
   };
 }
 

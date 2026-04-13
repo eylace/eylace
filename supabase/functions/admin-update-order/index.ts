@@ -6,6 +6,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const ORDER_ACCESS_ROLES = ['super_admin', 'admin', 'order_manager', 'support_manager', 'moderator'];
+
+const normalizeText = (value: unknown) => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeShippingAddress = (shippingAddress: unknown) => {
+  const address = typeof shippingAddress === 'object' && shippingAddress !== null
+    ? shippingAddress as Record<string, unknown>
+    : {};
+
+  return {
+    first_name: normalizeText(address.first_name ?? address.firstName),
+    last_name: normalizeText(address.last_name ?? address.lastName),
+    email: normalizeText(address.email),
+    phone: normalizeText(address.phone),
+  };
+};
+
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
 Deno.serve(async (req) => {
@@ -52,8 +73,8 @@ Deno.serve(async (req) => {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
+      .in('role', ORDER_ACCESS_ROLES)
+      .maybeSingle();
 
     if (roleError || !roleData) {
       return new Response(
@@ -113,16 +134,26 @@ Deno.serve(async (req) => {
       });
 
     // Get user email for notification
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('email, first_name')
-      .eq('user_id', order.user_id)
-      .single();
+    const shippingAddress = normalizeShippingAddress(order.shipping_address);
+    let profile: { email: string | null; first_name: string | null } | null = null;
+
+    if (order.user_id) {
+      const { data: profileData } = await supabaseAdmin
+        .from('profiles')
+        .select('email, first_name')
+        .eq('user_id', order.user_id)
+        .maybeSingle();
+
+      profile = profileData;
+    }
+
+    const recipientEmail = profile?.email || order.guest_email || shippingAddress.email;
+    const recipientName = profile?.first_name || shippingAddress.first_name || 'there';
 
     // Send email notification for all status changes
-    if (profile?.email && Deno.env.get('RESEND_API_KEY')) {
+    if (recipientEmail && Deno.env.get('RESEND_API_KEY')) {
       try {
-        const name = profile.first_name || 'there';
+        const name = recipientName;
         const orderNum = order.order_number;
 
         const statusMessages: Record<string, { subject: string; body: string }> = {
@@ -156,7 +187,7 @@ Deno.serve(async (req) => {
         if (emailContent) {
           await resend.emails.send({
             from: 'Eylace <noreply@resend.dev>',
-            to: [profile.email],
+            to: [recipientEmail],
             subject: emailContent.subject,
             text: emailContent.body,
           });

@@ -57,6 +57,7 @@ const Checkout = () => {
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(15);
   const [buyNowItems, setBuyNowItems] = useState<CartItem[]>(() => getBuyNowCheckoutItems());
+  const pendingCodDataRef = useRef<CheckoutFormData | null>(null);
 
   // Session-based incomplete order tracking
   const sessionIdRef = useRef<string>(crypto.randomUUID());
@@ -531,7 +532,7 @@ const Checkout = () => {
             </div>
             <p className="text-sm text-muted-foreground">{t('checkout.confirmationEmail')}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button variant="outline" asChild><Link to="/orders">{t('checkout.trackOrder')}</Link></Button>
+              <Button variant="outline" asChild><Link to={user ? '/orders' : '/track-order'}>{t('checkout.trackOrder')}</Link></Button>
               <Button variant="accent" asChild><Link to="/">{t('checkout.continueShopping')}</Link></Button>
             </div>
           </div>
@@ -553,18 +554,24 @@ const Checkout = () => {
         return;
       }
       setPendingCodData(data);
+      pendingCodDataRef.current = data;
       setShowCodOtp(true);
       return;
     }
     processOrder(data);
   };
 
-  const handleCodOtpVerified = () => {
+  const handleCodOtpVerified = async () => {
+    const verifiedCodData = pendingCodDataRef.current ?? pendingCodData;
     setShowCodOtp(false);
-    if (pendingCodData) {
-      processOrder(pendingCodData);
-      setPendingCodData(null);
+    if (!verifiedCodData) {
+      toast.error('অর্ডারের তথ্য খুঁজে পাওয়া যায়নি। আবার চেষ্টা করুন।');
+      return;
     }
+
+    await processOrder(verifiedCodData);
+    pendingCodDataRef.current = null;
+    setPendingCodData(null);
   };
 
 
@@ -590,7 +597,7 @@ const Checkout = () => {
       {renderCheckoutLayout()}
       <CodOtpVerificationModal
         open={showCodOtp}
-        onClose={() => { setShowCodOtp(false); setPendingCodData(null); }}
+        onClose={() => { setShowCodOtp(false); setPendingCodData(null); pendingCodDataRef.current = null; }}
         onVerified={handleCodOtpVerified}
         phone={pendingCodData?.phone || form.getValues('phone') || ''}
       />
