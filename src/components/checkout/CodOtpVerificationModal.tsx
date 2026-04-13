@@ -129,7 +129,7 @@ export const CodOtpVerificationModal = ({ open, onClose, onVerified, phone }: Co
     try {
       const formattedPhone = formatPhone(phone);
       const res = await supabase.functions.invoke('verify-otp', {
-        body: { phone: formattedPhone, code },
+        body: { phone: formattedPhone, code, purpose: 'checkout' },
       });
       if (res.error || res.data?.error) {
         toast.error(res.data?.error || 'OTP যাচাই ব্যর্থ');

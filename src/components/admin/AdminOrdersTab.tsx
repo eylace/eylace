@@ -44,6 +44,10 @@ const normalizeShippingAddress = (shippingAddress: any = {}) => ({
   country: shippingAddress?.country || '',
 });
 
+const isPhoneAliasEmail = (value: string | null | undefined) => typeof value === 'string' && /^phone_\d+@phone\.local$/i.test(value.trim());
+
+const isGuestLikeOrder = (order: any) => !order?.user_id || isPhoneAliasEmail(order?.profile?.email);
+
 const getOrderCustomerName = (order: any) => {
   const shippingAddress = normalizeShippingAddress(order?.shipping_address);
   const firstName = order?.profile?.first_name || shippingAddress.first_name || 'Guest';
@@ -54,7 +58,8 @@ const getOrderCustomerName = (order: any) => {
 
 const getOrderCustomerEmail = (order: any) => {
   const shippingAddress = normalizeShippingAddress(order?.shipping_address);
-  return order?.profile?.email || order?.guest_email || shippingAddress.email || 'N/A';
+  const profileEmail = isPhoneAliasEmail(order?.profile?.email) ? null : order?.profile?.email;
+  return profileEmail || order?.guest_email || shippingAddress.email || 'N/A';
 };
 
 const getOrderCustomerPhone = (order: any) => {
@@ -348,6 +353,7 @@ export const AdminOrdersTab = () => {
                             <Badge className={cn('gap-1 text-[10px] px-1.5', status.color)}>
                               <StatusIcon className="h-3 w-3" />{t(status.labelKey as any)}
                             </Badge>
+                            {isGuestLikeOrder(order) && <Badge variant="outline" className="text-[10px] px-1.5">Guest</Badge>}
                           </div>
                           <p className="text-xs text-muted-foreground truncate">
                             {customerName} • {customerEmail}
@@ -491,13 +497,20 @@ export const AdminOrdersTab = () => {
       <Dialog open={!!invoiceOrder} onOpenChange={open => !open && setInvoiceOrder(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Invoice #{invoiceOrder?.order_number}</DialogTitle></DialogHeader>
-          {invoiceOrder && (
+          {invoiceOrder && (() => {
+            const invoiceCustomerName = getOrderCustomerName(invoiceOrder);
+            const invoiceCustomerEmail = getOrderCustomerEmail(invoiceOrder);
+            const invoiceCustomerPhone = getOrderCustomerPhone(invoiceOrder);
+            const invoiceAddress = normalizeShippingAddress(invoiceOrder.shipping_address);
+
+            return (
             <div className="space-y-4">
               <div className="flex justify-between text-sm">
                 <div>
-                  <p className="font-semibold">{invoiceOrder.profile?.first_name} {invoiceOrder.profile?.last_name}</p>
-                  <p className="text-muted-foreground">{invoiceOrder.profile?.email}</p>
-                  <p className="text-muted-foreground">{invoiceOrder.shipping_address?.address} {invoiceOrder.shipping_address?.city}</p>
+                  <p className="font-semibold">{invoiceCustomerName}</p>
+                  <p className="text-muted-foreground">{invoiceCustomerEmail}</p>
+                  {invoiceCustomerPhone && <p className="text-muted-foreground">{invoiceCustomerPhone}</p>}
+                  <p className="text-muted-foreground">{[invoiceAddress.address, invoiceAddress.apartment, invoiceAddress.city, invoiceAddress.state, invoiceAddress.zip_code].filter(Boolean).join(', ') || 'N/A'}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">Invoice #{invoiceOrder.order_number}</p>
@@ -522,7 +535,8 @@ export const AdminOrdersTab = () => {
               </div>
               <Button onClick={printInvoice} className="w-full gap-2"><Printer className="h-4 w-4" /> Print Invoice</Button>
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
