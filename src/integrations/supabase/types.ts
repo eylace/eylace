@@ -1628,6 +1628,7 @@ export type Database = {
           digital_file_url: string | null
           discount: number | null
           flash_sale_ends: string | null
+          flash_sale_starts: string | null
           id: string
           images: string[] | null
           is_active: boolean | null
@@ -1658,6 +1659,7 @@ export type Database = {
           digital_file_url?: string | null
           discount?: number | null
           flash_sale_ends?: string | null
+          flash_sale_starts?: string | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
@@ -1688,6 +1690,7 @@ export type Database = {
           digital_file_url?: string | null
           discount?: number | null
           flash_sale_ends?: string | null
+          flash_sale_starts?: string | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null

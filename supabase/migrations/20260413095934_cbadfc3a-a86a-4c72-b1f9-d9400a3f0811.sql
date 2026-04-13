@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS flash_sale_starts timestamptz DEFAULT NULL;
