@@ -46,6 +46,100 @@ const normalizeOptionalText = (value?: string) => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const PRIVILEGED_GUEST_CHECKOUT_ROLES = [
+  'super_admin',
+  'admin',
+  'product_manager',
+  'order_manager',
+  'vendor_manager',
+  'customer_manager',
+  'content_manager',
+  'marketing_manager',
+  'finance_manager',
+  'support_manager',
+  'moderator',
+] as const;
+
+const parseRestResponse = async (response: Response) => {
+  const text = await response.text();
+  if (!text) return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+};
+
+const getRestErrorMessage = (payload: unknown, fallback: string) => {
+  if (typeof payload === 'string' && payload.trim()) return payload;
+  if (payload && typeof payload === 'object') {
+    const record = payload as Record<string, unknown>;
+    const message = record.message ?? record.error_description ?? record.error ?? record.hint;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+
+  return fallback;
+};
+
+const isPrivilegedGuestCheckoutUser = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .in('role', [...PRIVILEGED_GUEST_CHECKOUT_ROLES])
+    .limit(1);
+
+  if (error) {
+    console.error('[Checkout] Failed to resolve checkout role, falling back to account order:', error);
+    return false;
+  }
+
+  return (data?.length ?? 0) > 0;
+};
+
+const insertGuestOrderWithAnonApi = async (orderPayload: Record<string, unknown>) => {
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/orders?select=*`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      'Prefer': 'return=representation',
+    },
+    body: JSON.stringify(orderPayload),
+  });
+
+  const payload = await parseRestResponse(response);
+  if (!response.ok) {
+    throw new Error(getRestErrorMessage(payload, 'Guest order insert failed'));
+  }
+
+  if (!Array.isArray(payload) || !payload[0]) {
+    throw new Error('Guest order insert returned no order data');
+  }
+
+  return payload[0];
+};
+
+const insertGuestOrderItemsWithAnonApi = async (orderItems: Record<string, unknown>[]) => {
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/order_items`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify(orderItems),
+  });
+
+  if (!response.ok) {
+    const payload = await parseRestResponse(response);
+    throw new Error(getRestErrorMessage(payload, 'Guest order items insert failed'));
+  }
+};
+
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,6 +150,7 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [lastOrderWasGuest, setLastOrderWasGuest] = useState(false);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [showCodOtp, setShowCodOtp] = useState(false);
@@ -417,42 +512,37 @@ const Checkout = () => {
         payment_method: data.paymentMethod, shipping_address: shippingAddress,
       };
 
-      if (user) {
+      const shouldCreateGuestOrder = !user || await isPrivilegedGuestCheckoutUser(user.id);
+
+      if (!shouldCreateGuestOrder && user) {
         orderPayload.user_id = user.id;
       } else {
-        // Guest order - store contact info
         orderPayload.user_id = null;
         orderPayload.guest_email = normalizedGuestEmail;
         orderPayload.guest_phone = normalizedGuestPhone;
       }
 
-      console.log('[Checkout] Inserting order, isGuest:', !user, 'payload:', JSON.stringify(orderPayload));
+      console.log('[Checkout] Inserting order', {
+        hasSessionUser: !!user,
+        shouldCreateGuestOrder,
+        order_number: orderPayload.order_number,
+        guest_phone: orderPayload.guest_phone,
+      });
 
       let orderData: any = null;
       let orderError: any = null;
 
-      // Attempt insert
-      const result = await supabase
-        .from('orders').insert(orderPayload).select().single();
-      orderData = result.data;
-      orderError = result.error;
-
-      // If guest order fails with RLS error, retry with a fresh anon client
-      if (orderError && !user) {
-        console.warn('[Checkout] Guest order insert failed, retrying with anon client:', orderError.message);
-        const { createClient } = await import('@supabase/supabase-js');
-        const anonClient = createClient(
-          import.meta.env.VITE_SUPABASE_URL,
-          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          { auth: { persistSession: false, autoRefreshToken: false } }
-        );
-        await anonClient.auth.signOut(); // ensure no stale session
-        const retryResult = await anonClient.from('orders').insert(orderPayload).select().single();
-        orderData = retryResult.data;
-        orderError = retryResult.error;
-        if (orderError) {
-          console.error('[Checkout] Guest order RETRY also failed:', orderError);
+      if (shouldCreateGuestOrder) {
+        try {
+          orderData = await insertGuestOrderWithAnonApi(orderPayload);
+        } catch (error) {
+          orderError = error;
         }
+      } else {
+        const result = await supabase
+          .from('orders').insert(orderPayload).select().single();
+        orderData = result.data;
+        orderError = result.error;
       }
 
       if (orderError) {
@@ -469,21 +559,21 @@ const Checkout = () => {
         product_image: item.product.images?.[0] || null, price: item.product.price,
         quantity: item.quantity, variations: item.selectedVariations || null,
       }));
-      // For guest orders, use same client that succeeded for the order insert
-      let itemsResult;
-      if (!user) {
-        // Use a fresh anon client for consistency
-        const { createClient } = await import('@supabase/supabase-js');
-        const anonClient = createClient(
-          import.meta.env.VITE_SUPABASE_URL,
-          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          { auth: { persistSession: false, autoRefreshToken: false } }
-        );
-        await anonClient.auth.signOut();
-        itemsResult = await anonClient.from('order_items').insert(orderItems);
+      let itemsResult: { error: { message?: string } | null } = { error: null };
+      if (shouldCreateGuestOrder) {
+        try {
+          await insertGuestOrderItemsWithAnonApi(orderItems);
+        } catch (error) {
+          itemsResult = {
+            error: {
+              message: error instanceof Error ? error.message : 'Unknown error',
+            },
+          };
+        }
       } else {
         itemsResult = await supabase.from('order_items').insert(orderItems);
       }
+
       if (itemsResult.error) {
         console.error('[Checkout] Order items error:', itemsResult.error, orderItems);
         toast.error(`Failed to save order items: ${itemsResult.error.message}`);
@@ -497,7 +587,7 @@ const Checkout = () => {
         });
       }
 
-      if (user && data.saveAddress) {
+      if (!shouldCreateGuestOrder && user && data.saveAddress) {
         await supabase.from('profiles').update({
           first_name: data.firstName, last_name: data.lastName, phone: data.phone,
           address: data.address, apartment: data.apartment, city: data.city,
@@ -510,6 +600,7 @@ const Checkout = () => {
 
       await new Promise(resolve => setTimeout(resolve, 1000));
       setOrderId(orderNumber);
+      setLastOrderWasGuest(shouldCreateGuestOrder);
       if (isBuyNowMode) {
         clearBuyNowCheckout();
         setBuyNowItems([]);
@@ -588,7 +679,7 @@ const Checkout = () => {
                 <span className="text-muted-foreground">{t('checkout.estimatedDelivery')}</span>
                 <span className="font-medium text-foreground">{t('checkout.businessDays')}</span>
               </div>
-              {!user && (
+              {lastOrderWasGuest && (
                 <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg">
                   <p className="text-sm text-warning font-medium">⚠️ Save this order number & your phone number to track your order later at <Link to="/track-order" className="underline font-bold">Track Order</Link></p>
                 </div>
@@ -604,7 +695,7 @@ const Checkout = () => {
             </div>
             <p className="text-sm text-muted-foreground">{t('checkout.confirmationEmail')}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button variant="outline" asChild><Link to={user ? '/orders' : '/track-order'}>{t('checkout.trackOrder')}</Link></Button>
+              <Button variant="outline" asChild><Link to={lastOrderWasGuest ? '/track-order' : '/orders'}>{t('checkout.trackOrder')}</Link></Button>
               <Button variant="accent" asChild><Link to="/">{t('checkout.continueShopping')}</Link></Button>
             </div>
           </div>
