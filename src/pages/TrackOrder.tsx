@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Package, Search, Truck, CheckCircle, Clock, MapPin, RotateCcw, Copy, Loader2, ShoppingBag, XCircle } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Package, Search, Truck, CheckCircle, Clock, MapPin, RotateCcw, Copy, Loader2, ShoppingBag, XCircle, Phone } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -44,6 +43,7 @@ const statusColors: Record<string, string> = {
 
 const TrackOrder = () => {
   const [orderNumber, setOrderNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [orderSearched, setOrderSearched] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderData, setOrderData] = useState<any>(null);
@@ -54,19 +54,13 @@ const TrackOrder = () => {
   const [returnSearched, setReturnSearched] = useState(false);
   const [returnData, setReturnData] = useState<any>(null);
   const [returnLoading, setReturnLoading] = useState(false);
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  // Redirect logged-in users to their account orders tab
-  useEffect(() => {
-    if (!loading && user) {
-      navigate('/account?tab=orders', { replace: true });
-    }
-  }, [user, loading, navigate]);
 
   const handleOrderSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderNumber.trim()) return;
+    if (!orderNumber.trim() || !phoneNumber.trim()) {
+      toast.error('Please enter both order number and phone number');
+      return;
+    }
     setOrderLoading(true);
     setOrderSearched(false);
     setOrderData(null);
@@ -87,6 +81,38 @@ const TrackOrder = () => {
     }
 
     const order = orders[0];
+
+    // Verify phone number matches guest_phone or shipping_address phone
+    const normalizedInput = phoneNumber.trim().replace(/\s+/g, '');
+    const guestPhone = (order.guest_phone || '').replace(/\s+/g, '');
+    const shippingPhone = ((order.shipping_address as any)?.phone || '').replace(/\s+/g, '');
+    
+    const phoneMatches = 
+      normalizedInput === guestPhone ||
+      normalizedInput === shippingPhone ||
+      ('+88' + normalizedInput) === guestPhone ||
+      normalizedInput === ('+88' + guestPhone) ||
+      normalizedInput.endsWith(guestPhone.slice(-10)) ||
+      guestPhone.endsWith(normalizedInput.slice(-10)) ||
+      normalizedInput.endsWith(shippingPhone.slice(-10)) ||
+      shippingPhone.endsWith(normalizedInput.slice(-10));
+
+    // For authenticated orders, also check if user_id matches (they can track via account page too)
+    if (!phoneMatches && order.user_id) {
+      // authenticated order - phone must match shipping address
+      if (!shippingPhone.endsWith(normalizedInput.slice(-10)) && !normalizedInput.endsWith(shippingPhone.slice(-10))) {
+        setOrderSearched(true);
+        setOrderLoading(false);
+        toast.error('Phone number does not match this order');
+        return;
+      }
+    } else if (!phoneMatches) {
+      setOrderSearched(true);
+      setOrderLoading(false);
+      toast.error('Phone number does not match this order');
+      return;
+    }
+
     setOrderData(order);
     setOrderItems(order.order_items || []);
 
@@ -125,11 +151,10 @@ const TrackOrder = () => {
     setReturnSearched(true);
   };
 
-  // Determine which steps are done based on order status
   const getOrderStepStatus = (order: any) => {
     const statusOrder = ['pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'];
     const currentIdx = statusOrder.indexOf(order.status);
-    if (order.status === 'cancelled') return -1; // All grey
+    if (order.status === 'cancelled') return -1;
     return currentIdx;
   };
 
@@ -141,7 +166,7 @@ const TrackOrder = () => {
           <div className="container mx-auto px-4 text-center max-w-2xl">
             <Truck className="h-12 w-12 mx-auto mb-4" />
             <h1 className="text-3xl md:text-4xl font-bold mb-4">Track Your Order or Return</h1>
-            <p className="text-primary-foreground/80">Enter your order or return tracking number to see real-time updates</p>
+            <p className="text-primary-foreground/80">Enter your order number and phone number to see real-time updates</p>
           </div>
         </div>
 
@@ -154,19 +179,33 @@ const TrackOrder = () => {
 
             {/* Track Order Tab */}
             <TabsContent value="order" className="space-y-6 mt-6">
-              <form onSubmit={handleOrderSearch} className="flex gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    placeholder="e.g. ORD-2024-XXXXX"
-                    className="pl-12 h-12"
-                    value={orderNumber}
-                    onChange={(e) => { setOrderNumber(e.target.value); setOrderSearched(false); setOrderData(null); }}
-                  />
+              <form onSubmit={handleOrderSearch} className="space-y-3">
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Order Number (e.g. ORD-2024-XXXXX)"
+                      className="pl-12 h-12"
+                      value={orderNumber}
+                      onChange={(e) => { setOrderNumber(e.target.value); setOrderSearched(false); setOrderData(null); }}
+                    />
+                  </div>
                 </div>
-                <Button type="submit" className="h-12 px-8" disabled={orderLoading}>
-                  {orderLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Track'}
-                </Button>
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Phone Number (e.g. 01XXXXXXXXX)"
+                      className="pl-12 h-12"
+                      value={phoneNumber}
+                      onChange={(e) => { setPhoneNumber(e.target.value); setOrderSearched(false); setOrderData(null); }}
+                    />
+                  </div>
+                  <Button type="submit" className="h-12 px-8" disabled={orderLoading}>
+                    {orderLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Track'}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Both order number and phone number are required for security</p>
               </form>
 
               {orderSearched && orderData && (
@@ -199,8 +238,6 @@ const TrackOrder = () => {
                           const isActive = i <= currentIdx;
                           const isCurrent = i === currentIdx;
                           const StepIcon = step.icon;
-
-                          // Find matching event for timestamp
                           const matchingEvent = orderEvents.find(e => e.status?.toLowerCase() === step.key);
 
                           return (
@@ -290,7 +327,7 @@ const TrackOrder = () => {
                   <CardContent className="p-8 text-center space-y-4">
                     <Package className="h-16 w-16 text-muted-foreground/30 mx-auto" />
                     <h3 className="text-lg font-semibold text-foreground">No order found</h3>
-                    <p className="text-muted-foreground">Please check your order number and try again. Make sure you're using the exact order number from your confirmation email.</p>
+                    <p className="text-muted-foreground">Please check your order number and phone number and try again.</p>
                   </CardContent>
                 </Card>
               )}
@@ -300,8 +337,8 @@ const TrackOrder = () => {
                   <Card>
                     <CardContent className="p-8 space-y-4">
                       <Clock className="h-16 w-16 text-muted-foreground/30 mx-auto" />
-                      <h3 className="text-lg font-semibold text-foreground">Enter your order number above</h3>
-                      <p className="text-muted-foreground">You can find your order number in the confirmation email you received after placing your order.</p>
+                      <h3 className="text-lg font-semibold text-foreground">Enter your order number & phone above</h3>
+                      <p className="text-muted-foreground">You can find your order number in the confirmation you received after placing your order. Enter the same phone number you used during checkout.</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -339,7 +376,6 @@ const TrackOrder = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Return Status Timeline */}
                     {(() => {
                       const isRejected = returnData.status === 'rejected';
                       const steps = isRejected ? returnStepDefsRejected : returnStepDefs;
@@ -357,7 +393,6 @@ const TrackOrder = () => {
                                 )}
                                 <div className={cn(
                                   'relative z-10 w-8 h-8 rounded-full flex items-center justify-center shrink-0',
-                                  isRejected && step.key === 'rejected' ? 'bg-destructive text-destructive-foreground' :
                                   isActive ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'
                                 )}>
                                   <StepIcon className="h-4 w-4" />
@@ -367,8 +402,8 @@ const TrackOrder = () => {
                                   {step.key === 'pending' && returnData.created_at && (
                                     <p className="text-xs text-muted-foreground">{format(new Date(returnData.created_at), 'MMM d, yyyy h:mm a')}</p>
                                   )}
-                                  {step.key === returnData.status && returnData.updated_at && step.key !== 'pending' && (
-                                    <p className="text-xs text-muted-foreground">{format(new Date(returnData.updated_at), 'MMM d, yyyy h:mm a')}</p>
+                                  {step.key === 'refunded' && returnData.resolved_at && (
+                                    <p className="text-xs text-muted-foreground">{format(new Date(returnData.resolved_at), 'MMM d, yyyy h:mm a')}</p>
                                   )}
                                 </div>
                               </div>
@@ -378,44 +413,16 @@ const TrackOrder = () => {
                       );
                     })()}
 
-                    {/* Return Details */}
-                    <div className="bg-secondary/30 rounded-lg p-4 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Reason</span>
-                        <span className="font-medium">{returnData.reason}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Refund Method</span>
-                        <span className="font-medium capitalize">{returnData.refund_method || 'Original Payment'}</span>
-                      </div>
-                      {returnData.refund_amount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Refund Amount</span>
-                          <span className="font-bold text-success">৳{Number(returnData.refund_amount).toFixed(2)}</span>
-                        </div>
-                      )}
-                      {returnData.resolved_at && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Resolved</span>
-                          <span className="font-medium">{format(new Date(returnData.resolved_at), 'MMM d, yyyy')}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { navigator.clipboard.writeText(returnData.return_tracking_number); toast.success('Copied!'); }}>
-                        <Copy className="h-3.5 w-3.5" /> Copy RTN
-                      </Button>
-                      <ReturnReceipt
-                        trackingNumber={returnData.return_tracking_number}
-                        orderNumber=""
-                        reason={returnData.reason}
-                        refundMethod={returnData.refund_method}
-                        refundAmount={returnData.refund_amount}
-                        status={returnData.status}
-                        createdAt={returnData.created_at}
-                      />
-                    </div>
+                    <ReturnReceipt
+                      returnData={{
+                        return_tracking_number: returnData.return_tracking_number,
+                        status: returnData.status,
+                        reason: returnData.reason,
+                        created_at: returnData.created_at,
+                        refund_amount: returnData.refund_amount,
+                        refund_method: returnData.refund_method,
+                      }}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -435,21 +442,27 @@ const TrackOrder = () => {
                   <CardContent className="p-8 text-center space-y-4">
                     <RotateCcw className="h-16 w-16 text-muted-foreground/30 mx-auto" />
                     <h3 className="text-lg font-semibold text-foreground">Enter your return tracking number</h3>
-                    <p className="text-muted-foreground">You can find your Return Tracking Number (RTN) in your account dashboard under Returns & Cancellations, or on your Return Acknowledgement Receipt.</p>
-                    {user ? (
-                      <Link to="/account?tab=returns">
-                        <Button variant="outline" className="mt-2">View My Returns</Button>
-                      </Link>
-                    ) : (
-                      <Link to="/auth">
-                        <Button variant="outline" className="mt-2">Sign in to view returns</Button>
-                      </Link>
-                    )}
+                    <p className="text-muted-foreground">You can find the tracking number in the return confirmation email.</p>
                   </CardContent>
                 </Card>
               )}
             </TabsContent>
           </Tabs>
+
+          <Card>
+            <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                <ShoppingBag className="h-6 w-6 text-accent" />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <h3 className="font-semibold text-foreground">Have an account?</h3>
+                <p className="text-sm text-muted-foreground">Sign in for easier tracking and order management</p>
+              </div>
+              <Button variant="outline" asChild>
+                <Link to="/auth">Sign In</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>
