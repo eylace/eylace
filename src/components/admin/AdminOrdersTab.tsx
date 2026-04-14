@@ -893,31 +893,24 @@ export const AdminOrdersTab = () => {
       <Dialog open={!!invoiceOrder} onOpenChange={open => !open && setInvoiceOrder(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Invoice #{invoiceOrder?.order_number}</DialogTitle></DialogHeader>
-          {invoiceOrder && (() => {
-            const o = invoiceOrder;
-            const addr = normalizeShippingAddress(o.shipping_address);
-            const cName = getOrderCustomerName(o);
-            const cEmail = getOrderCustomerEmail(o);
-            const cPhone = getOrderCustomerPhone(o);
-            return (
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <div><p className="font-semibold">{cName}</p><p className="text-muted-foreground">{cEmail}</p>{cPhone && <p className="text-muted-foreground">{cPhone}</p>}<p className="text-muted-foreground">{[addr.address, addr.apartment, addr.city, addr.state, addr.zip_code].filter(Boolean).join(', ') || 'N/A'}</p></div>
-                  <div className="text-right"><p className="font-semibold">Invoice #{o.order_number}</p><p className="text-muted-foreground">{format(new Date(o.created_at), 'PPP')}</p><Badge className={statusConfig[o.status]?.color}>{o.status}</Badge></div>
-                </div>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Item</TableHead><TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
-                  <TableBody>{o.items?.map((item: any) => (<TableRow key={item.id}><TableCell>{item.product_name}</TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">৳{item.price.toFixed(2)}</TableCell><TableCell className="text-right">৳{(item.quantity * item.price).toFixed(2)}</TableCell></TableRow>))}</TableBody>
-                </Table>
-                <div className="text-right space-y-1 text-sm">
-                  <div>Subtotal: ৳{o.subtotal?.toFixed(2)}</div><div>Shipping: ৳{o.shipping?.toFixed(2)}</div><div>Tax: ৳{o.tax?.toFixed(2)}</div>
-                  {o.discount > 0 && <div className="text-green-600">Discount: -৳{o.discount.toFixed(2)}</div>}
-                  <div className="text-lg font-bold border-t pt-2">Total: ৳{o.total.toFixed(2)}</div>
-                </div>
-                <Button onClick={printInvoice} className="w-full gap-2"><Printer className="h-4 w-4" /> Print Invoice</Button>
+          {invoiceOrder && (
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <div><p className="font-semibold">{getOrderCustomerName(invoiceOrder)}</p><p className="text-muted-foreground">{getOrderCustomerEmail(invoiceOrder)}</p></div>
+                <div className="text-right"><p className="font-semibold">Invoice #{invoiceOrder.order_number}</p><p className="text-muted-foreground">{format(new Date(invoiceOrder.created_at), 'PPP')}</p></div>
               </div>
-            );
-          })()}
+              <div className="flex gap-3">
+                <Button className="flex-1 gap-2" onClick={() => { downloadSingleInvoice(invoiceOrder); setInvoiceOrder(null); }}>
+                  <Download className="h-4 w-4" /> Download Invoice
+                </Button>
+                <Button variant="outline" className="flex-1 gap-2" onClick={() => { printSingleInvoice(invoiceOrder); setInvoiceOrder(null); }}>
+                  <Printer className="h-4 w-4" /> Print Invoice
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
         </DialogContent>
       </Dialog>
 
