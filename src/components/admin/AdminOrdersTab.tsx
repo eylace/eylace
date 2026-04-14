@@ -129,6 +129,15 @@ export const AdminOrdersTab = () => {
     fetchCouriers();
   }, []);
 
+  // Sync detail modal status when opening
+  useEffect(() => {
+    if (detailOrder) {
+      const isPaid = detailOrder.payment_method !== 'cod' || detailOrder.status === 'delivered';
+      setDetailPaymentStatus(isPaid ? 'paid' : 'unpaid');
+      setDetailFulfillmentStatus(detailOrder.status || 'pending');
+    }
+  }, [detailOrder]);
+
   // Stats
   const stats = useMemo(() => {
     const total = orders.length;
