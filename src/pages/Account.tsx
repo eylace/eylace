@@ -153,6 +153,13 @@ const Account = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  // Tick every 60s to update return countdown timers
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Realtime subscription for user's own product reviews
   useEffect(() => {
     if (!user) return;
