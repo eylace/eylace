@@ -254,6 +254,36 @@ export const AdminOrdersTab = () => {
     setUpdating(null);
   };
 
+  const printInvoice = () => {
+    const win = window.open('', '_blank');
+    if (!win || !invoiceOrder) return;
+    const o = invoiceOrder;
+    const addr = normalizeShippingAddress(o.shipping_address);
+    const customerName = getOrderCustomerName(o);
+    const customerEmail = getOrderCustomerEmail(o);
+    const esc = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    win.document.write(`<!DOCTYPE html><html><head><title>Invoice #${esc(o.order_number)}</title>
+    <style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;border-bottom:2px solid #333;padding-bottom:20px;margin-bottom:20px}
+    .title{font-size:28px;font-weight:bold}table{width:100%;border-collapse:collapse;margin:20px 0}
+    th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}th{background:#f5f5f5;font-weight:600}
+    .total-row{font-weight:bold;font-size:16px}.footer{margin-top:40px;text-align:center;color:#888;font-size:12px}</style></head>
+    <body><div class="header"><div><div class="title">INVOICE</div><div>#${esc(o.order_number)}</div>
+    <div>Date: ${format(new Date(o.created_at), 'MMM d, yyyy')}</div></div>
+    <div style="text-align:right"><div><strong>Bill To:</strong></div><div>${esc(customerName)}</div><div>${esc(customerEmail)}</div>
+    <div>${esc([addr.address, addr.apartment, addr.city, addr.state, addr.zip_code].filter(Boolean).join(', '))}</div></div></div>
+    <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>
+    ${(o.items || []).map((i: any) => `<tr><td>${esc(i.product_name)}</td><td>${esc(i.quantity)}</td><td>৳${Number(i.price || 0).toFixed(2)}</td><td>৳${(Number(i.price || 0) * Number(i.quantity || 0)).toFixed(2)}</td></tr>`).join('')}
+    </tbody></table>
+    <div style="text-align:right;margin-top:20px">
+    <div>Subtotal: ৳${o.subtotal?.toFixed(2) || '0.00'}</div><div>Shipping: ৳${o.shipping?.toFixed(2) || '0.00'}</div>
+    <div>Tax: ৳${o.tax?.toFixed(2) || '0.00'}</div>${o.discount > 0 ? `<div>Discount: -৳${o.discount.toFixed(2)}</div>` : ''}
+    <div class="total-row" style="margin-top:10px;padding-top:10px;border-top:2px solid #333">Total: ৳${o.total.toFixed(2)}</div>
+    </div><div class="footer">Thank you for your order!</div></body></html>`);
+    win.document.close();
+    win.print();
+  };
+
   const toggleSort = (field: 'date' | 'total') => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('desc'); }
