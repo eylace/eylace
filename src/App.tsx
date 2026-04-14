@@ -90,6 +90,7 @@ const AdminMarketingBulkSMS = lazy(() => import("./pages/AdminMarketingBulkSMS")
 const AdminMarketingSubscribers = lazy(() => import("./pages/AdminMarketingSubscribers"));
 const AdminMarketingVisitors = lazy(() => import("./pages/AdminMarketingVisitors"));
 const AdminFraudPage = lazy(() => import("./pages/AdminFraudPage"));
+const AdminIpBlock = lazy(() => import("./pages/AdminIpBlock"));
 const AdminSettingsPage = lazy(() => import("./pages/AdminSettingsPage"));
 const AdminPagesPage = lazy(() => import("./pages/AdminPagesPage"));
 const AdminSEOPage = lazy(() => import("./pages/AdminSEOPage"));
@@ -265,6 +266,7 @@ const App = () => (
                 <Route path="/admin/coupons" element={<AdminCoupons />} />
                 <Route path="/admin/couriers" element={<AdminCouriers />} />
                 <Route path="/admin/fraud" element={<AdminFraudPage />} />
+                <Route path="/admin/ip-block" element={<AdminIpBlock />} />
                 <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
                 <Route path="/admin/marketing" element={<AdminMarketingPage />} />
                 <Route path="/admin/marketing/flash-deals" element={<AdminMarketingFlashDeals />} />

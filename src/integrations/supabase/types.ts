@@ -179,6 +179,30 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_ips: {
+        Row: {
+          blocked_by: string | null
+          created_at: string
+          id: string
+          ip_address: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_by?: string | null
+          created_at?: string
+          id?: string
+          ip_address: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_by?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           created_at: string
@@ -945,6 +969,7 @@ export type Database = {
         Row: {
           carrier: string | null
           created_at: string
+          customer_ip: string | null
           delivered_at: string | null
           discount: number
           estimated_delivery: string | null
@@ -967,6 +992,7 @@ export type Database = {
         Insert: {
           carrier?: string | null
           created_at?: string
+          customer_ip?: string | null
           delivered_at?: string | null
           discount?: number
           estimated_delivery?: string | null
@@ -989,6 +1015,7 @@ export type Database = {
         Update: {
           carrier?: string | null
           created_at?: string
+          customer_ip?: string | null
           delivered_at?: string | null
           discount?: number
           estimated_delivery?: string | null

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
-  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2,
+  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2, Ban,
 } from 'lucide-react';
 import { FraudDetectionModal } from '@/components/admin/FraudDetectionModal';
 import { Button } from '@/components/ui/button';
@@ -125,6 +125,18 @@ export const AdminOrdersTab = () => {
   const [detailPaymentStatus, setDetailPaymentStatus] = useState('unpaid');
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
   const { t } = useLanguage();
+
+  const handleBlockIp = async (ip: string) => {
+    const { error } = await (supabase as any)
+      .from('blocked_ips')
+      .insert({ ip_address: ip, reason: 'Blocked from order panel' });
+    if (error) {
+      if (error.code === '23505') toast.info('This IP is already blocked');
+      else toast.error('Failed to block IP');
+    } else {
+      toast.success(`IP ${ip} blocked successfully`);
+    }
+  };
 
   // Fetch active couriers
   useEffect(() => {
@@ -549,6 +561,11 @@ export const AdminOrdersTab = () => {
                             <Printer className="h-4 w-4 mr-2" /> Print Invoice
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          {(order as any).customer_ip && (
+                            <DropdownMenuItem onClick={() => handleBlockIp((order as any).customer_ip)} className="text-amber-600 focus:text-amber-600">
+                              <Ban className="h-4 w-4 mr-2" /> Block IP ({(order as any).customer_ip})
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => setDeleteOrderId(order.id)} className="text-destructive focus:text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" /> Delete
                           </DropdownMenuItem>
@@ -580,7 +597,7 @@ export const AdminOrdersTab = () => {
                       </div>
                     </TableCell>
                     <TableCell className="hidden 2xl:table-cell">
-                      <span className="text-[11px] text-muted-foreground">—</span>
+                      <span className="text-[11px] text-muted-foreground font-mono">{(order as any).customer_ip || '—'}</span>
                     </TableCell>
                     <TableCell>
                       <span className={cn('text-xs font-medium inline-flex items-center gap-1', isPaid ? 'text-emerald-600' : 'text-orange-500')}>
