@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
-  MoreVertical, Eye, ArrowUpDown,
+  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2,
 } from 'lucide-react';
 import { FraudDetectionModal } from '@/components/admin/FraudDetectionModal';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAdminOrders } from '@/hooks/useAdminData';
@@ -23,6 +24,13 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { exportToCSV } from '@/lib/csvExport';
 import { supabase } from '@/integrations/supabase/client';
+
+interface CourierOption {
+  id: string;
+  name: string;
+  code: string;
+  is_active: boolean;
+}
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock },
@@ -99,11 +107,25 @@ export const AdminOrdersTab = () => {
   const [invoiceOrder, setInvoiceOrder] = useState<any>(null);
   const [detailOrder, setDetailOrder] = useState<any>(null);
   const [courierDispatchOrder, setCourierDispatchOrder] = useState<any>(null);
-  const [dispatchProvider, setDispatchProvider] = useState('steadfast');
+  const [dispatchProvider, setDispatchProvider] = useState('');
   const [dispatching, setDispatching] = useState(false);
   const [sortField, setSortField] = useState<'date' | 'total'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [editOrder, setEditOrder] = useState<any>(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [couriers, setCouriers] = useState<CourierOption[]>([]);
   const { t } = useLanguage();
+
+  // Fetch active couriers
+  useEffect(() => {
+    const fetchCouriers = async () => {
+      const { data } = await (supabase as any).from('couriers').select('id, name, code, is_active').eq('is_active', true).order('name');
+      if (data) setCouriers(data);
+    };
+    fetchCouriers();
+  }, []);
 
   // Stats
   const stats = useMemo(() => {
@@ -167,7 +189,7 @@ export const AdminOrdersTab = () => {
   };
 
   const handleCourierDispatch = async () => {
-    if (!courierDispatchOrder) return;
+    if (!courierDispatchOrder || !dispatchProvider) return;
     setDispatching(true);
     try {
       const order = courierDispatchOrder;
@@ -200,6 +222,36 @@ export const AdminOrdersTab = () => {
       toast.error('Dispatch failed: ' + (e.message || 'Unknown error'));
     }
     setDispatching(false);
+  };
+
+  const handleShipViaCourier = (order: any, courier: CourierOption) => {
+    setDispatchProvider(courier.code);
+    setCourierDispatchOrder(order);
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!deleteOrderId) return;
+    setDeleting(true);
+    try {
+      await (supabase as any).from('order_items').delete().eq('order_id', deleteOrderId);
+      const { error } = await (supabase as any).from('orders').delete().eq('id', deleteOrderId);
+      if (error) throw error;
+      toast.success('Order deleted successfully');
+      setDeleteOrderId(null);
+    } catch (e: any) {
+      toast.error('Delete failed: ' + (e.message || 'Unknown error'));
+    }
+    setDeleting(false);
+  };
+
+  const handleEditOrderSave = async () => {
+    if (!editOrder) return;
+    setUpdating(editOrder.id);
+    const tracking = trackingInfo[editOrder.id];
+    const { error } = await updateOrderStatus(editOrder.id, editStatus, tracking);
+    if (error) toast.error('Failed to update');
+    else { toast.success('Order updated'); setEditOrder(null); }
+    setUpdating(null);
   };
 
   const printInvoice = () => {
@@ -396,12 +448,34 @@ export const AdminOrdersTab = () => {
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-48">
-                          <DropdownMenuItem onClick={() => setDetailOrder(order)}><Eye className="h-4 w-4 mr-2" /> View Details</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setInvoiceOrder(order)}><FileText className="h-4 w-4 mr-2" /> Invoice</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setCourierDispatchOrder(order)}><Truck className="h-4 w-4 mr-2" /> Send to Courier</DropdownMenuItem>
+                        <DropdownMenuContent align="start" className="w-52">
+                          <DropdownMenuItem onClick={() => toast.info('Re-assign feature coming soon')}>
+                            <UserPlus className="h-4 w-4 mr-2" /> Re-Assign
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setFraudOrder(order)} className="text-destructive"><ShieldAlert className="h-4 w-4 mr-2" /> Fraud Check</DropdownMenuItem>
+                          {couriers.length > 0 && (
+                            <>
+                              {couriers.map(c => (
+                                <DropdownMenuItem key={c.id} onClick={() => handleShipViaCourier(order, c)}>
+                                  <Truck className="h-4 w-4 mr-2" /> Ship via {c.name}
+                                </DropdownMenuItem>
+                              ))}
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          <DropdownMenuItem onClick={() => setDetailOrder(order)}>
+                            <Eye className="h-4 w-4 mr-2" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setEditOrder(order); setEditStatus(order.status); }}>
+                            <Edit className="h-4 w-4 mr-2" /> Edit Order
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setInvoiceOrder(order)}>
+                            <Download className="h-4 w-4 mr-2" /> Download Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setDeleteOrderId(order.id)} className="text-destructive focus:text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -644,22 +718,79 @@ export const AdminOrdersTab = () => {
               <div className="space-y-2">
                 <Label>Select Courier Provider</Label>
                 <Select value={dispatchProvider} onValueChange={setDispatchProvider}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Choose a courier..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="shiprocket">🚀 Shiprocket</SelectItem>
-                    <SelectItem value="steadfast">📦 Steadfast</SelectItem>
-                    <SelectItem value="pathao">🏍️ Pathao</SelectItem>
+                    {couriers.map(c => (
+                      <SelectItem key={c.id} value={c.code}>📦 {c.name}</SelectItem>
+                    ))}
+                    {couriers.length === 0 && (
+                      <>
+                        <SelectItem value="steadfast">📦 Steadfast</SelectItem>
+                        <SelectItem value="pathao">🏍️ Pathao</SelectItem>
+                        <SelectItem value="shiprocket">🚀 Shiprocket</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleCourierDispatch} disabled={dispatching} className="w-full gap-2">
+              <Button onClick={handleCourierDispatch} disabled={dispatching || !dispatchProvider} className="w-full gap-2">
                 {dispatching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Send to {dispatchProvider.charAt(0).toUpperCase() + dispatchProvider.slice(1)}
+                Send to {dispatchProvider ? dispatchProvider.charAt(0).toUpperCase() + dispatchProvider.slice(1) : 'Courier'}
               </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Order Modal */}
+      <Dialog open={!!editOrder} onOpenChange={open => !open && setEditOrder(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Edit className="h-5 w-5" /> Edit Order #{editOrder?.order_number}</DialogTitle></DialogHeader>
+          {editOrder && (
+            <div className="space-y-4">
+              <div>
+                <Label>Order Status</Label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Carrier</Label>
+                  <Input className="h-8 text-sm" placeholder="e.g., Steadfast" value={trackingInfo[editOrder.id]?.carrier || editOrder.carrier || ''} onChange={e => setTrackingInfo(p => ({ ...p, [editOrder.id]: { ...p[editOrder.id], carrier: e.target.value, tracking_number: p[editOrder.id]?.tracking_number || editOrder.tracking_number || '' } }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Tracking #</Label>
+                  <Input className="h-8 text-sm" placeholder="Tracking number" value={trackingInfo[editOrder.id]?.tracking_number || editOrder.tracking_number || ''} onChange={e => setTrackingInfo(p => ({ ...p, [editOrder.id]: { carrier: p[editOrder.id]?.carrier || editOrder.carrier || '', tracking_number: e.target.value } }))} />
+                </div>
+              </div>
+              <Button className="w-full gap-2" onClick={handleEditOrderSave} disabled={updating === editOrder.id}>
+                {updating === editOrder.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                Save Changes
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteOrderId} onOpenChange={open => !open && setDeleteOrderId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to delete this order? This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteOrder} disabled={deleting} className="bg-destructive text-destructive-foreground gap-2">
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />} Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
