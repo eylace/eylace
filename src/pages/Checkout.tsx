@@ -540,6 +540,7 @@ const Checkout = () => {
         order_number: orderNumber, status: 'pending',
         subtotal, shipping, tax, discount: totalDiscount, total,
         payment_method: data.paymentMethod, shipping_address: shippingAddress,
+        customer_ip: customerIp !== 'unknown' ? customerIp : null,
       };
 
       const hasImplicitGuestSession = isImplicitGuestSession(user);
