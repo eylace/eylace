@@ -158,6 +158,7 @@ const AdminRefundRequests = lazy(() => import("./pages/AdminRefundRequests"));
 const AdminRefundConfig = lazy(() => import("./pages/AdminRefundConfig"));
 const AdminRefundCategoryBased = lazy(() => import("./pages/AdminRefundCategoryBased"));
 const Categories = lazy(() => import("./pages/Categories"));
+const AdminStockManagement = lazy(() => import("./pages/AdminStockManagement"));
 const CmsPage = lazy(() => import("./pages/CmsPage"));
 
 const AIChatWidget = lazy(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
@@ -333,6 +334,7 @@ const App = () => (
                 <Route path="/admin/pages" element={<AdminPagesPage />} />
                 <Route path="/admin/seo" element={<AdminSEOPage />} />
                 <Route path="/admin/user-roles" element={<AdminUserRoles />} />
+                <Route path="/admin/stock" element={<AdminStockManagement />} />
                 <Route path="/deals" element={<Deals />} />
                 <Route path="/flash-sale" element={<FlashSale />} />
                 <Route path="/new-arrivals" element={<NewArrivals />} />
