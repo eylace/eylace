@@ -255,6 +255,7 @@ export const AdminOrdersTab = () => {
       if (error) throw error;
       toast.success('Order deleted successfully');
       setDeleteOrderId(null);
+      await refetch();
     } catch (e: any) {
       toast.error('Delete failed: ' + (e.message || 'Unknown error'));
     }
@@ -436,6 +437,7 @@ export const AdminOrdersTab = () => {
               }
               toast.success(`${count} order(s) deleted`);
               setSelectedOrders(new Set());
+              await refetch();
               setBulkUpdating(false);
             }}
             disabled={bulkUpdating}
