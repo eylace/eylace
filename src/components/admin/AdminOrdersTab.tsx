@@ -260,14 +260,42 @@ export const AdminOrdersTab = () => {
     setDeleting(false);
   };
 
-  const handleEditOrderSave = async () => {
-    if (!editOrder) return;
-    setUpdating(editOrder.id);
-    const tracking = trackingInfo[editOrder.id];
-    const { error } = await updateOrderStatus(editOrder.id, editStatus, tracking);
-    if (error) toast.error('Failed to update');
-    else { toast.success('Order updated'); setEditOrder(null); }
-    setUpdating(null);
+  const handleEditOrderSave = async (
+    orderId: string,
+    items: any[],
+    customer: { name: string; phone: string; address: string; notes: string },
+    discountVal: number,
+    shippingVal: number
+  ) => {
+    // Delete old items and insert new ones
+    await (supabase as any).from('order_items').delete().eq('order_id', orderId);
+    const newItems = items.map(i => ({
+      order_id: orderId,
+      product_id: i.product_id,
+      product_name: i.product_name,
+      product_image: i.product_image,
+      quantity: i.quantity,
+      price: i.price,
+    }));
+    if (newItems.length > 0) {
+      await (supabase as any).from('order_items').insert(newItems);
+    }
+    const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const total = subtotal - discountVal + shippingVal;
+    const nameParts = customer.name.split(' ');
+    const shippingAddress = {
+      first_name: nameParts[0] || '',
+      last_name: nameParts.slice(1).join(' ') || '',
+      phone: customer.phone,
+      address: customer.address,
+    };
+    await (supabase as any).from('orders').update({
+      subtotal, discount: discountVal, shipping: shippingVal, total,
+      shipping_address: shippingAddress,
+      guest_phone: customer.phone,
+    }).eq('id', orderId);
+    // Refetch
+    await updateOrderStatus(orderId, editOrder?.status || 'pending');
   };
 
   const printInvoice = () => {
