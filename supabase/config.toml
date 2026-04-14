@@ -47,3 +47,9 @@ project_id = "jmowninkqcfgwldyjeqo"
 
  [functions.affiliate-manage]
  verify_jwt = false
+
+ [functions.detect-ip]
+ verify_jwt = false
+
+ [functions.check-blocked-ip]
+ verify_jwt = false

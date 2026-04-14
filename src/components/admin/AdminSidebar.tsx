@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, MessageSquare, Store, Tag, Settings,
-  BarChart3, Truck, ShieldAlert, Megaphone, FileText, Globe, Layers, Image, Bell,
+  BarChart3, Truck, ShieldAlert, Megaphone, FileText, Globe, Layers, Image, Bell, Ban,
   CreditCard, ArrowLeft, LogOut, Shield, ChevronDown, ChevronRight, RefreshCw, Server, Map,
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
@@ -123,6 +123,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.fraudDetection' as TranslationKey, url: '/admin/fraud', icon: ShieldAlert },
     { titleKey: 'admin.transactions' as TranslationKey, url: '/admin/transactions', icon: CreditCard },
     { titleKey: 'admin.paymentGateways' as TranslationKey, url: '/admin/payment-gateways', icon: Wallet },
+    { titleKey: 'IP Block' as TranslationKey, url: '/admin/ip-block', icon: Ban },
   ];
 
   const marketingItems: NavItem[] = [
