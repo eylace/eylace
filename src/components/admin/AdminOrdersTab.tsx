@@ -550,10 +550,11 @@ export const AdminOrdersTab = () => {
                           <SelectItem value="processing">Processing</SelectItem>
                           <SelectItem value="sent_to_courier">Sent To Courier</SelectItem>
                           <SelectItem value="delivered">Delivered</SelectItem>
-                          <SelectItem value="shipped">Completed</SelectItem>
-                          <SelectItem value="out_for_delivery">Fulfilled</SelectItem>
-                          <SelectItem value="cancelled">Refunded</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                          <SelectItem value="refunded">Refunded</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
+                          <SelectItem value="failed">Failed</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
