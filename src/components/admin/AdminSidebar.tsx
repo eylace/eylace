@@ -81,7 +81,11 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
   const mainItems = [
     { titleKey: 'admin.dashboard' as TranslationKey, url: '/admin', icon: LayoutDashboard },
+  ];
+
+  const orderItems: NavItem[] = [
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
+    { titleKey: 'admin.incomplete.title' as TranslationKey, url: '/admin/incomplete-orders', icon: AlertTriangle },
   ];
 
   const sellerItems: NavItem[] = [
@@ -326,6 +330,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
       <SidebarContent className="overflow-y-auto">
         {canAccess('main') && renderGroup('admin.group.main', mainItems)}
+        {renderCollapsible('orders', 'admin.orders', ShoppingCart, orderItems, '/admin/orders')}
         {renderCollapsible('ai', 'admin.ai.section', Brain, aiItems)}
         {renderCollapsible('products', 'admin.products', Package, productItems, '/admin/products')}
         {renderCollapsible('sellers', 'admin.sellers.section', Store, sellerItems, '/admin/sellers')}
