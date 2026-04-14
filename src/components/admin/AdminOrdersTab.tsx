@@ -574,6 +574,27 @@ export const AdminOrdersTab = () => {
                       </DropdownMenu>
                     </TableCell>
                     <TableCell>
+                      {(() => {
+                        const firstItem = order.items?.[0];
+                        const extraCount = (order.items?.length || 0) - 1;
+                        return (
+                          <div className="flex items-center gap-2 min-w-0">
+                            {firstItem?.product_image ? (
+                              <img src={firstItem.product_image} alt={firstItem.product_name} className="h-9 w-9 rounded object-cover shrink-0 border border-border" />
+                            ) : (
+                              <div className="h-9 w-9 rounded bg-muted flex items-center justify-center shrink-0 border border-border">
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium truncate max-w-[140px]">{firstItem?.product_name || '—'}</p>
+                              {extraCount > 0 && <p className="text-[10px] text-muted-foreground">+{extraCount} more</p>}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>
                       <button onClick={() => setDetailOrder(order)} className="text-primary hover:underline text-xs font-medium">
                         #{order.order_number}
                       </button>
