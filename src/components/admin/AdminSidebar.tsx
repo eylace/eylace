@@ -330,7 +330,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
       <SidebarContent className="overflow-y-auto">
         {canAccess('main') && renderGroup('admin.group.main', mainItems)}
-        {renderCollapsible('orders', 'admin.orders', ShoppingCart, orderItems, '/admin/orders')}
+        {renderCollapsible('orders', 'Sales', ShoppingCart, orderItems, '/admin/orders')}
         {renderCollapsible('ai', 'admin.ai.section', Brain, aiItems)}
         {renderCollapsible('products', 'admin.products', Package, productItems, '/admin/products')}
         {renderCollapsible('sellers', 'admin.sellers.section', Store, sellerItems, '/admin/sellers')}

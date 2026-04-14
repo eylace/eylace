@@ -25,6 +25,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { exportToCSV } from '@/lib/csvExport';
 import { supabase } from '@/integrations/supabase/client';
 import { EditOrderModal } from '@/components/admin/EditOrderModal';
+import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
 
 interface CourierOption {
   id: string;
@@ -298,35 +299,7 @@ export const AdminOrdersTab = () => {
     await updateOrderStatus(orderId, editOrder?.status || 'pending');
   };
 
-  const printInvoice = () => {
-    const win = window.open('', '_blank');
-    if (!win || !invoiceOrder) return;
-    const o = invoiceOrder;
-    const addr = normalizeShippingAddress(o.shipping_address);
-    const customerName = getOrderCustomerName(o);
-    const customerEmail = getOrderCustomerEmail(o);
-    const esc = (s: unknown) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    win.document.write(`<!DOCTYPE html><html><head><title>Invoice #${esc(o.order_number)}</title>
-    <style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto}
-    .header{display:flex;justify-content:space-between;border-bottom:2px solid #333;padding-bottom:20px;margin-bottom:20px}
-    .title{font-size:28px;font-weight:bold}table{width:100%;border-collapse:collapse;margin:20px 0}
-    th,td{padding:10px;text-align:left;border-bottom:1px solid #ddd}th{background:#f5f5f5;font-weight:600}
-    .total-row{font-weight:bold;font-size:16px}.footer{margin-top:40px;text-align:center;color:#888;font-size:12px}</style></head>
-    <body><div class="header"><div><div class="title">INVOICE</div><div>#${esc(o.order_number)}</div>
-    <div>Date: ${format(new Date(o.created_at), 'MMM d, yyyy')}</div></div>
-    <div style="text-align:right"><div><strong>Bill To:</strong></div><div>${esc(customerName)}</div><div>${esc(customerEmail)}</div>
-    <div>${esc([addr.address, addr.apartment, addr.city, addr.state, addr.zip_code].filter(Boolean).join(', '))}</div></div></div>
-    <table><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>
-    ${(o.items || []).map((i: any) => `<tr><td>${esc(i.product_name)}</td><td>${esc(i.quantity)}</td><td>৳${Number(i.price || 0).toFixed(2)}</td><td>৳${(Number(i.price || 0) * Number(i.quantity || 0)).toFixed(2)}</td></tr>`).join('')}
-    </tbody></table>
-    <div style="text-align:right;margin-top:20px">
-    <div>Subtotal: ৳${o.subtotal?.toFixed(2) || '0.00'}</div><div>Shipping: ৳${o.shipping?.toFixed(2) || '0.00'}</div>
-    <div>Tax: ৳${o.tax?.toFixed(2) || '0.00'}</div>${o.discount > 0 ? `<div>Discount: -৳${o.discount.toFixed(2)}</div>` : ''}
-    <div class="total-row" style="margin-top:10px;padding-top:10px;border-top:2px solid #333">Total: ৳${o.total.toFixed(2)}</div>
-    </div><div class="footer">Thank you for your order!</div></body></html>`);
-    win.document.close();
-    win.print();
-  };
+  // Old printInvoice removed — now using invoiceGenerator module
 
   const toggleSort = (field: 'date' | 'total') => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -426,18 +399,52 @@ export const AdminOrdersTab = () => {
         </CardContent>
       </Card>
 
-      {/* Bulk Actions */}
+      {/* Bulk Actions Bar */}
       {selectedOrders.size > 0 && (
         <div className="mb-4 p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-wrap items-center gap-3">
-          <span className="text-xs font-medium">{selectedOrders.size} selected</span>
-          <Select onValueChange={handleBulkStatusUpdate} disabled={bulkUpdating}>
-            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Change status..." /></SelectTrigger>
-            <SelectContent>
-              {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          {bulkUpdating && <Loader2 className="h-4 w-4 animate-spin text-accent" />}
-          <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedOrders(new Set())}>Cancel</Button>
+          <Badge className="bg-accent text-accent-foreground text-xs px-3 py-1">{selectedOrders.size}</Badge>
+          <span className="text-xs font-medium">order(s) selected</span>
+          <div className="flex-1" />
+          <Button
+            variant="default" size="sm" className="gap-2 text-xs h-8"
+            onClick={() => {
+              const selected = orders.filter(o => selectedOrders.has(o.id));
+              if (selected.length > 0) downloadBulkInvoices(selected);
+            }}
+          >
+            <Download className="h-3.5 w-3.5" /> Download Invoices
+          </Button>
+          <Button
+            variant="outline" size="sm" className="gap-2 text-xs h-8"
+            onClick={() => {
+              const selected = orders.filter(o => selectedOrders.has(o.id));
+              if (selected.length > 0) printBulkInvoices(selected);
+            }}
+          >
+            <Printer className="h-3.5 w-3.5" /> Print Invoices
+          </Button>
+          <Button
+            variant="destructive" size="sm" className="gap-2 text-xs h-8"
+            onClick={async () => {
+              if (!confirm(`Are you sure you want to delete ${selectedOrders.size} order(s)?`)) return;
+              setBulkUpdating(true);
+              let count = 0;
+              for (const id of selectedOrders) {
+                await (supabase as any).from('order_items').delete().eq('order_id', id);
+                const { error } = await (supabase as any).from('orders').delete().eq('id', id);
+                if (!error) count++;
+              }
+              toast.success(`${count} order(s) deleted`);
+              setSelectedOrders(new Set());
+              setBulkUpdating(false);
+            }}
+            disabled={bulkUpdating}
+          >
+            {bulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Delete Orders
+          </Button>
+          <Button variant="ghost" size="sm" className="text-xs h-8 gap-1" onClick={() => setSelectedOrders(new Set())}>
+            <XCircle className="h-3.5 w-3.5" /> Clear
+          </Button>
         </div>
       )}
 
@@ -513,8 +520,11 @@ export const AdminOrdersTab = () => {
                           <DropdownMenuItem onClick={() => { setEditOrder(order); setEditStatus(order.status); }}>
                             <Edit className="h-4 w-4 mr-2" /> Edit Order
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setInvoiceOrder(order)}>
+                          <DropdownMenuItem onClick={() => downloadSingleInvoice(order)}>
                             <Download className="h-4 w-4 mr-2" /> Download Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => printSingleInvoice(order)}>
+                            <Printer className="h-4 w-4 mr-2" /> Print Invoice
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setDeleteOrderId(order.id)} className="text-destructive focus:text-destructive">
@@ -662,8 +672,11 @@ export const AdminOrdersTab = () => {
                     <Button size="sm" className="gap-2" onClick={() => { setDetailOrder(null); setEditOrder(o); setEditStatus(o.status); }}>
                       <Edit className="h-4 w-4" /> Edit Order
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => { setDetailOrder(null); setInvoiceOrder(o); }}>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => { setDetailOrder(null); downloadSingleInvoice(o); }}>
                       <FileText className="h-4 w-4" /> Invoice
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => { setDetailOrder(null); printSingleInvoice(o); }}>
+                      <Printer className="h-4 w-4" /> Print
                     </Button>
                   </div>
                 </div>
@@ -852,31 +865,22 @@ export const AdminOrdersTab = () => {
       <Dialog open={!!invoiceOrder} onOpenChange={open => !open && setInvoiceOrder(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Invoice #{invoiceOrder?.order_number}</DialogTitle></DialogHeader>
-          {invoiceOrder && (() => {
-            const o = invoiceOrder;
-            const addr = normalizeShippingAddress(o.shipping_address);
-            const cName = getOrderCustomerName(o);
-            const cEmail = getOrderCustomerEmail(o);
-            const cPhone = getOrderCustomerPhone(o);
-            return (
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <div><p className="font-semibold">{cName}</p><p className="text-muted-foreground">{cEmail}</p>{cPhone && <p className="text-muted-foreground">{cPhone}</p>}<p className="text-muted-foreground">{[addr.address, addr.apartment, addr.city, addr.state, addr.zip_code].filter(Boolean).join(', ') || 'N/A'}</p></div>
-                  <div className="text-right"><p className="font-semibold">Invoice #{o.order_number}</p><p className="text-muted-foreground">{format(new Date(o.created_at), 'PPP')}</p><Badge className={statusConfig[o.status]?.color}>{o.status}</Badge></div>
-                </div>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Item</TableHead><TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
-                  <TableBody>{o.items?.map((item: any) => (<TableRow key={item.id}><TableCell>{item.product_name}</TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">৳{item.price.toFixed(2)}</TableCell><TableCell className="text-right">৳{(item.quantity * item.price).toFixed(2)}</TableCell></TableRow>))}</TableBody>
-                </Table>
-                <div className="text-right space-y-1 text-sm">
-                  <div>Subtotal: ৳{o.subtotal?.toFixed(2)}</div><div>Shipping: ৳{o.shipping?.toFixed(2)}</div><div>Tax: ৳{o.tax?.toFixed(2)}</div>
-                  {o.discount > 0 && <div className="text-green-600">Discount: -৳{o.discount.toFixed(2)}</div>}
-                  <div className="text-lg font-bold border-t pt-2">Total: ৳{o.total.toFixed(2)}</div>
-                </div>
-                <Button onClick={printInvoice} className="w-full gap-2"><Printer className="h-4 w-4" /> Print Invoice</Button>
+          {invoiceOrder && (
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm">
+                <div><p className="font-semibold">{getOrderCustomerName(invoiceOrder)}</p><p className="text-muted-foreground">{getOrderCustomerEmail(invoiceOrder)}</p></div>
+                <div className="text-right"><p className="font-semibold">Invoice #{invoiceOrder.order_number}</p><p className="text-muted-foreground">{format(new Date(invoiceOrder.created_at), 'PPP')}</p></div>
               </div>
-            );
-          })()}
+              <div className="flex gap-3">
+                <Button className="flex-1 gap-2" onClick={() => { downloadSingleInvoice(invoiceOrder); setInvoiceOrder(null); }}>
+                  <Download className="h-4 w-4" /> Download Invoice
+                </Button>
+                <Button variant="outline" className="flex-1 gap-2" onClick={() => { printSingleInvoice(invoiceOrder); setInvoiceOrder(null); }}>
+                  <Printer className="h-4 w-4" /> Print Invoice
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
