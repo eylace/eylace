@@ -911,8 +911,6 @@ export const AdminOrdersTab = () => {
           )}
         </DialogContent>
       </Dialog>
-        </DialogContent>
-      </Dialog>
 
       {/* Courier Dispatch Modal */}
       <Dialog open={!!courierDispatchOrder} onOpenChange={open => !open && setCourierDispatchOrder(null)}>
