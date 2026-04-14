@@ -60,6 +60,41 @@ const passwordSchema = z.object({
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const isUuidLike = (value: string) => UUID_REGEX.test(value);
 
+const ReturnCountdown = ({ deliveredAt, onReturn }: { deliveredAt: string; onReturn: () => void }) => {
+  const deadline = useMemo(() => new Date(new Date(deliveredAt).getTime() + 24 * 60 * 60 * 1000), [deliveredAt]);
+  const [remaining, setRemaining] = useState(() => Math.max(0, deadline.getTime() - Date.now()));
+
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const timer = setInterval(() => {
+      const ms = deadline.getTime() - Date.now();
+      if (ms <= 0) { setRemaining(0); clearInterval(timer); }
+      else setRemaining(ms);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [deadline, remaining]);
+
+  if (remaining <= 0) return null;
+
+  const hrs = Math.floor(remaining / 3600000);
+  const mins = Math.floor((remaining % 3600000) / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" className="text-accent border-accent/30 hover:bg-accent/10" onClick={onReturn}>
+        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+        Return Order
+      </Button>
+      <span className="text-xs font-mono font-semibold text-destructive flex items-center gap-1 bg-destructive/10 px-2 py-1 rounded-md">
+        <Clock className="h-3 w-3" />
+        {pad(hrs)}:{pad(mins)}:{pad(secs)}
+      </span>
+    </div>
+  );
+};
+
 const SIDEBAR_ITEMS = [
   { id: 'overview', icon: BarChart3, label: 'Dashboard' },
   { id: 'orders', icon: Package, label: 'My Orders' },
@@ -985,37 +1020,16 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                                 )}
 
                                 {/* Return Order - only delivered & no existing return & within 24h */}
-                                {order.status === 'delivered' && !hasReturnRequest && order.order_items && (() => {
-                                  const deliveredAt = order.delivered_at ? new Date(order.delivered_at) : null;
-                                  if (!deliveredAt) return null;
-                                  const deadline = new Date(deliveredAt.getTime() + 24 * 60 * 60 * 1000);
-                                  const now = new Date();
-                                  if (now >= deadline) return null;
-                                  const remainMs = deadline.getTime() - now.getTime();
-                                  const hrs = Math.floor(remainMs / (1000 * 60 * 60));
-                                  const mins = Math.floor((remainMs % (1000 * 60 * 60)) / (1000 * 60));
-                                  return (
-                                    <div className="flex items-center gap-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-accent border-accent/30 hover:bg-accent/10"
-                                        onClick={() => setReturnModal({
-                                          orderId: order.id,
-                                          orderNumber: order.order_number,
-                                          items: order.order_items,
-                                        })}
-                                      >
-                                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                                        Return Order
-                                      </Button>
-                                      <span className="text-xs text-[hsl(var(--warning))] font-medium flex items-center gap-1">
-                                        <Clock className="h-3 w-3" />
-                                        {hrs}h {mins}m left
-                                      </span>
-                                    </div>
-                                  );
-                                })()}
+                                {order.status === 'delivered' && !hasReturnRequest && order.order_items && order.delivered_at && (
+                                  <ReturnCountdown
+                                    deliveredAt={order.delivered_at}
+                                    onReturn={() => setReturnModal({
+                                      orderId: order.id,
+                                      orderNumber: order.order_number,
+                                      items: order.order_items,
+                                    })}
+                                  />
+                                )}
 
                                 {/* Show return status if exists */}
                                 {hasReturnRequest && (() => {
