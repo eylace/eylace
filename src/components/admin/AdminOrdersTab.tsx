@@ -498,12 +498,12 @@ export const AdminOrdersTab = () => {
                   <span className="inline-flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
                 <TableHead className="text-xs">Customers</TableHead>
-                <TableHead className="text-xs hidden 2xl:table-cell">IP</TableHead>
+                <TableHead className="text-xs">IP</TableHead>
                 <TableHead className="text-xs">Payment</TableHead>
                 <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="text-xs hidden lg:table-cell">Courier</TableHead>
-                <TableHead className="text-xs hidden lg:table-cell">Method</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell">Fraud</TableHead>
+                <TableHead className="text-xs hidden xl:table-cell">Courier</TableHead>
+                <TableHead className="text-xs hidden xl:table-cell">Method</TableHead>
+                <TableHead className="text-xs hidden 2xl:table-cell">Fraud</TableHead>
                 <TableHead className="text-xs text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
                   <span className="inline-flex items-center gap-1">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
@@ -561,9 +561,9 @@ export const AdminOrdersTab = () => {
                             <Printer className="h-4 w-4 mr-2" /> Print Invoice
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {(order as any).customer_ip && (
-                            <DropdownMenuItem onClick={() => handleBlockIp((order as any).customer_ip)} className="text-amber-600 focus:text-amber-600">
-                              <Ban className="h-4 w-4 mr-2" /> Block IP ({(order as any).customer_ip})
+                          {order.customer_ip && (
+                            <DropdownMenuItem onClick={() => handleBlockIp(order.customer_ip!)} className="text-amber-600 focus:text-amber-600">
+                              <Ban className="h-4 w-4 mr-2" /> Block IP ({order.customer_ip})
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem onClick={() => setDeleteOrderId(order.id)} className="text-destructive focus:text-destructive">
@@ -596,8 +596,8 @@ export const AdminOrdersTab = () => {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden 2xl:table-cell">
-                      <span className="text-[11px] text-muted-foreground font-mono">{(order as any).customer_ip || '—'}</span>
+                    <TableCell>
+                      <span className="text-[11px] text-muted-foreground font-mono">{order.customer_ip || '—'}</span>
                     </TableCell>
                     <TableCell>
                       <span className={cn('text-xs font-medium inline-flex items-center gap-1', isPaid ? 'text-emerald-600' : 'text-orange-500')}>
@@ -636,16 +636,16 @@ export const AdminOrdersTab = () => {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell className="hidden xl:table-cell">
                       <span className="text-xs text-muted-foreground">{order.carrier || '—'}</span>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell className="hidden xl:table-cell">
                       <div className="flex items-center gap-1">
                         <CreditCard className="h-3 w-3 text-muted-foreground" />
                         <span className="text-xs uppercase">{order.payment_method || '—'}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden xl:table-cell">
+                    <TableCell className="hidden 2xl:table-cell">
                       {isGuestLikeOrder(order) ? (
                         <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
                           New Customer (0%)

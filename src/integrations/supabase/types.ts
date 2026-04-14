@@ -2821,6 +2821,30 @@ export type Database = {
           used_count: number
         }[]
       }
+      lookup_guest_order: {
+        Args: { _contact: string; _order_number: string }
+        Returns: {
+          carrier: string
+          created_at: string
+          delivered_at: string
+          discount: number
+          estimated_delivery: string
+          guest_email: string
+          guest_phone: string
+          id: string
+          order_number: string
+          payment_method: string
+          shipped_at: string
+          shipping: number
+          shipping_address: Json
+          status: string
+          subtotal: number
+          tax: number
+          total: number
+          tracking_number: string
+          updated_at: string
+        }[]
+      }
       lookup_return_by_tracking: {
         Args: { tracking_number: string }
         Returns: {

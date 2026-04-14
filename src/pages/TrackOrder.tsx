@@ -67,54 +67,55 @@ const TrackOrder = () => {
     setOrderItems([]);
     setOrderEvents([]);
 
-    // Search by order_number
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select('*, order_items(*)')
-      .eq('order_number', orderNumber.trim())
-      .limit(1);
+    // Use secure lookup function for guest orders
+    const { data: guestOrders, error: guestError } = await supabase.rpc('lookup_guest_order', {
+      _order_number: orderNumber.trim(),
+      _contact: phoneNumber.trim(),
+    });
 
-    if (error || !orders || orders.length === 0) {
-      setOrderSearched(true);
-      setOrderLoading(false);
-      return;
+    let order: any = null;
+
+    if (!guestError && guestOrders && Array.isArray(guestOrders) && guestOrders.length > 0) {
+      order = guestOrders[0];
+    } else {
+      // Try authenticated user's own order via normal query
+      const { data: authOrders } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('order_number', orderNumber.trim())
+        .limit(1);
+
+      if (authOrders && authOrders.length > 0) {
+        const authOrder = authOrders[0];
+        // Verify phone matches
+        const normalizedInput = phoneNumber.trim().replace(/\s+/g, '');
+        const shippingPhone = ((authOrder.shipping_address as any)?.phone || '').replace(/\s+/g, '');
+        const phoneMatches =
+          normalizedInput === shippingPhone ||
+          normalizedInput.endsWith(shippingPhone.slice(-10)) ||
+          shippingPhone.endsWith(normalizedInput.slice(-10));
+
+        if (phoneMatches) {
+          order = authOrder;
+        }
+      }
     }
 
-    const order = orders[0];
-
-    // Verify phone number matches guest_phone or shipping_address phone
-    const normalizedInput = phoneNumber.trim().replace(/\s+/g, '');
-    const guestPhone = (order.guest_phone || '').replace(/\s+/g, '');
-    const shippingPhone = ((order.shipping_address as any)?.phone || '').replace(/\s+/g, '');
-    
-    const phoneMatches = 
-      normalizedInput === guestPhone ||
-      normalizedInput === shippingPhone ||
-      ('+88' + normalizedInput) === guestPhone ||
-      normalizedInput === ('+88' + guestPhone) ||
-      normalizedInput.endsWith(guestPhone.slice(-10)) ||
-      guestPhone.endsWith(normalizedInput.slice(-10)) ||
-      normalizedInput.endsWith(shippingPhone.slice(-10)) ||
-      shippingPhone.endsWith(normalizedInput.slice(-10));
-
-    // For authenticated orders, also check if user_id matches (they can track via account page too)
-    if (!phoneMatches && order.user_id) {
-      // authenticated order - phone must match shipping address
-      if (!shippingPhone.endsWith(normalizedInput.slice(-10)) && !normalizedInput.endsWith(shippingPhone.slice(-10))) {
-        setOrderSearched(true);
-        setOrderLoading(false);
-        toast.error('Phone number does not match this order');
-        return;
-      }
-    } else if (!phoneMatches) {
+    if (!order) {
       setOrderSearched(true);
       setOrderLoading(false);
-      toast.error('Phone number does not match this order');
+      toast.error('Order not found or phone number does not match');
       return;
     }
 
     setOrderData(order);
-    setOrderItems(order.order_items || []);
+
+    // Fetch order items
+    const { data: items } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', order.id);
+    setOrderItems(items || []);
 
     // Fetch tracking events
     const { data: events } = await supabase
