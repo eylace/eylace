@@ -573,8 +573,7 @@ export const AdminOrdersTab = () => {
 
       {/* Order Detail Modal */}
       <Dialog open={!!detailOrder} onOpenChange={open => !open && setDetailOrder(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Package className="h-5 w-5" /> Order #{detailOrder?.order_number}</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
           {detailOrder && (() => {
             const o = detailOrder;
             const addr = normalizeShippingAddress(o.shipping_address);
@@ -582,84 +581,192 @@ export const AdminOrdersTab = () => {
             const cEmail = getOrderCustomerEmail(o);
             const cPhone = getOrderCustomerPhone(o);
             const st = statusConfig[o.status] || statusConfig.pending;
+            const isPaidOrder = o.payment_method !== 'cod' || o.status === 'delivered';
+
             return (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <Badge className={cn('text-xs px-3 py-1', st.color)}>{st.label}</Badge>
-                  {isGuestLikeOrder(o) && <Badge variant="outline">Guest</Badge>}
-                  <span className="text-xs text-muted-foreground ml-auto">{format(new Date(o.created_at), 'PPpp')}</span>
-                </div>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Customer */}
-                  <div>
-                    <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><MapPin className="h-4 w-4" /> Customer & Shipping</h4>
-                    <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
-                      <p className="font-medium">{cName}</p>
-                      <p className="text-muted-foreground">{cEmail}</p>
-                      <p className="text-muted-foreground">{addr.address || 'N/A'}</p>
-                      {addr.apartment && <p className="text-muted-foreground">{addr.apartment}</p>}
-                      <p className="text-muted-foreground">{[addr.city, addr.state, addr.zip_code].filter(Boolean).join(', ')}</p>
-                      <p className="text-muted-foreground">{addr.country}</p>
-                      {cPhone && (
-                        <div className="flex items-center gap-2 pt-1">
-                          <span className="text-muted-foreground">📞 {cPhone}</span>
-                          <a href={`tel:${cPhone}`} className="text-xs px-2 py-0.5 bg-green-500/10 text-green-600 rounded"><Phone className="h-3 w-3 inline mr-1" />Call</a>
-                          <a href={`https://wa.me/${cPhone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded"><MessageCircle className="h-3 w-3 inline mr-1" />WhatsApp</a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {/* Update Status */}
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm">Update Status</Label>
-                      <Select value={o.status} onValueChange={v => handleStatusUpdate(o.id, v)} disabled={updating === o.id}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><Label className="text-xs">Carrier</Label>
-                        <Input className="h-8 text-sm" placeholder="e.g., Steadfast" value={trackingInfo[o.id]?.carrier || o.carrier || ''} onChange={e => setTrackingInfo(p => ({ ...p, [o.id]: { ...p[o.id], carrier: e.target.value } }))} />
-                      </div>
-                      <div><Label className="text-xs">Tracking #</Label>
-                        <Input className="h-8 text-sm" placeholder="#" value={trackingInfo[o.id]?.tracking_number || o.tracking_number || ''} onChange={e => setTrackingInfo(p => ({ ...p, [o.id]: { ...p[o.id], tracking_number: e.target.value } }))} />
-                      </div>
-                    </div>
-                    <Button className="w-full gap-2" size="sm" onClick={() => handleStatusUpdate(o.id, o.status)} disabled={updating === o.id}>
-                      {updating === o.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Save Tracking
+              <div>
+                {/* Header */}
+                <div className="flex items-center justify-between p-5 border-b border-border">
+                  <h2 className="text-lg font-bold text-foreground">Order #{o.order_number}</h2>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" className="gap-2" onClick={() => { setDetailOrder(null); setEditOrder(o); setEditStatus(o.status); }}>
+                      <Edit className="h-4 w-4" /> Edit Order
                     </Button>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 text-xs gap-1" onClick={() => { setDetailOrder(null); setInvoiceOrder(o); }}><Printer className="h-3.5 w-3.5" /> Invoice</Button>
-                      <Button variant="outline" size="sm" className="flex-1 text-xs gap-1" onClick={() => { setDetailOrder(null); setCourierDispatchOrder(o); }}><Truck className="h-3.5 w-3.5" /> Dispatch</Button>
-                    </div>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => { setDetailOrder(null); setInvoiceOrder(o); }}>
+                      <FileText className="h-4 w-4" /> Invoice
+                    </Button>
                   </div>
                 </div>
-                {/* Items */}
-                <div>
-                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2"><Package className="h-4 w-4" /> Items</h4>
-                  <Table>
-                    <TableHeader><TableRow><TableHead>Item</TableHead><TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader>
-                    <TableBody>
-                      {o.items?.map((item: any) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="flex items-center gap-2">{item.product_image && <img src={item.product_image} alt="" className="w-8 h-8 rounded object-cover" />}<span className="text-sm">{item.product_name}</span></TableCell>
-                          <TableCell className="text-right">{item.quantity}</TableCell>
-                          <TableCell className="text-right">৳{Number(item.price).toFixed(2)}</TableCell>
-                          <TableCell className="text-right font-medium">৳{(item.quantity * item.price).toFixed(2)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div className="text-right space-y-1 text-sm mt-3">
-                    <div>Subtotal: ৳{o.subtotal?.toFixed(2)}</div>
-                    <div>Shipping: ৳{o.shipping?.toFixed(2)}</div>
-                    <div>Tax: ৳{o.tax?.toFixed(2)}</div>
-                    {o.discount > 0 && <div className="text-green-600">Discount: -৳{o.discount.toFixed(2)}</div>}
-                    <Separator />
-                    <div className="text-lg font-bold">Total: ৳{o.total.toFixed(2)}</div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
+                  {/* Left: Order Items */}
+                  <div className="lg:col-span-2 p-5">
+                    <Card className="border border-border">
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold text-sm mb-4">Order Items</h3>
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead className="text-xs font-semibold uppercase">Product</TableHead>
+                              <TableHead className="text-xs font-semibold uppercase text-center">Price</TableHead>
+                              <TableHead className="text-xs font-semibold uppercase text-center">Qty</TableHead>
+                              <TableHead className="text-xs font-semibold uppercase text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {o.items?.map((item: any) => (
+                              <TableRow key={item.id}>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    {item.product_image && (
+                                      <img src={item.product_image} alt="" className="w-12 h-12 rounded-lg object-cover border border-border" />
+                                    )}
+                                    <span className="text-sm font-medium">{item.product_name}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center text-sm">৳{Number(item.price).toLocaleString()}</TableCell>
+                                <TableCell className="text-center text-sm">{item.quantity}</TableCell>
+                                <TableCell className="text-right text-sm font-medium">৳{(item.quantity * item.price).toLocaleString()}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        <div className="mt-4 space-y-2 border-t border-border pt-4">
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>Subtotal:</span>
+                            <span>৳{o.subtotal?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>Shipping:</span>
+                            <span>৳{o.shipping?.toLocaleString() || 0}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Discount:</span>
+                            <span className={o.discount > 0 ? 'text-destructive' : 'text-muted-foreground'}>
+                              {o.discount > 0 ? `-৳${o.discount.toLocaleString()}` : `৳0`}
+                            </span>
+                          </div>
+                          <Separator />
+                          <div className="flex justify-between text-base font-bold">
+                            <span>Total:</span>
+                            <span>৳{o.total.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Right: Order Status + Customer Details */}
+                  <div className="p-5 space-y-4 border-l border-border">
+                    {/* Order Status Section */}
+                    <Card className="border border-border">
+                      <CardContent className="p-4 space-y-4">
+                        <h3 className="font-semibold text-sm">Order Status</h3>
+
+                        {/* Payment Status */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Payment Status</Label>
+                          <Select
+                            value={detailPaymentStatus}
+                            onValueChange={setDetailPaymentStatus}
+                          >
+                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="unpaid">Unpaid</SelectItem>
+                              <SelectItem value="paid">Paid</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="failed">Failed</SelectItem>
+                              <SelectItem value="refunded">Refunded</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Fulfillment Status */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Fulfillment Status</Label>
+                          <Select
+                            value={detailFulfillmentStatus}
+                            onValueChange={setDetailFulfillmentStatus}
+                          >
+                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="processing">Processing</SelectItem>
+                              <SelectItem value="sent_to_courier">Sent To Courier</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                              <SelectItem value="refunded">Refunded</SelectItem>
+                              <SelectItem value="failed">Failed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Status Badges */}
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className={cn('text-xs', detailPaymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : detailPaymentStatus === 'refunded' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : detailPaymentStatus === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400')}>
+                            {detailPaymentStatus === 'paid' ? 'Paid' : detailPaymentStatus === 'refunded' ? 'Refunded' : detailPaymentStatus === 'failed' ? 'Failed' : detailPaymentStatus === 'pending' ? 'Pending' : 'Unpaid'}
+                          </Badge>
+                          <Badge className={cn('text-xs', (statusConfig[detailFulfillmentStatus] || statusConfig.pending).color)}>
+                            {detailFulfillmentStatus === 'sent_to_courier' ? 'Sent To Courier' : detailFulfillmentStatus === 'fulfilled' ? 'Fulfilled' : detailFulfillmentStatus === 'completed' ? 'Completed' : detailFulfillmentStatus === 'refunded' ? 'Refunded' : detailFulfillmentStatus === 'failed' ? 'Failed' : (statusConfig[detailFulfillmentStatus] || statusConfig.pending).label}
+                          </Badge>
+                        </div>
+
+                        {/* Update Status Button */}
+                        <Button
+                          className="w-full gap-2"
+                          onClick={async () => {
+                            setUpdating(o.id);
+                            const { error } = await updateOrderStatus(o.id, detailFulfillmentStatus, trackingInfo[o.id]);
+                            if (error) toast.error('Failed to update');
+                            else toast.success('Order status updated');
+                            setUpdating(null);
+                          }}
+                          disabled={updating === o.id}
+                        >
+                          {updating === o.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                          Update Status
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {/* Customer Details */}
+                    <Card className="border border-border">
+                      <CardContent className="p-4 space-y-3">
+                        <h3 className="font-semibold text-sm">Customer Details</h3>
+                        <div className="flex items-start gap-3">
+                          <div className={cn('h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0', getAvatarColor(cName))}>
+                            {getInitials(cName)}
+                          </div>
+                          <div className="text-sm space-y-0.5">
+                            <p className="font-medium">{cName}</p>
+                            {o.user_id && <p className="text-xs text-muted-foreground">Order No: {o.order_number}</p>}
+                            {isGuestLikeOrder(o) && <p className="text-xs text-muted-foreground">Guest Order</p>}
+                          </div>
+                        </div>
+
+                        <Separator />
+
+                        <div>
+                          <h4 className="text-xs font-semibold text-muted-foreground mb-1">Contact Info</h4>
+                          <p className="text-sm">Email: {cEmail}</p>
+                          {cPhone && <p className="text-sm">Phone: {cPhone}</p>}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Shipping Address */}
+                    <Card className="border border-border">
+                      <CardContent className="p-4 space-y-2">
+                        <h3 className="font-semibold text-sm">Shipping Address</h3>
+                        <div className="text-sm text-muted-foreground space-y-0.5">
+                          <p>{[addr.address, addr.apartment].filter(Boolean).join(', ') || 'N/A'}</p>
+                          <p>{[addr.city, addr.state, addr.zip_code].filter(Boolean).join(' ')}</p>
+                          <p>{addr.country || 'BD'}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
               </div>
