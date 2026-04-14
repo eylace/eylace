@@ -566,7 +566,6 @@ export const AdminOrdersTab = () => {
                               <Ban className="h-4 w-4 mr-2" /> Block IP ({order.customer_ip})
                             </DropdownMenuItem>
                           )}
-                          )}
                           <DropdownMenuItem onClick={() => setDeleteOrderId(order.id)} className="text-destructive focus:text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" /> Delete
                           </DropdownMenuItem>
