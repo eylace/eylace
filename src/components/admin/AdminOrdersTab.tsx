@@ -492,6 +492,7 @@ export const AdminOrdersTab = () => {
                   <Checkbox checked={paginatedOrders.length > 0 && selectedOrders.size === paginatedOrders.length} onCheckedChange={toggleSelectAll} />
                 </TableHead>
                 <TableHead className="w-10 text-xs">Actions</TableHead>
+                <TableHead className="text-xs">Product</TableHead>
                 <TableHead className="text-xs">Order</TableHead>
                 <TableHead className="text-xs hidden xl:table-cell">Assigned To</TableHead>
                 <TableHead className="text-xs cursor-pointer select-none" onClick={() => toggleSort('date')}>
