@@ -60,6 +60,7 @@ export interface AdminOrder {
   shipping_address: any;
   guest_email?: string | null;
   guest_phone?: string | null;
+  customer_ip?: string | null;
   carrier: string | null;
   tracking_number: string | null;
   estimated_delivery: string | null;
