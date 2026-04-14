@@ -1,60 +1,55 @@
 
 
-## Website Bug Analysis & Fix Plan
+## Plan: IP Block System & Order IP Detection
 
-### Bugs Found
+### Overview
+Build a complete IP detection and blocking system: capture customer IP at checkout, display it in the admin orders table, and provide a dedicated "IP Block" admin section for managing blocked IPs. Blocked IPs will be checked at checkout to prevent fake orders.
 
-**BUG 1 (Critical): `useAdminCheck` uses `.maybeSingle()` — crashes for multi-role admins**
-The admin user (652354f5) has both `admin` AND `super_admin` roles. The `.maybeSingle()` call in `useAdminData.ts` line 124 throws a PostgreSQL error when >1 row is returned, potentially locking the admin out of the dashboard.
+### Database Changes
 
-**Fix**: Change `.maybeSingle()` to `.limit(1)` + array access (as documented in the architecture memory).
+**1. Add `customer_ip` column to `orders` table**
+- New nullable text column to store the IP address captured during order creation
 
----
+**2. Create `blocked_ips` table**
+- Columns: `id`, `ip_address` (unique), `reason`, `blocked_by` (user_id), `created_at`
+- RLS: Admin-only for all operations
 
-**BUG 2 (Critical): `products_public` view missing `flash_sale_starts` and `sold_count` columns**
-The migration added `flash_sale_starts` to the `products` table, but the `products_public` view was never updated. The `useProducts` hook filters by `flash_sale_starts` on the view — this filter silently fails/is ignored, meaning products with a future start date would still appear.
+### Backend Changes
 
-**Fix**: Recreate the `products_public` view to include `flash_sale_starts` and `sold_count`.
+**3. Create Edge Function `detect-ip`**
+- Simple function that returns the caller's IP from request headers (`x-forwarded-for`, `x-real-ip`, or connection info)
+- Called from checkout before order creation
 
----
+**4. Create Edge Function `check-blocked-ip`**
+- Accepts an IP, checks against `blocked_ips` table, returns blocked status
+- Called at checkout to prevent blocked IPs from placing orders
 
-**BUG 3 (Medium): 6 expired flash sale products still marked `is_flash_sale = true`**
-Products like "Nike Air Max 270", "Apple AirPods Pro", etc. have `flash_sale_ends = 2026-03-01` (over a month ago) but are still `is_flash_sale = true`. The `useProducts` hook does filter these out at query time, but:
-- They still appear in admin product lists as "flash sale" items
-- They show discounted prices even though the sale ended
-- The `ProductCard` may still show flash sale badges
+### Frontend Changes
 
-**Fix**: Run a migration to set `is_flash_sale = false` for all products where `flash_sale_ends < NOW()`. This is a one-time cleanup + optionally add a DB trigger or cron to auto-clear.
+**5. Update Checkout flow (`src/pages/Checkout.tsx`)**
+- Before creating an order, call `detect-ip` to get customer IP
+- Check against `check-blocked-ip`; if blocked, show error and prevent order
+- Include `customer_ip` in the order payload
 
----
+**6. Update Admin Orders Table (`AdminOrdersTab.tsx`)**
+- Add IP column to the orders table showing `customer_ip`
+- Add a "Block IP" option in the three-dot menu per order
 
-**BUG 4 (Low): `order_tracking_events` RLS blocks guest order tracking**
-The `order_tracking_events` table only has an `is_owner_of_order_tracking` SELECT policy that checks `user_id = auth.uid()`. Guest orders have `user_id = NULL`, so tracking events for guest orders can never be fetched — the TrackOrder page will always show an empty timeline for guest orders.
+**7. Create IP Block Admin Page (`src/pages/AdminIpBlock.tsx`)**
+- List all blocked IPs with reason and date
+- Add new IP manually with reason
+- Unblock (delete) existing entries
+- Search/filter functionality
 
-**Fix**: Add a SELECT policy for `anon` and `authenticated` roles that allows viewing tracking events for guest orders (where the parent order has `user_id IS NULL`).
+**8. Update Admin Sidebar (`AdminSidebar.tsx`)**
+- Add "IP Block" item under the Operations section with a `ShieldAlert` or `Ban` icon
 
----
-
-**BUG 5 (Low): `order_tracking_events` has no INSERT policy**
-Admins cannot insert tracking events because there's no INSERT/UPDATE/DELETE policy. The admin-update-order edge function likely uses service role, but if tracking events are ever added from the client, they'll fail.
-
-**Fix**: Add admin INSERT/UPDATE policies for `order_tracking_events`.
-
----
-
-### Files to modify
-
-| File / Resource | Change |
-|---|---|
-| `src/hooks/useAdminData.ts` | Fix `.maybeSingle()` → `.limit(1)` + array access |
-| DB Migration | Recreate `products_public` view with `flash_sale_starts`, `sold_count` |
-| DB Migration | Set `is_flash_sale = false` where `flash_sale_ends < NOW()` |
-| DB Migration | Add RLS policy on `order_tracking_events` for guest order viewing |
-| DB Migration | Add admin INSERT/UPDATE policies on `order_tracking_events` |
+**9. Update App Router (`App.tsx`)**
+- Add route for `/admin/ip-block` pointing to the new page
 
 ### Technical Details
-
-- The `products_public` view needs `DROP VIEW IF EXISTS` then `CREATE VIEW` with all existing columns plus `flash_sale_starts` and `sold_count`
-- The `useAdminCheck` fix is a 3-line change: replace `.maybeSingle()` with array handling
-- Guest tracking events RLS: `EXISTS (SELECT 1 FROM orders WHERE orders.id = order_tracking_events.order_id AND orders.user_id IS NULL)`
+- IP detection uses `x-forwarded-for` header in the edge function (standard for proxied environments)
+- The `blocked_ips` table uses a unique constraint on `ip_address` to prevent duplicates
+- Guest and authenticated orders both capture IP equally
+- The `DashboardIncompleteOrders` conversion flow will also carry forward the IP if available
 
