@@ -116,6 +116,8 @@ export const AdminOrdersTab = () => {
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [couriers, setCouriers] = useState<CourierOption[]>([]);
+  const [detailPaymentStatus, setDetailPaymentStatus] = useState('unpaid');
+  const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
   const { t } = useLanguage();
 
   // Fetch active couriers
