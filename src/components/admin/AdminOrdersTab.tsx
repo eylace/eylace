@@ -126,6 +126,18 @@ export const AdminOrdersTab = () => {
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
   const { t } = useLanguage();
 
+  const handleBlockIp = async (ip: string) => {
+    const { error } = await (supabase as any)
+      .from('blocked_ips')
+      .insert({ ip_address: ip, reason: 'Blocked from order panel' });
+    if (error) {
+      if (error.code === '23505') toast.info('This IP is already blocked');
+      else toast.error('Failed to block IP');
+    } else {
+      toast.success(`IP ${ip} blocked successfully`);
+    }
+  };
+
   // Fetch active couriers
   useEffect(() => {
     const fetchCouriers = async () => {
