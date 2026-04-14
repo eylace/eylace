@@ -548,8 +548,11 @@ export const AdminOrdersTab = () => {
                           <DropdownMenuItem onClick={() => { setEditOrder(order); setEditStatus(order.status); }}>
                             <Edit className="h-4 w-4 mr-2" /> Edit Order
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setInvoiceOrder(order)}>
+                          <DropdownMenuItem onClick={() => downloadSingleInvoice(order)}>
                             <Download className="h-4 w-4 mr-2" /> Download Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => printSingleInvoice(order)}>
+                            <Printer className="h-4 w-4 mr-2" /> Print Invoice
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setDeleteOrderId(order.id)} className="text-destructive focus:text-destructive">
