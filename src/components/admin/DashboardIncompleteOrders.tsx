@@ -266,7 +266,7 @@ export const DashboardIncompleteOrders = () => {
                           <Button variant="secondary" size="sm" className="h-7 text-[10px] px-2" onClick={() => updateStatus(o.id, 'contacted')}>{t('admin.incomplete.contacted')}</Button>
                         )}
                         {o.status !== 'converted' && (
-                          <Button variant="secondary" size="sm" className="h-7 text-[10px] px-2 gap-1" onClick={() => updateStatus(o.id, 'converted')}><CheckCheck className="h-3 w-3" /> Converted</Button>
+                          <Button variant="secondary" size="sm" className="h-7 text-[10px] px-2 gap-1" onClick={() => convertToOrder(o)}><CheckCheck className="h-3 w-3" /> Converted</Button>
                         )}
                       </div>
                       <div className="cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : o.id)}>
