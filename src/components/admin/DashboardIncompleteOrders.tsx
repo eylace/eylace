@@ -64,6 +64,61 @@ export const DashboardIncompleteOrders = () => {
     fetchIncomplete();
   };
 
+  const convertToOrder = async (order: IncompleteOrder) => {
+    try {
+      const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
+      const cartItems = Array.isArray(order.cart_items) ? order.cart_items : [];
+      const subtotal = Number(order.cart_total) || 0;
+
+      const { data: newOrder, error: orderError } = await supabase.from('orders').insert({
+        order_number: orderNumber,
+        user_id: null,
+        status: 'pending',
+        payment_method: 'cod',
+        subtotal,
+        discount: 0,
+        shipping: 0,
+        tax: 0,
+        total: subtotal,
+        guest_email: order.email,
+        guest_phone: order.phone,
+        shipping_address: {
+          first_name: order.first_name,
+          last_name: order.last_name,
+          address: order.address,
+          city: order.city,
+          state: order.state,
+          zip_code: order.zip_code,
+          country: order.country,
+          phone: order.phone,
+        },
+      }).select('id').single();
+
+      if (orderError) throw orderError;
+
+      if (newOrder && cartItems.length > 0) {
+        const items = cartItems.map((item: any) => ({
+          order_id: newOrder.id,
+          product_id: item.product_id || item.id || crypto.randomUUID(),
+          product_name: item.name || 'Product',
+          product_image: item.image || null,
+          price: Number(item.price) || 0,
+          quantity: Number(item.qty) || 1,
+          variations: item.variation || null,
+        }));
+        await supabase.from('order_items').insert(items);
+      }
+
+      // Mark as converted
+      await (supabase.from('incomplete_orders') as any).update({ status: 'converted' }).eq('id', order.id);
+
+      toast.success('Order converted successfully!');
+      navigate('/admin/orders');
+    } catch (err: any) {
+      toast.error('Failed to convert: ' + (err.message || 'Unknown error'));
+    }
+  };
+
   const deleteOrder = async (id: string) => {
     await (supabase.from('incomplete_orders') as any).delete().eq('id', id);
     toast.success(t('admin.incomplete.deleted'));
@@ -211,7 +266,7 @@ export const DashboardIncompleteOrders = () => {
                           <Button variant="secondary" size="sm" className="h-7 text-[10px] px-2" onClick={() => updateStatus(o.id, 'contacted')}>{t('admin.incomplete.contacted')}</Button>
                         )}
                         {o.status !== 'converted' && (
-                          <Button variant="secondary" size="sm" className="h-7 text-[10px] px-2 gap-1" onClick={() => updateStatus(o.id, 'converted')}><CheckCheck className="h-3 w-3" /> Converted</Button>
+                          <Button variant="secondary" size="sm" className="h-7 text-[10px] px-2 gap-1" onClick={() => convertToOrder(o)}><CheckCheck className="h-3 w-3" /> Converted</Button>
                         )}
                       </div>
                       <div className="cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : o.id)}>
