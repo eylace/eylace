@@ -473,27 +473,6 @@ const Checkout = () => {
   const processOrder = async (data: CheckoutFormData) => {
     setIsProcessing(true);
     try {
-      // Detect customer IP
-      let customerIp = 'unknown';
-      try {
-        const { data: ipData } = await supabase.functions.invoke('detect-ip');
-        if (ipData?.ip) customerIp = ipData.ip;
-      } catch { /* best effort */ }
-
-      // Check if IP is blocked
-      if (customerIp !== 'unknown') {
-        try {
-          const { data: blockData } = await supabase.functions.invoke('check-blocked-ip', {
-            body: { ip: customerIp },
-          });
-          if (blockData?.isBlocked) {
-            toast.error('Your IP address has been restricted from placing orders. Please contact support.');
-            setIsProcessing(false);
-            return;
-          }
-        } catch { /* allow order if check fails */ }
-      }
-
       // Pre-checkout stock validation
       const productIds = checkoutItems.map(i => i.product.id);
       const { data: stockData } = await supabase
@@ -519,7 +498,6 @@ const Checkout = () => {
         total,
         totalDiscount,
       } = getCheckoutPricing(data.paymentMethod, promoDiscount, data.shippingCharge);
-      let createdOrderId: string | null = null;
 
       const normalizedGuestEmail = normalizeOptionalText(data.email);
       const normalizedGuestPhone = normalizeOptionalText(data.phone);
@@ -536,95 +514,57 @@ const Checkout = () => {
         country: normalizeOptionalText(data.country) || 'BD',
       };
 
-      const orderPayload: any = {
-        order_number: orderNumber, status: 'pending',
-        subtotal, shipping, tax, discount: totalDiscount, total,
-        payment_method: data.paymentMethod, shipping_address: shippingAddress,
-        customer_ip: customerIp !== 'unknown' ? customerIp : null,
-      };
+      const orderItems = checkoutItems.map(item => ({
+        product_id: item.product.id,
+        product_name: item.product.name,
+        product_image: item.product.images?.[0] || null,
+        price: item.product.price,
+        quantity: item.quantity,
+        variations: item.selectedVariations || null,
+      }));
 
-      const hasImplicitGuestSession = isImplicitGuestSession(user);
-      const shouldCreateGuestOrder = !user
-        ? true
-        : hasImplicitGuestSession
-          ? true
-          : await isPrivilegedGuestCheckoutUser(user.id);
-
-      if (!shouldCreateGuestOrder && user) {
-        orderPayload.user_id = user.id;
-      } else {
-        orderPayload.user_id = null;
-        orderPayload.guest_email = normalizedGuestEmail;
-        orderPayload.guest_phone = normalizedGuestPhone;
-      }
-
-      console.log('[Checkout] Inserting order', {
-        hasSessionUser: !!user,
-        shouldCreateGuestOrder,
-        hasImplicitGuestSession,
-        order_number: orderPayload.order_number,
-        guest_phone: orderPayload.guest_phone,
+      // Use server-side order creation for reliable IP detection + user attribution
+      const { data: result, error: fnError } = await supabase.functions.invoke('checkout-create-order', {
+        body: {
+          order_number: orderNumber,
+          subtotal,
+          shipping,
+          tax,
+          discount: totalDiscount,
+          total,
+          payment_method: data.paymentMethod,
+          shipping_address: shippingAddress,
+          guest_email: normalizedGuestEmail,
+          guest_phone: normalizedGuestPhone,
+          items: orderItems,
+        },
       });
 
-      let orderData: any = null;
-      let orderError: any = null;
-
-      if (shouldCreateGuestOrder) {
-        try {
-          orderData = await insertGuestOrderWithAnonApi(orderPayload);
-        } catch (error) {
-          orderError = error;
-        }
-      } else {
-        const result = await supabase
-          .from('orders').insert(orderPayload).select().single();
-        orderData = result.data;
-        orderError = result.error;
-      }
-
-      if (orderError) {
-        console.error('[Checkout] Order creation error:', orderError, orderPayload);
-        toast.error(`Failed to create order: ${orderError.message || 'Unknown error'}`);
+      if (fnError || result?.error) {
+        const errorMsg = result?.error || fnError?.message || 'Unknown error';
+        console.error('[Checkout] Order creation error:', errorMsg);
+        toast.error(errorMsg);
         setIsProcessing(false);
         return;
       }
 
-      createdOrderId = orderData.id;
+      const orderData = result?.order;
+      const isGuestOrder = result?.is_guest ?? true;
+      const createdOrderId = orderData?.id;
 
-      const orderItems = checkoutItems.map(item => ({
-        order_id: orderData.id, product_id: item.product.id, product_name: item.product.name,
-        product_image: item.product.images?.[0] || null, price: item.product.price,
-        quantity: item.quantity, variations: item.selectedVariations || null,
-      }));
-      let itemsResult: { error: { message?: string } | null } = { error: null };
-      if (shouldCreateGuestOrder) {
-        try {
-          await insertGuestOrderItemsWithAnonApi(orderItems);
-        } catch (error) {
-          itemsResult = {
-            error: {
-              message: error instanceof Error ? error.message : 'Unknown error',
-            },
-          };
-        }
-      } else {
-        itemsResult = await supabase.from('order_items').insert(orderItems);
-      }
-
-      if (itemsResult.error) {
-        console.error('[Checkout] Order items error:', itemsResult.error, orderItems);
-        toast.error(`Failed to save order items: ${itemsResult.error.message}`);
+      if (!createdOrderId) {
+        toast.error('Failed to create order');
         setIsProcessing(false);
         return;
       }
 
       if (appliedCouponId && orderData) {
         await supabase.functions.invoke('apply-coupon', {
-          body: { coupon_id: appliedCouponId, order_id: orderData.id, discount_amount: promoDiscount },
+          body: { coupon_id: appliedCouponId, order_id: createdOrderId, discount_amount: promoDiscount },
         });
       }
 
-      if (!shouldCreateGuestOrder && user && data.saveAddress) {
+      if (!isGuestOrder && user && data.saveAddress) {
         await supabase.from('profiles').update({
           first_name: data.firstName, last_name: data.lastName, phone: data.phone,
           address: data.address, apartment: data.apartment, city: data.city,
@@ -637,7 +577,7 @@ const Checkout = () => {
 
       await new Promise(resolve => setTimeout(resolve, 1000));
       setOrderId(orderNumber);
-      setLastOrderWasGuest(shouldCreateGuestOrder);
+      setLastOrderWasGuest(isGuestOrder);
       if (isBuyNowMode) {
         clearBuyNowCheckout();
         setBuyNowItems([]);
