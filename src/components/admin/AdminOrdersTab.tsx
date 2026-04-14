@@ -700,8 +700,11 @@ export const AdminOrdersTab = () => {
                     <Button size="sm" className="gap-2" onClick={() => { setDetailOrder(null); setEditOrder(o); setEditStatus(o.status); }}>
                       <Edit className="h-4 w-4" /> Edit Order
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => { setDetailOrder(null); setInvoiceOrder(o); }}>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => { setDetailOrder(null); downloadSingleInvoice(o); }}>
                       <FileText className="h-4 w-4" /> Invoice
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => { setDetailOrder(null); printSingleInvoice(o); }}>
+                      <Printer className="h-4 w-4" /> Print
                     </Button>
                   </div>
                 </div>
