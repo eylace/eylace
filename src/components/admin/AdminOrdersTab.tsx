@@ -920,38 +920,13 @@ export const AdminOrdersTab = () => {
       </Dialog>
 
       {/* Edit Order Modal */}
-      <Dialog open={!!editOrder} onOpenChange={open => !open && setEditOrder(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Edit className="h-5 w-5" /> Edit Order #{editOrder?.order_number}</DialogTitle></DialogHeader>
-          {editOrder && (
-            <div className="space-y-4">
-              <div>
-                <Label>Order Status</Label>
-                <Select value={editStatus} onValueChange={setEditStatus}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Carrier</Label>
-                  <Input className="h-8 text-sm" placeholder="e.g., Steadfast" value={trackingInfo[editOrder.id]?.carrier || editOrder.carrier || ''} onChange={e => setTrackingInfo(p => ({ ...p, [editOrder.id]: { ...p[editOrder.id], carrier: e.target.value, tracking_number: p[editOrder.id]?.tracking_number || editOrder.tracking_number || '' } }))} />
-                </div>
-                <div>
-                  <Label className="text-xs">Tracking #</Label>
-                  <Input className="h-8 text-sm" placeholder="Tracking number" value={trackingInfo[editOrder.id]?.tracking_number || editOrder.tracking_number || ''} onChange={e => setTrackingInfo(p => ({ ...p, [editOrder.id]: { carrier: p[editOrder.id]?.carrier || editOrder.carrier || '', tracking_number: e.target.value } }))} />
-                </div>
-              </div>
-              <Button className="w-full gap-2" onClick={handleEditOrderSave} disabled={updating === editOrder.id}>
-                {updating === editOrder.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                Save Changes
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <EditOrderModal
+        order={editOrder}
+        open={!!editOrder}
+        onClose={() => setEditOrder(null)}
+        onViewDetails={() => { const o = editOrder; setEditOrder(null); setDetailOrder(o); }}
+        onSave={handleEditOrderSave}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteOrderId} onOpenChange={open => !open && setDeleteOrderId(null)}>
