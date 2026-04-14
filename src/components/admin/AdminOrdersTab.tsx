@@ -107,11 +107,25 @@ export const AdminOrdersTab = () => {
   const [invoiceOrder, setInvoiceOrder] = useState<any>(null);
   const [detailOrder, setDetailOrder] = useState<any>(null);
   const [courierDispatchOrder, setCourierDispatchOrder] = useState<any>(null);
-  const [dispatchProvider, setDispatchProvider] = useState('steadfast');
+  const [dispatchProvider, setDispatchProvider] = useState('');
   const [dispatching, setDispatching] = useState(false);
   const [sortField, setSortField] = useState<'date' | 'total'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [editOrder, setEditOrder] = useState<any>(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [couriers, setCouriers] = useState<CourierOption[]>([]);
   const { t } = useLanguage();
+
+  // Fetch active couriers
+  useEffect(() => {
+    const fetchCouriers = async () => {
+      const { data } = await (supabase as any).from('couriers').select('id, name, code, is_active').eq('is_active', true).order('name');
+      if (data) setCouriers(data);
+    };
+    fetchCouriers();
+  }, []);
 
   // Stats
   const stats = useMemo(() => {
