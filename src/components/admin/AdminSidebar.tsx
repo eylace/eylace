@@ -6,7 +6,7 @@ import {
   Home, Upload, Download, Palette, Ruler, ShieldCheck, Sparkles, Percent, Type, Box,
   Monitor, PanelTop, Paintbrush, Lock, LayoutTemplate, CalendarClock, ClipboardList,
   MessagesSquare, HelpCircle, BellRing, Star, DollarSign, Wallet, UserCheck,
-  Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone,
+  Zap, MousePointerClick, AlertTriangle, ShoppingBag, Mail, Newspaper, UsersRound, Eye, Smartphone, Boxes,
   Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw, Link2,
   UploadCloud, LifeBuoy, Ticket, MessageCircle, Contact, Award, PenSquare, FolderOpen, BookOpen,
   Receipt, Undo2, FileCheck, FolderCog,
@@ -101,6 +101,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.otp.loginConfig', url: '/admin/otp/login-config', icon: Smartphone },
     { titleKey: 'admin.otp.configurations', url: '/admin/otp/configurations', icon: Settings },
     { titleKey: 'admin.otp.smsTemplates', url: '/admin/otp/sms-templates', icon: MessageSquare },
+  ];
+
+  const stockItems: NavItem[] = [
+    { titleKey: 'All Stock Products', url: '/admin/stock', icon: Boxes },
   ];
 
   const managementItems = [
@@ -325,6 +329,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('ai', 'admin.ai.section', Brain, aiItems)}
         {renderCollapsible('products', 'admin.products', Package, productItems, '/admin/products')}
         {renderCollapsible('sellers', 'admin.sellers.section', Store, sellerItems, '/admin/sellers')}
+        {renderCollapsible('stockManagement', 'Stock Management', Boxes, stockItems)}
         {canAccess('management') && renderGroup('admin.group.management', managementItems)}
         {renderCollapsible('preorder', 'admin.preorder', CalendarClock, preorderItems, '/admin/preorder')}
         {renderCollapsible('otp', 'admin.otp.section', Smartphone, otpItems)}
