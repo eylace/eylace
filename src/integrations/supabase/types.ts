@@ -2579,6 +2579,7 @@ export type Database = {
           description: string | null
           discount: number | null
           flash_sale_ends: string | null
+          flash_sale_starts: string | null
           id: string | null
           images: string[] | null
           is_active: boolean | null
@@ -2594,6 +2595,7 @@ export type Database = {
           review_count: number | null
           seller_id: string | null
           slug: string | null
+          sold_count: number | null
           stock: number | null
           updated_at: string | null
           variations: Json | null
@@ -2607,6 +2609,7 @@ export type Database = {
           description?: string | null
           discount?: number | null
           flash_sale_ends?: string | null
+          flash_sale_starts?: string | null
           id?: string | null
           images?: string[] | null
           is_active?: boolean | null
@@ -2622,6 +2625,7 @@ export type Database = {
           review_count?: number | null
           seller_id?: string | null
           slug?: string | null
+          sold_count?: number | null
           stock?: number | null
           updated_at?: string | null
           variations?: Json | null
@@ -2635,6 +2639,7 @@ export type Database = {
           description?: string | null
           discount?: number | null
           flash_sale_ends?: string | null
+          flash_sale_starts?: string | null
           id?: string | null
           images?: string[] | null
           is_active?: boolean | null
@@ -2650,6 +2655,7 @@ export type Database = {
           review_count?: number | null
           seller_id?: string | null
           slug?: string | null
+          sold_count?: number | null
           stock?: number | null
           updated_at?: string | null
           variations?: Json | null
