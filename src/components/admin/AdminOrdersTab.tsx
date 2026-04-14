@@ -718,22 +718,79 @@ export const AdminOrdersTab = () => {
               <div className="space-y-2">
                 <Label>Select Courier Provider</Label>
                 <Select value={dispatchProvider} onValueChange={setDispatchProvider}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Choose a courier..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="shiprocket">🚀 Shiprocket</SelectItem>
-                    <SelectItem value="steadfast">📦 Steadfast</SelectItem>
-                    <SelectItem value="pathao">🏍️ Pathao</SelectItem>
+                    {couriers.map(c => (
+                      <SelectItem key={c.id} value={c.code}>📦 {c.name}</SelectItem>
+                    ))}
+                    {couriers.length === 0 && (
+                      <>
+                        <SelectItem value="steadfast">📦 Steadfast</SelectItem>
+                        <SelectItem value="pathao">🏍️ Pathao</SelectItem>
+                        <SelectItem value="shiprocket">🚀 Shiprocket</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleCourierDispatch} disabled={dispatching} className="w-full gap-2">
+              <Button onClick={handleCourierDispatch} disabled={dispatching || !dispatchProvider} className="w-full gap-2">
                 {dispatching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Send to {dispatchProvider.charAt(0).toUpperCase() + dispatchProvider.slice(1)}
+                Send to {dispatchProvider ? dispatchProvider.charAt(0).toUpperCase() + dispatchProvider.slice(1) : 'Courier'}
               </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Order Modal */}
+      <Dialog open={!!editOrder} onOpenChange={open => !open && setEditOrder(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Edit className="h-5 w-5" /> Edit Order #{editOrder?.order_number}</DialogTitle></DialogHeader>
+          {editOrder && (
+            <div className="space-y-4">
+              <div>
+                <Label>Order Status</Label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Carrier</Label>
+                  <Input className="h-8 text-sm" placeholder="e.g., Steadfast" value={trackingInfo[editOrder.id]?.carrier || editOrder.carrier || ''} onChange={e => setTrackingInfo(p => ({ ...p, [editOrder.id]: { ...p[editOrder.id], carrier: e.target.value, tracking_number: p[editOrder.id]?.tracking_number || editOrder.tracking_number || '' } }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Tracking #</Label>
+                  <Input className="h-8 text-sm" placeholder="Tracking number" value={trackingInfo[editOrder.id]?.tracking_number || editOrder.tracking_number || ''} onChange={e => setTrackingInfo(p => ({ ...p, [editOrder.id]: { carrier: p[editOrder.id]?.carrier || editOrder.carrier || '', tracking_number: e.target.value } }))} />
+                </div>
+              </div>
+              <Button className="w-full gap-2" onClick={handleEditOrderSave} disabled={updating === editOrder.id}>
+                {updating === editOrder.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                Save Changes
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteOrderId} onOpenChange={open => !open && setDeleteOrderId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to delete this order? This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteOrder} disabled={deleting} className="bg-destructive text-destructive-foreground gap-2">
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />} Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
