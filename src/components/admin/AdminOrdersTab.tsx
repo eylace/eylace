@@ -549,6 +549,11 @@ export const AdminOrdersTab = () => {
                             <Printer className="h-4 w-4 mr-2" /> Print Invoice
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          {(order as any).customer_ip && (
+                            <DropdownMenuItem onClick={() => handleBlockIp((order as any).customer_ip)} className="text-amber-600 focus:text-amber-600">
+                              <Ban className="h-4 w-4 mr-2" /> Block IP ({(order as any).customer_ip})
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => setDeleteOrderId(order.id)} className="text-destructive focus:text-destructive">
                             <Trash2 className="h-4 w-4 mr-2" /> Delete
                           </DropdownMenuItem>
@@ -580,7 +585,7 @@ export const AdminOrdersTab = () => {
                       </div>
                     </TableCell>
                     <TableCell className="hidden 2xl:table-cell">
-                      <span className="text-[11px] text-muted-foreground">—</span>
+                      <span className="text-[11px] text-muted-foreground font-mono">{(order as any).customer_ip || '—'}</span>
                     </TableCell>
                     <TableCell>
                       <span className={cn('text-xs font-medium inline-flex items-center gap-1', isPaid ? 'text-emerald-600' : 'text-orange-500')}>
