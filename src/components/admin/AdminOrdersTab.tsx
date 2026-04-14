@@ -524,9 +524,34 @@ export const AdminOrdersTab = () => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge className={cn('text-[10px] px-2 py-0.5 font-medium whitespace-nowrap', status.color)}>
-                        {status.label}
-                      </Badge>
+                      <Select
+                        value={order.status}
+                        onValueChange={async (newStatus) => {
+                          setUpdating(order.id);
+                          const { error } = await updateOrderStatus(order.id, newStatus);
+                          if (error) toast.error('Failed to update status');
+                          else toast.success(`Status updated to ${(statusConfig[newStatus] || { label: newStatus }).label}`);
+                          setUpdating(null);
+                        }}
+                        disabled={updating === order.id}
+                      >
+                        <SelectTrigger className="h-7 w-auto min-w-[130px] border-0 p-0 shadow-none focus:ring-0 [&>svg]:ml-1">
+                          <Badge className={cn('text-[10px] px-2 py-0.5 font-medium whitespace-nowrap cursor-pointer', status.color)}>
+                            {updating === order.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                            {status.label}
+                          </Badge>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
+                          <SelectItem value="sent_to_courier">Sent To Courier</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="shipped">Completed</SelectItem>
+                          <SelectItem value="out_for_delivery">Fulfilled</SelectItem>
+                          <SelectItem value="cancelled">Refunded</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <span className="text-xs text-muted-foreground">{order.carrier || '—'}</span>
