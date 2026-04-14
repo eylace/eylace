@@ -25,6 +25,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { exportToCSV } from '@/lib/csvExport';
 import { supabase } from '@/integrations/supabase/client';
 import { EditOrderModal } from '@/components/admin/EditOrderModal';
+import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
 
 interface CourierOption {
   id: string;
@@ -426,18 +427,52 @@ export const AdminOrdersTab = () => {
         </CardContent>
       </Card>
 
-      {/* Bulk Actions */}
+      {/* Bulk Actions Bar */}
       {selectedOrders.size > 0 && (
         <div className="mb-4 p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-wrap items-center gap-3">
-          <span className="text-xs font-medium">{selectedOrders.size} selected</span>
-          <Select onValueChange={handleBulkStatusUpdate} disabled={bulkUpdating}>
-            <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Change status..." /></SelectTrigger>
-            <SelectContent>
-              {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          {bulkUpdating && <Loader2 className="h-4 w-4 animate-spin text-accent" />}
-          <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelectedOrders(new Set())}>Cancel</Button>
+          <Badge className="bg-accent text-accent-foreground text-xs px-3 py-1">{selectedOrders.size}</Badge>
+          <span className="text-xs font-medium">order(s) selected</span>
+          <div className="flex-1" />
+          <Button
+            variant="default" size="sm" className="gap-2 text-xs h-8"
+            onClick={() => {
+              const selected = orders.filter(o => selectedOrders.has(o.id));
+              if (selected.length > 0) downloadBulkInvoices(selected);
+            }}
+          >
+            <Download className="h-3.5 w-3.5" /> Download Invoices
+          </Button>
+          <Button
+            variant="outline" size="sm" className="gap-2 text-xs h-8"
+            onClick={() => {
+              const selected = orders.filter(o => selectedOrders.has(o.id));
+              if (selected.length > 0) printBulkInvoices(selected);
+            }}
+          >
+            <Printer className="h-3.5 w-3.5" /> Print Invoices
+          </Button>
+          <Button
+            variant="destructive" size="sm" className="gap-2 text-xs h-8"
+            onClick={async () => {
+              if (!confirm(`Are you sure you want to delete ${selectedOrders.size} order(s)?`)) return;
+              setBulkUpdating(true);
+              let count = 0;
+              for (const id of selectedOrders) {
+                await (supabase as any).from('order_items').delete().eq('order_id', id);
+                const { error } = await (supabase as any).from('orders').delete().eq('id', id);
+                if (!error) count++;
+              }
+              toast.success(`${count} order(s) deleted`);
+              setSelectedOrders(new Set());
+              setBulkUpdating(false);
+            }}
+            disabled={bulkUpdating}
+          >
+            {bulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Delete Orders
+          </Button>
+          <Button variant="ghost" size="sm" className="text-xs h-8 gap-1" onClick={() => setSelectedOrders(new Set())}>
+            <XCircle className="h-3.5 w-3.5" /> Clear
+          </Button>
         </div>
       )}
 
