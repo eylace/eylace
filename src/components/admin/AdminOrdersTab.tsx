@@ -448,12 +448,34 @@ export const AdminOrdersTab = () => {
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-48">
-                          <DropdownMenuItem onClick={() => setDetailOrder(order)}><Eye className="h-4 w-4 mr-2" /> View Details</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setInvoiceOrder(order)}><FileText className="h-4 w-4 mr-2" /> Invoice</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setCourierDispatchOrder(order)}><Truck className="h-4 w-4 mr-2" /> Send to Courier</DropdownMenuItem>
+                        <DropdownMenuContent align="start" className="w-52">
+                          <DropdownMenuItem onClick={() => toast.info('Re-assign feature coming soon')}>
+                            <UserPlus className="h-4 w-4 mr-2" /> Re-Assign
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setFraudOrder(order)} className="text-destructive"><ShieldAlert className="h-4 w-4 mr-2" /> Fraud Check</DropdownMenuItem>
+                          {couriers.length > 0 && (
+                            <>
+                              {couriers.map(c => (
+                                <DropdownMenuItem key={c.id} onClick={() => handleShipViaCourier(order, c)}>
+                                  <Truck className="h-4 w-4 mr-2" /> Ship via {c.name}
+                                </DropdownMenuItem>
+                              ))}
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          <DropdownMenuItem onClick={() => setDetailOrder(order)}>
+                            <Eye className="h-4 w-4 mr-2" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setEditOrder(order); setEditStatus(order.status); }}>
+                            <Edit className="h-4 w-4 mr-2" /> Edit Order
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setInvoiceOrder(order)}>
+                            <Download className="h-4 w-4 mr-2" /> Download Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setDeleteOrderId(order.id)} className="text-destructive focus:text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
