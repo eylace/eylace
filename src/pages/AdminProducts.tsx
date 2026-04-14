@@ -1,111 +1,498 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Plus, Search, Edit, Trash2, Eye, EyeOff, Loader2, Image as ImageIcon } from 'lucide-react';
+import {
+  Package, Plus, Search, Edit, Trash2, Eye, Loader2,
+  Image as ImageIcon, Star, MoreVertical, Filter, ArrowUpDown,
+  Copy, Download, ChevronDown, CheckSquare,
+} from 'lucide-react';
 import { AdminProductFormModal } from '@/components/admin/ProductFormModal';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+type SortField = 'name' | 'price' | 'stock' | 'created_at' | 'sold_count' | 'rating';
+type SortDir = 'asc' | 'desc';
+type TabKey = 'all' | 'inhouse' | 'seller' | 'digital' | 'physical' | 'inactive';
 
 const AdminProducts = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [sellers, setSellers] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
+  const [tab, setTab] = useState<TabKey>('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterBrand, setFilterBrand] = useState('all');
+  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState('');
 
-  const fetchProducts = async () => {
+  const fetchAll = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('products').select('*, categories(name)').order('created_at', { ascending: false });
-    if (!error && data) setProducts(data);
+    const [prodRes, catRes, sellerRes, brandRes] = await Promise.all([
+      supabase.from('products').select('*, categories(name), sellers(name, id), brands(name)').order('created_at', { ascending: false }),
+      supabase.from('categories').select('id, name').order('name'),
+      supabase.from('sellers').select('id, name').order('name'),
+      supabase.from('brands').select('id, name').order('name'),
+    ]);
+    if (!prodRes.error && prodRes.data) setProducts(prodRes.data);
+    if (!catRes.error && catRes.data) setCategories(catRes.data);
+    if (!sellerRes.error && sellerRes.data) setSellers(sellerRes.data);
+    if (!brandRes.error && brandRes.data) setBrands(brandRes.data);
     setLoading(false);
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   const toggleActive = async (id: string, current: boolean) => {
     const { error } = await supabase.from('products').update({ is_active: !current }).eq('id', id);
-    if (!error) { toast.success(`Product ${!current ? 'activated' : 'deactivated'}`); fetchProducts(); }
+    if (!error) { toast.success(`Product ${!current ? 'published' : 'unpublished'}`); fetchAll(); }
+  };
+
+  const toggleFlashSale = async (id: string, current: boolean) => {
+    const { error } = await supabase.from('products').update({ is_flash_sale: !current }).eq('id', id);
+    if (!error) { toast.success(`Today's deal ${!current ? 'enabled' : 'disabled'}`); fetchAll(); }
+  };
+
+  const toggleFeatured = async (id: string, current: boolean) => {
+    const { error } = await supabase.from('products').update({ is_prime: !current }).eq('id', id);
+    if (!error) { toast.success(`Featured ${!current ? 'enabled' : 'disabled'}`); fetchAll(); }
   };
 
   const deleteProduct = async (id: string) => {
     const { error } = await supabase.from('products').delete().eq('id', id);
-    if (!error) { toast.success('Product deleted'); fetchProducts(); } else { toast.error('Failed to delete product'); }
+    if (!error) { toast.success('Product deleted'); fetchAll(); }
+    else toast.error('Failed to delete');
   };
 
-  const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.slug.toLowerCase().includes(search.toLowerCase()));
+  const handleBulkAction = async () => {
+    if (!bulkAction || selected.size === 0) return;
+    const ids = Array.from(selected);
+    let error;
+    if (bulkAction === 'activate') {
+      ({ error } = await supabase.from('products').update({ is_active: true }).in('id', ids));
+    } else if (bulkAction === 'deactivate') {
+      ({ error } = await supabase.from('products').update({ is_active: false }).in('id', ids));
+    } else if (bulkAction === 'delete') {
+      ({ error } = await supabase.from('products').delete().in('id', ids));
+    }
+    if (!error) { toast.success(`Bulk action applied to ${ids.length} products`); setSelected(new Set()); setBulkAction(''); fetchAll(); }
+    else toast.error('Bulk action failed');
+  };
+
+  const filtered = useMemo(() => {
+    let list = products;
+
+    // Tab filter
+    if (tab === 'inhouse') list = list.filter(p => !p.seller_id);
+    else if (tab === 'seller') list = list.filter(p => !!p.seller_id);
+    else if (tab === 'digital') list = list.filter(p => p.is_digital);
+    else if (tab === 'physical') list = list.filter(p => !p.is_digital);
+    else if (tab === 'inactive') list = list.filter(p => !p.is_active);
+
+    // Category filter
+    if (filterCategory !== 'all') list = list.filter(p => p.category_id === filterCategory);
+    // Brand filter
+    if (filterBrand !== 'all') list = list.filter(p => p.brand_id === filterBrand);
+
+    // Search
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.slug.toLowerCase().includes(q) ||
+        (p.brands?.name || '').toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    list = [...list].sort((a, b) => {
+      let va = a[sortField] ?? 0;
+      let vb = b[sortField] ?? 0;
+      if (typeof va === 'string') va = va.toLowerCase();
+      if (typeof vb === 'string') vb = vb.toLowerCase();
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [products, tab, filterCategory, filterBrand, search, sortField, sortDir]);
+
+  const tabCounts = useMemo(() => ({
+    all: products.length,
+    inhouse: products.filter(p => !p.seller_id).length,
+    seller: products.filter(p => !!p.seller_id).length,
+    digital: products.filter(p => p.is_digital).length,
+    physical: products.filter(p => !p.is_digital).length,
+    inactive: products.filter(p => !p.is_active).length,
+  }), [products]);
+
+  const allSelected = filtered.length > 0 && filtered.every(p => selected.has(p.id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(filtered.map(p => p.id)));
+  };
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
+
+  const renderStars = (rating: number | null) => {
+    const r = rating || 0;
+    return (
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map(i => (
+          <Star key={i} className={`h-3.5 w-3.5 ${i <= r ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/30'}`} />
+        ))}
+      </div>
+    );
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
+
+  const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <button onClick={() => handleSort(field)} className="flex items-center gap-1 hover:text-foreground transition-colors font-semibold text-xs uppercase tracking-wider">
+      {children}
+      <ArrowUpDown className={`h-3 w-3 ${sortField === field ? 'text-primary' : 'text-muted-foreground/40'}`} />
+    </button>
+  );
 
   return (
     <AdminLayout titleKey="admin.title.products" descriptionKey="admin.desc.products">
-      <Card className="border border-border">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base"><Package className="h-5 w-5" />{t('admin.allProducts')} ({filtered.length})</CardTitle>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder={t('admin.searchProducts')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 w-64" />
-            </div>
-            <Button size="sm" className="gap-1" onClick={() => { setEditProduct(null); setFormOpen(true); }}><Plus className="h-4 w-4" /> {t('admin.addProduct')}</Button>
+      {/* Top Tabs */}
+      <Tabs value={tab} onValueChange={(v) => { setTab(v as TabKey); setSelected(new Set()); }} className="mb-4">
+        <TabsList className="bg-muted/50 h-10 p-1 gap-0.5">
+          <TabsTrigger value="all" className="text-xs px-4">All Products <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">{tabCounts.all}</Badge></TabsTrigger>
+          <TabsTrigger value="inhouse" className="text-xs px-4">In-House <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">{tabCounts.inhouse}</Badge></TabsTrigger>
+          <TabsTrigger value="seller" className="text-xs px-4">Seller Products <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">{tabCounts.seller}</Badge></TabsTrigger>
+          <TabsTrigger value="digital" className="text-xs px-4">Digital <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">{tabCounts.digital}</Badge></TabsTrigger>
+          <TabsTrigger value="physical" className="text-xs px-4">Physical <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">{tabCounts.physical}</Badge></TabsTrigger>
+          <TabsTrigger value="inactive" className="text-xs px-4">Drafts <Badge variant="secondary" className="ml-1.5 text-[10px] px-1.5 py-0">{tabCounts.inactive}</Badge></TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* Action Bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search products..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 w-64 h-9 text-sm"
+            />
           </div>
-        </CardHeader>
+
+          {/* Bulk Action */}
+          <Select value={bulkAction} onValueChange={setBulkAction}>
+            <SelectTrigger className="w-[140px] h-9 text-xs">
+              <SelectValue placeholder="Bulk Action" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="activate">Activate</SelectItem>
+              <SelectItem value="deactivate">Deactivate</SelectItem>
+              <SelectItem value="delete">Delete</SelectItem>
+            </SelectContent>
+          </Select>
+          {bulkAction && selected.size > 0 && (
+            <Button size="sm" variant="outline" className="h-9 text-xs" onClick={handleBulkAction}>
+              Apply ({selected.size})
+            </Button>
+          )}
+
+          {/* Filter */}
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-[150px] h-9 text-xs">
+              <Filter className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterBrand} onValueChange={setFilterBrand}>
+            <SelectTrigger className="w-[130px] h-9 text-xs">
+              <SelectValue placeholder="Brand" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Brands</SelectItem>
+              {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          {/* Sort */}
+          <Select value={`${sortField}-${sortDir}`} onValueChange={v => { const [f, d] = v.split('-'); setSortField(f as SortField); setSortDir(d as SortDir); }}>
+            <SelectTrigger className="w-[140px] h-9 text-xs">
+              <ArrowUpDown className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at-desc">Newest First</SelectItem>
+              <SelectItem value="created_at-asc">Oldest First</SelectItem>
+              <SelectItem value="name-asc">Name A-Z</SelectItem>
+              <SelectItem value="name-desc">Name Z-A</SelectItem>
+              <SelectItem value="price-asc">Price Low-High</SelectItem>
+              <SelectItem value="price-desc">Price High-Low</SelectItem>
+              <SelectItem value="stock-asc">Stock Low-High</SelectItem>
+              <SelectItem value="stock-desc">Stock High-Low</SelectItem>
+              <SelectItem value="rating-desc">Top Rated</SelectItem>
+              <SelectItem value="sold_count-desc">Best Selling</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button size="sm" className="gap-1.5 h-9 px-4 bg-primary" onClick={() => navigate('/admin/products/add')}>
+          <Plus className="h-4 w-4" /> Add New Product
+        </Button>
+      </div>
+
+      {/* Products Table */}
+      <Card className="border border-border overflow-hidden">
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('admin.product')}</TableHead>
-                  <TableHead>{t('admin.price')}</TableHead>
-                  <TableHead>{t('admin.stock')}</TableHead>
-                  <TableHead>{t('admin.category')}</TableHead>
-                  <TableHead>{t('admin.status')}</TableHead>
-                  <TableHead>{t('admin.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {product.images?.[0] ? (<img src={product.images[0]} alt={product.name} className="h-10 w-10 rounded-lg object-cover" />) : (<div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center"><ImageIcon className="h-4 w-4 text-muted-foreground" /></div>)}
-                        <div><p className="font-medium text-sm truncate max-w-[200px]">{product.name}</p><p className="text-xs text-muted-foreground">{product.slug}</p></div>
-                      </div>
-                    </TableCell>
-                    <TableCell><span className="font-medium">৳{product.price}</span>{product.original_price && (<span className="text-xs text-muted-foreground line-through ml-1">৳{product.original_price}</span>)}</TableCell>
-                    <TableCell><Badge variant={product.stock > 10 ? 'secondary' : 'destructive'} className="text-xs">{product.stock || 0}</Badge></TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{(product as any).categories?.name || t('admin.uncategorized')}</TableCell>
-                    <TableCell><Badge className={product.is_active ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-muted text-muted-foreground'}>{product.is_active ? t('admin.active') : t('admin.inactive')}</Badge></TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/admin/products/edit/${product.id}`)}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleActive(product.id, product.is_active)}>{product.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>{t('admin.deleteProduct')}</AlertDialogTitle><AlertDialogDescription>{t('admin.deleteConfirm')} "{product.name}"? {t('admin.cannotUndo')}</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>{t('admin.cancel')}</AlertDialogCancel><AlertDialogAction onClick={() => deleteProduct(product.id)} className="bg-destructive text-destructive-foreground">{t('admin.delete')}</AlertDialogAction></AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="w-10">
+                      <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                    </TableHead>
+                    <TableHead className="w-16 text-xs uppercase tracking-wider font-semibold">Thumb</TableHead>
+                    <TableHead className="min-w-[200px]"><SortHeader field="name">Name / Brand</SortHeader></TableHead>
+                    <TableHead className="min-w-[140px] text-xs uppercase tracking-wider font-semibold">Owner / Category</TableHead>
+                    <TableHead className="min-w-[110px]"><SortHeader field="rating">Ratings</SortHeader></TableHead>
+                    <TableHead className="min-w-[130px]"><SortHeader field="price">Price Details</SortHeader></TableHead>
+                    <TableHead className="min-w-[100px]"><SortHeader field="sold_count">Info</SortHeader></TableHead>
+                    <TableHead className="w-20 text-xs uppercase tracking-wider font-semibold text-center">Published</TableHead>
+                    <TableHead className="w-20 text-xs uppercase tracking-wider font-semibold text-center">Featured</TableHead>
+                    <TableHead className="w-24 text-xs uppercase tracking-wider font-semibold text-center">Today's Deal</TableHead>
+                    <TableHead className="w-16 text-xs uppercase tracking-wider font-semibold text-center">Options</TableHead>
                   </TableRow>
-                ))}
-                {filtered.length === 0 && (<TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t('admin.noProducts')}</TableCell></TableRow>)}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((product) => {
+                    const ownerType = product.seller_id ? 'Seller' : 'In-House';
+                    const brandName = (product as any).brands?.name;
+                    const categoryName = (product as any).categories?.name || 'Uncategorized';
+                    const sellerName = (product as any).sellers?.name;
+
+                    return (
+                      <TableRow key={product.id} className={`${selected.has(product.id) ? 'bg-primary/5' : ''} hover:bg-muted/20 transition-colors`}>
+                        {/* Checkbox */}
+                        <TableCell>
+                          <Checkbox checked={selected.has(product.id)} onCheckedChange={() => toggleSelect(product.id)} />
+                        </TableCell>
+
+                        {/* Thumbnail */}
+                        <TableCell>
+                          {product.images?.[0] ? (
+                            <img src={product.images[0]} alt="" className="h-12 w-12 rounded-lg object-cover border border-border" />
+                          ) : (
+                            <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center border border-border">
+                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+
+                        {/* Name / Brand */}
+                        <TableCell>
+                          <div className="space-y-1">
+                            <p className="font-medium text-sm leading-tight line-clamp-2 max-w-[240px]">{product.name}</p>
+                            {brandName && (
+                              <span className="text-xs font-medium text-primary">{brandName}</span>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        {/* Owner / Category */}
+                        <TableCell>
+                          <div className="space-y-0.5">
+                            <span className={`text-xs font-semibold ${product.seller_id ? 'text-blue-500' : 'text-emerald-500'}`}>
+                              {ownerType}
+                            </span>
+                            {sellerName && <p className="text-[11px] text-muted-foreground">{sellerName}</p>}
+                            <p className="text-xs text-muted-foreground">{categoryName}</p>
+                          </div>
+                        </TableCell>
+
+                        {/* Ratings */}
+                        <TableCell>
+                          <div className="space-y-0.5">
+                            {renderStars(product.rating)}
+                            <p className="text-[11px] text-muted-foreground">
+                              {product.rating?.toFixed(1) || '0.0'} out of 5.0
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {product.review_count || 0} reviews
+                            </p>
+                          </div>
+                        </TableCell>
+
+                        {/* Price Details */}
+                        <TableCell>
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-1">
+                              <span className="text-[11px] text-muted-foreground">Price</span>
+                            </div>
+                            <p className="font-semibold text-sm">৳{product.price.toLocaleString()}</p>
+                            {product.discount > 0 && (
+                              <p className="text-[11px]">
+                                <span className="text-muted-foreground">Discount </span>
+                                <span className="text-destructive font-medium">{product.discount}%</span>
+                              </p>
+                            )}
+                            {product.original_price && (
+                              <p className="text-[11px] text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</p>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        {/* Info */}
+                        <TableCell>
+                          <div className="space-y-0.5">
+                            <p className="text-[11px] text-muted-foreground">Sales</p>
+                            <p className="font-semibold text-sm">{product.sold_count || 0}</p>
+                            <p className="text-[11px]">
+                              <span className={`font-medium ${(product.stock || 0) > 10 ? 'text-emerald-500' : (product.stock || 0) > 0 ? 'text-amber-500' : 'text-destructive'}`}>
+                                Stock: {product.stock || 0}
+                              </span>
+                            </p>
+                          </div>
+                        </TableCell>
+
+                        {/* Published */}
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={!!product.is_active}
+                            onCheckedChange={() => toggleActive(product.id, product.is_active)}
+                            className="mx-auto"
+                          />
+                        </TableCell>
+
+                        {/* Featured */}
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={!!product.is_prime}
+                            onCheckedChange={() => toggleFeatured(product.id, product.is_prime)}
+                            className="mx-auto"
+                          />
+                        </TableCell>
+
+                        {/* Today's Deal */}
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={!!product.is_flash_sale}
+                            onCheckedChange={() => toggleFlashSale(product.id, product.is_flash_sale)}
+                            className="mx-auto"
+                          />
+                        </TableCell>
+
+                        {/* Options */}
+                        <TableCell className="text-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem onClick={() => navigate(`/admin/products/edit/${product.id}`)}>
+                                <Edit className="h-3.5 w-3.5 mr-2" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => window.open(`/product/${product.slug}`, '_blank')}>
+                                <Eye className="h-3.5 w-3.5 mr-2" /> View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(product.slug); toast.success('Slug copied'); }}>
+                                <Copy className="h-3.5 w-3.5 mr-2" /> Copy Slug
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={e => e.preventDefault()} className="text-destructive focus:text-destructive">
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                                    <AlertDialogDescription>Delete "{product.name}"? This cannot be undone.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => deleteProduct(product.id)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={11} className="text-center py-16">
+                        <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                        <p className="text-muted-foreground font-medium">No products found</p>
+                        <p className="text-xs text-muted-foreground mt-1">Try adjusting your filters or search</p>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
-      <AdminProductFormModal open={formOpen} onOpenChange={setFormOpen} product={editProduct} onSaved={fetchProducts} />
+
+      {/* Footer Stats */}
+      {!loading && filtered.length > 0 && (
+        <div className="flex items-center justify-between mt-3 px-1 text-xs text-muted-foreground">
+          <span>Showing {filtered.length} of {products.length} products</span>
+          {selected.size > 0 && <span className="font-medium text-primary">{selected.size} selected</span>}
+        </div>
+      )}
+
+      <AdminProductFormModal open={formOpen} onOpenChange={setFormOpen} product={editProduct} onSaved={fetchAll} />
     </AdminLayout>
   );
 };
