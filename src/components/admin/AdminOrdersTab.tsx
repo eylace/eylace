@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
-  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2,
+  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2, Ban,
 } from 'lucide-react';
 import { FraudDetectionModal } from '@/components/admin/FraudDetectionModal';
 import { Button } from '@/components/ui/button';
