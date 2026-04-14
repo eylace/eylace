@@ -492,6 +492,7 @@ export const AdminOrdersTab = () => {
                   <Checkbox checked={paginatedOrders.length > 0 && selectedOrders.size === paginatedOrders.length} onCheckedChange={toggleSelectAll} />
                 </TableHead>
                 <TableHead className="w-10 text-xs">Actions</TableHead>
+                <TableHead className="text-xs">Product</TableHead>
                 <TableHead className="text-xs">Order</TableHead>
                 <TableHead className="text-xs hidden xl:table-cell">Assigned To</TableHead>
                 <TableHead className="text-xs cursor-pointer select-none" onClick={() => toggleSort('date')}>
@@ -512,7 +513,7 @@ export const AdminOrdersTab = () => {
             <TableBody>
               {paginatedOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="text-center py-12 text-muted-foreground">
+                   <TableCell colSpan={14} className="text-center py-12 text-muted-foreground">
                     {searchQuery ? 'No orders match your search' : 'No orders found'}
                   </TableCell>
                 </TableRow>
@@ -571,6 +572,27 @@ export const AdminOrdersTab = () => {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const firstItem = order.items?.[0];
+                        const extraCount = (order.items?.length || 0) - 1;
+                        return (
+                          <div className="flex items-center gap-2 min-w-0">
+                            {firstItem?.product_image ? (
+                              <img src={firstItem.product_image} alt={firstItem.product_name} className="h-9 w-9 rounded object-cover shrink-0 border border-border" />
+                            ) : (
+                              <div className="h-9 w-9 rounded bg-muted flex items-center justify-center shrink-0 border border-border">
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium truncate max-w-[140px]">{firstItem?.product_name || '—'}</p>
+                              {extraCount > 0 && <p className="text-[10px] text-muted-foreground">+{extraCount} more</p>}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <button onClick={() => setDetailOrder(order)} className="text-primary hover:underline text-xs font-medium">
