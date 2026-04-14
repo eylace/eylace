@@ -473,6 +473,27 @@ const Checkout = () => {
   const processOrder = async (data: CheckoutFormData) => {
     setIsProcessing(true);
     try {
+      // Detect customer IP
+      let customerIp = 'unknown';
+      try {
+        const { data: ipData } = await supabase.functions.invoke('detect-ip');
+        if (ipData?.ip) customerIp = ipData.ip;
+      } catch { /* best effort */ }
+
+      // Check if IP is blocked
+      if (customerIp !== 'unknown') {
+        try {
+          const { data: blockData } = await supabase.functions.invoke('check-blocked-ip', {
+            body: { ip: customerIp },
+          });
+          if (blockData?.isBlocked) {
+            toast.error('Your IP address has been restricted from placing orders. Please contact support.');
+            setIsProcessing(false);
+            return;
+          }
+        } catch { /* allow order if check fails */ }
+      }
+
       // Pre-checkout stock validation
       const productIds = checkoutItems.map(i => i.product.id);
       const { data: stockData } = await supabase
