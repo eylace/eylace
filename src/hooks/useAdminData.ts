@@ -120,11 +120,11 @@ export const useAdminCheck = () => {
         .select('role')
         .eq('user_id', user.id)
         .in('role', ADMIN_PANEL_ROLES)
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
-      setIsAdmin(!!data && !error);
-      setUserRole(data?.role as AppRole || null);
+      const firstRole = data && data.length > 0 ? data[0] : null;
+      setIsAdmin(!!firstRole && !error);
+      setUserRole(firstRole?.role as AppRole || null);
       setIsLoading(false);
     };
 
