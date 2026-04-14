@@ -153,6 +153,13 @@ const Account = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  // Tick every 60s to update return countdown timers
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Realtime subscription for user's own product reviews
   useEffect(() => {
     if (!user) return;
@@ -977,22 +984,38 @@ ${(order.order_items || []).map((item: any) => `<tr><td>${item.product_name}</td
                                   </Button>
                                 )}
 
-                                {/* Return Order - only delivered & no existing return */}
-                                {order.status === 'delivered' && !hasReturnRequest && order.order_items && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-accent border-accent/30 hover:bg-accent/10"
-                                    onClick={() => setReturnModal({
-                                      orderId: order.id,
-                                      orderNumber: order.order_number,
-                                      items: order.order_items,
-                                    })}
-                                  >
-                                    <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                                    Return Order
-                                  </Button>
-                                )}
+                                {/* Return Order - only delivered & no existing return & within 24h */}
+                                {order.status === 'delivered' && !hasReturnRequest && order.order_items && (() => {
+                                  const deliveredAt = order.delivered_at ? new Date(order.delivered_at) : null;
+                                  if (!deliveredAt) return null;
+                                  const deadline = new Date(deliveredAt.getTime() + 24 * 60 * 60 * 1000);
+                                  const now = new Date();
+                                  if (now >= deadline) return null;
+                                  const remainMs = deadline.getTime() - now.getTime();
+                                  const hrs = Math.floor(remainMs / (1000 * 60 * 60));
+                                  const mins = Math.floor((remainMs % (1000 * 60 * 60)) / (1000 * 60));
+                                  return (
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-accent border-accent/30 hover:bg-accent/10"
+                                        onClick={() => setReturnModal({
+                                          orderId: order.id,
+                                          orderNumber: order.order_number,
+                                          items: order.order_items,
+                                        })}
+                                      >
+                                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                                        Return Order
+                                      </Button>
+                                      <span className="text-xs text-[hsl(var(--warning))] font-medium flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {hrs}h {mins}m left
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
 
                                 {/* Show return status if exists */}
                                 {hasReturnRequest && (() => {
