@@ -100,7 +100,7 @@ const getAvatarColor = (name: string) => {
 };
 
 export const AdminOrdersTab = () => {
-  const { orders, isLoading, updateOrderStatus, refetch } = useAdminOrders();
+  const { orders, isLoading, updateOrderStatus, deleteOrders } = useAdminOrders();
   const [updating, setUpdating] = useState<string | null>(null);
   const [trackingInfo, setTrackingInfo] = useState<Record<string, { carrier: string; tracking_number: string }>>({});
   const [fraudOrder, setFraudOrder] = useState<any>(null);
@@ -247,19 +247,52 @@ export const AdminOrdersTab = () => {
   };
 
   const handleDeleteOrder = async () => {
-    if (!deleteOrderId) return;
+    const orderId = deleteOrderId;
+    if (!orderId) return;
+
     setDeleting(true);
+
     try {
-      await (supabase as any).from('order_items').delete().eq('order_id', deleteOrderId);
-      const { error } = await (supabase as any).from('orders').delete().eq('id', deleteOrderId);
+      const { error, deletedIds } = await deleteOrders([orderId]);
       if (error) throw error;
+
+      setSelectedOrders((current) => new Set([...current].filter((id) => !deletedIds.includes(id))));
+      setDetailOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      setEditOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      setInvoiceOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      setCourierDispatchOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      setFraudOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
       toast.success('Order deleted successfully');
       setDeleteOrderId(null);
-      await refetch();
     } catch (e: any) {
       toast.error('Delete failed: ' + (e.message || 'Unknown error'));
+    } finally {
+      setDeleting(false);
     }
-    setDeleting(false);
+  };
+
+  const handleBulkDeleteOrders = async () => {
+    if (selectedOrders.size === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedOrders.size} order(s)?`)) return;
+
+    setBulkUpdating(true);
+
+    try {
+      const { error, deletedIds } = await deleteOrders(Array.from(selectedOrders));
+      if (error) throw error;
+
+      setSelectedOrders((current) => new Set([...current].filter((id) => !deletedIds.includes(id))));
+      setDetailOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      setEditOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      setInvoiceOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      setCourierDispatchOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      setFraudOrder((current: any) => current && deletedIds.includes(current.id) ? null : current);
+      toast.success(`${deletedIds.length} order(s) deleted successfully`);
+    } catch (e: any) {
+      toast.error('Bulk delete failed: ' + (e.message || 'Unknown error'));
+    } finally {
+      setBulkUpdating(false);
+    }
   };
 
   const handleEditOrderSave = async (
@@ -426,20 +459,7 @@ export const AdminOrdersTab = () => {
           </Button>
           <Button
             variant="destructive" size="sm" className="gap-2 text-xs h-8"
-            onClick={async () => {
-              if (!confirm(`Are you sure you want to delete ${selectedOrders.size} order(s)?`)) return;
-              setBulkUpdating(true);
-              let count = 0;
-              for (const id of selectedOrders) {
-                await (supabase as any).from('order_items').delete().eq('order_id', id);
-                const { error } = await (supabase as any).from('orders').delete().eq('id', id);
-                if (!error) count++;
-              }
-              toast.success(`${count} order(s) deleted`);
-              setSelectedOrders(new Set());
-              await refetch();
-              setBulkUpdating(false);
-            }}
+            onClick={handleBulkDeleteOrders}
             disabled={bulkUpdating}
           >
             {bulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Delete Orders

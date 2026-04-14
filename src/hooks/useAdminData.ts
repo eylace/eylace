@@ -175,7 +175,27 @@ export const useAdminOrders = () => {
     return { error };
   };
 
-  return { orders, isLoading, refetch: fetchOrders, updateOrderStatus };
+  const deleteOrders = useCallback(async (orderIds: string[]) => {
+    const ids = Array.from(new Set(orderIds.filter(Boolean)));
+
+    if (ids.length === 0) {
+      return { error: new Error('No orders selected'), deletedIds: [] as string[] };
+    }
+
+    const { data, error } = await supabase.functions.invoke('admin-delete-orders', {
+      body: { orderIds: ids }
+    });
+
+    if (!error) {
+      const deletedIds = Array.isArray(data?.deletedIds) ? data.deletedIds : ids;
+      setOrders((currentOrders) => currentOrders.filter((order) => !deletedIds.includes(order.id)));
+      return { error: null, deletedIds };
+    }
+
+    return { error, deletedIds: [] as string[] };
+  }, []);
+
+  return { orders, isLoading, refetch: fetchOrders, updateOrderStatus, deleteOrders };
 };
 
 export const useAdminReviews = () => {
