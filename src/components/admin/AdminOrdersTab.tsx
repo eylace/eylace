@@ -100,7 +100,7 @@ const getAvatarColor = (name: string) => {
 };
 
 export const AdminOrdersTab = () => {
-  const { orders, isLoading, updateOrderStatus } = useAdminOrders();
+  const { orders, isLoading, updateOrderStatus, refetch } = useAdminOrders();
   const [updating, setUpdating] = useState<string | null>(null);
   const [trackingInfo, setTrackingInfo] = useState<Record<string, { carrier: string; tracking_number: string }>>({});
   const [fraudOrder, setFraudOrder] = useState<any>(null);
