@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { deleteMarketingSubscriber } from '@/lib/adminMarketing';
 
 interface Subscriber {
   id: string;
@@ -22,20 +23,38 @@ const AdminMarketingSubscribers = () => {
   const [search, setSearch] = useState('');
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchSubscribers = async () => {
+    setLoading(true);
     const { data, error } = await supabase.from('newsletter_subscribers').select('*').order('subscribed_at', { ascending: false });
-    if (error) console.error(error);
-    else setSubscribers(data || []);
+    if (error) {
+      console.error(error);
+      toast.error('Failed to load subscribers');
+      setSubscribers([]);
+    } else setSubscribers(data || []);
     setLoading(false);
   };
 
   useEffect(() => { fetchSubscribers(); }, []);
 
   const deleteSubscriber = async (id: string) => {
-    await supabase.from('newsletter_subscribers').delete().eq('id', id);
-    toast.success('Removed');
-    fetchSubscribers();
+    if (deletingId === id) return;
+
+    const previousSubscribers = subscribers;
+    setDeletingId(id);
+    setSubscribers((current) => current.filter((subscriber) => subscriber.id !== id));
+
+    try {
+      await deleteMarketingSubscriber(id);
+      toast.success('Subscriber removed');
+    } catch (error) {
+      console.error(error);
+      setSubscribers(previousSubscribers);
+      toast.error(error instanceof Error ? error.message : 'Failed to remove subscriber');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const exportCSV = () => {
@@ -76,7 +95,7 @@ const AdminMarketingSubscribers = () => {
                     <TableCell className="text-sm text-muted-foreground">{s.source || '—'}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{s.subscribed_at.split('T')[0]}</TableCell>
                     <TableCell>{s.status === 'active' ? <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Active</Badge> : <Badge variant="secondary">Unsubscribed</Badge>}</TableCell>
-                    <TableCell className="text-right"><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSubscriber(s.id)}><Trash2 className="h-4 w-4" /></Button></TableCell>
+                    <TableCell className="text-right"><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={deletingId === s.id} onClick={() => deleteSubscriber(s.id)}>{deletingId === s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</Button></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
