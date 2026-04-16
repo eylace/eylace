@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { deleteMarketingNewsletter } from '@/lib/adminMarketing';
 
 interface Newsletter {
   id: string;
@@ -26,11 +27,16 @@ const AdminMarketingNewsletters = () => {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ subject: '', content: '' });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchNewsletters = async () => {
+    setLoading(true);
     const { data, error } = await supabase.from('newsletters').select('*').order('created_at', { ascending: false });
-    if (error) console.error(error);
-    else setNewsletters(data || []);
+    if (error) {
+      console.error(error);
+      toast.error('Failed to load newsletters');
+      setNewsletters([]);
+    } else setNewsletters(data || []);
     setLoading(false);
   };
 
@@ -54,9 +60,22 @@ const AdminMarketingNewsletters = () => {
   };
 
   const deleteNewsletter = async (id: string) => {
-    await supabase.from('newsletters').delete().eq('id', id);
-    toast.success('Deleted');
-    fetchNewsletters();
+    if (deletingId === id) return;
+
+    const previousNewsletters = newsletters;
+    setDeletingId(id);
+    setNewsletters((current) => current.filter((newsletter) => newsletter.id !== id));
+
+    try {
+      await deleteMarketingNewsletter(id);
+      toast.success('Newsletter deleted');
+    } catch (error) {
+      console.error(error);
+      setNewsletters(previousNewsletters);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete newsletter');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const statusBadge = (s: string) => {
@@ -102,7 +121,7 @@ const AdminMarketingNewsletters = () => {
                     <TableCell className="text-sm text-muted-foreground">{n.sent_at?.split('T')[0] || '—'}</TableCell>
                     <TableCell className="text-right space-x-1">
                       {n.status === 'draft' && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => sendNewsletter(n.id)}><Send className="h-4 w-4" /></Button>}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteNewsletter(n.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={deletingId === n.id} onClick={() => deleteNewsletter(n.id)}>{deletingId === n.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</Button>
                     </TableCell>
                   </TableRow>
                 ))}

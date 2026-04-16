@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { deleteMarketingTemplate } from '@/lib/adminMarketing';
 
 interface EmailTemplate {
   id: string;
@@ -26,11 +27,16 @@ const AdminMarketingEmailTemplates = () => {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ name: '', subject: '', body: '' });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchTemplates = async () => {
+    setLoading(true);
     const { data, error } = await supabase.from('marketing_email_templates').select('*').order('created_at', { ascending: false });
-    if (error) console.error(error);
-    else setTemplates(data || []);
+    if (error) {
+      console.error(error);
+      toast.error('Failed to load email templates');
+      setTemplates([]);
+    } else setTemplates(data || []);
     setLoading(false);
   };
 
@@ -47,9 +53,22 @@ const AdminMarketingEmailTemplates = () => {
   };
 
   const deleteTemplate = async (id: string) => {
-    await supabase.from('marketing_email_templates').delete().eq('id', id);
-    toast.success('Deleted');
-    fetchTemplates();
+    if (deletingId === id) return;
+
+    const previousTemplates = templates;
+    setDeletingId(id);
+    setTemplates((current) => current.filter((template) => template.id !== id));
+
+    try {
+      await deleteMarketingTemplate(id);
+      toast.success('Template deleted');
+    } catch (error) {
+      console.error(error);
+      setTemplates(previousTemplates);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete template');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -89,7 +108,7 @@ const AdminMarketingEmailTemplates = () => {
                     <TableCell><Badge variant="outline">{t.template_type}</Badge></TableCell>
                     <TableCell className="text-sm text-muted-foreground">{t.updated_at?.split('T')[0]}</TableCell>
                     <TableCell className="text-right space-x-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteTemplate(t.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={deletingId === t.id} onClick={() => deleteTemplate(t.id)}>{deletingId === t.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</Button>
                     </TableCell>
                   </TableRow>
                 ))}
