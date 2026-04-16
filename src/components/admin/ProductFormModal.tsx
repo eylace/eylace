@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload, Sparkles, Tag, Search, Package, FileText, DollarSign, Truck, Shield, Image as ImageIcon, Settings2, FolderOpen } from 'lucide-react';
+import { Loader2, Plus, X, Sparkles, Tag, Search, Package, FileText, DollarSign, Truck, Shield, Image as ImageIcon, Settings2, FolderOpen } from 'lucide-react';
 import { MediaManagerModal } from './MediaManagerModal';
 
 interface ProductFormModalProps {
@@ -47,7 +47,6 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
   const [brands, setBrands] = useState<any[]>([]);
   const [warranties, setWarranties] = useState<any[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
-  const [imageUploading, setImageUploading] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [activeTab, setActiveTab] = useState('general');
@@ -108,29 +107,6 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
 
   const handleNameChange = (name: string) => {
     setForm(f => ({ ...f, name, slug: product ? f.slug : generateSlug(name) }));
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setImageUploading(true);
-    try {
-      const newImages: string[] = [];
-      for (const file of Array.from(files)) {
-        const ext = file.name.split('.').pop();
-        const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage.from('product-images').upload(path, file);
-        if (error) throw error;
-        const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-        newImages.push(urlData.publicUrl);
-      }
-      setForm(f => ({ ...f, images: [...f.images, ...newImages] }));
-      toast.success(`${newImages.length} image(s) uploaded`);
-    } catch (err: any) {
-      toast.error('Upload failed: ' + err.message);
-    } finally {
-      setImageUploading(false);
-    }
   };
 
   const removeImage = (index: number) => setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
@@ -564,7 +540,10 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
     <MediaManagerModal
       open={mediaManagerOpen}
       onOpenChange={setMediaManagerOpen}
-      onSelect={(url) => setForm(f => ({ ...f, images: [...f.images, url] }))}
+      multiple
+      acceptedKinds={['image']}
+      uploadFolder="products"
+      onSelect={(urls) => setForm(f => ({ ...f, images: Array.from(new Set([...f.images, ...urls])) }))}
     />
     </>
   );
