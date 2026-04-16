@@ -51,6 +51,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
   const [aiGenerating, setAiGenerating] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [activeTab, setActiveTab] = useState('general');
+  const [mediaManagerOpen, setMediaManagerOpen] = useState(false);
 
   const [form, setForm] = useState({ ...defaultForm });
 
