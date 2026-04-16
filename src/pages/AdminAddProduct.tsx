@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart, Video, FileText } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { MediaManagerModal } from '@/components/admin/MediaManagerModal';
 
 interface ProductFormState {
   name: string;
@@ -72,6 +73,18 @@ const defaultForm: ProductFormState = {
   hsn_code: '', gst_rate: '', frequently_bought_ids: [], note: '',
 };
 
+type MediaTarget = 'gallery' | 'thumbnail' | 'videos' | 'video_thumbnails' | 'pdf';
+
+const MEDIA_TARGET_CONFIG: Record<MediaTarget, { acceptedKinds: ('image' | 'video' | 'document')[]; multiple: boolean; uploadFolder: string }> = {
+  gallery: { acceptedKinds: ['image'], multiple: true, uploadFolder: 'gallery' },
+  thumbnail: { acceptedKinds: ['image'], multiple: false, uploadFolder: 'thumbnails' },
+  videos: { acceptedKinds: ['video'], multiple: true, uploadFolder: 'videos' },
+  video_thumbnails: { acceptedKinds: ['image'], multiple: true, uploadFolder: 'video-thumbs' },
+  pdf: { acceptedKinds: ['document'], multiple: false, uploadFolder: 'pdfs' },
+};
+
+const mergeUnique = (existing: string[], incoming: string[]) => Array.from(new Set([...existing, ...incoming]));
+
 const AdminAddProduct = () => {
   const navigate = useNavigate();
   const { id: editId } = useParams<{ id: string }>();
@@ -84,13 +97,9 @@ const AdminAddProduct = () => {
   const [warranties, setWarranties] = useState<any[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
-  const [imageUploading, setImageUploading] = useState(false);
-  const [thumbnailUploading, setThumbnailUploading] = useState(false);
-  const [videoUploading, setVideoUploading] = useState(false);
-  const [videoThumbUploading, setVideoThumbUploading] = useState(false);
-  const [pdfUploading, setPdfUploading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [mediaTarget, setMediaTarget] = useState<MediaTarget | null>(null);
   const flashDeals = ['Flash Sale', 'Flash Deal', 'Electronic', 'Winter Sale', 'End of Season'];
 
   const [form, setForm] = useState<ProductFormState>({ ...defaultForm });
@@ -173,87 +182,35 @@ const AdminAddProduct = () => {
     setForm(f => ({ ...f, name, slug: isEdit ? f.slug : generateSlug(name) }));
   };
 
-  const uploadFile = async (file: File, bucket: string, folder: string) => {
-    const ext = file.name.split('.').pop();
-    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from(bucket).upload(path, file);
-    if (error) throw error;
-    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
-    return urlData.publicUrl;
-  };
-
-  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setImageUploading(true);
-    try {
-      const urls: string[] = [];
-      for (const file of Array.from(files)) {
-        urls.push(await uploadFile(file, 'product-images', 'gallery'));
-      }
-      setForm(f => ({ ...f, images: [...f.images, ...urls] }));
-      toast.success(`${urls.length} gallery image(s) uploaded`);
-    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
-    finally { setImageUploading(false); }
-  };
-
-  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setThumbnailUploading(true);
-    try {
-      const url = await uploadFile(file, 'product-images', 'thumbnails');
-      setForm(f => ({ ...f, thumbnail: url }));
-      toast.success('Thumbnail uploaded');
-    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
-    finally { setThumbnailUploading(false); }
-  };
-
-  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setVideoUploading(true);
-    try {
-      const urls: string[] = [];
-      for (const file of Array.from(files)) {
-        urls.push(await uploadFile(file, 'product-images', 'videos'));
-      }
-      setForm(f => ({ ...f, videos: [...f.videos, ...urls] }));
-      toast.success(`${urls.length} video(s) uploaded`);
-    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
-    finally { setVideoUploading(false); }
-  };
-
-  const handleVideoThumbUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setVideoThumbUploading(true);
-    try {
-      const urls: string[] = [];
-      for (const file of Array.from(files)) {
-        urls.push(await uploadFile(file, 'product-images', 'video-thumbs'));
-      }
-      setForm(f => ({ ...f, video_thumbnails: [...f.video_thumbnails, ...urls] }));
-      toast.success('Video thumbnail(s) uploaded');
-    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
-    finally { setVideoThumbUploading(false); }
-  };
-
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPdfUploading(true);
-    try {
-      const url = await uploadFile(file, 'product-images', 'pdfs');
-      setForm(f => ({ ...f, pdf_url: url }));
-      toast.success('PDF uploaded');
-    } catch (err: any) { toast.error('Upload failed: ' + err.message); }
-    finally { setPdfUploading(false); }
-  };
-
   const removeImage = (index: number) => setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
   const removeVideo = (index: number) => setForm(f => ({ ...f, videos: f.videos.filter((_, i) => i !== index) }));
   const removeVideoThumb = (index: number) => setForm(f => ({ ...f, video_thumbnails: f.video_thumbnails.filter((_, i) => i !== index) }));
+
+  const handleMediaSelect = (urls: string[]) => {
+    if (!mediaTarget || !urls.length) return;
+
+    if (mediaTarget === 'gallery') {
+      setForm((currentForm) => ({ ...currentForm, images: mergeUnique(currentForm.images, urls) }));
+      return;
+    }
+
+    if (mediaTarget === 'thumbnail') {
+      setForm((currentForm) => ({ ...currentForm, thumbnail: urls[0] }));
+      return;
+    }
+
+    if (mediaTarget === 'videos') {
+      setForm((currentForm) => ({ ...currentForm, videos: mergeUnique(currentForm.videos, urls) }));
+      return;
+    }
+
+    if (mediaTarget === 'video_thumbnails') {
+      setForm((currentForm) => ({ ...currentForm, video_thumbnails: mergeUnique(currentForm.video_thumbnails, urls) }));
+      return;
+    }
+
+    setForm((currentForm) => ({ ...currentForm, pdf_url: urls[0] }));
+  };
 
   const addTag = () => { const t = tagInput.trim(); if (t && !tags.includes(t)) { setTags(prev => [...prev, t]); setTagInput(''); } };
   const removeTag = (tag: string) => setTags(prev => prev.filter(t => t !== tag));
@@ -544,12 +501,10 @@ const AdminAddProduct = () => {
                     <button onClick={() => removeImage(i)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
                   </div>
                 ))}
-                <label className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
-                  {imageUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
-                    <><Upload className="h-5 w-5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground mt-1">Browse</span></>
-                  )}
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} disabled={imageUploading} />
-                </label>
+                <button type="button" onClick={() => setMediaTarget('gallery')} className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground mt-1">Browse</span>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -565,12 +520,10 @@ const AdminAddProduct = () => {
                     <button onClick={() => setForm(f => ({ ...f, thumbnail: '' }))} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
                   </div>
                 )}
-                <label className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
-                  {thumbnailUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
-                    <><Upload className="h-5 w-5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground mt-1">Browse</span></>
-                  )}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleThumbnailUpload} disabled={thumbnailUploading} />
-                </label>
+                <button type="button" onClick={() => setMediaTarget('thumbnail')} className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground mt-1">Browse</span>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -587,12 +540,10 @@ const AdminAddProduct = () => {
                     <button onClick={() => removeVideo(i)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
                   </div>
                 ))}
-                <label className="h-20 w-32 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
-                  {videoUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
-                    <><Upload className="h-5 w-5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground mt-1">Browse</span></>
-                  )}
-                  <input type="file" accept="video/*" multiple className="hidden" onChange={handleVideoUpload} disabled={videoUploading} />
-                </label>
+                <button type="button" onClick={() => setMediaTarget('videos')} className="h-20 w-32 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground mt-1">Browse</span>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -608,12 +559,10 @@ const AdminAddProduct = () => {
                     <button onClick={() => removeVideoThumb(i)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
                   </div>
                 ))}
-                <label className="h-20 w-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
-                  {videoThumbUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
-                    <><Upload className="h-4 w-4 text-muted-foreground" /><span className="text-[9px] text-muted-foreground mt-1">Browse</span></>
-                  )}
-                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleVideoThumbUpload} disabled={videoThumbUploading} />
-                </label>
+                <button type="button" onClick={() => setMediaTarget('video_thumbnails')} className="h-20 w-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
+                  <Upload className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-[9px] text-muted-foreground mt-1">Browse</span>
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -636,11 +585,10 @@ const AdminAddProduct = () => {
                   <button onClick={() => setForm(f => ({ ...f, pdf_url: '' }))} className="text-destructive"><X className="h-4 w-4" /></button>
                 </div>
               )}
-              <label className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-accent transition-colors w-fit">
-                {pdfUploading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Upload className="h-4 w-4 text-muted-foreground" />}
+              <button type="button" onClick={() => setMediaTarget('pdf')} className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-accent transition-colors w-fit">
+                <Upload className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Browse</span>
-                <input type="file" accept=".pdf" className="hidden" onChange={handlePdfUpload} disabled={pdfUploading} />
-              </label>
+              </button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -803,6 +751,17 @@ const AdminAddProduct = () => {
           {isEdit ? 'Update Product' : 'Save Product'}
         </Button>
       </div>
+
+      <MediaManagerModal
+        open={mediaTarget !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setMediaTarget(null);
+        }}
+        onSelect={handleMediaSelect}
+        multiple={mediaTarget ? MEDIA_TARGET_CONFIG[mediaTarget].multiple : false}
+        acceptedKinds={mediaTarget ? MEDIA_TARGET_CONFIG[mediaTarget].acceptedKinds : ['image']}
+        uploadFolder={mediaTarget ? MEDIA_TARGET_CONFIG[mediaTarget].uploadFolder : 'gallery'}
+      />
     </AdminLayout>
   );
 };

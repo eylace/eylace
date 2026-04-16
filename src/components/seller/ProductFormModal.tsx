@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Loader2, Upload, X, Plus, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FolderOpen, Loader2, X, Plus, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { MediaManagerModal } from '@/components/admin/MediaManagerModal';
 
 const productSchema = z.object({
   name: z.string().trim().min(2, 'Product name is required').max(200),
@@ -64,9 +65,8 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [mediaManagerOpen, setMediaManagerOpen] = useState(false);
 
   const isEditing = !!product?.id;
 
@@ -95,37 +95,6 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
 
   const generateSlug = (name: string) =>
     name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-
-    setIsUploading(true);
-    const newImages: string[] = [];
-
-    for (const file of Array.from(files)) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 5MB)`);
-        continue;
-      }
-
-      const ext = file.name.split('.').pop();
-      const path = `${sellerId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-      const { error } = await supabase.storage.from('product-images').upload(path, file);
-      if (error) {
-        toast.error(`Failed to upload ${file.name}`);
-        continue;
-      }
-
-      const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(path);
-      newImages.push(urlData.publicUrl);
-    }
-
-    setForm(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
-    setIsUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
 
   const removeImage = (index: number) => {
     setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
@@ -184,150 +153,160 @@ export const ProductFormModal = ({ open, onOpenChange, sellerId, product, onSucc
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Product' : 'Add New Product'}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Images */}
-          <div className="space-y-2">
-            <Label>Product Images</Label>
-            <div className="flex flex-wrap gap-3">
-              {form.images.map((img, i) => (
-                <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border group">
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-accent hover:text-accent transition-colors"
-              >
-                {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Plus className="h-5 w-5" /><span className="text-[10px]">Upload</span></>}
-              </button>
-            </div>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-          </div>
-
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="p-name">Product Name *</Label>
-            <Input id="p-name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={200} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="p-desc">Description</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1 h-7 text-xs"
-                disabled={aiGenerating || !form.name}
-                onClick={async () => {
-                  setAiGenerating(true);
-                  try {
-                    const categoryName = categories.find(c => c.id === form.category_id)?.name;
-                    const { data, error } = await supabase.functions.invoke('ai-generate-description', {
-                      body: { productName: form.name, category: categoryName, price: form.price }
-                    });
-                    if (error) throw error;
-                    if (data?.error) throw new Error(data.error);
-                    setForm(f => ({ ...f, description: data.description }));
-                    toast.success('AI Description generated!');
-                  } catch (e: any) {
-                    toast.error(e.message || 'AI generation failed');
-                  }
-                  setAiGenerating(false);
-                }}
-              >
-                {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                AI Generate
-              </Button>
-            </div>
-            <RichTextEditor value={form.description} onChange={v => setForm(f => ({ ...f, description: v }))} placeholder="Write product description..." />
-          </div>
-
-          {/* Price & Original Price */}
-          <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Images */}
             <div className="space-y-2">
-              <Label htmlFor="p-price">Price *</Label>
-              <Input id="p-price" type="number" step="0.01" min="0" value={form.price || ''} onChange={e => setForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} />
-              {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
+              <Label>Product Images</Label>
+              <div className="flex flex-wrap gap-3">
+                {form.images.map((img, i) => (
+                  <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border group">
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setMediaManagerOpen(true)}
+                  className="flex h-20 w-20 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-accent hover:text-accent"
+                >
+                  <FolderOpen className="h-5 w-5" />
+                  <span className="mt-1 text-[10px]">Browse</span>
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">Click Browse to open the media library or upload new product images.</p>
             </div>
+
+            {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="p-orig-price">Original Price</Label>
-              <Input id="p-orig-price" type="number" step="0.01" min="0" value={form.original_price ?? ''} onChange={e => setForm(f => ({ ...f, original_price: e.target.value ? parseFloat(e.target.value) : null }))} placeholder="Optional" />
+              <Label htmlFor="p-name">Product Name *</Label>
+              <Input id="p-name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={200} />
+              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
-          </div>
 
-          {/* Stock & Category */}
-          <div className="grid grid-cols-2 gap-4">
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="p-stock">Stock *</Label>
-              <Input id="p-stock" type="number" min="0" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: parseInt(e.target.value) || 0 }))} />
-              {errors.stock && <p className="text-sm text-destructive">{errors.stock}</p>}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="p-desc">Description</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 h-7 text-xs"
+                  disabled={aiGenerating || !form.name}
+                  onClick={async () => {
+                    setAiGenerating(true);
+                    try {
+                      const categoryName = categories.find(c => c.id === form.category_id)?.name;
+                      const { data, error } = await supabase.functions.invoke('ai-generate-description', {
+                        body: { productName: form.name, category: categoryName, price: form.price }
+                      });
+                      if (error) throw error;
+                      if (data?.error) throw new Error(data.error);
+                      setForm(f => ({ ...f, description: data.description }));
+                      toast.success('AI Description generated!');
+                    } catch (e: any) {
+                      toast.error(e.message || 'AI generation failed');
+                    }
+                    setAiGenerating(false);
+                  }}
+                >
+                  {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  AI Generate
+                </Button>
+              </div>
+              <RichTextEditor value={form.description} onChange={v => setForm(f => ({ ...f, description: v }))} placeholder="Write product description..." />
             </div>
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={form.category_id || ''} onValueChange={v => setForm(f => ({ ...f, category_id: v || null }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          {/* Active & Flash Sale toggles */}
-          <div className="flex items-center gap-3">
-            <Switch checked={form.is_active} onCheckedChange={v => setForm(f => ({ ...f, is_active: v }))} />
-            <Label>Active (visible to customers)</Label>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Switch checked={form.is_flash_sale} onCheckedChange={v => setForm(f => ({ ...f, is_flash_sale: v }))} />
-            <Label>Flash Sale</Label>
-          </div>
-
-          {form.is_flash_sale && (
+            {/* Price & Original Price */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Flash Sale Starts</Label>
-                <Input type="datetime-local" value={form.flash_sale_starts} onChange={e => setForm(f => ({ ...f, flash_sale_starts: e.target.value }))} />
+                <Label htmlFor="p-price">Price *</Label>
+                <Input id="p-price" type="number" step="0.01" min="0" value={form.price || ''} onChange={e => setForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} />
+                {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Flash Sale Ends</Label>
-                <Input type="datetime-local" value={form.flash_sale_ends} onChange={e => setForm(f => ({ ...f, flash_sale_ends: e.target.value }))} />
+                <Label htmlFor="p-orig-price">Original Price</Label>
+                <Input id="p-orig-price" type="number" step="0.01" min="0" value={form.original_price ?? ''} onChange={e => setForm(f => ({ ...f, original_price: e.target.value ? parseFloat(e.target.value) : null }))} placeholder="Optional" />
               </div>
             </div>
-          )}
 
-          {/* Submit */}
-          <div className="flex gap-3 justify-end pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : isEditing ? 'Update Product' : 'Create Product'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            {/* Stock & Category */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="p-stock">Stock *</Label>
+                <Input id="p-stock" type="number" min="0" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: parseInt(e.target.value) || 0 }))} />
+                {errors.stock && <p className="text-sm text-destructive">{errors.stock}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={form.category_id || ''} onValueChange={v => setForm(f => ({ ...f, category_id: v || null }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Active & Flash Sale toggles */}
+            <div className="flex items-center gap-3">
+              <Switch checked={form.is_active} onCheckedChange={v => setForm(f => ({ ...f, is_active: v }))} />
+              <Label>Active (visible to customers)</Label>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Switch checked={form.is_flash_sale} onCheckedChange={v => setForm(f => ({ ...f, is_flash_sale: v }))} />
+              <Label>Flash Sale</Label>
+            </div>
+
+            {form.is_flash_sale && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Flash Sale Starts</Label>
+                  <Input type="datetime-local" value={form.flash_sale_starts} onChange={e => setForm(f => ({ ...f, flash_sale_starts: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Flash Sale Ends</Label>
+                  <Input type="datetime-local" value={form.flash_sale_ends} onChange={e => setForm(f => ({ ...f, flash_sale_ends: e.target.value }))} />
+                </div>
+              </div>
+            )}
+
+            {/* Submit */}
+            <div className="flex gap-3 justify-end pt-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</> : isEditing ? 'Update Product' : 'Create Product'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <MediaManagerModal
+        open={mediaManagerOpen}
+        onOpenChange={setMediaManagerOpen}
+        multiple
+        acceptedKinds={['image']}
+        uploadFolder={sellerId}
+        onSelect={(urls) => setForm(prev => ({ ...prev, images: Array.from(new Set([...prev.images, ...urls])) }))}
+      />
+    </>
   );
 };
