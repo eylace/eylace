@@ -12,4 +12,4 @@ export interface MediaFile {
   createdAt: string | null;
 }
 
-export const ITEMS_PER_PAGE = 12;
+export const ITEMS_PER_PAGE = 60;

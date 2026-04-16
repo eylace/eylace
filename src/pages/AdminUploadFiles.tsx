@@ -1,18 +1,25 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, Search, MoreVertical, Eye, Copy, Trash2, Download, ExternalLink } from 'lucide-react';
+import { Loader2, Upload, Search, MoreVertical, Eye, Copy, Trash2, Download, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  createMediaFileFromUpload,
+  fetchAllMediaFiles,
+  MEDIA_LIBRARY_QUERY_KEY,
+  removeMediaFilesByPath,
+  upsertMediaFiles,
+} from '@/components/admin/media-manager/media-library';
+import type { MediaFile } from '@/components/admin/media-manager/types';
 
 const formatSize = (bytes: number) => {
   if (!bytes) return '0 B';
@@ -22,80 +29,122 @@ const formatSize = (bytes: number) => {
 };
 
 export default function AdminUploadFiles() {
+  const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
-  const { data: files = [], refetch } = useQuery({
-    queryKey: ['admin-uploaded-files'],
-    queryFn: async () => {
-      const { data, error } = await supabase.storage.from('product-images').list('uploads', {
-        limit: 500,
-        sortBy: { column: 'created_at', order: 'desc' },
-      });
-      if (error) throw error;
-      return (data || []).map(f => ({
-        ...f,
-        url: supabase.storage.from('product-images').getPublicUrl(`uploads/${f.name}`).data.publicUrl,
-      }));
-    },
+  const { data: files = [], isPending } = useQuery<MediaFile[]>({
+    queryKey: MEDIA_LIBRARY_QUERY_KEY,
+    queryFn: fetchAllMediaFiles,
+    staleTime: 60_000,
+    gcTime: 300_000,
+    refetchOnWindowFocus: false,
   });
 
-  const sorted = [...files]
-    .filter(f => !search || f.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      if (sortBy === 'size') return (b.metadata?.size || 0) - (a.metadata?.size || 0);
-      return 0;
-    });
+  const sorted = useMemo(
+    () =>
+      [...files]
+        .filter((file) => !search || file.name.toLowerCase().includes(search.toLowerCase()))
+        .sort((a, b) => {
+          if (sortBy === 'newest') return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+          if (sortBy === 'oldest') return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+          if (sortBy === 'name') return a.name.localeCompare(b.name);
+          if (sortBy === 'size') return b.size - a.size;
+          return 0;
+        }),
+    [files, search, sortBy],
+  );
 
-  const allSelected = sorted.length > 0 && sorted.every(f => selectedIds.has(f.id));
+  const allSelected = sorted.length > 0 && sorted.every((file) => selectedIds.has(file.path));
 
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList?.length) return;
     setUploading(true);
     try {
-      for (const file of Array.from(fileList)) {
-        const ext = file.name.split('.').pop();
-        const path = `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error } = await supabase.storage.from('product-images').upload(path, file);
-        if (error) throw error;
+      const uploadResults = await Promise.allSettled(
+        Array.from(fileList).map(async (file) => {
+          const ext = file.name.split('.').pop();
+          const path = `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}${ext ? `.${ext}` : ''}`;
+          const { error } = await supabase.storage.from('product-images').upload(path, file);
+          if (error) throw error;
+          return createMediaFileFromUpload(file, path);
+        }),
+      );
+
+      const successfulUploads = uploadResults
+        .filter((result): result is PromiseFulfilledResult<MediaFile> => result.status === 'fulfilled')
+        .map((result) => result.value);
+
+      if (!successfulUploads.length) {
+        toast.error('Upload failed. Please try again.');
+        return;
       }
-      toast.success(`${fileList.length} file(s) uploaded successfully`);
-      refetch();
+
+      queryClient.setQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY, (currentFiles = []) =>
+        upsertMediaFiles(currentFiles, successfulUploads),
+      );
+      toast.success(`${successfulUploads.length} file(s) uploaded successfully`);
+      void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
     } catch (err: any) {
       toast.error(err.message);
     } finally {
       setUploading(false);
       e.target.value = '';
     }
-  }, [refetch]);
+  }, [queryClient]);
 
-  const handleDelete = async (name: string) => {
-    const { error } = await supabase.storage.from('product-images').remove([`uploads/${name}`]);
-    if (error) { toast.error(error.message); return; }
+  const handleDelete = async (file: MediaFile) => {
+    const previousFiles = queryClient.getQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY) || [];
+
+    queryClient.setQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY, (currentFiles = []) =>
+      removeMediaFilesByPath(currentFiles, [file.path]),
+    );
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(file.path);
+      return next;
+    });
+    if (previewUrl === file.url) setPreviewUrl(null);
+
+    const { error } = await supabase.storage.from('product-images').remove([file.path]);
+    if (error) {
+      queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
+      toast.error(error.message);
+      return;
+    }
+
     toast.success('File deleted');
-    setSelectedIds(prev => { const n = new Set(prev); n.delete(name); return n; });
-    setDeleteConfirm(null);
-    refetch();
+    void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
   };
 
   const handleBulkDelete = async () => {
-    const paths = sorted.filter(f => selectedIds.has(f.id)).map(f => `uploads/${f.name}`);
+    const paths = sorted.filter((file) => selectedIds.has(file.path)).map((file) => file.path);
     if (!paths.length) return;
+
+    const previousFiles = queryClient.getQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY) || [];
+    queryClient.setQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY, (currentFiles = []) =>
+      removeMediaFilesByPath(currentFiles, paths),
+    );
+
     const { error } = await supabase.storage.from('product-images').remove(paths);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
+      toast.error(error.message);
+      return;
+    }
+
     toast.success(`${paths.length} file(s) deleted`);
     setSelectedIds(new Set());
     setBulkDeleteConfirm(false);
-    refetch();
+    if (previewUrl && !removeMediaFilesByPath(sorted, paths).some((file) => file.url === previewUrl)) {
+      setPreviewUrl(null);
+    }
+    void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
   };
 
   const copyUrl = (url: string) => {
@@ -104,7 +153,7 @@ export default function AdminUploadFiles() {
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const n = new Set(prev);
       if (n.has(id)) n.delete(id); else n.add(id);
       return n;
@@ -115,7 +164,7 @@ export default function AdminUploadFiles() {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(sorted.map(f => f.id)));
+      setSelectedIds(new Set(sorted.map((file) => file.path)));
     }
   };
 
@@ -187,14 +236,20 @@ export default function AdminUploadFiles() {
         </div>
 
         {/* File Grid */}
-        {sorted.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {isPending ? (
+          <Card className="border border-border">
+            <CardContent className="flex min-h-[320px] items-center justify-center py-16">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            </CardContent>
+          </Card>
+        ) : sorted.length > 0 ? (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {sorted.map(file => {
-              const isImage = file.metadata?.mimetype?.startsWith('image/');
-              const isSelected = selectedIds.has(file.id);
+              const isImage = file.mimeType.startsWith('image/');
+              const isSelected = selectedIds.has(file.path);
               return (
                 <div
-                  key={file.id}
+                  key={file.path}
                   className={`group relative bg-card border rounded-lg overflow-hidden transition-all ${
                     isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-accent'
                   }`}
@@ -203,7 +258,7 @@ export default function AdminUploadFiles() {
                   <div className="absolute top-2 left-2 z-10">
                     <Checkbox
                       checked={isSelected}
-                      onCheckedChange={() => toggleSelect(file.id)}
+                      onCheckedChange={() => toggleSelect(file.path)}
                       className="bg-background/80 backdrop-blur-sm"
                     />
                   </div>
@@ -237,7 +292,7 @@ export default function AdminUploadFiles() {
                             <Download className="h-4 w-4 mr-2" /> Download
                           </a>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setDeleteConfirm(file.name)} className="text-destructive">
+                        <DropdownMenuItem onClick={() => handleDelete(file)} className="text-destructive focus:text-destructive">
                           <Trash2 className="h-4 w-4 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -263,7 +318,7 @@ export default function AdminUploadFiles() {
                   {/* Info */}
                   <div className="p-2">
                     <p className="text-xs font-medium text-foreground truncate" title={file.name}>{file.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatSize(file.metadata?.size || 0)}</p>
+                    <p className="text-[10px] text-muted-foreground">{formatSize(file.size)}</p>
                   </div>
                 </div>
               );
@@ -285,20 +340,6 @@ export default function AdminUploadFiles() {
           {previewUrl && <img src={previewUrl} className="w-full rounded" alt="Preview" />}
         </DialogContent>
       </Dialog>
-
-      {/* Single Delete Confirm */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete File</AlertDialogTitle>
-            <AlertDialogDescription>Are you sure you want to delete this file? This action cannot be undone.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Bulk Delete Confirm */}
       <AlertDialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
