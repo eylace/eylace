@@ -142,7 +142,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
   ];
 
   const uploadItems: NavItem[] = [
-    { titleKey: 'Upload Files', url: '/admin/upload-files', icon: UploadCloud },
+    { titleKey: 'Upload Media', url: '/admin/upload-files', icon: UploadCloud },
   ];
 
   const supportItems: NavItem[] = [
@@ -341,7 +341,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('otp', 'admin.otp.section', Smartphone, otpItems)}
         {canAccess('operations') && renderGroup('admin.group.operations', operationsItems)}
         {renderCollapsible('marketing', 'admin.marketing.section', Megaphone, marketingItems)}
-        {renderCollapsible('uploadFiles', 'Upload Files', UploadCloud, uploadItems)}
+        {renderCollapsible('uploadFiles', 'Upload Media', UploadCloud, uploadItems)}
         {renderCollapsible('support', 'Support', LifeBuoy, supportItems)}
         {renderCollapsible('affiliateSystem', 'Affiliate System', Link2, affiliateItems)}
         {renderCollapsible('clubPoint', 'Club Point System', Award, clubPointItems)}
