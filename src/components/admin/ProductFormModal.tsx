@@ -368,12 +368,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
               </div>
             </div>
             <p className="text-xs text-muted-foreground">First image will be used as the product thumbnail. Click "Browse" to open Media Manager — pick from library or upload new files.</p>
-            <MediaManagerModal
-              open={mediaManagerOpen}
-              onOpenChange={setMediaManagerOpen}
-              onSelect={(url) => setForm(f => ({ ...f, images: [...f.images, url] }))}
-            />
-          </TabsContent>
+            </TabsContent>
 
           {/* === PRICING === */}
           <TabsContent value="pricing" className="space-y-4 mt-4">
