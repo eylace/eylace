@@ -1,3 +1,4 @@
+import type { QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { classifyMediaKind } from './media-utils';
 import type { MediaFile } from './types';
@@ -14,7 +15,57 @@ interface StorageItem {
 
 export const MEDIA_LIBRARY_QUERY_KEY = ['media-library-files'] as const;
 
+const MEDIA_DELETE_VISIBILITY_TTL = 15_000;
+const pendingDeletedPaths = new Map<string, number>();
+
 const getMediaPublicUrl = (path: string) => supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+
+const prunePendingDeletedPaths = () => {
+  const now = Date.now();
+
+  pendingDeletedPaths.forEach((expiresAt, path) => {
+    if (expiresAt <= now) {
+      pendingDeletedPaths.delete(path);
+    }
+  });
+};
+
+const filterPendingDeletedFiles = (files: MediaFile[]) => {
+  prunePendingDeletedPaths();
+
+  if (!pendingDeletedPaths.size) {
+    return files;
+  }
+
+  return files.filter((file) => !pendingDeletedPaths.has(file.path));
+};
+
+export const markMediaFilesPendingDeletion = (paths: string[]) => {
+  prunePendingDeletedPaths();
+  const expiresAt = Date.now() + MEDIA_DELETE_VISIBILITY_TTL;
+
+  paths.forEach((path) => {
+    pendingDeletedPaths.set(path, expiresAt);
+  });
+};
+
+export const clearMediaFilesPendingDeletion = (paths: string[]) => {
+  paths.forEach((path) => {
+    pendingDeletedPaths.delete(path);
+  });
+};
+
+export const scheduleMediaLibrarySync = (queryClient: QueryClient, delay = 1200) => {
+  if (typeof window === 'undefined') {
+    void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
+    return;
+  }
+
+  window.setTimeout(() => {
+    prunePendingDeletedPaths();
+    void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
+  }, delay);
+};
 
 const listFolderItems = async (folder: string) => {
   const items: StorageItem[] = [];
@@ -55,10 +106,11 @@ export const upsertMediaFiles = (files: MediaFile[], incomingFiles: MediaFile[])
   const map = new Map(files.map((file) => [file.path, file]));
 
   incomingFiles.forEach((file) => {
+    pendingDeletedPaths.delete(file.path);
     map.set(file.path, file);
   });
 
-  return sortMediaFilesByNewest(Array.from(map.values()));
+  return filterPendingDeletedFiles(sortMediaFilesByNewest(Array.from(map.values())));
 };
 
 export const createMediaFileFromUpload = (file: File, path: string): MediaFile => ({
@@ -113,5 +165,5 @@ export const fetchAllMediaFiles = async (): Promise<MediaFile[]> => {
   };
 
   const allFiles = await collect('');
-  return sortMediaFilesByNewest(Array.from(new Map(allFiles.map((file) => [file.path, file])).values()));
+  return filterPendingDeletedFiles(sortMediaFilesByNewest(Array.from(new Map(allFiles.map((file) => [file.path, file])).values())));
 };
