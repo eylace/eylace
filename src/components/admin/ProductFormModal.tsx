@@ -561,5 +561,11 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <MediaManagerModal
+      open={mediaManagerOpen}
+      onOpenChange={setMediaManagerOpen}
+      onSelect={(url) => setForm(f => ({ ...f, images: [...f.images, url] }))}
+    />
+    </>
   );
 };
