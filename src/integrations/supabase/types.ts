@@ -888,6 +888,7 @@ export type Database = {
       }
       order_items: {
         Row: {
+          cost_per_item: number
           created_at: string
           id: string
           order_id: string
@@ -899,6 +900,7 @@ export type Database = {
           variations: Json | null
         }
         Insert: {
+          cost_per_item?: number
           created_at?: string
           id?: string
           order_id: string
@@ -910,6 +912,7 @@ export type Database = {
           variations?: Json | null
         }
         Update: {
+          cost_per_item?: number
           created_at?: string
           id?: string
           order_id?: string
@@ -1650,6 +1653,7 @@ export type Database = {
           attributes: Json | null
           brand_id: string | null
           category_id: string | null
+          cost_per_item: number
           created_at: string
           description: string | null
           digital_file_url: string | null
@@ -1681,6 +1685,7 @@ export type Database = {
           attributes?: Json | null
           brand_id?: string | null
           category_id?: string | null
+          cost_per_item?: number
           created_at?: string
           description?: string | null
           digital_file_url?: string | null
@@ -1712,6 +1717,7 @@ export type Database = {
           attributes?: Json | null
           brand_id?: string | null
           category_id?: string | null
+          cost_per_item?: number
           created_at?: string
           description?: string | null
           digital_file_url?: string | null
