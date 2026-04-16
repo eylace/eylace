@@ -12,6 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { deleteMediaFiles } from '@/lib/mediaManager';
+import {
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   clearMediaFilesPendingDeletion,
   createMediaFileFromUpload,
@@ -115,16 +121,15 @@ export default function AdminUploadFiles() {
     });
     if (previewUrl === file.url) setPreviewUrl(null);
 
-    const { error } = await supabase.storage.from('product-images').remove([file.path]);
-    if (error) {
+    try {
+      await deleteMediaFiles([file.path]);
+      toast.success('File deleted');
+      scheduleMediaLibrarySync(queryClient, 2000);
+    } catch (err: any) {
       clearMediaFilesPendingDeletion([file.path]);
       queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
-      toast.error(error.message);
-      return;
+      toast.error(err.message || 'Delete failed');
     }
-
-    toast.success('File deleted');
-    scheduleMediaLibrarySync(queryClient);
   };
 
   const handleBulkDelete = async () => {
@@ -137,21 +142,20 @@ export default function AdminUploadFiles() {
       removeMediaFilesByPath(currentFiles, paths),
     );
 
-    const { error } = await supabase.storage.from('product-images').remove(paths);
-    if (error) {
+    try {
+      await deleteMediaFiles(paths);
+      toast.success(`${paths.length} file(s) deleted`);
+      setSelectedIds(new Set());
+      setBulkDeleteConfirm(false);
+      if (previewUrl && !removeMediaFilesByPath(sorted, paths).some((file) => file.url === previewUrl)) {
+        setPreviewUrl(null);
+      }
+      scheduleMediaLibrarySync(queryClient, 2000);
+    } catch (err: any) {
       clearMediaFilesPendingDeletion(paths);
       queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
-      toast.error(error.message);
-      return;
+      toast.error(err.message || 'Bulk delete failed');
     }
-
-    toast.success(`${paths.length} file(s) deleted`);
-    setSelectedIds(new Set());
-    setBulkDeleteConfirm(false);
-    if (previewUrl && !removeMediaFilesByPath(sorted, paths).some((file) => file.url === previewUrl)) {
-      setPreviewUrl(null);
-    }
-    scheduleMediaLibrarySync(queryClient);
   };
 
   const copyUrl = (url: string) => {
