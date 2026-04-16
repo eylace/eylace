@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload, Sparkles, Tag, Search, Package, FileText, DollarSign, Truck, Shield, Image as ImageIcon, Settings2 } from 'lucide-react';
+import { Loader2, Plus, X, Upload, Sparkles, Tag, Search, Package, FileText, DollarSign, Truck, Shield, Image as ImageIcon, Settings2, FolderOpen } from 'lucide-react';
+import { MediaManagerModal } from './MediaManagerModal';
 
 interface ProductFormModalProps {
   open: boolean;
