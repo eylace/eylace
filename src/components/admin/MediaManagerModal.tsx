@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { MediaLibraryGrid } from './media-manager/MediaLibraryGrid';
 import { MediaUploadPanel } from './media-manager/MediaUploadPanel';
 import { classifyMediaKind, getUploadLimit, matchesAcceptedKinds } from './media-manager/media-utils';
+import {
+  createMediaFileFromUpload,
+  fetchAllMediaFiles,
+  MEDIA_LIBRARY_QUERY_KEY,
+  removeMediaFilesByPath,
+  upsertMediaFiles,
+} from './media-manager/media-library';
 import { ITEMS_PER_PAGE, type MediaFile, type MediaKind } from './media-manager/types';
 
 interface MediaManagerModalProps {
@@ -21,87 +28,6 @@ interface MediaManagerModalProps {
   uploadFolder?: string;
 }
 
-interface StorageItem {
-  created_at?: string | null;
-  id?: string | null;
-  metadata?: {
-    mimetype?: string;
-    size?: number;
-  } | null;
-  name: string;
-}
-
-const listFolderItems = async (folder: string) => {
-  const items: StorageItem[] = [];
-  let offset = 0;
-
-  while (true) {
-    const { data, error } = await supabase.storage.from('product-images').list(folder, {
-      limit: 1000,
-      offset,
-      sortBy: { column: 'created_at', order: 'desc' },
-    });
-
-    if (error) throw error;
-
-    const batch = (data as StorageItem[]) || [];
-    items.push(...batch);
-
-    if (batch.length < 1000) break;
-    offset += batch.length;
-  }
-
-  return items;
-};
-
-const fetchMediaFiles = async (): Promise<MediaFile[]> => {
-  const visited = new Set<string>();
-
-  const collect = async (folder = ''): Promise<MediaFile[]> => {
-    if (visited.has(folder)) return [];
-    visited.add(folder);
-
-    const entries = await listFolderItems(folder);
-    const folders: string[] = [];
-    const files: MediaFile[] = [];
-
-    entries.forEach((entry) => {
-      const fullPath = folder ? `${folder}/${entry.name}` : entry.name;
-      const metadata = entry.metadata;
-      const isFolder = !metadata || Object.keys(metadata).length === 0 || entry.id == null;
-
-      if (isFolder) {
-        folders.push(fullPath);
-        return;
-      }
-
-      const mimeType = metadata.mimetype || '';
-      files.push({
-        id: entry.id || fullPath,
-        name: entry.name,
-        path: fullPath,
-        url: supabase.storage.from('product-images').getPublicUrl(fullPath).data.publicUrl,
-        size: metadata.size || 0,
-        mimeType,
-        kind: classifyMediaKind(entry.name, mimeType),
-        extension: entry.name.split('.').pop()?.toUpperCase() || '',
-        createdAt: entry.created_at || null,
-      });
-    });
-
-    const nestedFiles = await Promise.all(folders.map((nestedFolder) => collect(nestedFolder)));
-    return [...files, ...nestedFiles.flat()];
-  };
-
-  const allFiles = await collect('');
-
-  return Array.from(new Map(allFiles.map((file) => [file.path, file])).values()).sort((a, b) => {
-    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return bTime - aTime;
-  });
-};
-
 export function MediaManagerModal({
   open,
   onOpenChange,
@@ -110,6 +36,7 @@ export function MediaManagerModal({
   acceptedKinds = ['image'],
   uploadFolder = 'uploads',
 }: MediaManagerModalProps) {
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState('library');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -119,8 +46,8 @@ export function MediaManagerModal({
   const acceptedKindsKey = acceptedKinds.join('|');
 
   const { data: files = [], isPending, refetch } = useQuery({
-    queryKey: ['media-manager-files'],
-    queryFn: fetchMediaFiles,
+    queryKey: MEDIA_LIBRARY_QUERY_KEY,
+    queryFn: fetchAllMediaFiles,
     enabled: open,
     staleTime: 60_000,
     gcTime: 300_000,
@@ -199,19 +126,16 @@ export function MediaManagerModal({
       const uploadedFiles = await Promise.allSettled(
         validFiles.map(async (file) => {
           const extension = file.name.split('.').pop();
-          const path = `${uploadFolder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${extension}`;
+          const path = `${uploadFolder}/${Date.now()}_${Math.random().toString(36).slice(2)}${extension ? `.${extension}` : ''}`;
           const { error } = await supabase.storage.from('product-images').upload(path, file);
           if (error) throw error;
 
-          return {
-            path,
-            url: supabase.storage.from('product-images').getPublicUrl(path).data.publicUrl,
-          };
+          return createMediaFileFromUpload(file, path);
         }),
       );
 
       const successfulUploads = uploadedFiles
-        .filter((result): result is PromiseFulfilledResult<{ path: string; url: string }> => result.status === 'fulfilled')
+        .filter((result): result is PromiseFulfilledResult<MediaFile> => result.status === 'fulfilled')
         .map((result) => result.value);
 
       if (!successfulUploads.length) {
@@ -219,9 +143,13 @@ export function MediaManagerModal({
         return;
       }
 
+      queryClient.setQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY, (currentFiles = []) =>
+        upsertMediaFiles(currentFiles, successfulUploads),
+      );
+
       setSelectedPaths(multiple ? successfulUploads.map((file) => file.path) : [successfulUploads[0].path]);
       toast.success(`${successfulUploads.length} file(s) uploaded`);
-      await refetch();
+      void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
       setTab('library');
       setSearch('');
       setPage(1);
@@ -230,7 +158,7 @@ export function MediaManagerModal({
     } finally {
       setUploading(false);
     }
-  }, [acceptedKinds, multiple, refetch, uploadFolder]);
+  }, [acceptedKinds, multiple, queryClient, uploadFolder]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -248,17 +176,22 @@ export function MediaManagerModal({
   };
 
   const handleDeleteFromLibrary = async (file: MediaFile) => {
-    if (!window.confirm(`Delete "${file.name}"?`)) return;
+    const previousFiles = queryClient.getQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY) || [];
+
+    queryClient.setQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY, (currentFiles = []) =>
+      removeMediaFilesByPath(currentFiles, [file.path]),
+    );
+    setSelectedPaths((currentPaths) => currentPaths.filter((path) => path !== file.path));
 
     const { error } = await supabase.storage.from('product-images').remove([file.path]);
     if (error) {
+      queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
       toast.error(error.message);
       return;
     }
 
     toast.success('Deleted');
-    setSelectedPaths((currentPaths) => currentPaths.filter((path) => path !== file.path));
-    await refetch();
+    void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
   };
 
   const handleSelect = () => {
@@ -276,7 +209,7 @@ export function MediaManagerModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[90vh] max-w-6xl flex-col overflow-hidden">
+      <DialogContent className="flex h-[90vh] max-h-[90vh] max-w-[1180px] flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Media Manager</DialogTitle>
         </DialogHeader>
