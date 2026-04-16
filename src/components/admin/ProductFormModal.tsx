@@ -347,12 +347,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
 
           {/* === MEDIA === */}
           <TabsContent value="media" className="space-y-4 mt-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">Product Images</Label>
-              <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setMediaManagerOpen(true)}>
-                <FolderOpen className="h-4 w-4" /> Media Manager
-              </Button>
-            </div>
+            <Label className="text-sm font-semibold">Product Images</Label>
             <div className="flex flex-wrap gap-3">
               {form.images.map((img, i) => (
                 <div key={i} className="relative h-24 w-24 rounded-lg border border-border overflow-hidden group">
@@ -364,14 +359,15 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
                   {i === 0 && <span className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[9px] text-center py-0.5">Thumbnail</span>}
                 </div>
               ))}
-              <label className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors">
-                {imageUploading ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : (
-                  <><Upload className="h-5 w-5 text-muted-foreground" /><span className="text-[10px] text-muted-foreground mt-1">Upload</span></>
-                )}
-                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={imageUploading} />
-              </label>
+              <div
+                onClick={() => setMediaManagerOpen(true)}
+                className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors"
+              >
+                <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                <span className="text-[10px] text-muted-foreground mt-1">Browse</span>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">First image will be used as the product thumbnail. Click "Media Manager" to pick from your library.</p>
+            <p className="text-xs text-muted-foreground">First image will be used as the product thumbnail. Click "Browse" to open Media Manager — pick from library or upload new files.</p>
             <MediaManagerModal
               open={mediaManagerOpen}
               onOpenChange={setMediaManagerOpen}
