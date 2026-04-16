@@ -13,10 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
+  clearMediaFilesPendingDeletion,
   createMediaFileFromUpload,
   fetchAllMediaFiles,
+  markMediaFilesPendingDeletion,
   MEDIA_LIBRARY_QUERY_KEY,
   removeMediaFilesByPath,
+  scheduleMediaLibrarySync,
   upsertMediaFiles,
 } from '@/components/admin/media-manager/media-library';
 import type { MediaFile } from '@/components/admin/media-manager/types';
@@ -99,6 +102,7 @@ export default function AdminUploadFiles() {
   }, [queryClient]);
 
   const handleDelete = async (file: MediaFile) => {
+    markMediaFilesPendingDeletion([file.path]);
     const previousFiles = queryClient.getQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY) || [];
 
     queryClient.setQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY, (currentFiles = []) =>
@@ -113,19 +117,21 @@ export default function AdminUploadFiles() {
 
     const { error } = await supabase.storage.from('product-images').remove([file.path]);
     if (error) {
+      clearMediaFilesPendingDeletion([file.path]);
       queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
       toast.error(error.message);
       return;
     }
 
     toast.success('File deleted');
-    void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
+    scheduleMediaLibrarySync(queryClient);
   };
 
   const handleBulkDelete = async () => {
     const paths = sorted.filter((file) => selectedIds.has(file.path)).map((file) => file.path);
     if (!paths.length) return;
 
+    markMediaFilesPendingDeletion(paths);
     const previousFiles = queryClient.getQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY) || [];
     queryClient.setQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY, (currentFiles = []) =>
       removeMediaFilesByPath(currentFiles, paths),
@@ -133,6 +139,7 @@ export default function AdminUploadFiles() {
 
     const { error } = await supabase.storage.from('product-images').remove(paths);
     if (error) {
+      clearMediaFilesPendingDeletion(paths);
       queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
       toast.error(error.message);
       return;
@@ -144,7 +151,7 @@ export default function AdminUploadFiles() {
     if (previewUrl && !removeMediaFilesByPath(sorted, paths).some((file) => file.url === previewUrl)) {
       setPreviewUrl(null);
     }
-    void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
+    scheduleMediaLibrarySync(queryClient);
   };
 
   const copyUrl = (url: string) => {

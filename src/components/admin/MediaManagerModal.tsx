@@ -11,10 +11,13 @@ import { MediaLibraryGrid } from './media-manager/MediaLibraryGrid';
 import { MediaUploadPanel } from './media-manager/MediaUploadPanel';
 import { classifyMediaKind, getUploadLimit, matchesAcceptedKinds } from './media-manager/media-utils';
 import {
+  clearMediaFilesPendingDeletion,
   createMediaFileFromUpload,
   fetchAllMediaFiles,
+  markMediaFilesPendingDeletion,
   MEDIA_LIBRARY_QUERY_KEY,
   removeMediaFilesByPath,
+  scheduleMediaLibrarySync,
   upsertMediaFiles,
 } from './media-manager/media-library';
 import { ITEMS_PER_PAGE, type MediaFile, type MediaKind } from './media-manager/types';
@@ -45,7 +48,7 @@ export function MediaManagerModal({
   const [dragOver, setDragOver] = useState(false);
   const acceptedKindsKey = acceptedKinds.join('|');
 
-  const { data: files = [], isPending, refetch } = useQuery({
+  const { data: files = [], isPending } = useQuery({
     queryKey: MEDIA_LIBRARY_QUERY_KEY,
     queryFn: fetchAllMediaFiles,
     enabled: open,
@@ -176,6 +179,7 @@ export function MediaManagerModal({
   };
 
   const handleDeleteFromLibrary = async (file: MediaFile) => {
+    markMediaFilesPendingDeletion([file.path]);
     const previousFiles = queryClient.getQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY) || [];
 
     queryClient.setQueryData<MediaFile[]>(MEDIA_LIBRARY_QUERY_KEY, (currentFiles = []) =>
@@ -185,13 +189,14 @@ export function MediaManagerModal({
 
     const { error } = await supabase.storage.from('product-images').remove([file.path]);
     if (error) {
+      clearMediaFilesPendingDeletion([file.path]);
       queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
       toast.error(error.message);
       return;
     }
 
     toast.success('Deleted');
-    void queryClient.invalidateQueries({ queryKey: MEDIA_LIBRARY_QUERY_KEY });
+    scheduleMediaLibrarySync(queryClient);
   };
 
   const handleSelect = () => {
