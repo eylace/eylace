@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload, Sparkles, Tag, Search, Package, FileText, DollarSign, Truck, Shield, Image as ImageIcon, Settings2 } from 'lucide-react';
+import { Loader2, Plus, X, Upload, Sparkles, Tag, Search, Package, FileText, DollarSign, Truck, Shield, Image as ImageIcon, Settings2, FolderOpen } from 'lucide-react';
+import { MediaManagerModal } from './MediaManagerModal';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -50,6 +51,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
   const [aiGenerating, setAiGenerating] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [activeTab, setActiveTab] = useState('general');
+  const [mediaManagerOpen, setMediaManagerOpen] = useState(false);
 
   const [form, setForm] = useState({ ...defaultForm });
 
@@ -345,7 +347,12 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
 
           {/* === MEDIA === */}
           <TabsContent value="media" className="space-y-4 mt-4">
-            <Label className="text-sm font-semibold">Product Images</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">Product Images</Label>
+              <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setMediaManagerOpen(true)}>
+                <FolderOpen className="h-4 w-4" /> Media Manager
+              </Button>
+            </div>
             <div className="flex flex-wrap gap-3">
               {form.images.map((img, i) => (
                 <div key={i} className="relative h-24 w-24 rounded-lg border border-border overflow-hidden group">
@@ -364,7 +371,12 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={imageUploading} />
               </label>
             </div>
-            <p className="text-xs text-muted-foreground">First image will be used as the product thumbnail. Drag to reorder (coming soon).</p>
+            <p className="text-xs text-muted-foreground">First image will be used as the product thumbnail. Click "Media Manager" to pick from your library.</p>
+            <MediaManagerModal
+              open={mediaManagerOpen}
+              onOpenChange={setMediaManagerOpen}
+              onSelect={(url) => setForm(f => ({ ...f, images: [...f.images, url] }))}
+            />
           </TabsContent>
 
           {/* === PRICING === */}
