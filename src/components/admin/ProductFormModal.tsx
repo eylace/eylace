@@ -27,7 +27,7 @@ interface ProductFormModalProps {
 
 const defaultForm = {
   name: '', slug: '', description: '', short_description: '',
-  price: '', original_price: '', discount: '', stock: '', sku: '',
+  price: '', original_price: '', cost_per_item: '', discount: '', stock: '', sku: '',
   category_id: '', brand_id: '', warranty_id: '', label_id: '',
   images: [] as string[],
   is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
@@ -63,6 +63,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
         name: product.name || '', slug: product.slug || '',
         description: product.description || '', short_description: product.short_description || '',
         price: String(product.price || ''), original_price: String(product.original_price || ''),
+        cost_per_item: String(product.cost_per_item || ''),
         discount: String(product.discount || ''), stock: String(product.stock || ''),
         sku: product.sku || '',
         category_id: product.category_id || '', brand_id: product.brand_id || '',
@@ -139,6 +140,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
       description: form.description || null,
       price: parseFloat(form.price),
       original_price: form.original_price ? parseFloat(form.original_price) : null,
+      cost_per_item: form.cost_per_item ? parseFloat(form.cost_per_item) : 0,
       discount: form.discount ? parseInt(form.discount) : 0,
       stock: form.stock ? parseInt(form.stock) : 0,
       category_id: form.category_id || null,
@@ -375,10 +377,17 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
                 }} placeholder="0.00" />
               </div>
               <div>
+                <Label>Cost Per Item</Label>
+                <Input type="number" value={form.cost_per_item} onChange={e => setForm(f => ({ ...f, cost_per_item: e.target.value }))} placeholder="0.00" />
+                <p className="text-[10px] text-muted-foreground mt-1">Base cost for profit calculation</p>
+              </div>
+              <div>
                 <Label>Discount %</Label>
                 <Input type="number" value={form.discount} readOnly className="bg-muted cursor-not-allowed" placeholder="Auto" />
                 {form.discount && <p className="text-xs text-[hsl(var(--success))] mt-1">{form.discount}% off</p>}
               </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <Label>SKU</Label>
                 <Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} placeholder="SKU-001" />
