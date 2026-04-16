@@ -23,6 +23,8 @@ import { DashboardIncompleteOrders } from './DashboardIncompleteOrders';
 
 interface DashboardStats {
   totalRevenue: number;
+  totalSales: number;
+  totalProfit: number;
   totalOrders: number;
   totalCustomers: number;
   totalProducts: number;
@@ -59,15 +61,28 @@ export const AdminDashboardOverview = () => {
       const { count: productCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
       const { count: reviewCount } = await supabase.from('product_reviews').select('*', { count: 'exact', head: true });
 
-      const totalRevenue = orders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+      const nonCancelled = orders.filter((o: any) => o.status !== 'cancelled');
+      const deliveredOrders = orders.filter((o: any) => o.status === 'delivered');
+      const totalSales = nonCancelled.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+      const totalRevenue = deliveredOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+      
+      // Calculate profit from order items cost_per_item
+      let totalCost = 0;
+      deliveredOrders.forEach((o: any) => {
+        o.items?.forEach((item: any) => {
+          totalCost += (item.cost_per_item || 0) * (item.quantity || 1);
+        });
+      });
+      const totalProfit = totalRevenue - totalCost;
+
       const pendingOrders = orders.filter((o: any) => o.status === 'pending').length;
       const shippedOrders = orders.filter((o: any) => o.status === 'shipped').length;
       const uniqueCustomers = new Set(orders.map((o: any) => o.user_id)).size;
 
       setStats({
-        totalRevenue, totalOrders: orders.length, totalCustomers: uniqueCustomers,
+        totalRevenue, totalSales, totalProfit, totalOrders: orders.length, totalCustomers: uniqueCustomers,
         totalProducts: productCount || 0, pendingOrders, shippedOrders,
-        avgOrderValue: orders.length > 0 ? totalRevenue / orders.length : 0,
+        avgOrderValue: orders.length > 0 ? totalSales / orders.length : 0,
         totalReviews: reviewCount || 0,
       });
 
@@ -115,10 +130,12 @@ export const AdminDashboardOverview = () => {
   }
 
   const statCards = [
-    { title: t('admin.totalRevenue'), value: `৳${(stats?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: DollarSign, trend: '+12.5%', trendUp: true, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
-    { title: t('admin.totalOrders'), value: stats?.totalOrders || 0, icon: ShoppingCart, trend: '+8.2%', trendUp: true, color: 'text-accent', bg: 'bg-accent/10' },
-    { title: t('admin.customers'), value: stats?.totalCustomers || 0, icon: Users, trend: '+5.1%', trendUp: true, color: 'text-[hsl(var(--prime))]', bg: 'bg-[hsl(var(--prime))]/10' },
-    { title: t('admin.products'), value: stats?.totalProducts || 0, icon: Package, trend: '+3', trendUp: true, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },
+    { title: t('admin.totalRevenue'), value: `৳${(stats?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: DollarSign, trend: 'Delivered', trendUp: true, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
+    { title: 'Total Sales', value: `৳${(stats?.totalSales || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: ShoppingCart, trend: 'Non-cancelled', trendUp: true, color: 'text-accent', bg: 'bg-accent/10' },
+    { title: 'Total Profit', value: `৳${(stats?.totalProfit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: TrendingUp, trend: 'Revenue - Cost', trendUp: (stats?.totalProfit || 0) >= 0, color: 'text-[hsl(var(--prime))]', bg: 'bg-[hsl(var(--prime))]/10' },
+    { title: t('admin.totalOrders'), value: stats?.totalOrders || 0, icon: Package, trend: `${stats?.pendingOrders || 0} pending`, trendUp: true, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },
+    { title: t('admin.customers'), value: stats?.totalCustomers || 0, icon: Users, trend: '+5.1%', trendUp: true, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { title: t('admin.products'), value: stats?.totalProducts || 0, icon: Package, trend: `${stats?.totalReviews || 0} reviews`, trendUp: true, color: 'text-orange-500', bg: 'bg-orange-500/10' },
   ];
 
   const statusConfig: Record<string, string> = {
