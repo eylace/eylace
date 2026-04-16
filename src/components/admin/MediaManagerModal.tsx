@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { deleteMediaFiles } from '@/lib/mediaManager';
 import { MediaLibraryGrid } from './media-manager/MediaLibraryGrid';
 import { MediaUploadPanel } from './media-manager/MediaUploadPanel';
 import { classifyMediaKind, getUploadLimit, matchesAcceptedKinds } from './media-manager/media-utils';
@@ -187,16 +188,15 @@ export function MediaManagerModal({
     );
     setSelectedPaths((currentPaths) => currentPaths.filter((path) => path !== file.path));
 
-    const { error } = await supabase.storage.from('product-images').remove([file.path]);
-    if (error) {
+    try {
+      await deleteMediaFiles([file.path]);
+      toast.success('Deleted');
+      scheduleMediaLibrarySync(queryClient, 2000);
+    } catch (err: any) {
       clearMediaFilesPendingDeletion([file.path]);
       queryClient.setQueryData(MEDIA_LIBRARY_QUERY_KEY, previousFiles);
-      toast.error(error.message);
-      return;
+      toast.error(err.message || 'Delete failed');
     }
-
-    toast.success('Deleted');
-    scheduleMediaLibrarySync(queryClient);
   };
 
   const handleSelect = () => {
