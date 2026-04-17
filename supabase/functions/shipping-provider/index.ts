@@ -419,6 +419,20 @@ Deno.serve(async (req) => {
         else throw new Error(`Unknown action: ${action}`);
         break;
       }
+      case 'redx': {
+        if (action === 'create_order') result = await redxCreateOrder(config.apiKey, payload);
+        else if (action === 'track') result = { events: await redxTrack(config.apiKey, payload.tracking_number) };
+        else if (action === 'check_rate') result = { rates: await redxCheckRate(config.apiKey, payload) };
+        else throw new Error(`Unknown action: ${action}`);
+        break;
+      }
+      case 'carrybee': {
+        if (action === 'create_order') result = await carrybeeCreateOrder(config.apiKey, payload);
+        else if (action === 'track') result = { events: await carrybeeTrack(config.apiKey, payload.tracking_number) };
+        else if (action === 'check_rate') result = { rates: await carrybeeCheckRate(config.apiKey, payload) };
+        else throw new Error(`Unknown action: ${action}`);
+        break;
+      }
       default:
         throw new Error(`Unknown provider: ${providerCode}`);
     }
