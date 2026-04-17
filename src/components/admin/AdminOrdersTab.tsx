@@ -25,6 +25,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { exportToCSV } from '@/lib/csvExport';
 import { supabase } from '@/integrations/supabase/client';
 import { EditOrderModal } from '@/components/admin/EditOrderModal';
+import { CourierDispatchModal } from '@/components/admin/CourierDispatchModal';
 import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
 
 interface CourierOption {
@@ -222,40 +223,11 @@ export const AdminOrdersTab = () => {
     setUpdating(null);
   };
 
-  const handleCourierDispatch = async () => {
-    if (!courierDispatchOrder || !dispatchProvider) return;
-    setDispatching(true);
-    try {
-      const order = courierDispatchOrder;
-      const addr = normalizeShippingAddress(order.shipping_address);
-      const customerName = getOrderCustomerName(order);
-      const customerPhone = getOrderCustomerPhone(order);
-      const { data, error } = await supabase.functions.invoke('shipping-provider', {
-        body: {
-          action: 'create_order', provider: dispatchProvider,
-          payload: {
-            order_id: order.order_number, recipient_name: customerName,
-            recipient_phone: customerPhone || '01700000000',
-            recipient_address: `${addr.address || ''} ${addr.apartment || ''} ${addr.city || ''} ${addr.state || ''} ${addr.zip_code || ''}`.trim(),
-            amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
-            item_description: order.items?.map((i: any) => `${i.product_name} x${i.quantity}`).join(', ') || 'Products',
-            item_quantity: order.items?.reduce((s: number, i: any) => s + i.quantity, 0) || 1,
-            item_weight: 0.5, note: `Order #${order.order_number}`,
-          },
-        },
-      });
-      if (error) throw error;
-      if (data?.consignment_id || data?.tracking_code) {
-        await updateOrderStatus(order.id, 'processing', { carrier: dispatchProvider, tracking_number: data.consignment_id || data.tracking_code || '' });
-        toast.success(`Order dispatched! Tracking: ${data.consignment_id || data.tracking_code || 'pending'}`);
-      } else {
-        toast.success('Order sent to courier successfully');
-      }
-      setCourierDispatchOrder(null);
-    } catch (e: any) {
-      toast.error('Dispatch failed: ' + (e.message || 'Unknown error'));
-    }
-    setDispatching(false);
+  const handleDispatched = async (orderId: string, courierCode: string, trackingNumber: string) => {
+    await updateOrderStatus(orderId, 'sent_to_courier', {
+      carrier: courierCode,
+      tracking_number: trackingNumber || '',
+    });
   };
 
   const handleShipViaCourier = (order: any, courier: CourierOption) => {
