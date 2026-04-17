@@ -922,44 +922,14 @@ export const AdminOrdersTab = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Courier Dispatch Modal */}
-      <Dialog open={!!courierDispatchOrder} onOpenChange={open => !open && setCourierDispatchOrder(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Truck className="h-5 w-5 text-primary" /> Dispatch to Courier</DialogTitle></DialogHeader>
-          {courierDispatchOrder && (
-            <div className="space-y-4">
-              <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
-                <div className="flex justify-between"><span className="text-muted-foreground">Order</span><span className="font-semibold">#{courierDispatchOrder.order_number}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Customer</span><span>{getOrderCustomerName(courierDispatchOrder)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className="font-bold">৳{courierDispatchOrder.total.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Payment</span><Badge variant="outline" className="text-xs">{courierDispatchOrder.payment_method?.toUpperCase()}</Badge></div>
-              </div>
-              <div className="space-y-2">
-                <Label>Select Courier Provider</Label>
-                <Select value={dispatchProvider} onValueChange={setDispatchProvider}>
-                  <SelectTrigger><SelectValue placeholder="Choose a courier..." /></SelectTrigger>
-                  <SelectContent>
-                    {couriers.map(c => (
-                      <SelectItem key={c.id} value={c.code}>📦 {c.name}</SelectItem>
-                    ))}
-                    {couriers.length === 0 && (
-                      <>
-                        <SelectItem value="steadfast">📦 Steadfast</SelectItem>
-                        <SelectItem value="pathao">🏍️ Pathao</SelectItem>
-                        <SelectItem value="shiprocket">🚀 Shiprocket</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleCourierDispatch} disabled={dispatching || !dispatchProvider} className="w-full gap-2">
-                {dispatching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Send to {dispatchProvider ? dispatchProvider.charAt(0).toUpperCase() + dispatchProvider.slice(1) : 'Courier'}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Courier Dispatch Modal — auto-fills order data and one-click sends to selected courier */}
+      <CourierDispatchModal
+        open={!!courierDispatchOrder}
+        order={courierDispatchOrder}
+        providerCode={dispatchProvider}
+        onClose={() => setCourierDispatchOrder(null)}
+        onDispatched={handleDispatched}
+      />
 
       {/* Edit Order Modal */}
       <EditOrderModal
