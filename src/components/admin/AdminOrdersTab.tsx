@@ -25,6 +25,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { exportToCSV } from '@/lib/csvExport';
 import { supabase } from '@/integrations/supabase/client';
 import { EditOrderModal } from '@/components/admin/EditOrderModal';
+import { CourierDispatchModal } from '@/components/admin/CourierDispatchModal';
 import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
 
 interface CourierOption {
@@ -114,7 +115,6 @@ export const AdminOrdersTab = () => {
   const [detailOrder, setDetailOrder] = useState<any>(null);
   const [courierDispatchOrder, setCourierDispatchOrder] = useState<any>(null);
   const [dispatchProvider, setDispatchProvider] = useState('');
-  const [dispatching, setDispatching] = useState(false);
   const [sortField, setSortField] = useState<'date' | 'total'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [editOrder, setEditOrder] = useState<any>(null);
@@ -222,40 +222,11 @@ export const AdminOrdersTab = () => {
     setUpdating(null);
   };
 
-  const handleCourierDispatch = async () => {
-    if (!courierDispatchOrder || !dispatchProvider) return;
-    setDispatching(true);
-    try {
-      const order = courierDispatchOrder;
-      const addr = normalizeShippingAddress(order.shipping_address);
-      const customerName = getOrderCustomerName(order);
-      const customerPhone = getOrderCustomerPhone(order);
-      const { data, error } = await supabase.functions.invoke('shipping-provider', {
-        body: {
-          action: 'create_order', provider: dispatchProvider,
-          payload: {
-            order_id: order.order_number, recipient_name: customerName,
-            recipient_phone: customerPhone || '01700000000',
-            recipient_address: `${addr.address || ''} ${addr.apartment || ''} ${addr.city || ''} ${addr.state || ''} ${addr.zip_code || ''}`.trim(),
-            amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
-            item_description: order.items?.map((i: any) => `${i.product_name} x${i.quantity}`).join(', ') || 'Products',
-            item_quantity: order.items?.reduce((s: number, i: any) => s + i.quantity, 0) || 1,
-            item_weight: 0.5, note: `Order #${order.order_number}`,
-          },
-        },
-      });
-      if (error) throw error;
-      if (data?.consignment_id || data?.tracking_code) {
-        await updateOrderStatus(order.id, 'processing', { carrier: dispatchProvider, tracking_number: data.consignment_id || data.tracking_code || '' });
-        toast.success(`Order dispatched! Tracking: ${data.consignment_id || data.tracking_code || 'pending'}`);
-      } else {
-        toast.success('Order sent to courier successfully');
-      }
-      setCourierDispatchOrder(null);
-    } catch (e: any) {
-      toast.error('Dispatch failed: ' + (e.message || 'Unknown error'));
-    }
-    setDispatching(false);
+  const handleDispatched = async (orderId: string, courierCode: string, trackingNumber: string) => {
+    await updateOrderStatus(orderId, 'sent_to_courier', {
+      carrier: courierCode,
+      tracking_number: trackingNumber || '',
+    });
   };
 
   const handleShipViaCourier = (order: any, courier: CourierOption) => {
@@ -950,44 +921,14 @@ export const AdminOrdersTab = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Courier Dispatch Modal */}
-      <Dialog open={!!courierDispatchOrder} onOpenChange={open => !open && setCourierDispatchOrder(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Truck className="h-5 w-5 text-primary" /> Dispatch to Courier</DialogTitle></DialogHeader>
-          {courierDispatchOrder && (
-            <div className="space-y-4">
-              <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
-                <div className="flex justify-between"><span className="text-muted-foreground">Order</span><span className="font-semibold">#{courierDispatchOrder.order_number}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Customer</span><span>{getOrderCustomerName(courierDispatchOrder)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Amount</span><span className="font-bold">৳{courierDispatchOrder.total.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Payment</span><Badge variant="outline" className="text-xs">{courierDispatchOrder.payment_method?.toUpperCase()}</Badge></div>
-              </div>
-              <div className="space-y-2">
-                <Label>Select Courier Provider</Label>
-                <Select value={dispatchProvider} onValueChange={setDispatchProvider}>
-                  <SelectTrigger><SelectValue placeholder="Choose a courier..." /></SelectTrigger>
-                  <SelectContent>
-                    {couriers.map(c => (
-                      <SelectItem key={c.id} value={c.code}>📦 {c.name}</SelectItem>
-                    ))}
-                    {couriers.length === 0 && (
-                      <>
-                        <SelectItem value="steadfast">📦 Steadfast</SelectItem>
-                        <SelectItem value="pathao">🏍️ Pathao</SelectItem>
-                        <SelectItem value="shiprocket">🚀 Shiprocket</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleCourierDispatch} disabled={dispatching || !dispatchProvider} className="w-full gap-2">
-                {dispatching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Send to {dispatchProvider ? dispatchProvider.charAt(0).toUpperCase() + dispatchProvider.slice(1) : 'Courier'}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Courier Dispatch Modal — auto-fills order data and one-click sends to selected courier */}
+      <CourierDispatchModal
+        open={!!courierDispatchOrder}
+        order={courierDispatchOrder}
+        providerCode={dispatchProvider}
+        onClose={() => setCourierDispatchOrder(null)}
+        onDispatched={handleDispatched}
+      />
 
       {/* Edit Order Modal */}
       <EditOrderModal
