@@ -21,6 +21,7 @@ interface ProductFormState {
   description: string;
   price: string;
   original_price: string;
+  cost_per_item: string;
   discount: string;
   discount_type: string;
   stock: string;
@@ -62,7 +63,7 @@ interface ProductFormState {
 }
 
 const defaultForm: ProductFormState = {
-  name: '', slug: '', description: '', price: '', original_price: '', discount: '', discount_type: 'flat',
+  name: '', slug: '', description: '', price: '', original_price: '', cost_per_item: '', discount: '', discount_type: 'flat',
   stock: '', category_id: '', brand_id: '', warranty_id: '', label_id: '',
   images: [], thumbnail: '', videos: [], video_thumbnails: [], youtube_link: '', pdf_url: '',
   is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
@@ -133,6 +134,7 @@ const AdminAddProduct = () => {
         description: data.description || '',
         price: String(data.price || ''),
         original_price: String(data.original_price || ''),
+        cost_per_item: String((data as any).cost_per_item ?? ''),
         discount: String(data.discount || ''),
         discount_type: attrs.discount_type || 'flat',
         stock: String(data.stock || ''),
@@ -237,6 +239,7 @@ const AdminAddProduct = () => {
       name: form.name, slug: form.slug, description: form.description || null,
       price: parseFloat(form.price),
       original_price: form.original_price ? parseFloat(form.original_price) : null,
+      cost_per_item: form.cost_per_item ? parseFloat(form.cost_per_item) : 0,
       discount: form.discount ? parseInt(form.discount) : 0,
       stock: form.stock ? parseInt(form.stock) : 0,
       category_id: form.category_id || null, brand_id: form.brand_id || null,
@@ -598,9 +601,14 @@ const AdminAddProduct = () => {
           <Card>
             <CardHeader><CardTitle className="text-sm">Pricing</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div><Label>Unit Price *</Label><Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="0.00" /></div>
                 <div><Label>Original Price</Label><Input type="number" value={form.original_price} onChange={e => setForm(f => ({ ...f, original_price: e.target.value }))} placeholder="0.00" /></div>
+                <div>
+                  <Label>Cost per item</Label>
+                  <Input type="number" step="0.01" value={form.cost_per_item} onChange={e => setForm(f => ({ ...f, cost_per_item: e.target.value }))} placeholder="0.00" />
+                  <p className="text-xs text-muted-foreground mt-1">Your purchase cost — used for profit calculation</p>
+                </div>
                 <div><Label>Discount</Label><Input type="number" value={form.discount} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" /></div>
                 <div>
                   <Label>Discount Type</Label>

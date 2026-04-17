@@ -166,13 +166,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 5. Create order items
+    // 5. Fetch cost_per_item from products (for accurate historical profit calc)
+    const productIds = Array.from(new Set(items.map((i: any) => i.product_id).filter(Boolean)));
+    const costMap = new Map<string, number>();
+    if (productIds.length > 0) {
+      const { data: prodRows } = await supabaseAdmin
+        .from('products')
+        .select('id, cost_per_item')
+        .in('id', productIds as string[]);
+      prodRows?.forEach((p: any) => costMap.set(String(p.id), Number(p.cost_per_item) || 0));
+    }
+
+    // 6. Create order items
     const orderItems = items.map((item: any) => ({
       order_id: orderData.id,
       product_id: item.product_id,
       product_name: item.product_name,
       product_image: item.product_image || null,
       price: item.price,
+      cost_per_item: costMap.get(String(item.product_id)) ?? 0,
       quantity: item.quantity,
       variations: item.variations || null,
     }));
