@@ -94,7 +94,7 @@ const AdminIpBlock = lazy(() => import("./pages/AdminIpBlock"));
 const AdminSettingsPage = lazy(() => import("./pages/AdminSettingsPage"));
 const AdminPagesPage = lazy(() => import("./pages/AdminPagesPage"));
 const AdminSEOPage = lazy(() => import("./pages/AdminSEOPage"));
-const AdminMediaPage = lazy(() => import("./pages/AdminMediaPage"));
+
 const AdminNotificationsPage = lazy(() => import("./pages/AdminNotificationsPage"));
 const AdminAddProduct = lazy(() => import("./pages/AdminAddProduct"));
 const AdminInHouseProducts = lazy(() => import("./pages/AdminInHouseProducts"));
@@ -280,7 +280,7 @@ const App = () => (
                 <Route path="/admin/marketing/subscribers" element={<AdminMarketingSubscribers />} />
                 <Route path="/admin/marketing/visitors" element={<AdminMarketingVisitors />} />
                 <Route path="/admin/reports" element={<AdminReportsPage />} />
-                <Route path="/admin/media" element={<AdminMediaPage />} />
+                
                 <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />
                 <Route path="/admin/website-setup" element={<AdminWebsiteSetupPage />} />
