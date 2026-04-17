@@ -41,13 +41,30 @@ interface TrackingResult {
 
 const defaultProviders: ShippingProvider[] = [
   {
-    id: 'shiprocket',
-    name: 'Shiprocket',
-    code: 'shiprocket',
+    id: 'pathao',
+    name: 'Pathao',
+    code: 'pathao',
     enabled: false,
     apiKey: '',
     apiSecret: '',
-    apiUrl: 'https://apiv2.shiprocket.in/v1/external',
+    apiUrl: 'https://api-hermes.pathao.com',
+    webhookUrl: '',
+    defaultWeight: '0.5',
+    defaultLength: '20',
+    defaultWidth: '15',
+    defaultHeight: '10',
+    pickupLocation: '',
+    codEnabled: true,
+    autoAssign: false,
+  },
+  {
+    id: 'redx',
+    name: 'RedX',
+    code: 'redx',
+    enabled: false,
+    apiKey: '',
+    apiSecret: '',
+    apiUrl: 'https://openapi.redx.com.bd',
     webhookUrl: '',
     defaultWeight: '0.5',
     defaultLength: '20',
@@ -75,13 +92,13 @@ const defaultProviders: ShippingProvider[] = [
     autoAssign: false,
   },
   {
-    id: 'pathao',
-    name: 'Pathao',
-    code: 'pathao',
+    id: 'carrybee',
+    name: 'Carrybee',
+    code: 'carrybee',
     enabled: false,
     apiKey: '',
     apiSecret: '',
-    apiUrl: 'https://api-hermes.pathao.com',
+    apiUrl: 'https://api.carrybee.com.bd',
     webhookUrl: '',
     defaultWeight: '0.5',
     defaultLength: '20',
@@ -96,9 +113,9 @@ const defaultProviders: ShippingProvider[] = [
 const AdminShippingProviders = () => {
   const [providers, setProviders] = useState<ShippingProvider[]>(defaultProviders);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('shiprocket');
+  const [activeTab, setActiveTab] = useState('pathao');
   const [trackingNumber, setTrackingNumber] = useState('');
-  const [trackingProvider, setTrackingProvider] = useState('shiprocket');
+  const [trackingProvider, setTrackingProvider] = useState('pathao');
   const [trackingResult, setTrackingResult] = useState<TrackingResult[] | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [rateCheckLoading, setRateCheckLoading] = useState(false);
@@ -214,7 +231,7 @@ const AdminShippingProviders = () => {
             type="password"
             value={provider.apiKey}
             onChange={(e) => updateProvider(provider.id, 'apiKey', e.target.value)}
-            placeholder={provider.id === 'shiprocket' ? 'Email for Shiprocket' : 'API Key'}
+            placeholder={provider.id === 'shiprocket' ? 'Email for Shiprocket' : provider.id === 'redx' ? 'API Access Token' : provider.id === 'carrybee' ? 'API Token' : 'API Key / Client ID'}
           />
         </div>
         <div className="space-y-2">
@@ -223,7 +240,7 @@ const AdminShippingProviders = () => {
             type="password"
             value={provider.apiSecret}
             onChange={(e) => updateProvider(provider.id, 'apiSecret', e.target.value)}
-            placeholder={provider.id === 'shiprocket' ? 'Password' : 'API Secret'}
+            placeholder={provider.id === 'redx' || provider.id === 'carrybee' ? 'Not required' : provider.id === 'shiprocket' ? 'Password' : 'API Secret / Client Secret'}
           />
         </div>
         <div className="space-y-2">
@@ -286,7 +303,7 @@ const AdminShippingProviders = () => {
   );
 
   return (
-    <AdminLayout title="Shipping Providers" description="Configure Shiprocket, Steadfast & Pathao integrations">
+    <AdminLayout title="Courier Management" description="Configure Pathao, RedX, Steadfast & Carrybee courier integrations and dispatch orders with one click">
       <div className="space-y-6">
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={loading}>
