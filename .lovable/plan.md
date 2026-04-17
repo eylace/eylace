@@ -1,100 +1,54 @@
 
-আমি কোড দেখে ৪টা root cause পেয়েছি, তাই fix‑টা শুধু UI না, checkout + backend + data access — এই তিন জায়গায় করতে হবে।
+## Plan: Cost Tracking + Comprehensive Profit Dashboard
 
-1. `IP` column desktop‑এ hide হচ্ছে
-- `src/components/admin/AdminOrdersTab.tsx`‑এ IP header/cell এখন `hidden 2xl:table-cell`
-- তাই 100% desktop width‑এও column দেখা যায় না, শুধু extra-wide width‑এ দেখা যায়
+### Problem
+1. **AdminAddProduct.tsx** (the actual `/admin/add-product` page used via "Add New") has no "Cost per item" field in the Price & Stock tab.
+2. Dashboard overview is missing profit-related cards: Net Profit, Gross Profit, Sold COGS (cost of goods sold), Purchase Cost (current stock value), and Courier Expense.
 
-2. `real IP` reliably save হচ্ছে না
-- `src/pages/Checkout.tsx` এখন আগে `detect-ip` call করে, তারপর আলাদা client insert করে
-- `supabase/functions/detect-ip/index.ts` শুধু `x-forwarded-for` / `x-real-ip` দেখে
-- ফলে অনেক ক্ষেত্রে `unknown`, proxy IP, বা invalid IP save হওয়ার chance আছে
+### Part 1 — Add "Cost per item" to AdminAddProduct (Price & Stock tab)
 
-3. order ownership / account attribution logic fragile
-- checkout এখন client-side condition দিয়ে decide করছে order `user_id` পাবে নাকি guest হবে
-- browser/session reuse হলে wrong account attribution হওয়া সম্ভব
-- permanent fix-এর জন্য order creation server-side centralize করা দরকার
+**File:** `src/pages/AdminAddProduct.tsx`
+- Add `cost_per_item: ''` to `ProductFormState` interface and `defaultForm`.
+- Load `cost_per_item` from product on edit.
+- Include `cost_per_item` in the save payload (`parseFloat` or `null`).
+- Add a 5th input in the Pricing grid (change `md:grid-cols-4` → `md:grid-cols-5`) labeled **"Cost per item"** with helper text *"Your purchase cost — used for profit calculation"*.
 
-4. guest order visibility policy too broad
-- current migration‑এ guest SELECT policy effectively `user_id IS NULL`
-- এটা overly permissive; guest orders wrong context‑এ visible/mixed হওয়ার risk তৈরি করছে
-- user যে “customer order admin side/account‑এ চলে আসছে” issue বলেছে, এটা ওই access model‑এর সাথেও related হতে পারে
+### Part 2 — Persist cost_per_item into order_items at checkout
+**File:** `supabase/functions/checkout-create-order/index.ts`
+- When inserting order items, fetch `cost_per_item` from the product row alongside price and copy it into `order_items.cost_per_item` so historical profit calculations are accurate even if the product cost later changes.
 
-Implementation plan
+### Part 3 — Enrich admin-get-orders to include cost_per_item
+**File:** `supabase/functions/admin-get-orders/index.ts`
+- Ensure the `items` array returned to the dashboard includes `cost_per_item` (already in DB after the previous migration, just need to select it).
 
-A. Sales table IP column fully responsive করব
-- `AdminOrdersTab.tsx`‑এ IP column `2xl` dependency remove করব
-- IP columnকে normal desktop breakpoint‑এ visible করব
-- low-priority columns (`Assigned To`, `Fraud`) earlier hide করে IP‑কে higher priority দেব
-- table width/layout rebalance করব যাতে 100% desktop, 80%, laptop, tablet — সবখানে IP visible থাকে
-- `useAdminData.ts` এর `AdminOrder` type‑এ `customer_ip` add করব, যাতে `any` cast remove হয়
+### Part 4 — Comprehensive Profit Dashboard
 
-B. Order creation server-side করব for permanent fix
-- নতুন secure backend function বানাব (e.g. `checkout-create-order`)
-- এই function:
-  - request থেকে validated real IP detect করবে
-  - blocked IP check করবে
-  - authenticated user থাকলে server-side resolve করবে
-  - privileged/admin session হলে order কখনো admin `user_id`‑তে bind করবে না
-  - guest হলে `user_id = null`, normal customer হলে actual customer `user_id`
-  - order + order_items এক flow‑তে create করবে
-- এতে IP detection + ownership attribution + consistency এক জায়গায় থাকবে
+**File:** `src/components/admin/AdminDashboardOverview.tsx`
 
-C. IP detection harden করব
-- `detect-ip` logic বা নতুন order function‑এ multiple headers inspect করব:
-  - `cf-connecting-ip`
-  - `x-forwarded-for`
-  - `x-real-ip`
-  - `fly-client-ip`
-  - `x-client-ip`
-- first valid IP normalize করব
-- invalid/private/local proxy values filter করব যতটা সম্ভব
-- no valid public IP পেলে safe fallback রাখব, কিন্তু bogus value save করব না
+Replace the current 6-card grid with a richer KPI section organised in two rows:
 
-D. Checkout frontend refactor করব
-- `Checkout.tsx` থেকে direct `orders` / `order_items` insert path সরিয়ে backend function invoke করব
-- current guest/account branching client-side থেকে backend-side validation‑এ move করব
-- success response থেকে created order data use করব
-- existing UI flow, toasts, order success screen preserve থাকবে
+**Row 1 — Last 30 Days performance** (3 large cards, with date range subtitle):
+| Card | Formula |
+|------|---------|
+| **Total Profit (Last 30 Days)** | Σ (item.price − item.cost_per_item) × qty for delivered orders in last 30d |
+| **Total Revenue (Last 30 Days)** | Σ order.total for delivered orders in last 30d |
+| **Total Sales (Last 30 Days)** | Σ order.total for non-cancelled orders in last 30d |
 
-E. Customer order isolation fix করব
-- overly broad guest order read policy replace করব
-- guest tracking/read-এর জন্য secure path রাখব (policy tightening + প্রয়োজন হলে dedicated lookup function / tracking flow update)
-- `/orders` বা customer-facing order fetch যেন শুধু rightful user-এর orderই দেখায়, সেটা নিশ্চিত করব
-- guest order authenticated/admin context‑এ leak করবে না
+**Row 2 — All-Time financial breakdown** (3 cards):
+| Card | Formula | Source |
+|------|---------|--------|
+| **Purchase Cost (All Time)** | Σ product.cost_per_item × product.stock | `products` table — total base value of current inventory |
+| **Sold COGS (All Time)** | Σ item.cost_per_item × qty for delivered orders | order_items |
+| **Courier Expense (All Time)** | Σ order.shipping for delivered orders | orders.shipping |
 
-F. Existing IP block flow align করব
-- blocked IP check একই backend order creation flow‑তে centralize করব
-- Sales table‑এ stored IP reliably show করবে
-- order row থেকে block action existing `blocked_ips` system‑এর সাথেই কাজ করবে
+**Row 3 — Operational metrics** (existing 4 cards kept): Customers, Products, Orders (total), Pending.
 
-G. Optional carry-forward improvement
-- incomplete order → sales convert flow‑এ IP available থাকলে preserve করব
-- এতে future manual conversion‑এও IP history retain থাকবে
+Add a new query to fetch products with `cost_per_item` and `stock` to compute Purchase Cost. Keep all existing charts (Revenue Overview, Order Status, Daily Report, etc.) below unchanged.
 
-Files likely to change
-- `src/components/admin/AdminOrdersTab.tsx`
-- `src/hooks/useAdminData.ts`
-- `src/pages/Checkout.tsx`
-- `src/pages/Orders.tsx` and/or guest tracking flow file(s)
-- `supabase/functions/detect-ip/index.ts`
-- new backend order creation function
-- new migration for RLS/policy tightening (and any supporting schema tweak if needed)
+### Files Modified
+1. `src/pages/AdminAddProduct.tsx` — add cost_per_item form field
+2. `supabase/functions/checkout-create-order/index.ts` — copy cost into order_items
+3. `supabase/functions/admin-get-orders/index.ts` — include cost_per_item in items
+4. `src/components/admin/AdminDashboardOverview.tsx` — new profit/expense KPI cards
 
-Technical details
-- direct client inserts থেকে backend function‑এ move করা হচ্ছে কারণ এটিই permanent fix
-- role check‑এ `.limit(1)` pattern follow করব
-- `orders` ownership server-side set হবে; client `user_id` trusted হবে না
-- guest order access policy tighten করা হবে যাতে accidental data bleed বন্ধ হয়
-- `customer_ip` typed field হিসেবে admin model‑এ থাকবে
-
-Validation / QA
-- 100% desktop, 80% zoom, laptop width, tablet width‑এ IP column visible কিনা
-- guest checkout → order created with `user_id = null`, valid IP saved
-- normal logged-in customer checkout → correct customer `user_id`, valid IP saved
-- admin logged-in browser থেকে storefront checkout test → order admin account‑এ attach না হয়
-- blocked IP → checkout rejected
-- Sales page → IP immediately visible
-- customer `/orders` page → অন্যের order বা guest order leak না হয়
-
-Approve করলে আমি next step‑এ এই permanent fix implement করব end-to-end.
+No new database migrations required (cost_per_item columns already exist on products and order_items).
