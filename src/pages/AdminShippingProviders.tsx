@@ -30,6 +30,18 @@ interface ShippingProvider {
   pickupLocation: string;
   codEnabled: boolean;
   autoAssign: boolean;
+  // Pathao-specific
+  clientId?: string;
+  clientSecret?: string;
+  username?: string;
+  password?: string;
+  storeId?: string;
+  // Carrybee-specific
+  clientContext?: string;
+  // Fraud Checker
+  fraudUser?: string;
+  fraudPassword?: string;
+  fraudPhone?: string;
 }
 
 interface TrackingResult {
@@ -56,6 +68,13 @@ const defaultProviders: ShippingProvider[] = [
     pickupLocation: '',
     codEnabled: true,
     autoAssign: false,
+    clientId: '',
+    clientSecret: '',
+    username: '',
+    password: '',
+    storeId: '',
+    fraudUser: '',
+    fraudPassword: '',
   },
   {
     id: 'redx',
@@ -64,7 +83,7 @@ const defaultProviders: ShippingProvider[] = [
     enabled: false,
     apiKey: '',
     apiSecret: '',
-    apiUrl: 'https://openapi.redx.com.bd',
+    apiUrl: 'https://openapi.redx.com.bd/v1.0.0-beta',
     webhookUrl: '',
     defaultWeight: '0.5',
     defaultLength: '20',
@@ -73,6 +92,8 @@ const defaultProviders: ShippingProvider[] = [
     pickupLocation: '',
     codEnabled: true,
     autoAssign: false,
+    fraudPhone: '',
+    fraudPassword: '',
   },
   {
     id: 'steadfast',
@@ -81,7 +102,7 @@ const defaultProviders: ShippingProvider[] = [
     enabled: false,
     apiKey: '',
     apiSecret: '',
-    apiUrl: 'https://portal.steadfast.com.bd/api/v1',
+    apiUrl: 'https://portal.packzy.com/api/v1',
     webhookUrl: '',
     defaultWeight: '0.5',
     defaultLength: '20',
@@ -90,6 +111,8 @@ const defaultProviders: ShippingProvider[] = [
     pickupLocation: '',
     codEnabled: true,
     autoAssign: false,
+    fraudUser: '',
+    fraudPassword: '',
   },
   {
     id: 'carrybee',
@@ -98,7 +121,7 @@ const defaultProviders: ShippingProvider[] = [
     enabled: false,
     apiKey: '',
     apiSecret: '',
-    apiUrl: 'https://api.carrybee.com.bd',
+    apiUrl: '',
     webhookUrl: '',
     defaultWeight: '0.5',
     defaultLength: '20',
@@ -107,6 +130,9 @@ const defaultProviders: ShippingProvider[] = [
     pickupLocation: '',
     codEnabled: true,
     autoAssign: false,
+    clientId: '',
+    clientSecret: '',
+    clientContext: '',
   },
 ];
 
@@ -224,42 +250,223 @@ const AdminShippingProviders = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>API Key / Email</Label>
-          <Input
-            type="password"
-            value={provider.apiKey}
-            onChange={(e) => updateProvider(provider.id, 'apiKey', e.target.value)}
-            placeholder={provider.id === 'shiprocket' ? 'Email for Shiprocket' : provider.id === 'redx' ? 'API Access Token' : provider.id === 'carrybee' ? 'API Token' : 'API Key / Client ID'}
-          />
+      {/* Base URL - common to all */}
+      <div className="space-y-2">
+        <Label>Base URL</Label>
+        <Input
+          value={provider.apiUrl}
+          onChange={(e) => updateProvider(provider.id, 'apiUrl', e.target.value)}
+          placeholder="https://api.example.com"
+        />
+      </div>
+
+      {/* Provider-specific credential fields */}
+      {provider.id === 'pathao' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Client ID</Label>
+              <Input
+                value={provider.clientId || ''}
+                onChange={(e) => updateProvider(provider.id, 'clientId', e.target.value)}
+                placeholder="Client ID"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Client Secret</Label>
+              <Input
+                type="password"
+                value={provider.clientSecret || ''}
+                onChange={(e) => updateProvider(provider.id, 'clientSecret', e.target.value)}
+                placeholder="Client Secret"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <Input
+                value={provider.username || ''}
+                onChange={(e) => updateProvider(provider.id, 'username', e.target.value)}
+                placeholder="merchant.pathao.com login email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Password</Label>
+              <Input
+                type="password"
+                value={provider.password || ''}
+                onChange={(e) => updateProvider(provider.id, 'password', e.target.value)}
+                placeholder="Password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Store ID</Label>
+              <Input
+                value={provider.storeId || ''}
+                onChange={(e) => updateProvider(provider.id, 'storeId', e.target.value)}
+                placeholder="Store ID"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Webhook URL (Optional)</Label>
+              <Input
+                value={provider.webhookUrl}
+                onChange={(e) => updateProvider(provider.id, 'webhookUrl', e.target.value)}
+                placeholder="https://your-domain.com/webhook"
+              />
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-semibold mb-3 text-foreground">Fraud Checker Credentials</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Merchant User</Label>
+                <Input
+                  value={provider.fraudUser || ''}
+                  onChange={(e) => updateProvider(provider.id, 'fraudUser', e.target.value)}
+                  placeholder="merchant.pathao.com login email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Merchant Password</Label>
+                <Input
+                  type="password"
+                  value={provider.fraudPassword || ''}
+                  onChange={(e) => updateProvider(provider.id, 'fraudPassword', e.target.value)}
+                  placeholder="Password"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {provider.id === 'redx' && (
+        <>
+          <div className="space-y-2">
+            <Label>API Token</Label>
+            <Input
+              type="password"
+              value={provider.apiKey}
+              onChange={(e) => updateProvider(provider.id, 'apiKey', e.target.value)}
+              placeholder="API Access Token"
+            />
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-semibold mb-3 text-foreground">Fraud Checker Credentials</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Phone Number</Label>
+                <Input
+                  value={provider.fraudPhone || ''}
+                  onChange={(e) => updateProvider(provider.id, 'fraudPhone', e.target.value)}
+                  placeholder="01XXXXXXXXX"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={provider.fraudPassword || ''}
+                  onChange={(e) => updateProvider(provider.id, 'fraudPassword', e.target.value)}
+                  placeholder="Password"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {provider.id === 'steadfast' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>API Key</Label>
+              <Input
+                type="password"
+                value={provider.apiKey}
+                onChange={(e) => updateProvider(provider.id, 'apiKey', e.target.value)}
+                placeholder="API Key"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Secret Key</Label>
+              <Input
+                type="password"
+                value={provider.apiSecret}
+                onChange={(e) => updateProvider(provider.id, 'apiSecret', e.target.value)}
+                placeholder="Secret Key"
+              />
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-semibold mb-3 text-foreground">Fraud Checker Credentials</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>User / Email</Label>
+                <Input
+                  value={provider.fraudUser || ''}
+                  onChange={(e) => updateProvider(provider.id, 'fraudUser', e.target.value)}
+                  placeholder="steadfast.com.bd login email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={provider.fraudPassword || ''}
+                  onChange={(e) => updateProvider(provider.id, 'fraudPassword', e.target.value)}
+                  placeholder="Password"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {provider.id === 'carrybee' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Client ID</Label>
+            <Input
+              value={provider.clientId || ''}
+              onChange={(e) => updateProvider(provider.id, 'clientId', e.target.value)}
+              placeholder="Client ID"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Client Secret</Label>
+            <Input
+              type="password"
+              value={provider.clientSecret || ''}
+              onChange={(e) => updateProvider(provider.id, 'clientSecret', e.target.value)}
+              placeholder="Client Secret"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Client Context</Label>
+            <Input
+              value={provider.clientContext || ''}
+              onChange={(e) => updateProvider(provider.id, 'clientContext', e.target.value)}
+              placeholder="Client Context"
+            />
+          </div>
         </div>
+      )}
+
+      {/* Pickup Location - shared */}
+      {provider.id !== 'pathao' && (
         <div className="space-y-2">
-          <Label>API Secret / Password</Label>
-          <Input
-            type="password"
-            value={provider.apiSecret}
-            onChange={(e) => updateProvider(provider.id, 'apiSecret', e.target.value)}
-            placeholder={provider.id === 'redx' || provider.id === 'carrybee' ? 'Not required' : provider.id === 'shiprocket' ? 'Password' : 'API Secret / Client Secret'}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Webhook URL (Optional)</Label>
-          <Input
-            value={provider.webhookUrl}
-            onChange={(e) => updateProvider(provider.id, 'webhookUrl', e.target.value)}
-            placeholder="https://your-domain.com/webhook"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Pickup Location / Store ID</Label>
+          <Label>Pickup Location {provider.id === 'pathao' ? '/ Store ID' : ''}</Label>
           <Input
             value={provider.pickupLocation}
             onChange={(e) => updateProvider(provider.id, 'pickupLocation', e.target.value)}
-            placeholder={provider.id === 'pathao' ? 'Store ID' : 'Pickup location name'}
+            placeholder="Pickup location name"
           />
         </div>
-      </div>
+      )}
 
       <div className="border-t pt-4">
         <h4 className="text-sm font-semibold mb-3 text-foreground">Default Package Dimensions</h4>
