@@ -22,9 +22,15 @@ import { DashboardFeatureCards } from './DashboardFeatureCards';
 import { DashboardIncompleteOrders } from './DashboardIncompleteOrders';
 
 interface DashboardStats {
-  totalRevenue: number;
-  totalSales: number;
-  totalProfit: number;
+  // Last 30 days
+  totalRevenue30: number;
+  totalSales30: number;
+  totalProfit30: number;
+  // All-time financial breakdown
+  purchaseCostAll: number;
+  soldCogsAll: number;
+  courierExpenseAll: number;
+  // Operational
   totalOrders: number;
   totalCustomers: number;
   totalProducts: number;
@@ -61,28 +67,59 @@ export const AdminDashboardOverview = () => {
       const { count: productCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
       const { count: reviewCount } = await supabase.from('product_reviews').select('*', { count: 'exact', head: true });
 
+      // Fetch all products for purchase cost calculation
+      const { data: productRows } = await supabase
+        .from('products')
+        .select('cost_per_item, stock')
+        .limit(10000);
+      const purchaseCostAll = (productRows || []).reduce(
+        (sum: number, p: any) => sum + (Number(p.cost_per_item) || 0) * (Number(p.stock) || 0),
+        0
+      );
+
+      // Date helpers
+      const thirtyDaysAgo = subDays(new Date(), 30);
+      const isLast30 = (o: any) => new Date(o.created_at) >= thirtyDaysAgo;
+
       const nonCancelled = orders.filter((o: any) => o.status !== 'cancelled');
       const deliveredOrders = orders.filter((o: any) => o.status === 'delivered');
-      const totalSales = nonCancelled.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
-      const totalRevenue = deliveredOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
-      
-      // Calculate profit from order items cost_per_item
-      let totalCost = 0;
-      deliveredOrders.forEach((o: any) => {
+      const deliveredLast30 = deliveredOrders.filter(isLast30);
+      const nonCancelledLast30 = nonCancelled.filter(isLast30);
+
+      // Last 30 days metrics
+      const totalSales30 = nonCancelledLast30.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+      const totalRevenue30 = deliveredLast30.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+      let cost30 = 0;
+      deliveredLast30.forEach((o: any) => {
         o.items?.forEach((item: any) => {
-          totalCost += (item.cost_per_item || 0) * (item.quantity || 1);
+          cost30 += (Number(item.cost_per_item) || 0) * (Number(item.quantity) || 1);
         });
       });
-      const totalProfit = totalRevenue - totalCost;
+      const totalProfit30 = totalRevenue30 - cost30;
+
+      // All-time financial breakdown
+      let soldCogsAll = 0;
+      let courierExpenseAll = 0;
+      deliveredOrders.forEach((o: any) => {
+        courierExpenseAll += Number(o.shipping) || 0;
+        o.items?.forEach((item: any) => {
+          soldCogsAll += (Number(item.cost_per_item) || 0) * (Number(item.quantity) || 1);
+        });
+      });
 
       const pendingOrders = orders.filter((o: any) => o.status === 'pending').length;
       const shippedOrders = orders.filter((o: any) => o.status === 'shipped').length;
       const uniqueCustomers = new Set(orders.map((o: any) => o.user_id)).size;
+      const totalSalesAll = nonCancelled.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
 
       setStats({
-        totalRevenue, totalSales, totalProfit, totalOrders: orders.length, totalCustomers: uniqueCustomers,
-        totalProducts: productCount || 0, pendingOrders, shippedOrders,
-        avgOrderValue: orders.length > 0 ? totalSales / orders.length : 0,
+        totalRevenue30, totalSales30, totalProfit30,
+        purchaseCostAll, soldCogsAll, courierExpenseAll,
+        totalOrders: orders.length,
+        totalCustomers: uniqueCustomers,
+        totalProducts: productCount || 0,
+        pendingOrders, shippedOrders,
+        avgOrderValue: orders.length > 0 ? totalSalesAll / orders.length : 0,
         totalReviews: reviewCount || 0,
       });
 
@@ -129,13 +166,25 @@ export const AdminDashboardOverview = () => {
     );
   }
 
-  const statCards = [
-    { title: t('admin.totalRevenue'), value: `৳${(stats?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: DollarSign, trend: 'Delivered', trendUp: true, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
-    { title: 'Total Sales', value: `৳${(stats?.totalSales || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: ShoppingCart, trend: 'Non-cancelled', trendUp: true, color: 'text-accent', bg: 'bg-accent/10' },
-    { title: 'Total Profit', value: `৳${(stats?.totalProfit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`, icon: TrendingUp, trend: 'Revenue - Cost', trendUp: (stats?.totalProfit || 0) >= 0, color: 'text-[hsl(var(--prime))]', bg: 'bg-[hsl(var(--prime))]/10' },
-    { title: t('admin.totalOrders'), value: stats?.totalOrders || 0, icon: Package, trend: `${stats?.pendingOrders || 0} pending`, trendUp: true, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },
-    { title: t('admin.customers'), value: stats?.totalCustomers || 0, icon: Users, trend: '+5.1%', trendUp: true, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  const fmt = (n: number) => `৳${(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const performanceCards = [
+    { title: 'Total Profit (Last 30 Days)', value: fmt(stats?.totalProfit30 || 0), icon: TrendingUp, trend: 'Revenue − COGS', trendUp: (stats?.totalProfit30 || 0) >= 0, color: 'text-[hsl(var(--prime))]', bg: 'bg-[hsl(var(--prime))]/10' },
+    { title: 'Total Revenue (Last 30 Days)', value: fmt(stats?.totalRevenue30 || 0), icon: DollarSign, trend: 'Delivered orders', trendUp: true, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
+    { title: 'Total Sales (Last 30 Days)', value: fmt(stats?.totalSales30 || 0), icon: ShoppingCart, trend: 'Non-cancelled', trendUp: true, color: 'text-accent', bg: 'bg-accent/10' },
+  ];
+
+  const financeCards = [
+    { title: 'Purchase Cost (All Time)', value: fmt(stats?.purchaseCostAll || 0), icon: Package, trend: 'Current inventory value', trendUp: true, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { title: 'Sold COGS (All Time)', value: fmt(stats?.soldCogsAll || 0), icon: TrendingDown, trend: 'Cost of goods sold', trendUp: false, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { title: 'Courier Expense (All Time)', value: fmt(stats?.courierExpenseAll || 0), icon: Truck, trend: 'Shipping costs', trendUp: false, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  ];
+
+  const operationalCards = [
+    { title: t('admin.customers'), value: stats?.totalCustomers || 0, icon: Users, trend: 'Unique', trendUp: true, color: 'text-purple-500', bg: 'bg-purple-500/10' },
     { title: t('admin.products'), value: stats?.totalProducts || 0, icon: Package, trend: `${stats?.totalReviews || 0} reviews`, trendUp: true, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { title: t('admin.totalOrders'), value: stats?.totalOrders || 0, icon: ShoppingCart, trend: 'All time', trendUp: true, color: 'text-accent', bg: 'bg-accent/10' },
+    { title: t('admin.pendingOrders'), value: stats?.pendingOrders || 0, icon: Clock, trend: 'Awaiting', trendUp: false, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },
   ];
 
   const statusConfig: Record<string, string> = {
@@ -146,6 +195,23 @@ export const AdminDashboardOverview = () => {
     cancelled: 'bg-destructive/10 text-destructive',
   };
 
+  const renderStatCard = (stat: any) => (
+    <Card key={stat.title} className="border border-border hover:shadow-md transition-shadow">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm text-muted-foreground font-medium">{stat.title}</span>
+          <div className={`h-9 w-9 rounded-lg ${stat.bg} flex items-center justify-center`}><stat.icon className={`h-4 w-4 ${stat.color}`} /></div>
+        </div>
+        <div className="flex items-end justify-between">
+          <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+          <div className={`flex items-center gap-0.5 text-xs font-medium ${stat.trendUp ? 'text-[hsl(var(--success))]' : 'text-destructive'}`}>
+            {stat.trendUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}{stat.trend}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -153,24 +219,28 @@ export const AdminDashboardOverview = () => {
         <p className="text-muted-foreground text-sm">{t('admin.welcomeBack')}</p>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {statCards.map((stat) => (
-          <Card key={stat.title} className="border border-border hover:shadow-md transition-shadow">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-muted-foreground font-medium">{stat.title}</span>
-                <div className={`h-9 w-9 rounded-lg ${stat.bg} flex items-center justify-center`}><stat.icon className={`h-4 w-4 ${stat.color}`} /></div>
-              </div>
-              <div className="flex items-end justify-between">
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                <div className={`flex items-center gap-0.5 text-xs font-medium ${stat.trendUp ? 'text-[hsl(var(--success))]' : 'text-destructive'}`}>
-                  {stat.trendUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}{stat.trend}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Row 1 — Last 30 Days Performance */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Last 30 Days Performance</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {performanceCards.map(renderStatCard)}
+        </div>
+      </div>
+
+      {/* Row 2 — All-Time Financial Breakdown */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">All-Time Financial Breakdown</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {financeCards.map(renderStatCard)}
+        </div>
+      </div>
+
+      {/* Row 3 — Operational Metrics */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Operational Metrics</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {operationalCards.map(renderStatCard)}
+        </div>
       </div>
 
       {/* Quick Stats Row */}
