@@ -30,6 +30,18 @@ interface ShippingProvider {
   pickupLocation: string;
   codEnabled: boolean;
   autoAssign: boolean;
+  // Pathao-specific
+  clientId?: string;
+  clientSecret?: string;
+  username?: string;
+  password?: string;
+  storeId?: string;
+  // Carrybee-specific
+  clientContext?: string;
+  // Fraud Checker
+  fraudUser?: string;
+  fraudPassword?: string;
+  fraudPhone?: string;
 }
 
 interface TrackingResult {
