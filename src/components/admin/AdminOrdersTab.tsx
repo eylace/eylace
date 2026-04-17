@@ -138,11 +138,16 @@ export const AdminOrdersTab = () => {
     }
   };
 
-  // Fetch active couriers
+  // Fetch enabled couriers from shipping_providers_config
   useEffect(() => {
     const fetchCouriers = async () => {
-      const { data } = await (supabase as any).from('couriers').select('id, name, code, is_active').eq('is_active', true).order('name');
-      if (data) setCouriers(data);
+      const { data } = await supabase.from('system_settings').select('value').eq('key', 'shipping_providers_config').maybeSingle();
+      if (data?.value && Array.isArray(data.value)) {
+        const enabled = (data.value as any[])
+          .filter((p: any) => p.enabled)
+          .map((p: any) => ({ id: p.id, name: p.name, code: p.code, is_active: true }));
+        setCouriers(enabled);
+      }
     };
     fetchCouriers();
   }, []);

@@ -242,7 +242,102 @@ async function pathaoCheckRate(token: string, payload: any) {
   }];
 }
 
-// ─── Main Handler ───────────────────────────────────────────
+// ─── RedX ───────────────────────────────────────────────────
+async function redxCreateOrder(apiKey: string, order: any) {
+  const res = await fetch('https://openapi.redx.com.bd/v1.0.0-beta/parcel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'API-ACCESS-TOKEN': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      customer_name: order.recipient_name || order.customer_name,
+      customer_phone: order.recipient_phone || order.phone,
+      delivery_area: order.recipient_area || order.city || 'Dhaka',
+      delivery_area_id: order.area_id || 1,
+      customer_address: order.recipient_address || order.address,
+      merchant_invoice_id: order.order_id || order.order_number,
+      cash_collection_amount: String(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)),
+      parcel_weight: Math.round((order.item_weight || 0.5) * 1000),
+      instruction: order.note || '',
+      value: order.total || order.subtotal || 0,
+      is_closed_box: true,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`RedX order failed: ${JSON.stringify(data)}`);
+  return { ...data, tracking_code: data?.tracking_id || data?.data?.tracking_id, consignment_id: data?.tracking_id || data?.data?.tracking_id };
+}
+
+async function redxTrack(apiKey: string, trackingNumber: string) {
+  const res = await fetch(`https://openapi.redx.com.bd/v1.0.0-beta/parcel/track/${trackingNumber}`, {
+    headers: { 'API-ACCESS-TOKEN': `Bearer ${apiKey}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`RedX tracking failed: ${JSON.stringify(data)}`);
+  const events = data?.parcel_log || data?.data || [];
+  return events.map((e: any) => ({
+    status: e.parcel_status_title || e.status || 'Unknown',
+    location: e.area_name || '',
+    timestamp: e.time || e.created_at || new Date().toISOString(),
+    description: e.message || e.parcel_status_title || '',
+  }));
+}
+
+async function redxCheckRate(_apiKey: string, payload: any) {
+  // RedX doesn't expose a public rate API; flat zone-based
+  const insideDhaka = payload.delivery_postcode?.startsWith('12') || payload.delivery_postcode?.startsWith('13');
+  return [{
+    provider: 'RedX',
+    service: insideDhaka ? 'Inside Dhaka' : 'Outside Dhaka',
+    rate: insideDhaka ? 70 : 130,
+    estimated_days: insideDhaka ? '1-2' : '2-4',
+  }];
+}
+
+// ─── Carrybee ───────────────────────────────────────────────
+async function carrybeeCreateOrder(apiKey: string, order: any) {
+  const res = await fetch('https://api.carrybee.com.bd/api/v1/order/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      invoice_id: order.order_id || order.order_number,
+      recipient_name: order.recipient_name || order.customer_name,
+      recipient_phone: order.recipient_phone || order.phone,
+      recipient_address: order.recipient_address || order.address,
+      recipient_city: order.city || 'Dhaka',
+      cod_amount: order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0),
+      weight: order.item_weight || 0.5,
+      product_description: order.item_description || 'Products',
+      special_instruction: order.note || '',
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`Carrybee order failed: ${JSON.stringify(data)}`);
+  return { ...data, tracking_code: data?.tracking_code || data?.data?.tracking_code, consignment_id: data?.consignment_id || data?.tracking_code };
+}
+
+async function carrybeeTrack(apiKey: string, trackingNumber: string) {
+  const res = await fetch(`https://api.carrybee.com.bd/api/v1/order/track/${trackingNumber}`, {
+    headers: { 'Authorization': `Bearer ${apiKey}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`Carrybee tracking failed: ${JSON.stringify(data)}`);
+  const events = data?.tracking_events || data?.data?.events || [];
+  return events.map((e: any) => ({
+    status: e.status || 'Unknown',
+    location: e.location || '',
+    timestamp: e.timestamp || new Date().toISOString(),
+    description: e.note || e.status || '',
+  }));
+}
+
+async function carrybeeCheckRate(_apiKey: string, payload: any) {
+  const insideDhaka = payload.delivery_postcode?.startsWith('12') || payload.delivery_postcode?.startsWith('13');
+  return [{
+    provider: 'Carrybee',
+    service: insideDhaka ? 'Inside Dhaka' : 'Outside Dhaka',
+    rate: insideDhaka ? 65 : 125,
+    estimated_days: insideDhaka ? '1-2' : '2-4',
+  }];
+}
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
