@@ -115,7 +115,6 @@ export const AdminOrdersTab = () => {
   const [detailOrder, setDetailOrder] = useState<any>(null);
   const [courierDispatchOrder, setCourierDispatchOrder] = useState<any>(null);
   const [dispatchProvider, setDispatchProvider] = useState('');
-  const [dispatching, setDispatching] = useState(false);
   const [sortField, setSortField] = useState<'date' | 'total'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [editOrder, setEditOrder] = useState<any>(null);
