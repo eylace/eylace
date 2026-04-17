@@ -129,14 +129,23 @@ export const CourierDispatchModal = ({
           },
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(error.message || 'Edge function call failed');
+      if (data && data.ok === false) {
+        throw new Error(`${data.error || 'Unknown error'}${data.stage ? ` (stage: ${data.stage})` : ''}`);
+      }
 
-      const tracking = data?.consignment_id || data?.tracking_code || data?.data?.consignment_id || '';
+      const tracking =
+        data?.consignment_id ||
+        data?.tracking_code ||
+        data?.data?.consignment_id ||
+        data?.data?.tracking_code ||
+        '';
       toast.success(`Sent to ${providerName} successfully${tracking ? ` — Tracking: ${tracking}` : ''}`);
       onDispatched?.(order.id, providerCode, tracking);
       onClose();
     } catch (e: any) {
-      toast.error(`Failed to send to ${providerName}: ${e?.message || 'Unknown error'}`);
+      console.error('[CourierDispatch]', e);
+      toast.error(`Failed to send to ${providerName}: ${e?.message || 'Unknown error'}`, { duration: 8000 });
     } finally {
       setSending(false);
     }
