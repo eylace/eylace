@@ -501,6 +501,7 @@ const AdminProducts = () => {
       )}
 
       <AdminProductFormModal open={formOpen} onOpenChange={setFormOpen} product={editProduct} onSaved={fetchAll} />
+      <ProductImportExportModal open={importExportOpen} onOpenChange={setImportExportOpen} onImported={fetchAll} />
     </AdminLayout>
   );
 };
