@@ -170,6 +170,239 @@ async function steadfastTrack(config: ProviderConfig, trackingNumber: string) {
 }
 
 // ─── Pathao ─────────────────────────────────────────────────
+interface PathaoCity {
+  city_id: number;
+  city_name: string;
+}
+
+interface PathaoZone {
+  zone_id: number;
+  zone_name: string;
+}
+
+interface PathaoArea {
+  area_id: number;
+  area_name: string;
+  home_delivery_available?: boolean;
+}
+
+interface PathaoStore {
+  store_id: number;
+  store_name: string;
+  store_address?: string;
+  city_id?: number;
+  zone_id?: number;
+  is_active?: boolean | number;
+  is_default_store?: boolean;
+}
+
+const compactText = (value: unknown) => String(value ?? '').trim();
+
+const toPositiveInt = (value: unknown) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return Math.round(parsed);
+};
+
+const normalizeLookupText = (value: unknown) => compactText(value)
+  .toLowerCase()
+  .normalize('NFKD')
+  .replace(/[^a-z0-9]+/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const levenshteinDistance = (a: string, b: string) => {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+
+  const matrix = Array.from({ length: a.length + 1 }, () => Array<number>(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i += 1) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j += 1) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i += 1) {
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost,
+      );
+    }
+  }
+
+  return matrix[a.length][b.length];
+};
+
+const getMatchScore = (needle: string, candidate: string) => {
+  if (!needle || !candidate) return 0;
+  if (needle === candidate) return 1;
+  if (candidate.includes(needle) || needle.includes(candidate)) return 0.94;
+  const distance = levenshteinDistance(needle, candidate);
+  return 1 - distance / Math.max(needle.length, candidate.length, 1);
+};
+
+const buildSearchCandidates = (...values: unknown[]) => {
+  const candidates: string[] = [];
+
+  for (const value of values) {
+    const text = compactText(value);
+    if (!text) continue;
+    candidates.push(text);
+    for (const part of text.split(/[\n,|/]+/)) {
+      const trimmed = part.trim();
+      if (trimmed) candidates.push(trimmed);
+    }
+  }
+
+  return Array.from(new Set(candidates));
+};
+
+const pickBestPathaoMatch = <T extends Record<string, any>>(
+  candidates: unknown[],
+  items: T[],
+  getId: (item: T) => unknown,
+  getLabels: (item: T) => unknown[],
+  minScore = 0.72,
+) => {
+  for (const candidate of candidates) {
+    const candidateId = toPositiveInt(candidate);
+    if (!candidateId) continue;
+    const directMatch = items.find((item) => toPositiveInt(getId(item)) === candidateId);
+    if (directMatch) return directMatch;
+  }
+
+  let bestItem: T | null = null;
+  let bestScore = 0;
+
+  for (const candidate of buildSearchCandidates(...candidates)) {
+    const normalizedCandidate = normalizeLookupText(candidate);
+    if (!normalizedCandidate) continue;
+
+    for (const item of items) {
+      const labelTerms = buildSearchCandidates(...getLabels(item));
+      for (const term of labelTerms) {
+        const score = getMatchScore(normalizedCandidate, normalizeLookupText(term));
+        if (score > bestScore) {
+          bestScore = score;
+          bestItem = item;
+        }
+      }
+    }
+  }
+
+  return bestScore >= minScore ? bestItem : null;
+};
+
+const normalizeBangladeshPhone = (value: unknown) => {
+  const digits = compactText(value).replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('880')) return `0${digits.slice(3)}`;
+  if (digits.startsWith('88') && digits.length > 11) return digits.slice(2);
+  if (digits.length === 10 && digits.startsWith('1')) return `0${digits}`;
+  return digits;
+};
+
+const formatPathaoError = (payload: any) => {
+  const details = payload?.errors && typeof payload.errors === 'object'
+    ? Object.entries(payload.errors)
+      .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : String(messages)}`)
+      .join(' | ')
+    : '';
+
+  return [payload?.message, details].filter(Boolean).join(' — ') || JSON.stringify(payload);
+};
+
+async function pathaoFetchCollection<T extends Record<string, any>>(
+  token: string,
+  config: ProviderConfig,
+  path: string,
+  label: string,
+): Promise<T[]> {
+  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
+  const res = await fetch(`${base}/aladdin/api/v1/${path}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  const data = await res.json().catch(() => ({}));
+
+  const items = Array.isArray(data?.data?.data)
+    ? data.data.data
+    : Array.isArray(data?.data)
+      ? data.data
+      : [];
+
+  if (!res.ok || (!items.length && data?.success === false)) {
+    throw new Error(`Pathao ${label} failed (${res.status}): ${formatPathaoError(data)}`);
+  }
+
+  return items as T[];
+}
+
+async function resolvePathaoStore(token: string, order: any, config: ProviderConfig) {
+  const stores = await pathaoFetchCollection<PathaoStore>(token, config, 'stores', 'store lookup');
+  const activeStores = stores.filter((store) => store.is_active === undefined || store.is_active === true || Number(store.is_active) === 1);
+  if (!activeStores.length) throw new Error('Pathao: no active stores found for this account');
+
+  const configuredStore = pickBestPathaoMatch(
+    [order?.store_id, config.storeId, config.pickupLocation],
+    activeStores,
+    (store) => store.store_id,
+    (store) => [store.store_name, store.store_address],
+    0.8,
+  );
+
+  if (configuredStore) return { store: configuredStore, fallbackUsed: false };
+
+  const hasConfiguredStore = Boolean(compactText(order?.store_id || config.storeId || config.pickupLocation));
+  const isSandbox = (trimSlash(config.apiUrl) || '').includes('sandbox') || compactText(config.username).toLowerCase().includes('test@');
+
+  if (hasConfiguredStore && !isSandbox) {
+    throw new Error('Pathao: configured Store ID was not found for this account. Update Courier Management with a valid Store ID.');
+  }
+
+  const fallbackStore = activeStores.find((store) => store.is_default_store) || activeStores[0];
+  return { store: fallbackStore, fallbackUsed: hasConfiguredStore };
+}
+
+async function resolvePathaoDestination(token: string, order: any, config: ProviderConfig, store: PathaoStore) {
+  const cities = await pathaoFetchCollection<PathaoCity>(token, config, 'city-list', 'city lookup');
+  const city = pickBestPathaoMatch(
+    [order?.recipient_city, order?.city_id, order?.city, order?.recipient_address, order?.address],
+    cities,
+    (item) => item.city_id,
+    (item) => [item.city_name],
+    0.74,
+  ) || cities.find((item) => toPositiveInt(item.city_id) === toPositiveInt(store.city_id));
+
+  if (!city) {
+    throw new Error('Pathao: could not resolve the destination city from this order. Please add a valid city or Pathao city ID.');
+  }
+
+  const zones = await pathaoFetchCollection<PathaoZone>(token, config, `cities/${city.city_id}/zone-list`, 'zone lookup');
+  const zone = pickBestPathaoMatch(
+    [order?.recipient_zone, order?.zone_id, order?.zone, order?.recipient_address, order?.address],
+    zones,
+    (item) => item.zone_id,
+    (item) => [item.zone_name],
+    0.74,
+  ) || zones.find((item) => toPositiveInt(item.zone_id) === toPositiveInt(store.zone_id)) || zones[0];
+
+  if (!zone) {
+    throw new Error(`Pathao: no delivery zone found for ${city.city_name}`);
+  }
+
+  const areas = await pathaoFetchCollection<PathaoArea>(token, config, `zones/${zone.zone_id}/area-list`, 'area lookup');
+  const area = pickBestPathaoMatch(
+    [order?.recipient_area, order?.area_id, order?.area, order?.recipient_address, order?.address],
+    areas,
+    (item) => item.area_id,
+    (item) => [item.area_name],
+    0.74,
+  ) || areas.find((item) => item.home_delivery_available !== false) || areas[0] || null;
+
+  return { city, zone, area };
+}
+
 async function pathaoAuth(config: ProviderConfig) {
   const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
   const clientId = config.clientId || config.apiKey;
@@ -203,8 +436,51 @@ async function pathaoAuth(config: ProviderConfig) {
 
 async function pathaoCreateOrder(token: string, order: any, config: ProviderConfig) {
   const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
-  const storeId = order.store_id || config.storeId || config.pickupLocation;
-  if (!storeId) throw new Error('Pathao: Store ID is required');
+  const { store, fallbackUsed } = await resolvePathaoStore(token, order, config);
+  const { city, zone, area } = await resolvePathaoDestination(token, order, config, store);
+
+  const amountToCollect = Math.max(0, Math.round(Number(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)) || 0));
+  const recipientPhone = normalizeBangladeshPhone(order.recipient_phone || order.phone);
+  if (!recipientPhone) throw new Error('Pathao: customer phone is required');
+
+  const addressParts: string[] = [];
+  for (const part of [
+    order.recipient_address || order.address,
+    area?.area_name,
+    zone?.zone_name,
+    city?.city_name,
+    'Bangladesh',
+  ]) {
+    const text = compactText(part);
+    if (!text) continue;
+    const normalized = normalizeLookupText(text);
+    if (!addressParts.some((item) => normalizeLookupText(item) === normalized)) {
+      addressParts.push(text);
+    }
+  }
+
+  const recipientAddress = addressParts.join(', ');
+  if (recipientAddress.length < 10) {
+    throw new Error('Pathao: customer address is too short. Please provide a more detailed delivery address.');
+  }
+
+  const requestBody = {
+    store_id: Number(store.store_id),
+    merchant_order_id: compactText(order.order_number || order.order_id),
+    recipient_name: compactText(order.recipient_name || order.customer_name || 'Customer'),
+    recipient_phone: recipientPhone,
+    recipient_address: recipientAddress,
+    recipient_city: Number(city.city_id),
+    recipient_zone: Number(zone.zone_id),
+    recipient_area: area ? Number(area.area_id) : undefined,
+    delivery_type: 48,
+    item_type: 2,
+    item_quantity: Math.max(1, Math.round(Number(order.item_quantity || 1) || 1)),
+    item_weight: Number(order.item_weight || config.defaultWeight || 0.5) || 0.5,
+    amount_to_collect: amountToCollect,
+    item_description: compactText(order.item_description || 'Products'),
+    special_instruction: compactText(order.note || ''),
+  };
 
   const res = await fetch(`${base}/aladdin/api/v1/orders`, {
     method: 'POST',
@@ -212,33 +488,22 @@ async function pathaoCreateOrder(token: string, order: any, config: ProviderConf
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      store_id: Number(storeId),
-      merchant_order_id: order.order_number,
-      recipient_name: order.recipient_name || order.customer_name,
-      recipient_phone: order.recipient_phone || order.phone,
-      recipient_address: order.recipient_address || order.address,
-      recipient_city: Number(order.recipient_city || order.city_id || 1),
-      recipient_zone: Number(order.recipient_zone || order.zone_id || 1),
-      recipient_area: Number(order.recipient_area || order.area_id || 1),
-      delivery_type: 48,
-      item_type: 2,
-      item_quantity: Number(order.item_quantity || 1),
-      item_weight: Number(order.item_weight || config.defaultWeight || 0.5),
-      amount_to_collect: Number(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)) || 0,
-      item_description: order.item_description || 'Products',
-      special_instruction: order.note || '',
-    }),
+    body: JSON.stringify(requestBody),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(`Pathao order failed (${res.status}): ${data?.message || JSON.stringify(data)}`);
+    throw new Error(`Pathao order failed (${res.status}): ${formatPathaoError(data)}`);
   }
   const inner = data?.data || data;
   return {
     ...data,
     consignment_id: inner?.consignment_id || inner?.order_id,
     tracking_code: inner?.consignment_id || inner?.order_id,
+    resolved_store_id: requestBody.store_id,
+    resolved_city_id: requestBody.recipient_city,
+    resolved_zone_id: requestBody.recipient_zone,
+    resolved_area_id: requestBody.recipient_area,
+    used_store_fallback: fallbackUsed,
   };
 }
 
