@@ -13,6 +13,8 @@ import {
   Copy, Download, ChevronDown, CheckSquare,
 } from 'lucide-react';
 import { AdminProductFormModal } from '@/components/admin/ProductFormModal';
+import { ProductImportExportModal } from '@/components/admin/ProductImportExportModal';
+import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
@@ -51,6 +53,7 @@ const AdminProducts = () => {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState('');
+  const [importExportOpen, setImportExportOpen] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -276,9 +279,14 @@ const AdminProducts = () => {
           </Select>
         </div>
 
-        <Button size="sm" className="gap-1.5 h-9 px-4 bg-primary" onClick={() => navigate('/admin/products/add')}>
-          <Plus className="h-4 w-4" /> Add New Product
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-1.5 h-9 px-3" onClick={() => setImportExportOpen(true)}>
+            <Upload className="h-4 w-4" /> Import / Export
+          </Button>
+          <Button size="sm" className="gap-1.5 h-9 px-4 bg-primary" onClick={() => navigate('/admin/products/add')}>
+            <Plus className="h-4 w-4" /> Add New Product
+          </Button>
+        </div>
       </div>
 
       {/* Products Table */}
