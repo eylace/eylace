@@ -74,7 +74,6 @@ const AdminSellerPackages = lazy(() => import("./pages/AdminSellerPackages"));
 const AdminSellerVerification = lazy(() => import("./pages/AdminSellerVerification"));
 const AdminCoupons = lazy(() => import("./pages/AdminCoupons"));
 const AdminCustomers = lazy(() => import("./pages/AdminCustomers"));
-const AdminCouriers = lazy(() => import("./pages/AdminCouriers"));
 const AdminCategories = lazy(() => import("./pages/AdminCategories"));
 const AdminReportsPage = lazy(() => import("./pages/AdminReportsPage"));
 const AdminTransactionsPage = lazy(() => import("./pages/AdminTransactionsPage"));
@@ -264,7 +263,7 @@ const App = () => (
                 <Route path="/admin/sellers/verification" element={<AdminSellerVerification />} />
                 <Route path="/admin/reviews" element={<AdminReviews />} />
                 <Route path="/admin/coupons" element={<AdminCoupons />} />
-                <Route path="/admin/couriers" element={<AdminCouriers />} />
+                <Route path="/admin/couriers" element={<Navigate to="/admin/shipping-providers" replace />} />
                 <Route path="/admin/fraud" element={<AdminFraudPage />} />
                 <Route path="/admin/ip-block" element={<AdminIpBlock />} />
                 <Route path="/admin/transactions" element={<AdminTransactionsPage />} />
