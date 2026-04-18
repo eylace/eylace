@@ -100,7 +100,7 @@ export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => 
           {filtered.map((order) => (
             <Card key={order.id}>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -124,6 +124,40 @@ export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => 
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="inline-flex items-center gap-1 hover:opacity-80">
+                          {order.carrier ? (
+                            <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                              ✓ {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] border-dashed">
+                              <Send className="h-2.5 w-2.5 mr-1" /> Send to Courier
+                            </Badge>
+                          )}
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        {couriers.length === 0 ? (
+                          <DropdownMenuItem disabled>No couriers configured</DropdownMenuItem>
+                        ) : couriers.map(c => (
+                          <DropdownMenuItem key={c.id} onClick={() => handleShipVia(order, c)}>
+                            <Truck className="h-3.5 w-3.5 mr-2" />
+                            {order.carrier === c.code ? `Re-send via ${c.name}` : `Send via ${c.name}`}
+                          </DropdownMenuItem>
+                        ))}
+                        {order.tracking_number && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem disabled className="text-[10px] font-mono">
+                              #{order.tracking_number}
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <span className="font-semibold">৳{Number(order.total).toFixed(0)}</span>
                     <Badge className={statusColors[order.status] || 'bg-muted text-muted-foreground'}>
                       {order.status}
@@ -140,6 +174,11 @@ export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => 
                     </div>
                   ))}
                 </div>
+                {order.customer_phone && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <CustomerContactBlock phone={order.customer_phone} className="!py-0" />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
