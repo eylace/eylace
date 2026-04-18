@@ -579,7 +579,16 @@ export const AdminOrdersTab = () => {
 
       {/* Orders Table */}
       <Card className="border border-border">
-        <div className="overflow-x-auto">
+        {/* Top horizontal scrollbar (synced) */}
+        <div
+          ref={topScrollRef}
+          onScroll={onTopScroll}
+          className="overflow-x-auto overflow-y-hidden border-b border-border"
+          style={{ height: 14 }}
+        >
+          <div style={{ width: tableScrollWidth, height: 1 }} />
+        </div>
+        <div ref={tableScrollRef} onScroll={onTableScroll} className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
