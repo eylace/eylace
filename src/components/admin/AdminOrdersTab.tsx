@@ -648,7 +648,47 @@ export const AdminOrdersTab = () => {
                       </Select>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
-                      <span className="text-xs text-muted-foreground">{order.carrier || '—'}</span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="inline-flex items-center gap-1.5 text-[11px] font-medium hover:opacity-80 transition-opacity">
+                            {order.carrier ? (
+                              <>
+                                <Badge className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                  ✓ {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
+                                </Badge>
+                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                              </>
+                            ) : (
+                              <>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-dashed">
+                                  <Send className="h-2.5 w-2.5 mr-1" /> Send to Courier
+                                </Badge>
+                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                              </>
+                            )}
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48">
+                          {couriers.length === 0 ? (
+                            <DropdownMenuItem disabled>No couriers configured</DropdownMenuItem>
+                          ) : (
+                            couriers.map(c => (
+                              <DropdownMenuItem key={c.id} onClick={() => handleShipViaCourier(order, c)}>
+                                <Truck className="h-3.5 w-3.5 mr-2" />
+                                {order.carrier === c.code ? `Re-send via ${c.name}` : `Send via ${c.name}`}
+                              </DropdownMenuItem>
+                            ))
+                          )}
+                          {order.tracking_number && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem disabled className="text-[10px] font-mono">
+                                #{order.tracking_number}
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
                       <div className="flex items-center gap-1">
