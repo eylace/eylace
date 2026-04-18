@@ -128,6 +128,29 @@ export const AdminOrdersTab = () => {
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
   const { t } = useLanguage();
 
+  // Synced top horizontal scrollbar for orders table
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [tableScrollWidth, setTableScrollWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      if (tableScrollRef.current) setTableScrollWidth(tableScrollRef.current.scrollWidth);
+    };
+    update();
+    window.addEventListener('resize', update);
+    const ro = new ResizeObserver(update);
+    if (tableScrollRef.current) ro.observe(tableScrollRef.current);
+    return () => { window.removeEventListener('resize', update); ro.disconnect(); };
+  });
+
+  const onTopScroll = () => {
+    if (tableScrollRef.current && topScrollRef.current) tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+  };
+  const onTableScroll = () => {
+    if (tableScrollRef.current && topScrollRef.current) topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+  };
+
   const handleBlockIp = async (ip: string) => {
     const { error } = await (supabase as any)
       .from('blocked_ips')
