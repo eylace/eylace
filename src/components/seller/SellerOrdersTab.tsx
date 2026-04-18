@@ -192,6 +192,7 @@ export const SellerOrdersTab = ({ orders, isLoading, refetch }: SellerOrdersTabP
         order={dispatchOrder}
         providerCode={dispatchProvider}
         onClose={() => setDispatchOrder(null)}
+        onDispatched={() => { refetch?.(); }}
       />
     </div>
   );
