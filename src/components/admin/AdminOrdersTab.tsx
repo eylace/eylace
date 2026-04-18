@@ -924,7 +924,7 @@ export const AdminOrdersTab = () => {
                         <div>
                           <h4 className="text-xs font-semibold text-muted-foreground mb-1">Contact Info</h4>
                           <p className="text-sm">Email: {cEmail}</p>
-                          {cPhone && <p className="text-sm">Phone: {cPhone}</p>}
+                          {cPhone && <CustomerContactBlock phone={cPhone} className="!py-2" />}
                         </div>
                       </CardContent>
                     </Card>
