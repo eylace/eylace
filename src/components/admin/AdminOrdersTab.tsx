@@ -486,6 +486,74 @@ export const AdminOrdersTab = () => {
         </div>
       )}
 
+      {/* Status Pills + Bulk Courier Dispatch */}
+      <Card className="mb-4 border border-border">
+        <CardContent className="p-3">
+          <div className="flex flex-wrap items-stretch gap-2 mb-3">
+            {[
+              { key: 'all', label: 'Orders', count: stats.total, color: 'text-foreground', bar: 'bg-foreground' },
+              { key: 'pending', label: 'Pending', count: stats.pending, color: 'text-amber-600', bar: 'bg-amber-500' },
+              { key: 'processing', label: 'Processing', count: stats.processing, color: 'text-blue-600', bar: 'bg-blue-500' },
+              { key: 'sent_to_courier', label: 'Sent To Courier', count: stats.sentToCourier, color: 'text-teal-600', bar: 'bg-teal-500' },
+              { key: 'delivered', label: 'Delivered', count: stats.delivered, color: 'text-cyan-600', bar: 'bg-cyan-500' },
+              { key: 'completed', label: 'Completed', count: stats.completed, color: 'text-emerald-600', bar: 'bg-emerald-500' },
+              { key: 'cancelled', label: 'Cancelled', count: stats.cancelled, color: 'text-red-600', bar: 'bg-red-500' },
+              { key: 'refunded', label: 'Returned', count: stats.refunded, color: 'text-purple-600', bar: 'bg-purple-500' },
+            ].map(s => (
+              <button
+                key={s.key}
+                onClick={() => { setStatusFilter(s.key); setCurrentPage(1); setSelectedOrders(new Set()); }}
+                className={cn(
+                  'flex-1 min-w-[110px] px-3 py-2 rounded-md border transition-all text-left',
+                  statusFilter === s.key
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                    : 'border-border bg-card hover:bg-muted/50'
+                )}
+              >
+                <p className={cn('text-[11px] font-semibold uppercase tracking-wide', s.color)}>{s.label}</p>
+                <p className="text-lg font-bold text-foreground leading-tight">{s.count}</p>
+                <span className={cn('block h-0.5 w-full rounded-full mt-1', s.bar, statusFilter === s.key ? 'opacity-100' : 'opacity-30')} />
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="gap-2 text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={selectedOrders.size === 0 || bulkUpdating || couriers.length === 0}
+                >
+                  {bulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Truck className="h-3.5 w-3.5" />}
+                  Send To Courier {selectedOrders.size > 0 ? `(${selectedOrders.size})` : ''}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52">
+                {couriers.length === 0 ? (
+                  <DropdownMenuItem disabled>No couriers configured</DropdownMenuItem>
+                ) : (
+                  couriers.map(c => (
+                    <DropdownMenuItem key={c.id} onClick={() => handleBulkSendToCourier(c.code)}>
+                      <Truck className="h-3.5 w-3.5 mr-2" /> Send via {c.name}
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Select onValueChange={(v) => { if (selectedOrders.size > 0) handleBulkStatusUpdate(v); else toast.error('Select orders first'); }}>
+              <SelectTrigger className="h-8 text-xs w-[140px]"><SelectValue placeholder="Select Status" /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {selectedOrders.size > 0 && (
+              <span className="text-xs text-muted-foreground ml-auto">{selectedOrders.size} selected</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Orders Table */}
       <Card className="border border-border">
         <div className="overflow-x-auto">
