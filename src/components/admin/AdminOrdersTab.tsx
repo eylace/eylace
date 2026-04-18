@@ -167,10 +167,36 @@ export const AdminOrdersTab = () => {
   const stats = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter(o => o.status === 'pending').length;
-    const completed = orders.filter(o => o.status === 'delivered').length;
+    const processing = orders.filter(o => o.status === 'processing').length;
+    const sentToCourier = orders.filter(o => o.status === 'sent_to_courier').length;
+    const delivered = orders.filter(o => o.status === 'delivered').length;
+    const completed = orders.filter(o => o.status === 'completed' || o.status === 'fulfilled' || o.status === 'delivered').length;
+    const cancelled = orders.filter(o => o.status === 'cancelled').length;
+    const refunded = orders.filter(o => o.status === 'refunded').length;
     const totalSales = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total || 0), 0);
-    return { total, pending, completed, totalSales };
+    return { total, pending, processing, sentToCourier, delivered, completed, cancelled, refunded, totalSales };
   }, [orders]);
+
+  // Bulk send-to-courier dispatch
+  const [bulkCourierProvider, setBulkCourierProvider] = useState('');
+  const handleBulkSendToCourier = async (courierCode: string) => {
+    if (selectedOrders.size === 0) return toast.error('Select orders first');
+    setBulkUpdating(true);
+    let success = 0, failed = 0;
+    for (const id of selectedOrders) {
+      try {
+        const { data, error } = await supabase.functions.invoke('admin-update-order', {
+          body: { orderId: id, action: 'dispatch', provider: courierCode },
+        });
+        if (error || !data?.success) failed++;
+        else success++;
+      } catch { failed++; }
+    }
+    if (success) toast.success(`${success} order(s) dispatched to ${courierCode.toUpperCase()}`);
+    if (failed) toast.error(`${failed} order(s) failed to dispatch`);
+    setSelectedOrders(new Set());
+    setBulkUpdating(false);
+  };
 
   // Filter & sort
   const filteredOrders = useMemo(() => {
