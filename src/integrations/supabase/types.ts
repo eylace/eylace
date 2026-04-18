@@ -970,6 +970,10 @@ export type Database = {
       }
       orders: {
         Row: {
+          assigned_at: string | null
+          assigned_role: string | null
+          assigned_user_id: string | null
+          assigned_user_name: string | null
           carrier: string | null
           created_at: string
           customer_ip: string | null
@@ -993,6 +997,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_role?: string | null
+          assigned_user_id?: string | null
+          assigned_user_name?: string | null
           carrier?: string | null
           created_at?: string
           customer_ip?: string | null
@@ -1016,6 +1024,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          assigned_at?: string | null
+          assigned_role?: string | null
+          assigned_user_id?: string | null
+          assigned_user_name?: string | null
           carrier?: string | null
           created_at?: string
           customer_ip?: string | null
@@ -2801,6 +2813,13 @@ export type Database = {
       }
     }
     Functions: {
+      get_user_role_and_name: {
+        Args: { _user_id: string }
+        Returns: {
+          display_name: string
+          role_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

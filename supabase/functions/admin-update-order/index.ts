@@ -45,9 +45,9 @@ Deno.serve(async (req) => {
 
     const { orderId, status, carrier, tracking_number } = await req.json();
 
-    if (!orderId || !status) {
+    if (!orderId) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing orderId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -93,17 +93,32 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const updateData: any = { status, updated_at: new Date().toISOString() };
-    
+    const updateData: any = { updated_at: new Date().toISOString() };
+    if (status) updateData.status = status;
     if (carrier) updateData.carrier = carrier;
     if (tracking_number) updateData.tracking_number = tracking_number;
-    
+
     if (status === 'shipped') {
       updateData.shipped_at = new Date().toISOString();
       updateData.estimated_delivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
     }
     if (status === 'delivered') {
       updateData.delivered_at = new Date().toISOString();
+    }
+
+    // Auto-track who is performing this action (Assigned To)
+    try {
+      const { data: roleInfo } = await supabaseAdmin
+        .rpc('get_user_role_and_name', { _user_id: user.id });
+      const info = Array.isArray(roleInfo) ? roleInfo[0] : roleInfo;
+      if (info) {
+        updateData.assigned_user_id = user.id;
+        updateData.assigned_user_name = info.display_name || 'Unknown';
+        updateData.assigned_role = info.role_name || 'admin';
+        updateData.assigned_at = new Date().toISOString();
+      }
+    } catch (e) {
+      console.warn('Could not resolve user role for assignment:', e);
     }
 
     const { data: order, error: updateError } = await supabaseAdmin
@@ -129,13 +144,15 @@ Deno.serve(async (req) => {
       cancelled: 'Order has been cancelled',
     };
 
-    await supabaseAdmin
-      .from('order_tracking_events')
-      .insert({
-        order_id: orderId,
-        status,
-        description: statusDescriptions[status] || `Status updated to ${status}`,
-      });
+    if (status) {
+      await supabaseAdmin
+        .from('order_tracking_events')
+        .insert({
+          order_id: orderId,
+          status,
+          description: statusDescriptions[status] || `Status updated to ${status}`,
+        });
+    }
 
     // Get user email for notification
     const shippingAddress = normalizeShippingAddress(order.shipping_address);
@@ -187,7 +204,7 @@ Deno.serve(async (req) => {
           },
         };
 
-        const emailContent = statusMessages[status];
+        const emailContent = status ? statusMessages[status] : null;
         if (emailContent) {
           await resend.emails.send({
             from: 'Eylace <noreply@resend.dev>',

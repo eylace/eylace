@@ -20,7 +20,7 @@ const SellerDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { seller, isLoading: sellerLoading } = useSellerCheck();
   const { products, isLoading: productsLoading, toggleProductActive, refetch } = useSellerProducts(seller?.id);
-  const { orders, isLoading: ordersLoading } = useSellerOrders(seller?.id);
+  const { orders, isLoading: ordersLoading, refetch: refetchOrders } = useSellerOrders(seller?.id);
   const [activeTab, setActiveTab] = useState('overview');
 
   if (authLoading || sellerLoading) {
@@ -66,7 +66,7 @@ const SellerDashboard = () => {
           />
         );
       case 'orders':
-        return <SellerOrdersTab orders={orders} isLoading={ordersLoading} />;
+        return <SellerOrdersTab orders={orders} isLoading={ordersLoading} refetch={refetchOrders} />;
       case 'analytics':
         return <SellerAnalytics orders={orders} products={products} />;
       case 'finance':

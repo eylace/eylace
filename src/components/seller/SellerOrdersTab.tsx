@@ -3,11 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, MoreVertical, Truck } from 'lucide-react';
+import { Search, MoreVertical, Truck, ChevronDown, Send } from 'lucide-react';
 import { format } from 'date-fns';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { CourierDispatchModal } from '@/components/admin/CourierDispatchModal';
+import { CustomerContactBlock } from '@/components/orders/CustomerContactBlock';
 import { toast } from 'sonner';
 import type { SellerOrder } from '@/hooks/useSellerData';
 
@@ -25,9 +26,10 @@ interface CourierOption { id: string; name: string; code: string }
 interface SellerOrdersTabProps {
   orders: SellerOrder[];
   isLoading: boolean;
+  refetch?: () => void | Promise<void>;
 }
 
-export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => {
+export const SellerOrdersTab = ({ orders, isLoading, refetch }: SellerOrdersTabProps) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [couriers, setCouriers] = useState<CourierOption[]>([]);
@@ -99,7 +101,7 @@ export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => 
           {filtered.map((order) => (
             <Card key={order.id}>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -123,6 +125,40 @@ export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => 
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="inline-flex items-center gap-1 hover:opacity-80">
+                          {order.carrier ? (
+                            <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                              ✓ {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] border-dashed">
+                              <Send className="h-2.5 w-2.5 mr-1" /> Send to Courier
+                            </Badge>
+                          )}
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        {couriers.length === 0 ? (
+                          <DropdownMenuItem disabled>No couriers configured</DropdownMenuItem>
+                        ) : couriers.map(c => (
+                          <DropdownMenuItem key={c.id} onClick={() => handleShipVia(order, c)}>
+                            <Truck className="h-3.5 w-3.5 mr-2" />
+                            {order.carrier === c.code ? `Re-send via ${c.name}` : `Send via ${c.name}`}
+                          </DropdownMenuItem>
+                        ))}
+                        {order.tracking_number && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem disabled className="text-[10px] font-mono">
+                              #{order.tracking_number}
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <span className="font-semibold">৳{Number(order.total).toFixed(0)}</span>
                     <Badge className={statusColors[order.status] || 'bg-muted text-muted-foreground'}>
                       {order.status}
@@ -139,6 +175,11 @@ export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => 
                     </div>
                   ))}
                 </div>
+                {order.customer_phone && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <CustomerContactBlock phone={order.customer_phone} className="!py-0" />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -151,6 +192,7 @@ export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => 
         order={dispatchOrder}
         providerCode={dispatchProvider}
         onClose={() => setDispatchOrder(null)}
+        onDispatched={() => { refetch?.(); }}
       />
     </div>
   );
