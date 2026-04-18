@@ -1152,7 +1152,14 @@ export const AdminOrdersTab = () => {
         onDispatched={handleDispatched}
       />
 
-      {/* Edit Order Modal */}
+      {/* Create Order Modal */}
+      <CreateOrderModal
+        open={createOrderOpen}
+        onClose={() => setCreateOrderOpen(false)}
+        onCreated={() => refetch()}
+      />
+
+
       <EditOrderModal
         order={editOrder}
         open={!!editOrder}
