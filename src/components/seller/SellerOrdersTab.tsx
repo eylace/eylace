@@ -26,9 +26,10 @@ interface CourierOption { id: string; name: string; code: string }
 interface SellerOrdersTabProps {
   orders: SellerOrder[];
   isLoading: boolean;
+  refetch?: () => void | Promise<void>;
 }
 
-export const SellerOrdersTab = ({ orders, isLoading }: SellerOrdersTabProps) => {
+export const SellerOrdersTab = ({ orders, isLoading, refetch }: SellerOrdersTabProps) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [couriers, setCouriers] = useState<CourierOption[]>([]);
