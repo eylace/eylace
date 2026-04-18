@@ -787,7 +787,7 @@ export const AdminOrdersTab = () => {
                             ) : (
                               <>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-dashed">
-                                  <Send className="h-2.5 w-2.5 mr-1" /> Send to Courier
+                                  <Truck className="h-2.5 w-2.5 mr-1" /> Send to Courier
                                 </Badge>
                                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
                               </>
