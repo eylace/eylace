@@ -761,9 +761,14 @@ export const AdminOrdersTab = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {format(new Date(order.created_at), 'M/d/yyyy hh:mm a')}
-                      </span>
+                      <div className="flex flex-col leading-tight whitespace-nowrap">
+                        <span className="text-xs font-medium text-foreground">
+                          {format(new Date(order.created_at), 'M/d/yyyy')}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {format(new Date(order.created_at), 'hh:mm a')}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 min-w-0">
