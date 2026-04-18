@@ -201,22 +201,56 @@ export const AdminOrdersTab = () => {
   }, [orders]);
 
   // Bulk send-to-courier dispatch
-  const [bulkCourierProvider, setBulkCourierProvider] = useState('');
   const handleBulkSendToCourier = async (courierCode: string) => {
     if (selectedOrders.size === 0) return toast.error('Select orders first');
     setBulkUpdating(true);
     let success = 0, failed = 0;
+    const failedReasons: string[] = [];
     for (const id of selectedOrders) {
+      const order = orders.find(o => o.id === id);
+      if (!order) { failed++; continue; }
+      const sa = order.shipping_address || {};
+      const name = `${sa.first_name || ''} ${sa.last_name || ''}`.trim() || 'Customer';
+      const phone = sa.phone || order.guest_phone || order.profile?.phone || '';
+      const address = sa.address || '';
+      if (!phone || !address) { failed++; failedReasons.push(`#${order.order_number}: missing phone/address`); continue; }
+      const itemDesc = (order.items || []).map((i: any) => i.product_name).slice(0, 3).join(', ') || 'Products';
+      const itemCount = (order.items || []).reduce((s: number, i: any) => s + (i.quantity || 1), 0) || 1;
       try {
-        const { data, error } = await supabase.functions.invoke('admin-update-order', {
-          body: { orderId: id, action: 'dispatch', provider: courierCode },
+        const { data, error } = await supabase.functions.invoke('shipping-provider', {
+          body: {
+            action: 'create_order',
+            provider: courierCode,
+            payload: {
+              order_id: order.order_number, order_number: order.order_number,
+              recipient_name: name, customer_name: name,
+              recipient_phone: phone, phone,
+              recipient_address: address, address,
+              city: sa.city || 'Dhaka', recipient_city: sa.city || undefined,
+              recipient_zone: sa.state || undefined,
+              amount_to_collect: order.payment_method === 'cod' ? Number(order.total) || 0 : 0,
+              cod_amount: order.payment_method === 'cod' ? Number(order.total) || 0 : 0,
+              item_description: itemDesc, item_quantity: itemCount, item_weight: 0.5,
+              value: Number(order.total) || 0, total: order.total, subtotal: order.subtotal,
+              payment_method: order.payment_method, note: `Order #${order.order_number}`,
+            },
+          },
         });
-        if (error || !data?.success) failed++;
-        else success++;
-      } catch { failed++; }
+        if (error || (data && data.ok === false)) {
+          failed++;
+          failedReasons.push(`#${order.order_number}: ${error?.message || data?.error || 'failed'}`);
+          continue;
+        }
+        const tracking = data?.consignment_id || data?.tracking_code || data?.data?.consignment_id || data?.data?.tracking_code || '';
+        await updateOrderStatus(id, 'sent_to_courier', { carrier: courierCode, tracking_number: tracking || '' });
+        success++;
+      } catch (e: any) {
+        failed++;
+        failedReasons.push(`#${order.order_number}: ${e?.message || 'error'}`);
+      }
     }
     if (success) toast.success(`${success} order(s) dispatched to ${courierCode.toUpperCase()}`);
-    if (failed) toast.error(`${failed} order(s) failed to dispatch`);
+    if (failed) toast.error(`${failed} failed${failedReasons.length ? ` — ${failedReasons.slice(0, 2).join('; ')}` : ''}`, { duration: 7000 });
     setSelectedOrders(new Set());
     setBulkUpdating(false);
   };
