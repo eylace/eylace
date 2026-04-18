@@ -467,86 +467,8 @@ export const AdminOrdersTab = () => {
         </Card>
       </div>
 
-      {/* Filter Section */}
-      <Card className="mb-6 border border-border">
-        <CardContent className="p-4">
-          <p className="text-sm font-semibold text-foreground mb-3">Filter</p>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search (number, name, email, phone)" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-9 h-9" />
-            </div>
-            <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setCurrentPage(1); setSelectedOrders(new Set()); }}>
-              <SelectTrigger className="w-full sm:w-[160px] h-9"><SelectValue placeholder="All Statuses" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2">
-              <Select value={String(perPage)} onValueChange={v => { setPerPage(Number(v)); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[70px] h-9"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {[10, 25, 50, 100].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => exportToCSV(
-                orders.map(o => ({
-                  order_number: o.order_number, customer: getOrderCustomerName(o),
-                  email: getOrderCustomerEmail(o), status: o.status, total: o.total?.toFixed(2),
-                  payment: o.payment_method, carrier: o.carrier || '', tracking: o.tracking_number || '',
-                  date: format(new Date(o.created_at), 'yyyy-MM-dd'),
-                })),
-                [{ key: 'order_number', label: 'Order #' }, { key: 'customer', label: 'Customer' }, { key: 'email', label: 'Email' },
-                { key: 'status', label: 'Status' }, { key: 'total', label: 'Total' }, { key: 'payment', label: 'Payment' },
-                { key: 'carrier', label: 'Carrier' }, { key: 'tracking', label: 'Tracking' }, { key: 'date', label: 'Date' }], 'orders'
-              )} title="Export CSV">
-                <Download className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Bulk Actions Bar */}
-      {selectedOrders.size > 0 && (
-        <div className="mb-4 p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-wrap items-center gap-3">
-          <Badge className="bg-accent text-accent-foreground text-xs px-3 py-1">{selectedOrders.size}</Badge>
-          <span className="text-xs font-medium">order(s) selected</span>
-          <div className="flex-1" />
-          <Button
-            variant="default" size="sm" className="gap-2 text-xs h-8"
-            onClick={() => {
-              const selected = orders.filter(o => selectedOrders.has(o.id));
-              if (selected.length > 0) downloadBulkInvoices(selected);
-            }}
-          >
-            <Download className="h-3.5 w-3.5" /> Download Invoices
-          </Button>
-          <Button
-            variant="outline" size="sm" className="gap-2 text-xs h-8"
-            onClick={() => {
-              const selected = orders.filter(o => selectedOrders.has(o.id));
-              if (selected.length > 0) printBulkInvoices(selected);
-            }}
-          >
-            <Printer className="h-3.5 w-3.5" /> Print Invoices
-          </Button>
-          <Button
-            variant="destructive" size="sm" className="gap-2 text-xs h-8"
-            onClick={handleBulkDeleteOrders}
-            disabled={bulkUpdating}
-          >
-            {bulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Delete Orders
-          </Button>
-          <Button variant="ghost" size="sm" className="text-xs h-8 gap-1" onClick={() => setSelectedOrders(new Set())}>
-            <XCircle className="h-3.5 w-3.5" /> Clear
-          </Button>
-        </div>
-      )}
-
-      {/* Status Pills + Bulk Courier Dispatch */}
-      <Card className="mb-4 border border-border">
+      {/* Status Pills + Bulk Action Bar (above filter) */}
+      <Card className="mb-3 border border-border">
         <CardContent className="p-3">
           <div className="flex flex-wrap items-stretch gap-2 mb-3">
             {[
@@ -576,6 +498,14 @@ export const AdminOrdersTab = () => {
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+            <Button
+              size="sm"
+              variant="accent"
+              className="gap-2 text-xs h-8"
+              onClick={() => setCreateOrderOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5" /> Add Order
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -612,6 +542,83 @@ export const AdminOrdersTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Filter Section (compact) */}
+      <Card className="mb-3 border border-border">
+        <CardContent className="p-2.5">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search (number, name, email, phone)" value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-9 h-8 text-xs" />
+            </div>
+            <Select value={statusFilter} onValueChange={v => { setStatusFilter(v); setCurrentPage(1); setSelectedOrders(new Set()); }}>
+              <SelectTrigger className="w-full sm:w-[150px] h-8 text-xs"><SelectValue placeholder="All Statuses" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <Select value={String(perPage)} onValueChange={v => { setPerPage(Number(v)); setCurrentPage(1); }}>
+                <SelectTrigger className="w-[64px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[10, 25, 50, 100].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => exportToCSV(
+                orders.map(o => ({
+                  order_number: o.order_number, customer: getOrderCustomerName(o),
+                  email: getOrderCustomerEmail(o), status: o.status, total: o.total?.toFixed(2),
+                  payment: o.payment_method, carrier: o.carrier || '', tracking: o.tracking_number || '',
+                  date: format(new Date(o.created_at), 'yyyy-MM-dd'),
+                })),
+                [{ key: 'order_number', label: 'Order #' }, { key: 'customer', label: 'Customer' }, { key: 'email', label: 'Email' },
+                { key: 'status', label: 'Status' }, { key: 'total', label: 'Total' }, { key: 'payment', label: 'Payment' },
+                { key: 'carrier', label: 'Carrier' }, { key: 'tracking', label: 'Tracking' }, { key: 'date', label: 'Date' }], 'orders'
+              )} title="Export CSV">
+                <Download className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Actions Bar (selected) */}
+      {selectedOrders.size > 0 && (
+        <div className="mb-4 p-3 bg-accent/10 border border-accent/20 rounded-lg flex flex-wrap items-center gap-3">
+          <Badge className="bg-accent text-accent-foreground text-xs px-3 py-1">{selectedOrders.size}</Badge>
+          <span className="text-xs font-medium">order(s) selected</span>
+          <div className="flex-1" />
+          <Button
+            variant="default" size="sm" className="gap-2 text-xs h-8"
+            onClick={() => {
+              const selected = orders.filter(o => selectedOrders.has(o.id));
+              if (selected.length > 0) downloadBulkInvoices(selected);
+            }}
+          >
+            <Download className="h-3.5 w-3.5" /> Download Invoices
+          </Button>
+          <Button
+            variant="outline" size="sm" className="gap-2 text-xs h-8"
+            onClick={() => {
+              const selected = orders.filter(o => selectedOrders.has(o.id));
+              if (selected.length > 0) printBulkInvoices(selected);
+            }}
+          >
+            <Printer className="h-3.5 w-3.5" /> Print Invoices
+          </Button>
+          <Button
+            variant="destructive" size="sm" className="gap-2 text-xs h-8"
+            onClick={handleBulkDeleteOrders}
+            disabled={bulkUpdating}
+          >
+            {bulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />} Delete Orders
+          </Button>
+          <Button variant="ghost" size="sm" className="text-xs h-8 gap-1" onClick={() => setSelectedOrders(new Set())}>
+            <XCircle className="h-3.5 w-3.5" /> Clear
+          </Button>
+        </div>
+      )}
 
       {/* Orders Table */}
       <Card className="border border-border">
