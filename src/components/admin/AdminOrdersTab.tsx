@@ -142,7 +142,7 @@ export const AdminOrdersTab = () => {
     const ro = new ResizeObserver(update);
     if (tableScrollRef.current) ro.observe(tableScrollRef.current);
     return () => { window.removeEventListener('resize', update); ro.disconnect(); };
-  });
+  }, []);
 
   const onTopScroll = () => {
     if (tableScrollRef.current && topScrollRef.current) tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
