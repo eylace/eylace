@@ -578,7 +578,18 @@ export const AdminOrdersTab = () => {
                       </button>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
-                      <span className="text-xs text-muted-foreground">Unassigned</span>
+                      {order.assigned_role || order.assigned_user_name ? (
+                        <div className="leading-tight">
+                          <p className="text-[11px] font-semibold text-foreground">
+                            {formatRoleLabel(order.assigned_role)}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+                            {order.assigned_user_name || '—'}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Unassigned</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
