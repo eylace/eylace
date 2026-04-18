@@ -26,6 +26,8 @@ import { exportToCSV } from '@/lib/csvExport';
 import { supabase } from '@/integrations/supabase/client';
 import { EditOrderModal } from '@/components/admin/EditOrderModal';
 import { CourierDispatchModal } from '@/components/admin/CourierDispatchModal';
+import { CustomerContactBlock } from '@/components/orders/CustomerContactBlock';
+import { formatRoleLabel } from '@/lib/roleLabels';
 import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
 
 interface CourierOption {
