@@ -144,13 +144,15 @@ Deno.serve(async (req) => {
       cancelled: 'Order has been cancelled',
     };
 
-    await supabaseAdmin
-      .from('order_tracking_events')
-      .insert({
-        order_id: orderId,
-        status,
-        description: statusDescriptions[status] || `Status updated to ${status}`,
-      });
+    if (status) {
+      await supabaseAdmin
+        .from('order_tracking_events')
+        .insert({
+          order_id: orderId,
+          status,
+          description: statusDescriptions[status] || `Status updated to ${status}`,
+        });
+    }
 
     // Get user email for notification
     const shippingAddress = normalizeShippingAddress(order.shipping_address);
