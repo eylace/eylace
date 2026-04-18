@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
           },
         };
 
-        const emailContent = statusMessages[status];
+        const emailContent = status ? statusMessages[status] : null;
         if (emailContent) {
           await resend.emails.send({
             from: 'Eylace <noreply@resend.dev>',
