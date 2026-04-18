@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import {
   Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
@@ -128,6 +128,29 @@ export const AdminOrdersTab = () => {
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
   const { t } = useLanguage();
 
+  // Synced top horizontal scrollbar for orders table
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const [tableScrollWidth, setTableScrollWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      if (tableScrollRef.current) setTableScrollWidth(tableScrollRef.current.scrollWidth);
+    };
+    update();
+    window.addEventListener('resize', update);
+    const ro = new ResizeObserver(update);
+    if (tableScrollRef.current) ro.observe(tableScrollRef.current);
+    return () => { window.removeEventListener('resize', update); ro.disconnect(); };
+  }, []);
+
+  const onTopScroll = () => {
+    if (tableScrollRef.current && topScrollRef.current) tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+  };
+  const onTableScroll = () => {
+    if (tableScrollRef.current && topScrollRef.current) topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+  };
+
   const handleBlockIp = async (ip: string) => {
     const { error } = await (supabase as any)
       .from('blocked_ips')
@@ -167,10 +190,70 @@ export const AdminOrdersTab = () => {
   const stats = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter(o => o.status === 'pending').length;
-    const completed = orders.filter(o => o.status === 'delivered').length;
+    const processing = orders.filter(o => o.status === 'processing').length;
+    const sentToCourier = orders.filter(o => o.status === 'sent_to_courier').length;
+    const delivered = orders.filter(o => o.status === 'delivered').length;
+    const completed = orders.filter(o => o.status === 'completed' || o.status === 'fulfilled' || o.status === 'delivered').length;
+    const cancelled = orders.filter(o => o.status === 'cancelled').length;
+    const refunded = orders.filter(o => o.status === 'refunded').length;
     const totalSales = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + (o.total || 0), 0);
-    return { total, pending, completed, totalSales };
+    return { total, pending, processing, sentToCourier, delivered, completed, cancelled, refunded, totalSales };
   }, [orders]);
+
+  // Bulk send-to-courier dispatch
+  const handleBulkSendToCourier = async (courierCode: string) => {
+    if (selectedOrders.size === 0) return toast.error('Select orders first');
+    setBulkUpdating(true);
+    let success = 0, failed = 0;
+    const failedReasons: string[] = [];
+    for (const id of selectedOrders) {
+      const order = orders.find(o => o.id === id);
+      if (!order) { failed++; continue; }
+      const sa = order.shipping_address || {};
+      const name = `${sa.first_name || ''} ${sa.last_name || ''}`.trim() || 'Customer';
+      const phone = sa.phone || order.guest_phone || order.profile?.phone || '';
+      const address = sa.address || '';
+      if (!phone || !address) { failed++; failedReasons.push(`#${order.order_number}: missing phone/address`); continue; }
+      const itemDesc = (order.items || []).map((i: any) => i.product_name).slice(0, 3).join(', ') || 'Products';
+      const itemCount = (order.items || []).reduce((s: number, i: any) => s + (i.quantity || 1), 0) || 1;
+      try {
+        const { data, error } = await supabase.functions.invoke('shipping-provider', {
+          body: {
+            action: 'create_order',
+            provider: courierCode,
+            payload: {
+              order_id: order.order_number, order_number: order.order_number,
+              recipient_name: name, customer_name: name,
+              recipient_phone: phone, phone,
+              recipient_address: address, address,
+              city: sa.city || 'Dhaka', recipient_city: sa.city || undefined,
+              recipient_zone: sa.state || undefined,
+              amount_to_collect: order.payment_method === 'cod' ? Number(order.total) || 0 : 0,
+              cod_amount: order.payment_method === 'cod' ? Number(order.total) || 0 : 0,
+              item_description: itemDesc, item_quantity: itemCount, item_weight: 0.5,
+              value: Number(order.total) || 0, total: order.total, subtotal: order.subtotal,
+              payment_method: order.payment_method, note: `Order #${order.order_number}`,
+            },
+          },
+        });
+        if (error || (data && data.ok === false)) {
+          failed++;
+          failedReasons.push(`#${order.order_number}: ${error?.message || data?.error || 'failed'}`);
+          continue;
+        }
+        const tracking = data?.consignment_id || data?.tracking_code || data?.data?.consignment_id || data?.data?.tracking_code || '';
+        await updateOrderStatus(id, 'sent_to_courier', { carrier: courierCode, tracking_number: tracking || '' });
+        success++;
+      } catch (e: any) {
+        failed++;
+        failedReasons.push(`#${order.order_number}: ${e?.message || 'error'}`);
+      }
+    }
+    if (success) toast.success(`${success} order(s) dispatched to ${courierCode.toUpperCase()}`);
+    if (failed) toast.error(`${failed} failed${failedReasons.length ? ` — ${failedReasons.slice(0, 2).join('; ')}` : ''}`, { duration: 7000 });
+    setSelectedOrders(new Set());
+    setBulkUpdating(false);
+  };
 
   // Filter & sort
   const filteredOrders = useMemo(() => {
@@ -460,9 +543,86 @@ export const AdminOrdersTab = () => {
         </div>
       )}
 
+      {/* Status Pills + Bulk Courier Dispatch */}
+      <Card className="mb-4 border border-border">
+        <CardContent className="p-3">
+          <div className="flex flex-wrap items-stretch gap-2 mb-3">
+            {[
+              { key: 'all', label: 'Orders', count: stats.total, color: 'text-foreground', bar: 'bg-foreground' },
+              { key: 'pending', label: 'Pending', count: stats.pending, color: 'text-amber-600', bar: 'bg-amber-500' },
+              { key: 'processing', label: 'Processing', count: stats.processing, color: 'text-blue-600', bar: 'bg-blue-500' },
+              { key: 'sent_to_courier', label: 'Sent To Courier', count: stats.sentToCourier, color: 'text-teal-600', bar: 'bg-teal-500' },
+              { key: 'delivered', label: 'Delivered', count: stats.delivered, color: 'text-cyan-600', bar: 'bg-cyan-500' },
+              { key: 'completed', label: 'Completed', count: stats.completed, color: 'text-emerald-600', bar: 'bg-emerald-500' },
+              { key: 'cancelled', label: 'Cancelled', count: stats.cancelled, color: 'text-red-600', bar: 'bg-red-500' },
+              { key: 'refunded', label: 'Returned', count: stats.refunded, color: 'text-purple-600', bar: 'bg-purple-500' },
+            ].map(s => (
+              <button
+                key={s.key}
+                onClick={() => { setStatusFilter(s.key); setCurrentPage(1); setSelectedOrders(new Set()); }}
+                className={cn(
+                  'flex-1 min-w-[110px] px-3 py-2 rounded-md border transition-all text-left',
+                  statusFilter === s.key
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                    : 'border-border bg-card hover:bg-muted/50'
+                )}
+              >
+                <p className={cn('text-[11px] font-semibold uppercase tracking-wide', s.color)}>{s.label}</p>
+                <p className="text-lg font-bold text-foreground leading-tight">{s.count}</p>
+                <span className={cn('block h-0.5 w-full rounded-full mt-1', s.bar, statusFilter === s.key ? 'opacity-100' : 'opacity-30')} />
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="gap-2 text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={selectedOrders.size === 0 || bulkUpdating || couriers.length === 0}
+                >
+                  {bulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Truck className="h-3.5 w-3.5" />}
+                  Send To Courier {selectedOrders.size > 0 ? `(${selectedOrders.size})` : ''}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52">
+                {couriers.length === 0 ? (
+                  <DropdownMenuItem disabled>No couriers configured</DropdownMenuItem>
+                ) : (
+                  couriers.map(c => (
+                    <DropdownMenuItem key={c.id} onClick={() => handleBulkSendToCourier(c.code)}>
+                      <Truck className="h-3.5 w-3.5 mr-2" /> Send via {c.name}
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Select onValueChange={(v) => { if (selectedOrders.size > 0) handleBulkStatusUpdate(v); else toast.error('Select orders first'); }}>
+              <SelectTrigger className="h-8 text-xs w-[140px]"><SelectValue placeholder="Select Status" /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {selectedOrders.size > 0 && (
+              <span className="text-xs text-muted-foreground ml-auto">{selectedOrders.size} selected</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Orders Table */}
       <Card className="border border-border">
-        <div className="overflow-x-auto">
+        {/* Top horizontal scrollbar (synced) */}
+        <div
+          ref={topScrollRef}
+          onScroll={onTopScroll}
+          className="overflow-x-auto overflow-y-hidden border-b border-border"
+          style={{ height: 14 }}
+        >
+          <div style={{ width: tableScrollWidth, height: 1 }} />
+        </div>
+        <div ref={tableScrollRef} onScroll={onTableScroll} className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
@@ -661,7 +821,7 @@ export const AdminOrdersTab = () => {
                             ) : (
                               <>
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-dashed">
-                                  <Send className="h-2.5 w-2.5 mr-1" /> Send to Courier
+                                  <Truck className="h-2.5 w-2.5 mr-1" /> Send to Courier
                                 </Badge>
                                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
                               </>
