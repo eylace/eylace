@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import {
   Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
-  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2, Ban,
+  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2, Ban, Plus,
 } from 'lucide-react';
 import { FraudDetectionModal } from '@/components/admin/FraudDetectionModal';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ import { exportToCSV } from '@/lib/csvExport';
 import { supabase } from '@/integrations/supabase/client';
 import { EditOrderModal } from '@/components/admin/EditOrderModal';
 import { CourierDispatchModal } from '@/components/admin/CourierDispatchModal';
+import { CreateOrderModal } from '@/components/admin/CreateOrderModal';
 import { CustomerContactBlock } from '@/components/orders/CustomerContactBlock';
 import { formatRoleLabel } from '@/lib/roleLabels';
 import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
@@ -103,7 +104,8 @@ const getAvatarColor = (name: string) => {
 };
 
 export const AdminOrdersTab = () => {
-  const { orders, isLoading, updateOrderStatus, deleteOrders } = useAdminOrders();
+  const { orders, isLoading, refetch, updateOrderStatus, deleteOrders } = useAdminOrders();
+  const [createOrderOpen, setCreateOrderOpen] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
   const [trackingInfo, setTrackingInfo] = useState<Record<string, { carrier: string; tracking_number: string }>>({});
   const [fraudOrder, setFraudOrder] = useState<any>(null);
