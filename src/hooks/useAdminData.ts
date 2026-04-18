@@ -68,6 +68,10 @@ export interface AdminOrder {
   delivered_at: string | null;
   created_at: string;
   updated_at: string;
+  assigned_user_id?: string | null;
+  assigned_user_name?: string | null;
+  assigned_role?: string | null;
+  assigned_at?: string | null;
   items?: AdminOrderItem[];
   profile?: {
     first_name: string | null;
