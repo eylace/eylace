@@ -3,11 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, MoreVertical, Truck } from 'lucide-react';
+import { Search, MoreVertical, Truck, ChevronDown, Send } from 'lucide-react';
 import { format } from 'date-fns';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { CourierDispatchModal } from '@/components/admin/CourierDispatchModal';
+import { CustomerContactBlock } from '@/components/orders/CustomerContactBlock';
 import { toast } from 'sonner';
 import type { SellerOrder } from '@/hooks/useSellerData';
 
