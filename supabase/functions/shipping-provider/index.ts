@@ -754,10 +754,34 @@ Deno.serve(async (req) => {
         break;
       }
       case 'pathao': {
-        const token = await pathaoAuth(config);
-        if (action === 'create_order') result = await pathaoCreateOrder(token, payload, config);
-        else if (action === 'track') result = { events: await pathaoTrack(token, payload.tracking_number, config) };
-        else throw new Error(`Unknown action: ${action}`);
+        if (action === 'test_connection') {
+          // Force fresh issue to validate credentials, then cache.
+          const fresh = await pathaoIssueToken(config);
+          const env = pathaoEnvKey(config);
+          const clientId = config.clientId || config.apiKey || '';
+          const expiresAt = new Date(Date.now() + fresh.expires_in * 1000).toISOString();
+          await supabaseAdmin.from('courier_auth_tokens').upsert({
+            provider: 'pathao', environment: env, client_id: clientId,
+            access_token: fresh.access_token, refresh_token: fresh.refresh_token,
+            expires_at: expiresAt,
+          }, { onConflict: 'provider,environment,client_id' });
+
+          // Also fetch stores to confirm we can reach the API beyond just auth
+          const stores = await pathaoFetchCollection<PathaoStore>(fresh.access_token, config, 'stores', 'store list');
+          result = {
+            authenticated: true,
+            environment: env,
+            base_url: pathaoBaseUrl(config),
+            expires_in_seconds: fresh.expires_in,
+            store_count: stores.length,
+            stores: stores.map((s) => ({ store_id: s.store_id, store_name: s.store_name, is_default_store: s.is_default_store })),
+          };
+        } else {
+          const token = await pathaoGetToken(supabaseAdmin, config);
+          if (action === 'create_order') result = await pathaoCreateOrder(token, payload, config);
+          else if (action === 'track') result = { events: await pathaoTrack(token, payload.tracking_number, config) };
+          else throw new Error(`Unknown action: ${action}`);
+        }
         break;
       }
       case 'redx': {
