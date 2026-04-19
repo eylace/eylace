@@ -282,15 +282,53 @@ const AdminShippingProviders = () => {
         </div>
       </div>
 
-      {/* Base URL - common to all */}
-      <div className="space-y-2">
-        <Label>Base URL</Label>
-        <Input
-          value={provider.apiUrl}
-          onChange={(e) => updateProvider(provider.id, 'apiUrl', e.target.value)}
-          placeholder="https://api.example.com"
-        />
-      </div>
+      {/* Pathao Environment Selector */}
+      {provider.id === 'pathao' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border bg-primary/5">
+          <div className="space-y-2">
+            <Label className="font-semibold">Environment</Label>
+            <Select
+              value={provider.environment || 'live'}
+              onValueChange={(v) => {
+                updateProvider(provider.id, 'environment', v);
+                updateProvider(provider.id, 'apiUrl', PATHAO_BASE_URLS[v as 'sandbox' | 'live']);
+              }}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
+                <SelectItem value="live">Live (Production)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Sandbox orders appear in <strong>test@pathao.com</strong> shared panel. Live orders go to your real Pathao merchant panel.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Base URL (auto-filled)</Label>
+            <Input
+              value={provider.apiUrl}
+              onChange={(e) => updateProvider(provider.id, 'apiUrl', e.target.value)}
+              placeholder={PATHAO_BASE_URLS.live}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Auto-set from environment. Only override if Pathao gives you a different base URL.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Base URL - common to non-Pathao */}
+      {provider.id !== 'pathao' && (
+        <div className="space-y-2">
+          <Label>Base URL</Label>
+          <Input
+            value={provider.apiUrl}
+            onChange={(e) => updateProvider(provider.id, 'apiUrl', e.target.value)}
+            placeholder="https://api.example.com"
+          />
+        </div>
+      )}
 
       {/* Provider-specific credential fields */}
       {provider.id === 'pathao' && (
