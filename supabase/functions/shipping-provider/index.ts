@@ -585,7 +585,7 @@ async function pathaoCreateOrder(token: string, order: any, config: ProviderConf
 }
 
 async function pathaoTrack(token: string, consignmentId: string, config: ProviderConfig) {
-  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
+  const base = pathaoBaseUrl(config);
   const res = await fetch(`${base}/aladdin/api/v1/orders/${consignmentId}`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
