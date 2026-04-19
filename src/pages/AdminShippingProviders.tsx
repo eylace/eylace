@@ -31,6 +31,7 @@ interface ShippingProvider {
   codEnabled: boolean;
   autoAssign: boolean;
   // Pathao-specific
+  environment?: 'sandbox' | 'live';
   clientId?: string;
   clientSecret?: string;
   username?: string;
@@ -43,6 +44,11 @@ interface ShippingProvider {
   fraudPassword?: string;
   fraudPhone?: string;
 }
+
+const PATHAO_BASE_URLS = {
+  sandbox: 'https://courier-api-sandbox.pathao.com',
+  live: 'https://api-hermes.pathao.com',
+} as const;
 
 interface TrackingResult {
   status: string;
