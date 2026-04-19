@@ -386,8 +386,18 @@ const AdminShippingProviders = () => {
             </div>
           </div>
 
-          <div className="border-t pt-4">
-            <h4 className="text-sm font-semibold mb-3 text-foreground">Fraud Checker Credentials</h4>
+          {/* Test Connection */}
+          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border border-dashed bg-muted/20">
+            <Button type="button" size="sm" onClick={handleTestPathao} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Save & Test Pathao Connection
+            </Button>
+            <p className="text-[11px] text-muted-foreground flex-1">
+              Saves your credentials and verifies them by issuing an access token + listing your stores. Token will be cached automatically for future orders.
+            </p>
+          </div>
+
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Merchant User</Label>
