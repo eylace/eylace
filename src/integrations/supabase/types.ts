@@ -504,6 +504,42 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_auth_tokens: {
+        Row: {
+          access_token: string
+          client_id: string | null
+          created_at: string
+          environment: string
+          expires_at: string
+          id: string
+          provider: string
+          refresh_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          client_id?: string | null
+          created_at?: string
+          environment?: string
+          expires_at: string
+          id?: string
+          provider: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          client_id?: string | null
+          created_at?: string
+          environment?: string
+          expires_at?: string
+          id?: string
+          provider?: string
+          refresh_token?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       couriers: {
         Row: {
           base_cost: number | null

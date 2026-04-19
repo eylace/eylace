@@ -20,6 +20,7 @@ interface ProviderConfig {
   defaultWidth: string;
   defaultHeight: string;
   // Pathao
+  environment?: 'sandbox' | 'live'; // sandbox or live
   clientId?: string;
   clientSecret?: string;
   username?: string;
@@ -27,6 +28,27 @@ interface ProviderConfig {
   storeId?: string;
   // Carrybee
   clientContext?: string;
+}
+
+// Pathao default base URLs for each environment
+const PATHAO_BASE = {
+  sandbox: 'https://courier-api-sandbox.pathao.com',
+  live: 'https://api-hermes.pathao.com',
+} as const;
+
+function pathaoBaseUrl(config: ProviderConfig): string {
+  if (config.apiUrl && config.apiUrl.trim()) return trimSlash(config.apiUrl);
+  const env = (config.environment === 'sandbox') ? 'sandbox' : 'live';
+  return PATHAO_BASE[env];
+}
+
+function pathaoEnvKey(config: ProviderConfig): 'sandbox' | 'live' {
+  if (config.environment === 'sandbox' || config.environment === 'live') return config.environment;
+  const url = (config.apiUrl || '').toLowerCase();
+  if (url.includes('sandbox')) return 'sandbox';
+  const user = (config.username || '').toLowerCase();
+  if (user.includes('test@pathao.com')) return 'sandbox';
+  return 'live';
 }
 
 // Helper to always reply 200 with structured payload (so the client can read error messages)
@@ -319,7 +341,7 @@ async function pathaoFetchCollection<T extends Record<string, any>>(
   path: string,
   label: string,
 ): Promise<T[]> {
-  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
+  const base = pathaoBaseUrl(config);
   const res = await fetch(`${base}/aladdin/api/v1/${path}`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
@@ -354,7 +376,7 @@ async function resolvePathaoStore(token: string, order: any, config: ProviderCon
   if (configuredStore) return { store: configuredStore, fallbackUsed: false };
 
   const hasConfiguredStore = Boolean(compactText(order?.store_id || config.storeId || config.pickupLocation));
-  const isSandbox = (trimSlash(config.apiUrl) || '').includes('sandbox') || compactText(config.username).toLowerCase().includes('test@');
+  const isSandbox = pathaoEnvKey(config) === 'sandbox';
 
   if (hasConfiguredStore && !isSandbox) {
     throw new Error('Pathao: configured Store ID was not found for this account. Update Courier Management with a valid Store ID.');
@@ -403,23 +425,24 @@ async function resolvePathaoDestination(token: string, order: any, config: Provi
   return { city, zone, area };
 }
 
-async function pathaoAuth(config: ProviderConfig) {
-  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
+// Issues a NEW Pathao access token via API. Does not cache. Used by both fresh-auth and refresh paths.
+async function pathaoIssueToken(config: ProviderConfig, opts: { useRefresh?: string } = {}) {
+  const base = pathaoBaseUrl(config);
   const clientId = config.clientId || config.apiKey;
   const clientSecret = config.clientSecret || config.apiSecret;
   if (!clientId || !clientSecret) throw new Error('Pathao: Client ID & Client Secret are required');
 
-  // Try password grant if username/password supplied (Pathao standard)
-  const body: any = {
-    client_id: clientId,
-    client_secret: clientSecret,
-  };
-  if (config.username && config.password) {
+  const body: any = { client_id: clientId, client_secret: clientSecret };
+
+  if (opts.useRefresh) {
+    body.grant_type = 'refresh_token';
+    body.refresh_token = opts.useRefresh;
+  } else if (config.username && config.password) {
+    body.grant_type = 'password';
     body.username = config.username;
     body.password = config.password;
-    body.grant_type = 'password';
   } else {
-    body.grant_type = 'client_credentials';
+    throw new Error('Pathao: Username & Password are required for first-time authentication');
   }
 
   const res = await fetch(`${base}/aladdin/api/v1/issue-token`, {
@@ -431,11 +454,65 @@ async function pathaoAuth(config: ProviderConfig) {
   if (!res.ok || !data?.access_token) {
     throw new Error(`Pathao auth failed (${res.status}): ${data?.message || JSON.stringify(data)}`);
   }
-  return data.access_token as string;
+  return {
+    access_token: data.access_token as string,
+    refresh_token: (data.refresh_token as string) || null,
+    expires_in: Number(data.expires_in) || 432000,
+  };
+}
+
+// Reads token cache from DB and returns a valid access token, refreshing/issuing as needed.
+async function pathaoGetToken(supabaseAdmin: any, config: ProviderConfig): Promise<string> {
+  const provider = 'pathao';
+  const environment = pathaoEnvKey(config);
+  const clientId = config.clientId || config.apiKey || '';
+
+  // 1. Look up cached token
+  const { data: cached } = await supabaseAdmin
+    .from('courier_auth_tokens')
+    .select('*')
+    .eq('provider', provider)
+    .eq('environment', environment)
+    .eq('client_id', clientId)
+    .maybeSingle();
+
+  const now = Date.now();
+  // 60s safety buffer
+  if (cached?.access_token && new Date(cached.expires_at).getTime() > now + 60_000) {
+    return cached.access_token as string;
+  }
+
+  // 2. Try refresh token if we have one and the access token is expired
+  if (cached?.refresh_token) {
+    try {
+      const refreshed = await pathaoIssueToken(config, { useRefresh: cached.refresh_token });
+      const expiresAt = new Date(now + refreshed.expires_in * 1000).toISOString();
+      await supabaseAdmin.from('courier_auth_tokens').upsert({
+        provider, environment, client_id: clientId,
+        access_token: refreshed.access_token,
+        refresh_token: refreshed.refresh_token || cached.refresh_token,
+        expires_at: expiresAt,
+      }, { onConflict: 'provider,environment,client_id' });
+      return refreshed.access_token;
+    } catch (e) {
+      console.warn('[pathao] refresh failed, falling back to password grant', (e as any)?.message);
+    }
+  }
+
+  // 3. Fresh issue (password grant)
+  const fresh = await pathaoIssueToken(config);
+  const expiresAt = new Date(now + fresh.expires_in * 1000).toISOString();
+  await supabaseAdmin.from('courier_auth_tokens').upsert({
+    provider, environment, client_id: clientId,
+    access_token: fresh.access_token,
+    refresh_token: fresh.refresh_token,
+    expires_at: expiresAt,
+  }, { onConflict: 'provider,environment,client_id' });
+  return fresh.access_token;
 }
 
 async function pathaoCreateOrder(token: string, order: any, config: ProviderConfig) {
-  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
+  const base = pathaoBaseUrl(config);
   const { store, fallbackUsed } = await resolvePathaoStore(token, order, config);
   const { city, zone, area } = await resolvePathaoDestination(token, order, config, store);
 
@@ -508,7 +585,7 @@ async function pathaoCreateOrder(token: string, order: any, config: ProviderConf
 }
 
 async function pathaoTrack(token: string, consignmentId: string, config: ProviderConfig) {
-  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
+  const base = pathaoBaseUrl(config);
   const res = await fetch(`${base}/aladdin/api/v1/orders/${consignmentId}`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
@@ -677,10 +754,34 @@ Deno.serve(async (req) => {
         break;
       }
       case 'pathao': {
-        const token = await pathaoAuth(config);
-        if (action === 'create_order') result = await pathaoCreateOrder(token, payload, config);
-        else if (action === 'track') result = { events: await pathaoTrack(token, payload.tracking_number, config) };
-        else throw new Error(`Unknown action: ${action}`);
+        if (action === 'test_connection') {
+          // Force fresh issue to validate credentials, then cache.
+          const fresh = await pathaoIssueToken(config);
+          const env = pathaoEnvKey(config);
+          const clientId = config.clientId || config.apiKey || '';
+          const expiresAt = new Date(Date.now() + fresh.expires_in * 1000).toISOString();
+          await supabaseAdmin.from('courier_auth_tokens').upsert({
+            provider: 'pathao', environment: env, client_id: clientId,
+            access_token: fresh.access_token, refresh_token: fresh.refresh_token,
+            expires_at: expiresAt,
+          }, { onConflict: 'provider,environment,client_id' });
+
+          // Also fetch stores to confirm we can reach the API beyond just auth
+          const stores = await pathaoFetchCollection<PathaoStore>(fresh.access_token, config, 'stores', 'store list');
+          result = {
+            authenticated: true,
+            environment: env,
+            base_url: pathaoBaseUrl(config),
+            expires_in_seconds: fresh.expires_in,
+            store_count: stores.length,
+            stores: stores.map((s) => ({ store_id: s.store_id, store_name: s.store_name, is_default_store: s.is_default_store })),
+          };
+        } else {
+          const token = await pathaoGetToken(supabaseAdmin, config);
+          if (action === 'create_order') result = await pathaoCreateOrder(token, payload, config);
+          else if (action === 'track') result = { events: await pathaoTrack(token, payload.tracking_number, config) };
+          else throw new Error(`Unknown action: ${action}`);
+        }
         break;
       }
       case 'redx': {
@@ -700,15 +801,13 @@ Deno.serve(async (req) => {
     }
 
     // Add a friendly note for Pathao sandbox so users know orders appear in the sandbox panel
-    const isPathaoSandbox = providerCode === 'pathao'
-      && ((trimSlash(config.apiUrl) || '').includes('sandbox')
-        || (config.username || '').toLowerCase().includes('test@pathao.com'));
+    const isPathaoSandbox = providerCode === 'pathao' && pathaoEnvKey(config) === 'sandbox';
 
     const extra: Record<string, any> = {};
     if (isPathaoSandbox && action === 'create_order') {
       extra.sandbox = true;
       extra.sandbox_panel_url = 'https://merchant.pathao.com/courier/orders';
-      extra.note = 'Sandbox order created. View it at https://merchant.pathao.com/courier/orders by logging in with test@pathao.com / lovePathao. Switch to LIVE credentials in Courier Management to dispatch to your real Pathao panel.';
+      extra.note = 'Sandbox order created. View it at https://merchant.pathao.com/courier/orders by logging in with test@pathao.com / lovePathao. Switch to LIVE in Courier Management → Pathao → Environment to dispatch to your real Pathao panel.';
       if (result?.used_store_fallback) {
         extra.note += ` (Configured Store ID was not found in sandbox — used Pathao test store #${result.resolved_store_id} instead.)`;
       }

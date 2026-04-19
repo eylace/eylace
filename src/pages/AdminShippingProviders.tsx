@@ -31,6 +31,7 @@ interface ShippingProvider {
   codEnabled: boolean;
   autoAssign: boolean;
   // Pathao-specific
+  environment?: 'sandbox' | 'live';
   clientId?: string;
   clientSecret?: string;
   username?: string;
@@ -43,6 +44,11 @@ interface ShippingProvider {
   fraudPassword?: string;
   fraudPhone?: string;
 }
+
+const PATHAO_BASE_URLS = {
+  sandbox: 'https://courier-api-sandbox.pathao.com',
+  live: 'https://api-hermes.pathao.com',
+} as const;
 
 interface TrackingResult {
   status: string;
@@ -59,7 +65,7 @@ const defaultProviders: ShippingProvider[] = [
     enabled: false,
     apiKey: '',
     apiSecret: '',
-    apiUrl: '',
+    apiUrl: PATHAO_BASE_URLS.live,
     webhookUrl: '',
     defaultWeight: '0.5',
     defaultLength: '20',
@@ -68,6 +74,7 @@ const defaultProviders: ShippingProvider[] = [
     pickupLocation: '',
     codEnabled: true,
     autoAssign: false,
+    environment: 'live',
     clientId: '',
     clientSecret: '',
     username: '',
@@ -228,6 +235,31 @@ const AdminShippingProviders = () => {
     toast.info('Test order creation requires a real order. Use the Orders page to assign a shipping provider.');
   };
 
+  const handleTestPathao = async () => {
+    const pathao = providers.find(p => p.id === 'pathao');
+    if (!pathao) return;
+    if (!pathao.clientId || !pathao.clientSecret || !pathao.username || !pathao.password) {
+      toast.error('Please fill Client ID, Client Secret, Username and Password before testing.');
+      return;
+    }
+    // Save first so the edge function reads the latest values
+    await handleSave();
+    const tId = toast.loading('Testing Pathao connection...');
+    try {
+      const { data, error } = await supabase.functions.invoke('shipping-provider', {
+        body: { action: 'test_connection', provider: 'pathao', payload: {} },
+      });
+      if (error) throw new Error(error.message);
+      if (data && data.ok === false) throw new Error(data.error || 'Connection test failed');
+      const storeNote = data?.store_count
+        ? ` Found ${data.store_count} store(s).`
+        : ' No stores found in this account — create one in Pathao panel first.';
+      toast.success(`Pathao connected (${data?.environment || 'live'}).${storeNote}`, { id: tId, duration: 8000 });
+    } catch (e: any) {
+      toast.error(`Pathao test failed: ${e?.message || 'Unknown error'}`, { id: tId, duration: 12000 });
+    }
+  };
+
   const renderProviderConfig = (provider: ShippingProvider) => (
     <div className="space-y-6">
       <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
@@ -250,15 +282,53 @@ const AdminShippingProviders = () => {
         </div>
       </div>
 
-      {/* Base URL - common to all */}
-      <div className="space-y-2">
-        <Label>Base URL</Label>
-        <Input
-          value={provider.apiUrl}
-          onChange={(e) => updateProvider(provider.id, 'apiUrl', e.target.value)}
-          placeholder="https://api.example.com"
-        />
-      </div>
+      {/* Pathao Environment Selector */}
+      {provider.id === 'pathao' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border bg-primary/5">
+          <div className="space-y-2">
+            <Label className="font-semibold">Environment</Label>
+            <Select
+              value={provider.environment || 'live'}
+              onValueChange={(v) => {
+                updateProvider(provider.id, 'environment', v);
+                updateProvider(provider.id, 'apiUrl', PATHAO_BASE_URLS[v as 'sandbox' | 'live']);
+              }}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
+                <SelectItem value="live">Live (Production)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Sandbox orders appear in <strong>test@pathao.com</strong> shared panel. Live orders go to your real Pathao merchant panel.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Base URL (auto-filled)</Label>
+            <Input
+              value={provider.apiUrl}
+              onChange={(e) => updateProvider(provider.id, 'apiUrl', e.target.value)}
+              placeholder={PATHAO_BASE_URLS.live}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Auto-set from environment. Only override if Pathao gives you a different base URL.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Base URL - common to non-Pathao */}
+      {provider.id !== 'pathao' && (
+        <div className="space-y-2">
+          <Label>Base URL</Label>
+          <Input
+            value={provider.apiUrl}
+            onChange={(e) => updateProvider(provider.id, 'apiUrl', e.target.value)}
+            placeholder="https://api.example.com"
+          />
+        </div>
+      )}
 
       {/* Provider-specific credential fields */}
       {provider.id === 'pathao' && (
@@ -314,6 +384,17 @@ const AdminShippingProviders = () => {
                 placeholder="https://your-domain.com/webhook"
               />
             </div>
+          </div>
+
+          {/* Test Connection */}
+          <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border border-dashed bg-muted/20">
+            <Button type="button" size="sm" onClick={handleTestPathao} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Save & Test Pathao Connection
+            </Button>
+            <p className="text-[11px] text-muted-foreground flex-1">
+              Saves your credentials and verifies them by issuing an access token + listing your stores. Token will be cached automatically for future orders.
+            </p>
           </div>
 
           <div className="border-t pt-4">
