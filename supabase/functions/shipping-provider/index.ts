@@ -376,7 +376,7 @@ async function resolvePathaoStore(token: string, order: any, config: ProviderCon
   if (configuredStore) return { store: configuredStore, fallbackUsed: false };
 
   const hasConfiguredStore = Boolean(compactText(order?.store_id || config.storeId || config.pickupLocation));
-  const isSandbox = (trimSlash(config.apiUrl) || '').includes('sandbox') || compactText(config.username).toLowerCase().includes('test@');
+  const isSandbox = pathaoEnvKey(config) === 'sandbox';
 
   if (hasConfiguredStore && !isSandbox) {
     throw new Error('Pathao: configured Store ID was not found for this account. Update Courier Management with a valid Store ID.');
