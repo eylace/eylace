@@ -513,6 +513,7 @@ async function pathaoGetToken(supabaseAdmin: any, config: ProviderConfig): Promi
 
 async function pathaoCreateOrder(token: string, order: any, config: ProviderConfig) {
   const base = pathaoBaseUrl(config);
+  const { store, fallbackUsed } = await resolvePathaoStore(token, order, config);
   const { city, zone, area } = await resolvePathaoDestination(token, order, config, store);
 
   const amountToCollect = Math.max(0, Math.round(Number(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)) || 0));
