@@ -425,23 +425,24 @@ async function resolvePathaoDestination(token: string, order: any, config: Provi
   return { city, zone, area };
 }
 
-async function pathaoAuth(config: ProviderConfig) {
-  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
+// Issues a NEW Pathao access token via API. Does not cache. Used by both fresh-auth and refresh paths.
+async function pathaoIssueToken(config: ProviderConfig, opts: { useRefresh?: string } = {}) {
+  const base = pathaoBaseUrl(config);
   const clientId = config.clientId || config.apiKey;
   const clientSecret = config.clientSecret || config.apiSecret;
   if (!clientId || !clientSecret) throw new Error('Pathao: Client ID & Client Secret are required');
 
-  // Try password grant if username/password supplied (Pathao standard)
-  const body: any = {
-    client_id: clientId,
-    client_secret: clientSecret,
-  };
-  if (config.username && config.password) {
+  const body: any = { client_id: clientId, client_secret: clientSecret };
+
+  if (opts.useRefresh) {
+    body.grant_type = 'refresh_token';
+    body.refresh_token = opts.useRefresh;
+  } else if (config.username && config.password) {
+    body.grant_type = 'password';
     body.username = config.username;
     body.password = config.password;
-    body.grant_type = 'password';
   } else {
-    body.grant_type = 'client_credentials';
+    throw new Error('Pathao: Username & Password are required for first-time authentication');
   }
 
   const res = await fetch(`${base}/aladdin/api/v1/issue-token`, {
@@ -453,7 +454,61 @@ async function pathaoAuth(config: ProviderConfig) {
   if (!res.ok || !data?.access_token) {
     throw new Error(`Pathao auth failed (${res.status}): ${data?.message || JSON.stringify(data)}`);
   }
-  return data.access_token as string;
+  return {
+    access_token: data.access_token as string,
+    refresh_token: (data.refresh_token as string) || null,
+    expires_in: Number(data.expires_in) || 432000,
+  };
+}
+
+// Reads token cache from DB and returns a valid access token, refreshing/issuing as needed.
+async function pathaoGetToken(supabaseAdmin: any, config: ProviderConfig): Promise<string> {
+  const provider = 'pathao';
+  const environment = pathaoEnvKey(config);
+  const clientId = config.clientId || config.apiKey || '';
+
+  // 1. Look up cached token
+  const { data: cached } = await supabaseAdmin
+    .from('courier_auth_tokens')
+    .select('*')
+    .eq('provider', provider)
+    .eq('environment', environment)
+    .eq('client_id', clientId)
+    .maybeSingle();
+
+  const now = Date.now();
+  // 60s safety buffer
+  if (cached?.access_token && new Date(cached.expires_at).getTime() > now + 60_000) {
+    return cached.access_token as string;
+  }
+
+  // 2. Try refresh token if we have one and the access token is expired
+  if (cached?.refresh_token) {
+    try {
+      const refreshed = await pathaoIssueToken(config, { useRefresh: cached.refresh_token });
+      const expiresAt = new Date(now + refreshed.expires_in * 1000).toISOString();
+      await supabaseAdmin.from('courier_auth_tokens').upsert({
+        provider, environment, client_id: clientId,
+        access_token: refreshed.access_token,
+        refresh_token: refreshed.refresh_token || cached.refresh_token,
+        expires_at: expiresAt,
+      }, { onConflict: 'provider,environment,client_id' });
+      return refreshed.access_token;
+    } catch (e) {
+      console.warn('[pathao] refresh failed, falling back to password grant', (e as any)?.message);
+    }
+  }
+
+  // 3. Fresh issue (password grant)
+  const fresh = await pathaoIssueToken(config);
+  const expiresAt = new Date(now + fresh.expires_in * 1000).toISOString();
+  await supabaseAdmin.from('courier_auth_tokens').upsert({
+    provider, environment, client_id: clientId,
+    access_token: fresh.access_token,
+    refresh_token: fresh.refresh_token,
+    expires_at: expiresAt,
+  }, { onConflict: 'provider,environment,client_id' });
+  return fresh.access_token;
 }
 
 async function pathaoCreateOrder(token: string, order: any, config: ProviderConfig) {
