@@ -801,15 +801,13 @@ Deno.serve(async (req) => {
     }
 
     // Add a friendly note for Pathao sandbox so users know orders appear in the sandbox panel
-    const isPathaoSandbox = providerCode === 'pathao'
-      && ((trimSlash(config.apiUrl) || '').includes('sandbox')
-        || (config.username || '').toLowerCase().includes('test@pathao.com'));
+    const isPathaoSandbox = providerCode === 'pathao' && pathaoEnvKey(config) === 'sandbox';
 
     const extra: Record<string, any> = {};
     if (isPathaoSandbox && action === 'create_order') {
       extra.sandbox = true;
       extra.sandbox_panel_url = 'https://merchant.pathao.com/courier/orders';
-      extra.note = 'Sandbox order created. View it at https://merchant.pathao.com/courier/orders by logging in with test@pathao.com / lovePathao. Switch to LIVE credentials in Courier Management to dispatch to your real Pathao panel.';
+      extra.note = 'Sandbox order created. View it at https://merchant.pathao.com/courier/orders by logging in with test@pathao.com / lovePathao. Switch to LIVE in Courier Management → Pathao → Environment to dispatch to your real Pathao panel.';
       if (result?.used_store_fallback) {
         extra.note += ` (Configured Store ID was not found in sandbox — used Pathao test store #${result.resolved_store_id} instead.)`;
       }
