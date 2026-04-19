@@ -56,3 +56,6 @@ project_id = "jmowninkqcfgwldyjeqo"
 
  [functions.checkout-create-order]
  verify_jwt = false
+
+ [functions.shipping-provider]
+ verify_jwt = false
