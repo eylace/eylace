@@ -771,15 +771,45 @@ export const AdminOrdersTab = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className={cn('h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0', getAvatarColor(customerName))}>
-                          {getInitials(customerName)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium truncate max-w-[120px]">{customerName}</p>
-                          <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">{customerEmail}</p>
-                        </div>
-                      </div>
+                      {(() => {
+                        const phoneRaw = getOrderCustomerPhone(order);
+                        const cleaned = phoneRaw.replace(/[^\d+]/g, '');
+                        const wa = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned.startsWith('88') ? cleaned : `88${cleaned}`;
+                        return (
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <div className={cn('h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0', getAvatarColor(customerName))}>
+                              {getInitials(customerName)}
+                            </div>
+                            <div className="min-w-0 leading-tight">
+                              <p className="text-xs font-medium truncate max-w-[140px]">{customerName}</p>
+                              <p className="text-[10px] text-muted-foreground truncate max-w-[140px]">{customerEmail}</p>
+                              {phoneRaw && (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <span className="text-[10px] font-mono text-foreground">{phoneRaw}</span>
+                                  <a
+                                    href={`tel:${cleaned}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center justify-center h-4 w-4 rounded bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25"
+                                    title="Call"
+                                  >
+                                    <Phone className="h-2.5 w-2.5" />
+                                  </a>
+                                  <a
+                                    href={`https://wa.me/${wa}`}
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center justify-center h-4 w-4 rounded bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25"
+                                    title="WhatsApp"
+                                  >
+                                    <MessageCircle className="h-2.5 w-2.5" />
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <span className="text-[11px] text-muted-foreground font-mono">{order.customer_ip || '—'}</span>
