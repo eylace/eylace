@@ -341,7 +341,7 @@ async function pathaoFetchCollection<T extends Record<string, any>>(
   path: string,
   label: string,
 ): Promise<T[]> {
-  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
+  const base = pathaoBaseUrl(config);
   const res = await fetch(`${base}/aladdin/api/v1/${path}`, {
     headers: { 'Authorization': `Bearer ${token}` },
   });
