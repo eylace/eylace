@@ -235,6 +235,31 @@ const AdminShippingProviders = () => {
     toast.info('Test order creation requires a real order. Use the Orders page to assign a shipping provider.');
   };
 
+  const handleTestPathao = async () => {
+    const pathao = providers.find(p => p.id === 'pathao');
+    if (!pathao) return;
+    if (!pathao.clientId || !pathao.clientSecret || !pathao.username || !pathao.password) {
+      toast.error('Please fill Client ID, Client Secret, Username and Password before testing.');
+      return;
+    }
+    // Save first so the edge function reads the latest values
+    await handleSave();
+    const tId = toast.loading('Testing Pathao connection...');
+    try {
+      const { data, error } = await supabase.functions.invoke('shipping-provider', {
+        body: { action: 'test_connection', provider: 'pathao', payload: {} },
+      });
+      if (error) throw new Error(error.message);
+      if (data && data.ok === false) throw new Error(data.error || 'Connection test failed');
+      const storeNote = data?.store_count
+        ? ` Found ${data.store_count} store(s).`
+        : ' No stores found in this account — create one in Pathao panel first.';
+      toast.success(`Pathao connected (${data?.environment || 'live'}).${storeNote}`, { id: tId, duration: 8000 });
+    } catch (e: any) {
+      toast.error(`Pathao test failed: ${e?.message || 'Unknown error'}`, { id: tId, duration: 12000 });
+    }
+  };
+
   const renderProviderConfig = (provider: ShippingProvider) => (
     <div className="space-y-6">
       <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
