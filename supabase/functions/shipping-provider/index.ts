@@ -640,8 +640,8 @@ Deno.serve(async (req) => {
     stage = 'check_role';
     const { data: roleData } = await supabaseAdmin
       .from('user_roles').select('role').eq('user_id', user.id)
-      .in('role', ['admin', 'super_admin']).limit(1);
-    if (!roleData || roleData.length === 0) return respond(false, { error: 'Forbidden: admin role required' }, 'check_role');
+      .in('role', ['admin', 'super_admin', 'seller', 'order_manager', 'support_manager', 'moderator']).limit(1);
+    if (!roleData || roleData.length === 0) return respond(false, { error: 'Forbidden: admin or seller role required' }, 'check_role');
 
     stage = 'parse_body';
     const body = await req.json();
