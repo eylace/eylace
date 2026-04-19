@@ -20,6 +20,7 @@ interface ProviderConfig {
   defaultWidth: string;
   defaultHeight: string;
   // Pathao
+  environment?: 'sandbox' | 'live'; // sandbox or live
   clientId?: string;
   clientSecret?: string;
   username?: string;
@@ -27,6 +28,27 @@ interface ProviderConfig {
   storeId?: string;
   // Carrybee
   clientContext?: string;
+}
+
+// Pathao default base URLs for each environment
+const PATHAO_BASE = {
+  sandbox: 'https://courier-api-sandbox.pathao.com',
+  live: 'https://api-hermes.pathao.com',
+} as const;
+
+function pathaoBaseUrl(config: ProviderConfig): string {
+  if (config.apiUrl && config.apiUrl.trim()) return trimSlash(config.apiUrl);
+  const env = (config.environment === 'sandbox') ? 'sandbox' : 'live';
+  return PATHAO_BASE[env];
+}
+
+function pathaoEnvKey(config: ProviderConfig): 'sandbox' | 'live' {
+  if (config.environment === 'sandbox' || config.environment === 'live') return config.environment;
+  const url = (config.apiUrl || '').toLowerCase();
+  if (url.includes('sandbox')) return 'sandbox';
+  const user = (config.username || '').toLowerCase();
+  if (user.includes('test@pathao.com')) return 'sandbox';
+  return 'live';
 }
 
 // Helper to always reply 200 with structured payload (so the client can read error messages)
