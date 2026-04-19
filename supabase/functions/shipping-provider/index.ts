@@ -512,8 +512,7 @@ async function pathaoGetToken(supabaseAdmin: any, config: ProviderConfig): Promi
 }
 
 async function pathaoCreateOrder(token: string, order: any, config: ProviderConfig) {
-  const base = trimSlash(config.apiUrl) || 'https://api-hermes.pathao.com';
-  const { store, fallbackUsed } = await resolvePathaoStore(token, order, config);
+  const base = pathaoBaseUrl(config);
   const { city, zone, area } = await resolvePathaoDestination(token, order, config, store);
 
   const amountToCollect = Math.max(0, Math.round(Number(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)) || 0));
