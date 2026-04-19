@@ -142,7 +142,12 @@ export const CourierDispatchModal = ({
         '';
       // Persist carrier + tracking BEFORE closing so the badge shows up immediately
       await onDispatched?.(order.id, providerCode, tracking);
-      toast.success(`Sent to ${providerName} successfully${tracking ? ` — Tracking: ${tracking}` : ''}`);
+
+      const sandboxNote = data?.sandbox ? data?.note : '';
+      toast.success(
+        `Sent to ${providerName}${tracking ? ` — Tracking: ${tracking}` : ''}`,
+        { duration: sandboxNote ? 12000 : 4000, description: sandboxNote || undefined }
+      );
       onClose();
     } catch (e: any) {
       console.error('[CourierDispatch]', e);
