@@ -632,20 +632,20 @@ export const AdminOrdersTab = () => {
           <div style={{ width: tableScrollWidth, height: 1 }} />
         </div>
         <div ref={tableScrollRef} onScroll={onTableScroll} className="overflow-x-auto">
-          <Table>
+          <Table className="[&_th]:px-2 [&_td]:px-2 [&_th]:py-2 [&_td]:py-1.5">
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-10">
+                <TableHead className="w-8">
                   <Checkbox checked={paginatedOrders.length > 0 && selectedOrders.size === paginatedOrders.length} onCheckedChange={toggleSelectAll} />
                 </TableHead>
-                <TableHead className="w-10 text-xs">Actions</TableHead>
+                <TableHead className="w-8 text-xs">Actions</TableHead>
                 <TableHead className="text-xs">Product</TableHead>
                 <TableHead className="text-xs">Order</TableHead>
                 <TableHead className="text-xs hidden xl:table-cell">Assigned To</TableHead>
                 <TableHead className="text-xs cursor-pointer select-none" onClick={() => toggleSort('date')}>
                   <span className="inline-flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
-                <TableHead className="text-xs">Customers</TableHead>
+                <TableHead className="text-xs">Customer</TableHead>
                 <TableHead className="text-xs">IP</TableHead>
                 <TableHead className="text-xs">Payment</TableHead>
                 <TableHead className="text-xs">Status</TableHead>
