@@ -36,7 +36,7 @@ interface CourierDispatchModalProps {
   order: any | null;
   providerCode: string;
   onClose: () => void;
-  onDispatched?: (orderId: string, providerCode: string, trackingNumber: string) => void;
+  onDispatched?: (orderId: string, providerCode: string, trackingNumber: string) => void | Promise<void>;
 }
 
 export const CourierDispatchModal = ({
@@ -140,12 +140,13 @@ export const CourierDispatchModal = ({
         data?.data?.consignment_id ||
         data?.data?.tracking_code ||
         '';
+      // Persist carrier + tracking BEFORE closing so the badge shows up immediately
+      await onDispatched?.(order.id, providerCode, tracking);
       toast.success(`Sent to ${providerName} successfully${tracking ? ` — Tracking: ${tracking}` : ''}`);
-      onDispatched?.(order.id, providerCode, tracking);
       onClose();
     } catch (e: any) {
       console.error('[CourierDispatch]', e);
-      toast.error(`Failed to send to ${providerName}: ${e?.message || 'Unknown error'}`, { duration: 8000 });
+      toast.error(`Failed to send to ${providerName}: ${e?.message || 'Unknown error'}`, { duration: 10000 });
     } finally {
       setSending(false);
     }
@@ -244,7 +245,7 @@ export const CourierDispatchModal = ({
           <div className="flex gap-2 pt-2">
             <Button onClick={handleSend} disabled={sending} className="flex-1 gap-2">
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {sending ? 'Sending...' : 'Sent'}
+              {sending ? 'Sending...' : `Send to ${providerName}`}
             </Button>
             <Button variant="outline" onClick={onClose} disabled={sending}>Cancel</Button>
           </div>
