@@ -746,7 +746,7 @@ export const AdminOrdersTab = () => {
                         #{order.order_number}
                       </button>
                     </TableCell>
-                    <TableCell className="hidden xl:table-cell min-w-[140px]">
+                    <TableCell className="hidden xl:table-cell w-[120px]">
                       {order.assigned_role || order.assigned_user_name ? (
                         <div className="flex flex-col leading-tight">
                           <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">
