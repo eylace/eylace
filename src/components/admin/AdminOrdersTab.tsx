@@ -632,16 +632,16 @@ export const AdminOrdersTab = () => {
           <div style={{ width: tableScrollWidth, height: 1 }} />
         </div>
         <div ref={tableScrollRef} onScroll={onTableScroll} className="overflow-x-auto">
-          <Table className="[&_th]:px-2 [&_td]:px-2 [&_th]:py-2 [&_td]:py-1.5">
+          <Table className="[&_th]:px-1.5 [&_td]:px-1.5 [&_th]:py-2 [&_td]:py-1.5">
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-8">
+                <TableHead className="w-6 pr-0">
                   <Checkbox checked={paginatedOrders.length > 0 && selectedOrders.size === paginatedOrders.length} onCheckedChange={toggleSelectAll} />
                 </TableHead>
-                <TableHead className="w-8 text-xs">Actions</TableHead>
+                <TableHead className="w-8 text-xs pl-1">Actions</TableHead>
                 <TableHead className="text-xs">Product</TableHead>
                 <TableHead className="text-xs">Order</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell">Assigned To</TableHead>
+                <TableHead className="text-xs hidden xl:table-cell w-[120px]">Assigned To</TableHead>
                 <TableHead className="text-xs cursor-pointer select-none" onClick={() => toggleSort('date')}>
                   <span className="inline-flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
@@ -746,7 +746,7 @@ export const AdminOrdersTab = () => {
                         #{order.order_number}
                       </button>
                     </TableCell>
-                    <TableCell className="hidden xl:table-cell min-w-[140px]">
+                    <TableCell className="hidden xl:table-cell w-[120px]">
                       {order.assigned_role || order.assigned_user_name ? (
                         <div className="flex flex-col leading-tight">
                           <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">
