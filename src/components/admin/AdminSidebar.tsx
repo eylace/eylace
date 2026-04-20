@@ -140,9 +140,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.marketing.affiliate', url: '/admin/affiliate', icon: Link2 },
   ];
 
-  const uploadItems: NavItem[] = [
-    { titleKey: 'Upload Media', url: '/admin/upload-files', icon: UploadCloud },
-  ];
+  const uploadMediaItem = { titleKey: 'Upload Media' as TranslationKey, url: '/admin/upload-files', icon: UploadCloud };
 
   const supportItems: NavItem[] = [
     { titleKey: 'Tickets', url: '/admin/support/tickets', icon: Ticket },
