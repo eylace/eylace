@@ -632,7 +632,7 @@ export const AdminOrdersTab = () => {
           <div style={{ width: tableScrollWidth, height: 1 }} />
         </div>
         <div ref={tableScrollRef} onScroll={onTableScroll} className="overflow-x-auto">
-          <Table className="[&_th]:pl-[-0.625rem] [&_th]:pr-[0.375rem] [&_td]:pl-[-0.625rem] [&_td]:pr-[0.375rem] [&_th]:py-2 [&_td]:py-1.5">
+          <Table className="[&_th]:pl-[-0.625rem] [&_th]:pr-[-0.625rem] [&_td]:pl-[-0.625rem] [&_td]:pr-[-0.625rem] [&_th]:py-2 [&_td]:py-1.5">
             <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="w-6 pr-0">
