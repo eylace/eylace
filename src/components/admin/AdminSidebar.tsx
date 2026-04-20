@@ -330,6 +330,22 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('orders', 'Sales', ShoppingCart, orderItems, '/admin/orders')}
         {renderCollapsible('ai', 'admin.ai.section', Brain, aiItems)}
         {renderCollapsible('products', 'admin.products', Package, productItems, '/admin/products')}
+        {canAccess('products') && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media">
+                    <NavLink to={uploadMediaItem.url} className="hover:bg-sidebar-accent/50" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
+                      <uploadMediaItem.icon className="h-4 w-4 shrink-0" />
+                      <span>Upload Media</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         {renderCollapsible('sellers', 'admin.sellers.section', Store, sellerItems, '/admin/sellers')}
         {renderCollapsible('stockManagement', 'Stock Management', Boxes, stockItems)}
         {canAccess('management') && renderGroup('admin.group.management', managementItems)}
@@ -337,7 +353,6 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('otp', 'admin.otp.section', Smartphone, otpItems)}
         {canAccess('operations') && renderGroup('admin.group.operations', operationsItems)}
         {renderCollapsible('marketing', 'admin.marketing.section', Megaphone, marketingItems)}
-        {renderCollapsible('uploadFiles', 'Upload Media', UploadCloud, uploadItems)}
         {renderCollapsible('support', 'Support', LifeBuoy, supportItems)}
         {renderCollapsible('affiliateSystem', 'Affiliate System', Link2, affiliateItems)}
         {renderCollapsible('clubPoint', 'Club Point System', Award, clubPointItems)}
