@@ -125,6 +125,11 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Failed to create seller: ' + sellerError.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
+      // Grant vendor_admin role so the user can access the seller dashboard
+      await supabaseAdmin
+        .from('user_roles')
+        .upsert({ user_id: app.user_id, role: 'vendor_admin' }, { onConflict: 'user_id,role' });
+
       await supabaseAdmin
         .from('seller_applications')
         .update({ status: 'approved', admin_notes: adminNotes, updated_at: new Date().toISOString() })
