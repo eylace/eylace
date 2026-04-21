@@ -1,8 +1,10 @@
-import { Package, ClipboardCheck, Clock, Truck, Navigation, CheckCircle, MapPin, Box, Send, XCircle, RotateCcw } from 'lucide-react';
+import { Package, ClipboardCheck, Clock, Truck, Navigation, CheckCircle, MapPin, Box, Send, User, ShieldCheck, Truck as TruckIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Badge } from '@/components/ui/badge';
+import { getStatusMeta } from '@/lib/orderStatusConfig';
 
 interface TrackingEvent {
   id: string;
@@ -67,6 +69,25 @@ export const OrderTrackingTimeline = ({
   const isMobile = useIsMobile();
   const currentStepIndex = getStepIndex(status);
   const isCancelled = status === 'cancelled';
+
+  // Parse "by NAME · ROLE" suffix from event description and split out reason
+  const parseActor = (description: string) => {
+    const m = description.match(/\s*\(by\s+(.+?)\s*·\s*(.+?)\)\s*$/);
+    if (!m) return { actor: null as null | { name: string; role: string }, base: description };
+    return { actor: { name: m[1], role: m[2] }, base: description.replace(m[0], '').trim() };
+  };
+  const splitReason = (base: string) => {
+    const m = base.match(/\s*—\s*Reason:\s*(.+)$/);
+    if (!m) return { reason: null as string | null, headline: base };
+    return { reason: m[1].trim(), headline: base.replace(m[0], '').trim() };
+  };
+  const roleIcon = (role?: string | null) => {
+    const r = (role || '').toLowerCase();
+    if (r.includes('seller') || r.includes('vendor')) return Package;
+    if (r.includes('courier') || r.includes('delivery') || r.includes('shipping')) return TruckIcon;
+    if (r.includes('admin') || r.includes('manager') || r.includes('moderator') || r.includes('support')) return ShieldCheck;
+    return User;
+  };
 
   return (
     <div className="space-y-6">
@@ -205,46 +226,78 @@ export const OrderTrackingTimeline = ({
         </div>
       )}
 
-      {/* Tracking Events */}
+      {/* Detailed Tracking History (with actor + timestamps + reasons) */}
       {events.length > 0 && (
         <div className="space-y-3">
-          <h4 className="font-medium text-sm text-muted-foreground">{t('tracking.trackingHistory')}</h4>
-          <div className="space-y-3">
-            {events.map((event, index) => (
-              <div
-                key={event.id}
-                className={cn('flex gap-3 text-sm', index === 0 && 'font-medium')}
-              >
-                <div className="flex flex-col items-center">
-                  <div
-                    className={cn(
-                      'w-2 h-2 rounded-full mt-1.5',
-                      index === 0 ? 'bg-success' : 'bg-border'
-                    )}
-                  />
-                  {index < events.length - 1 && (
-                    <div className="w-0.5 flex-1 bg-border mt-1" />
-                  )}
-                </div>
-                <div className="flex-1 pb-3">
-                  <p className={index === 0 ? 'text-foreground' : 'text-muted-foreground'}>
-                    {event.description}
-                  </p>
-                  <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
-                    <span>{format(new Date(event.created_at), 'MMM d, yyyy h:mm a')}</span>
-                    {event.location && (
-                      <>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {event.location}
-                        </span>
-                      </>
-                    )}
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-sm text-foreground">{t('tracking.trackingHistory')}</h4>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {events.length} update{events.length === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="space-y-3">
+              {events.map((event, index) => {
+                const meta = getStatusMeta(event.status);
+                const { actor, base } = parseActor(event.description || '');
+                const { reason, headline } = splitReason(base);
+                const ActorIcon = roleIcon(actor?.role);
+                return (
+                  <div key={event.id} className="flex gap-3 text-sm">
+                    <div className="flex flex-col items-center">
+                      <div className={cn(
+                        'h-7 w-7 rounded-full flex items-center justify-center border',
+                        index === 0 ? meta.badgeClass : 'bg-muted text-muted-foreground border-border'
+                      )}>
+                        <meta.icon className="h-3.5 w-3.5" />
+                      </div>
+                      {index < events.length - 1 && (
+                        <div className="w-0.5 flex-1 bg-border mt-1" />
+                      )}
+                    </div>
+                    <div className="flex-1 pb-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="outline" className={cn('text-[10px] font-semibold', meta.badgeClass)}>
+                          {meta.label}
+                        </Badge>
+                        {actor && (
+                          <Badge variant="outline" className="text-[10px] gap-1 capitalize">
+                            <ActorIcon className="h-2.5 w-2.5" /> {actor.role.replace(/_/g, ' ')}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className={cn('mt-1', index === 0 ? 'text-foreground' : 'text-muted-foreground')}>
+                        {headline || meta.description}
+                      </p>
+                      {reason && (
+                        <p className="mt-1 text-xs italic text-muted-foreground">
+                          “{reason}”
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground mt-1">
+                        <span>{format(new Date(event.created_at), 'MMM d, yyyy h:mm a')}</span>
+                        {actor && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <User className="h-3 w-3" /> {actor.name}
+                            </span>
+                          </>
+                        )}
+                        {event.location && !actor && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" /> {event.location}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

@@ -29,6 +29,8 @@ import { EditOrderModal } from '@/components/admin/EditOrderModal';
 import { CourierDispatchModal } from '@/components/admin/CourierDispatchModal';
 import { CreateOrderModal } from '@/components/admin/CreateOrderModal';
 import { CustomerContactBlock } from '@/components/orders/CustomerContactBlock';
+import { OrderStatusLegend } from '@/components/orders/OrderStatusLegend';
+import { AdminOrderStatusPanel } from '@/components/admin/AdminOrderStatusPanel';
 import { formatRoleLabel } from '@/lib/roleLabels';
 import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
 import { computeFraudFromHistory, persistFraudCache, loadFraudCache, normalizePhone, type FraudResult } from '@/lib/fraudRisk';
@@ -956,6 +958,7 @@ export const AdminOrdersTab = () => {
                 {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <OrderStatusLegend triggerLabel="Status guide" />
             <Select value={fraudLevelFilter} onValueChange={v => { setFraudLevelFilter(v); setCurrentPage(1); }}>
               <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs">
                 <ShieldAlert className="h-3 w-3 mr-1" />
@@ -1539,58 +1542,14 @@ export const AdminOrdersTab = () => {
                           </Select>
                         </div>
 
-                        {/* Fulfillment Status */}
-                        <div className="space-y-1.5">
-                          <Label className="text-xs text-muted-foreground">Fulfillment Status</Label>
-                          <Select
-                            value={detailFulfillmentStatus}
-                            onValueChange={setDetailFulfillmentStatus}
-                          >
-                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="processing">Processing</SelectItem>
-                              <SelectItem value="packaging">Packaging</SelectItem>
-                              <SelectItem value="ready_to_ship">Ready to Ship</SelectItem>
-                              <SelectItem value="sent_to_courier">Sent To Courier</SelectItem>
-                              <SelectItem value="shipped">Shipped</SelectItem>
-                              <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
-                              <SelectItem value="delivered">Delivered</SelectItem>
-                              <SelectItem value="fulfilled">Fulfilled</SelectItem>
-                              <SelectItem value="returned">Returned</SelectItem>
-                              <SelectItem value="cancelled">Cancelled</SelectItem>
-                              <SelectItem value="refunded">Refunded</SelectItem>
-                              <SelectItem value="failed">Failed</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Status Badges */}
-                        <div className="flex flex-wrap gap-2">
-                          <Badge className={cn('text-xs', detailPaymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : detailPaymentStatus === 'refunded' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : detailPaymentStatus === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400')}>
-                            {detailPaymentStatus === 'paid' ? 'Paid' : detailPaymentStatus === 'refunded' ? 'Refunded' : detailPaymentStatus === 'failed' ? 'Failed' : detailPaymentStatus === 'pending' ? 'Pending' : 'Unpaid'}
-                          </Badge>
-                          <Badge className={cn('text-xs', (statusConfig[detailFulfillmentStatus] || statusConfig.pending).color)}>
-                            {detailFulfillmentStatus === 'sent_to_courier' ? 'Sent To Courier' : detailFulfillmentStatus === 'fulfilled' ? 'Fulfilled' : detailFulfillmentStatus === 'completed' ? 'Completed' : detailFulfillmentStatus === 'refunded' ? 'Refunded' : detailFulfillmentStatus === 'failed' ? 'Failed' : (statusConfig[detailFulfillmentStatus] || statusConfig.pending).label}
-                          </Badge>
-                        </div>
-
-                        {/* Update Status Button */}
-                        <Button
-                          className="w-full gap-2"
-                          onClick={async () => {
-                            setUpdating(o.id);
-                            const { error } = await updateOrderStatus(o.id, detailFulfillmentStatus, trackingInfo[o.id]);
-                            if (error) toast.error('Failed to update');
-                            else toast.success('Order status updated');
-                            setUpdating(null);
-                          }}
-                          disabled={updating === o.id}
-                        >
-                          {updating === o.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                          Update Status
-                        </Button>
+                        {/* Fulfillment Status w/ reason */}
+                        <AdminOrderStatusPanel
+                          orderId={o.id}
+                          currentStatus={o.status}
+                          carrier={o.carrier}
+                          trackingNumber={o.tracking_number}
+                          onUpdate={async (id, status, extras) => updateOrderStatus(id, status, extras)}
+                        />
                       </CardContent>
                     </Card>
 
