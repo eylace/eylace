@@ -86,6 +86,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
   const orderItems: NavItem[] = [
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
     { titleKey: 'admin.incomplete.title' as TranslationKey, url: '/admin/incomplete-orders', icon: AlertTriangle },
+    { titleKey: 'admin.mapsOrderData' as TranslationKey, url: '/admin/maps-order-data', icon: Map },
   ];
 
   const sellerItems: NavItem[] = [
