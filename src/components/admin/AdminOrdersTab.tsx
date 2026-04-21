@@ -865,10 +865,10 @@ export const AdminOrdersTab = () => {
                               </>
                             ) : (
                               <>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 border-dashed whitespace-nowrap inline-flex items-center gap-1">
+                                <span className="text-[10px] px-2 py-1 rounded-md bg-primary text-primary-foreground whitespace-nowrap inline-flex items-center gap-1 shadow-sm hover:opacity-90 transition-opacity">
                                   <Truck className="h-2.5 w-2.5" /> Send to Courier
-                                </Badge>
-                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                  <ChevronDown className="h-3 w-3" />
+                                </span>
                               </>
                             )}
                           </button>
