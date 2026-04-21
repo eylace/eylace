@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { orderId, status, carrier, tracking_number } = await req.json();
+    const { orderId, status, carrier, tracking_number, shipping_address } = await req.json();
 
     if (!orderId) {
       return new Response(
@@ -97,6 +97,7 @@ Deno.serve(async (req) => {
     if (status) updateData.status = status;
     if (carrier) updateData.carrier = carrier;
     if (tracking_number) updateData.tracking_number = tracking_number;
+    if (shipping_address && typeof shipping_address === 'object') updateData.shipping_address = shipping_address;
 
     if (status === 'shipped') {
       updateData.shipped_at = new Date().toISOString();
