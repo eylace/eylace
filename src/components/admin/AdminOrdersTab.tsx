@@ -632,22 +632,80 @@ export const AdminOrdersTab = () => {
   };
 
   // Deterministic phone-based fraud analysis with persistent DB cache.
-  // Same phone => identical result. Persisted in fraud_risk_cache.
+  // Same phone => identical result. Cache-first: read from fraud_risk_cache, recompute only on demand.
   const runFraudCheck = useCallback(async (order: any, forceRecompute = false) => {
     if (!order?.id) return;
     const phone = normalizePhone(getOrderCustomerPhone(order));
-    const history = orders.filter((o: any) => {
-      const oPhone = normalizePhone(getOrderCustomerPhone(o));
-      if (phone && oPhone) return oPhone === phone;
-      if (order.user_id && o.user_id) return o.user_id === order.user_id;
-      return o.id === order.id;
-    });
-    const result = computeFraudFromHistory(history);
-    setFraudResults(prev => ({ ...prev, [order.id]: result }));
-    if (phone && (forceRecompute || true)) {
-      void persistFraudCache(phone, result);
+    setFraudChecking(prev => ({ ...prev, [order.id]: true }));
+    try {
+      // Try cache first unless force-recompute
+      if (phone && !forceRecompute) {
+        const cache = await loadFraudCache([phone]);
+        if (cache[phone]) {
+          setFraudResults(prev => ({ ...prev, [order.id]: cache[phone] }));
+          return;
+        }
+      }
+      const history = orders.filter((o: any) => {
+        const oPhone = normalizePhone(getOrderCustomerPhone(o));
+        if (phone && oPhone) return oPhone === phone;
+        if (order.user_id && o.user_id) return o.user_id === order.user_id;
+        return o.id === order.id;
+      });
+      const result = computeFraudFromHistory(history);
+      setFraudResults(prev => ({ ...prev, [order.id]: result }));
+      if (phone) void persistFraudCache(phone, result);
+    } finally {
+      setFraudChecking(prev => { const n = { ...prev }; delete n[order.id]; return n; });
     }
   }, [orders]);
+
+  // On orders load: bulk-restore fraud results from DB cache for all visible phones (one query, no per-row I/O)
+  useEffect(() => {
+    if (orders.length === 0) return;
+    const phoneToOrderIds = new Map<string, string[]>();
+    orders.forEach((o: any) => {
+      const p = normalizePhone(getOrderCustomerPhone(o));
+      if (!p) return;
+      const arr = phoneToOrderIds.get(p) || [];
+      arr.push(o.id);
+      phoneToOrderIds.set(p, arr);
+    });
+    const phones = Array.from(phoneToOrderIds.keys());
+    if (phones.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const cache = await loadFraudCache(phones);
+      if (cancelled) return;
+      setFraudResults(prev => {
+        const next = { ...prev };
+        for (const [phone, ids] of phoneToOrderIds.entries()) {
+          const cached = cache[phone];
+          if (!cached) continue;
+          for (const id of ids) if (!next[id]) next[id] = cached;
+        }
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [orders]);
+
+  // Bulk recompute fraud stats for currently-filtered orders (admin button)
+  const handleRecomputeFiltered = useCallback(async () => {
+    if (filteredOrders.length === 0) { toast.error('No orders to recompute'); return; }
+    setRecomputingAll(true);
+    const seenPhones = new Set<string>();
+    let count = 0;
+    for (const order of filteredOrders) {
+      const phone = normalizePhone(getOrderCustomerPhone(order));
+      if (phone && seenPhones.has(phone)) continue;
+      if (phone) seenPhones.add(phone);
+      await runFraudCheck(order, true);
+      count++;
+    }
+    setRecomputingAll(false);
+    toast.success(`Recomputed fraud risk for ${count} customer(s)`);
+  }, [filteredOrders, runFraudCheck]);
 
   const handleDeleteOrder = async () => {
     const orderId = deleteOrderId;
