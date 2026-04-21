@@ -435,6 +435,9 @@ export const AdminOrdersTab = () => {
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
   const [fraudResults, setFraudResults] = useState<Record<string, FraudResult>>({});
   const [fraudChecking, setFraudChecking] = useState<Record<string, boolean>>({});
+  const [fraudLevelFilter, setFraudLevelFilter] = useState<string>('all');
+  const [fraudSort, setFraudSort] = useState<'none' | 'asc' | 'desc'>('none');
+  const [recomputingAll, setRecomputingAll] = useState(false);
   const { t } = useLanguage();
 
   // Synced top horizontal scrollbar for orders table
@@ -577,7 +580,17 @@ export const AdminOrdersTab = () => {
         getOrderCustomerPhone(o).toLowerCase().includes(q)
       );
     }
+    // Fraud level filter
+    if (fraudLevelFilter !== 'all') {
+      result = result.filter(o => fraudResults[o.id]?.risk_level === fraudLevelFilter);
+    }
     result = [...result].sort((a, b) => {
+      // Fraud score sort wins when active
+      if (fraudSort !== 'none') {
+        const sa = fraudResults[a.id]?.risk_score ?? -1;
+        const sb = fraudResults[b.id]?.risk_score ?? -1;
+        return fraudSort === 'asc' ? sa - sb : sb - sa;
+      }
       if (sortField === 'date') {
         const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         return sortDir === 'asc' ? diff : -diff;
@@ -585,7 +598,7 @@ export const AdminOrdersTab = () => {
       return sortDir === 'asc' ? a.total - b.total : b.total - a.total;
     });
     return result;
-  }, [orders, statusFilter, searchQuery, sortField, sortDir]);
+  }, [orders, statusFilter, searchQuery, sortField, sortDir, fraudLevelFilter, fraudSort, fraudResults]);
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / perPage));
   const paginatedOrders = filteredOrders.slice((currentPage - 1) * perPage, currentPage * perPage);
@@ -629,22 +642,79 @@ export const AdminOrdersTab = () => {
   };
 
   // Deterministic phone-based fraud analysis with persistent DB cache.
-  // Same phone => identical result. Persisted in fraud_risk_cache.
+  // Same phone => identical result. Cache-first: read from fraud_risk_cache, recompute only on demand.
   const runFraudCheck = useCallback(async (order: any, forceRecompute = false) => {
     if (!order?.id) return;
     const phone = normalizePhone(getOrderCustomerPhone(order));
-    const history = orders.filter((o: any) => {
-      const oPhone = normalizePhone(getOrderCustomerPhone(o));
-      if (phone && oPhone) return oPhone === phone;
-      if (order.user_id && o.user_id) return o.user_id === order.user_id;
-      return o.id === order.id;
-    });
-    const result = computeFraudFromHistory(history);
-    setFraudResults(prev => ({ ...prev, [order.id]: result }));
-    if (phone && (forceRecompute || true)) {
-      void persistFraudCache(phone, result);
+    setFraudChecking(prev => ({ ...prev, [order.id]: true }));
+    try {
+      // Try cache first unless force-recompute
+      if (phone && !forceRecompute) {
+        const cache = await loadFraudCache([phone]);
+        if (cache[phone]) {
+          setFraudResults(prev => ({ ...prev, [order.id]: cache[phone] }));
+          return;
+        }
+      }
+      const history = orders.filter((o: any) => {
+        const oPhone = normalizePhone(getOrderCustomerPhone(o));
+        if (phone && oPhone) return oPhone === phone;
+        if (order.user_id && o.user_id) return o.user_id === order.user_id;
+        return o.id === order.id;
+      });
+      const result = computeFraudFromHistory(history);
+      setFraudResults(prev => ({ ...prev, [order.id]: result }));
+      if (phone) void persistFraudCache(phone, result);
+    } finally {
+      setFraudChecking(prev => { const n = { ...prev }; delete n[order.id]; return n; });
     }
   }, [orders]);
+
+  // On orders load: bulk-restore fraud results from DB cache for all visible phones (one query, no per-row I/O)
+  useEffect(() => {
+    if (orders.length === 0) return;
+    const phoneToOrderIds = new Map<string, string[]>();
+    orders.forEach((o: any) => {
+      const p = normalizePhone(getOrderCustomerPhone(o));
+      if (!p) return;
+      const arr = phoneToOrderIds.get(p) || [];
+      arr.push(o.id);
+      phoneToOrderIds.set(p, arr);
+    });
+    const phones = Array.from(phoneToOrderIds.keys());
+    if (phones.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const cache = await loadFraudCache(phones);
+      if (cancelled) return;
+      setFraudResults(prev => {
+        const next = { ...prev };
+        for (const [phone, ids] of phoneToOrderIds.entries()) {
+          const cached = cache[phone];
+          if (!cached) continue;
+          for (const id of ids) if (!next[id]) next[id] = cached;
+        }
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [orders]);
+
+  // Bulk recompute fraud stats for currently-filtered orders (admin button)
+  const handleRecomputeFiltered = useCallback(async () => {
+    setRecomputingAll(true);
+    const seenPhones = new Set<string>();
+    let count = 0;
+    for (const order of orders) {
+      const phone = normalizePhone(getOrderCustomerPhone(order));
+      if (phone && seenPhones.has(phone)) continue;
+      if (phone) seenPhones.add(phone);
+      await runFraudCheck(order, true);
+      count++;
+    }
+    setRecomputingAll(false);
+    toast.success(`Recomputed fraud risk for ${count} customer(s)`);
+  }, [orders, runFraudCheck]);
 
   const handleDeleteOrder = async () => {
     const orderId = deleteOrderId;
@@ -670,14 +740,6 @@ export const AdminOrdersTab = () => {
       setDeleting(false);
     }
   };
-
-  useEffect(() => {
-    paginatedOrders.forEach((order) => {
-      if (!fraudResults[order.id] && !fraudChecking[order.id]) {
-        runFraudCheck(order);
-      }
-    });
-  }, [paginatedOrders, fraudResults, fraudChecking, runFraudCheck]);
 
   const handleBulkDeleteOrders = async () => {
     if (selectedOrders.size === 0) return;
@@ -891,6 +953,41 @@ export const AdminOrdersTab = () => {
                 {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={fraudLevelFilter} onValueChange={v => { setFraudLevelFilter(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs">
+                <ShieldAlert className="h-3 w-3 mr-1" />
+                <SelectValue placeholder="Fraud Level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Risk Levels</SelectItem>
+                <SelectItem value="low">Low Risk</SelectItem>
+                <SelectItem value="medium">Medium Risk</SelectItem>
+                <SelectItem value="high">High Risk</SelectItem>
+                <SelectItem value="critical">Critical Risk</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={fraudSort} onValueChange={(v: any) => { setFraudSort(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs">
+                <ArrowUpDown className="h-3 w-3 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sort: Default</SelectItem>
+                <SelectItem value="desc">Risk: High → Low</SelectItem>
+                <SelectItem value="asc">Risk: Low → High</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={handleRecomputeFiltered}
+              disabled={recomputingAll}
+              title="Recompute fraud risk for all orders using latest history"
+            >
+              {recomputingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              Recompute Fraud
+            </Button>
             <div className="flex items-center gap-2">
               <Select value={String(perPage)} onValueChange={v => { setPerPage(Number(v)); setCurrentPage(1); }}>
                 <SelectTrigger className="w-[64px] h-8 text-xs"><SelectValue /></SelectTrigger>
