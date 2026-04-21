@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, ChevronRight, ShoppingBag, Loader2, Phone, MessageCircle, RotateCcw, XCircle, AlertTriangle } from 'lucide-react';
+import { Package, ChevronRight, ShoppingBag, Loader2, Phone, MessageCircle, RotateCcw, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,8 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { OrderTrackingTimeline } from '@/components/orders/OrderTrackingTimeline';
 import { ReturnRequestModal } from '@/components/orders/ReturnRequestModal';
+import { OrderStatusLegend } from '@/components/orders/OrderStatusLegend';
+import { getCustomerActionEligibility, getStatusMeta } from '@/lib/orderStatusConfig';
 import { toast } from 'sonner';
 
 interface OrderItem {
@@ -199,6 +201,7 @@ const Orders = () => {
                 {t('orders.trackManage')}
               </p>
             </div>
+            <OrderStatusLegend triggerLabel="Status guide" />
           </div>
 
           {orders.length === 0 ? (
@@ -413,43 +416,60 @@ const Orders = () => {
 
                       {/* Action Buttons */}
                       <div className="p-4 flex flex-wrap gap-2 border-b border-border">
-                        {order.status === 'pending' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-destructive border-destructive/30 hover:bg-destructive/10"
-                            onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.id); }}
-                            disabled={cancellingOrder === order.id}
-                          >
-                            {cancellingOrder === order.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                            ) : (
-                              <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                            )}
-                            Cancel Order
-                          </Button>
-                        )}
-                        {order.status === 'delivered' && (() => {
+                        {(() => {
                           const returnedItemIds = new Set(order.return_requests.map(r => r.order_item_id));
                           const unreturned = order.order_items.filter(i => !returnedItemIds.has(i.id));
-                          if (unreturned.length === 0) return null;
+                          const hasOpenReturn = order.return_requests.some(r => ['pending', 'approved', 'picked_up'].includes(r.status));
+                          const hours = order.delivered_at
+                            ? (Date.now() - new Date(order.delivered_at).getTime()) / 36e5
+                            : undefined;
+                          const elig = getCustomerActionEligibility(order.status, hasOpenReturn, hours);
+                          const toneClass = elig.tone === 'destructive'
+                            ? 'bg-destructive/10 text-destructive border-destructive/20'
+                            : elig.tone === 'warning'
+                              ? 'bg-warning/10 text-warning border-warning/20'
+                              : elig.tone === 'success'
+                                ? 'bg-success/10 text-success border-success/20'
+                                : 'bg-muted text-muted-foreground border-border';
                           return (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-accent border-accent/30 hover:bg-accent/10"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setReturnModal({
-                                  orderId: order.id,
-                                  orderNumber: order.order_number,
-                                  items: unreturned,
-                                });
-                              }}
-                            >
-                              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                              Request Return
-                            </Button>
+                            <div className="w-full space-y-2">
+                              <div className={cn('flex items-start gap-2 rounded-md border p-2.5 text-xs', toneClass)}>
+                                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                <span>{elig.message}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {elig.canCancel && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                                    onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.id); }}
+                                    disabled={cancellingOrder === order.id}
+                                  >
+                                    {cancellingOrder === order.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <XCircle className="h-3.5 w-3.5 mr-1.5" />}
+                                    Cancel Order
+                                  </Button>
+                                )}
+                                {elig.canReturn && unreturned.length > 0 && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-accent border-accent/30 hover:bg-accent/10"
+                                    onClick={(e) => { e.stopPropagation(); setReturnModal({ orderId: order.id, orderNumber: order.order_number, items: unreturned }); }}
+                                  >
+                                    <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                                    Request Return / Refund
+                                  </Button>
+                                )}
+                                {(order.status === 'cancelled' || order.status === 'failed' || order.status === 'returned' || order.status === 'refunded') && (
+                                  <Button asChild variant="outline" size="sm">
+                                    <a href="/contact-us" onClick={e => e.stopPropagation()}>
+                                      <MessageCircle className="h-3.5 w-3.5 mr-1.5" /> Contact Support
+                                    </a>
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
                           );
                         })()}
                       </div>
