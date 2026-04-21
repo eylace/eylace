@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminOrderDistrictMap, type DistrictStats, type GeoJsonFeatureCollection } from '@/components/admin/maps/AdminOrderDistrictMap';
+import { AddressMappingAuditDialog, type AddressMappingAuditRow } from '@/components/admin/maps/AddressMappingAuditDialog';
+import { MapStatusLegend } from '@/components/admin/maps/MapStatusLegend';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { BD_DISTRICT_LIST, normalizeDistrict } from '@/data/bdDistrictCoords';
-import { Loader2, MapPin, Search } from 'lucide-react';
+import { BD_DISTRICT_LIST } from '@/data/bdDistrictCoords';
+import { extractDistrictFromText, getShippingAddressDistrictMatch, mapOrderStatusToDistrictBucket } from '@/lib/districtMapping';
+import { Loader2, MapPin, Search, ShieldAlert } from 'lucide-react';
+import { toast } from 'sonner';
 
 const BD_GEOJSON_SOURCES = [
   'https://raw.githubusercontent.com/ifahimreza/bangladesh-geojson/master/bangladesh.geojson',
@@ -36,6 +41,8 @@ const AdminMapsOrderData = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [geojson, setGeojson] = useState<GeoJsonFeatureCollection | null>(null);
   const [geojsonError, setGeojsonError] = useState<string | null>(null);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [savingAuditOrderId, setSavingAuditOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -87,25 +94,18 @@ const AdminMapsOrderData = () => {
     };
   }, [language]);
 
+  const orderDistrictDetails = useMemo(() => {
+    return orders.map((order) => ({
+      order,
+      match: getShippingAddressDistrictMatch(order.shipping_address),
+    }));
+  }, [orders]);
+
   const statsByDistrict = useMemo(() => {
     const districtMap: Record<string, DistrictStats> = {};
 
-    for (const order of orders) {
-      const shippingAddress = order.shipping_address || {};
-      // Try every address-like field; many records only have the district in the freeform `address` line
-      const candidates = [
-        shippingAddress.district,
-        shippingAddress.state,
-        shippingAddress.city,
-        shippingAddress.address,
-        shippingAddress.area,
-      ].filter(Boolean) as string[];
-
-      let districtKey: string | null = null;
-      for (const candidate of candidates) {
-        districtKey = normalizeDistrict(candidate);
-        if (districtKey) break;
-      }
+    for (const { order, match } of orderDistrictDetails) {
+      const districtKey = match.district;
       if (!districtKey) continue;
 
       if (!districtMap[districtKey]) {
@@ -114,19 +114,36 @@ const AdminMapsOrderData = () => {
 
       districtMap[districtKey].total += 1;
 
-      const status = (order.status || '').toLowerCase();
-      if (status === 'pending') districtMap[districtKey].pending += 1;
-      else if (status === 'processing' || status === 'confirmed') districtMap[districtKey].processing += 1;
-      else if (status === 'packaging' || status === 'packed') districtMap[districtKey].packaging += 1;
-      else if (status === 'sent_to_courier' || status === 'shipped' || status === 'in_transit' || status === 'out_for_delivery') districtMap[districtKey].inCourier += 1;
-      else if (status === 'ready_to_ship') districtMap[districtKey].readyToShip += 1;
-      else if (status === 'delivered' || status === 'completed') districtMap[districtKey].delivered += 1;
-      else if (status === 'cancelled' || status === 'canceled') districtMap[districtKey].cancelled += 1;
-      else if (status === 'failed' || status === 'returned' || status === 'refunded') districtMap[districtKey].failed += 1;
+      const statusBucket = mapOrderStatusToDistrictBucket(order.status || '');
+      if (statusBucket) districtMap[districtKey][statusBucket] += 1;
     }
 
     return districtMap;
-  }, [orders]);
+  }, [orderDistrictDetails]);
+
+  const auditRows = useMemo<AddressMappingAuditRow[]>(() => {
+    return orderDistrictDetails
+      .filter(({ match }) => match.issue !== 'ok')
+      .map(({ order, match }) => {
+        const shippingAddress = order.shipping_address || {};
+        const name = [shippingAddress.first_name || shippingAddress.firstName, shippingAddress.last_name || shippingAddress.lastName].filter(Boolean).join(' ') || 'Guest';
+        const addressText = match.rawValues.map((entry) => `${entry.field}: ${entry.value}`).join(' • ') || String(shippingAddress.address || '');
+
+        return {
+          id: order.id,
+          orderNumber: order.order_number,
+          customerName: name,
+          phone: shippingAddress.phone || order.guest_phone || '',
+          status: order.status || '',
+          addressText,
+          issue: match.issue === 'unmatched' ? 'unmatched' : 'review',
+          issueLabel: match.issue === 'unmatched' ? (language === 'bn' ? 'District পাওয়া যায়নি' : 'No district match') : (language === 'bn' ? 'রিভিউ দরকার' : 'Needs review'),
+          sourceField: match.sourceField,
+          suggestedDistrict: match.district,
+          matchedAlias: match.matchedAlias,
+        };
+      });
+  }, [language, orderDistrictDetails]);
 
   const filteredDistricts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -138,6 +155,34 @@ const AdminMapsOrderData = () => {
   }, [search]);
 
   const selectedStats = selectedDistrict ? (statsByDistrict[selectedDistrict] || EMPTY_STATS) : null;
+
+  const handleAuditSave = async (orderId: string, district: string) => {
+    if (!district) return;
+    const target = orders.find((order) => order.id === orderId);
+    if (!target) return;
+
+    setSavingAuditOrderId(orderId);
+    try {
+      const shippingAddress = { ...(target.shipping_address || {}) };
+      shippingAddress.district = district;
+      if (!shippingAddress.state || extractDistrictFromText(shippingAddress.state).district == null) {
+        shippingAddress.state = district;
+      }
+
+      const { error } = await supabase.functions.invoke('admin-update-order', {
+        body: { orderId, shipping_address: shippingAddress },
+      });
+
+      if (error) throw error;
+
+      setOrders((current) => current.map((order) => order.id === orderId ? { ...order, shipping_address: shippingAddress } : order));
+      toast.success(language === 'bn' ? 'District mapping update হয়েছে' : 'District mapping updated');
+    } catch (error: any) {
+      toast.error(error?.message || (language === 'bn' ? 'Update failed' : 'Update failed'));
+    } finally {
+      setSavingAuditOrderId(null);
+    }
+  };
 
   const labels = language === 'bn'
     ? {
@@ -158,6 +203,17 @@ const AdminMapsOrderData = () => {
         processing: 'প্রসেসিং',
         packaging: 'প্যাকেজিং',
         inCourier: 'কুরিয়ারে',
+        statusLegend: 'স্ট্যাটাস লেজেন্ড',
+        statusLegendHint: 'সব জেলা ও popup-এ একই counting rule ব্যবহার করা হচ্ছে।',
+        pendingHelp: 'নতুন অর্ডার, এখনো প্রসেস শুরু হয়নি।',
+        processingHelp: 'অর্ডার কনফার্ম বা প্রসেসিংয়ে আছে।',
+        packagingHelp: 'পণ্য প্যাক বা ready-for-pickup ধাপে আছে।',
+        readyHelp: 'কুরিয়ারে দেওয়ার জন্য প্রস্তুত।',
+        inCourierHelp: 'কুরিয়ার/শিপড/ট্রানজিট/আউট ফর ডেলিভারি।',
+        deliveredHelp: 'সফলভাবে ডেলিভারি সম্পন্ন হয়েছে।',
+        cancelledHelp: 'ম্যানুয়ালি বাতিল করা অর্ডার।',
+        failedHelp: 'ফেল/রিটার্ন/রিফান্ড হওয়া অর্ডার।',
+        audit: 'Address mapping audit',
       }
     : {
         title: 'Maps Order Data',
@@ -177,6 +233,17 @@ const AdminMapsOrderData = () => {
         processing: 'Processing',
         packaging: 'Packaging',
         inCourier: 'In Courier',
+        statusLegend: 'Status legend',
+        statusLegendHint: 'The same counting rules are used in the district popup and sync panel.',
+        pendingHelp: 'New orders waiting for confirmation or payment follow-up.',
+        processingHelp: 'Confirmed or actively being processed by the team.',
+        packagingHelp: 'Packed or staged for pickup before handoff.',
+        readyHelp: 'Ready to be handed to courier.',
+        inCourierHelp: 'Sent to courier, shipped, in transit, or out for delivery.',
+        deliveredHelp: 'Successfully delivered/completed orders.',
+        cancelledHelp: 'Orders cancelled before completion.',
+        failedHelp: 'Failed delivery, returned, or refunded orders.',
+        audit: 'Address mapping audit',
       };
 
   return (
@@ -207,6 +274,11 @@ const AdminMapsOrderData = () => {
                     className="h-8 pl-7 text-xs"
                   />
                 </div>
+
+                <Button type="button" variant="outline" size="sm" className="mb-3 w-full justify-start gap-2" onClick={() => setAuditOpen(true)}>
+                  <ShieldAlert className="h-4 w-4" />
+                  {labels.audit}
+                </Button>
 
                 <div className="max-h-[560px] overflow-y-auto divide-y divide-border">
                   {filteredDistricts.map((district) => {
@@ -249,6 +321,10 @@ const AdminMapsOrderData = () => {
                   statsByDistrict={statsByDistrict}
                   onSelectDistrict={setSelectedDistrict}
                 />
+
+                <div className="border-t border-border p-3">
+                  <MapStatusLegend labels={labels} stats={selectedStats || undefined} />
+                </div>
 
                 {selectedDistrict && selectedStats ? (
                   <div className="grid grid-cols-2 gap-3 border-t border-border p-3 md:grid-cols-3 lg:grid-cols-9">
@@ -299,6 +375,15 @@ const AdminMapsOrderData = () => {
           </div>
         )}
       </div>
+
+      <AddressMappingAuditDialog
+        open={auditOpen}
+        onOpenChange={setAuditOpen}
+        rows={auditRows}
+        language={language}
+        savingOrderId={savingAuditOrderId}
+        onSaveFix={handleAuditSave}
+      />
     </AdminLayout>
   );
 };
