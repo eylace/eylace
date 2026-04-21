@@ -110,8 +110,9 @@ const AdminMapsOrderData = () => {
 
   // Fetch GeoJSON boundaries
   useEffect(() => {
-    (async () => {
       let mounted = true;
+
+    void (async () => {
       try {
         for (const url of BD_GEOJSON_SOURCES) {
           const res = await fetch(url);
@@ -127,11 +128,11 @@ const AdminMapsOrderData = () => {
       } catch {
         if (mounted) setGeojsonError('Failed to load district boundary data.');
       }
-
-      return () => {
-        mounted = false;
-      };
     })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Compute stats per district
@@ -263,51 +264,65 @@ const AdminMapsOrderData = () => {
               <CardContent className="p-0">
                 <div className="h-[600px] w-full bg-muted/20">
                   {mapReady ? (
-                    <MapContainer
-                      center={[23.685, 90.3563]}
-                      zoom={7}
-                      style={{ height: '100%', width: '100%' }}
-                      scrollWheelZoom
+                    <MapErrorBoundary
+                      fallback={
+                        <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                          <p className="text-sm font-medium text-foreground">Map preview is temporarily unavailable.</p>
+                          <p className="text-xs text-muted-foreground">District list and order totals are still available on the left.</p>
+                        </div>
+                      }
                     >
-                      <InvalidateOnMount />
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      {geojson && (
-                        <GeoJSON
-                          key={selectedDistrict || 'none'}
-                          data={geojson}
-                          style={geoJsonStyle as any}
-                          onEachFeature={onEachFeature}
+                      <MapContainer
+                        center={[23.685, 90.3563]}
+                        zoom={7}
+                        style={{ height: '100%', width: '100%' }}
+                        scrollWheelZoom
+                      >
+                        <InvalidateOnMount />
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
-                      )}
-                      {selectedDistrict && selectedCoords && selectedStats && (
-                        <Marker position={selectedCoords}>
-                          <Popup>
-                            <div className="min-w-[180px]">
-                              <div className="font-bold text-sm mb-1.5 text-foreground">
-                                {(language === 'bn' ? BD_DISTRICT_COORDS[selectedDistrict].nameBn : selectedDistrict)} District, Bangladesh
+                        {geojson && (
+                          <GeoJSON
+                            key={selectedDistrict || 'none'}
+                            data={geojson}
+                            style={geoJsonStyle as any}
+                            onEachFeature={onEachFeature}
+                          />
+                        )}
+                        {selectedDistrict && selectedCoords && selectedStats && (
+                          <Marker position={selectedCoords}>
+                            <Popup>
+                              <div className="min-w-[180px]">
+                                <div className="font-bold text-sm mb-1.5 text-foreground">
+                                  {(language === 'bn' ? BD_DISTRICT_COORDS[selectedDistrict].nameBn : selectedDistrict)} District, Bangladesh
+                                </div>
+                                <div className="space-y-0.5 text-xs">
+                                  <div><strong>{labels.total}:</strong> {selectedStats.total} pcs</div>
+                                  <div><strong>{labels.ready}:</strong> {selectedStats.readyToShip} pcs</div>
+                                  <div><strong>{labels.delivered}:</strong> {selectedStats.delivered} pcs</div>
+                                  <div><strong>{labels.cancelled}:</strong> {selectedStats.cancelled} pcs</div>
+                                  <div><strong>{labels.failed}:</strong> {selectedStats.failed} pcs</div>
+                                </div>
                               </div>
-                              <div className="space-y-0.5 text-xs">
-                                <div><strong>{labels.total}:</strong> {selectedStats.total} pcs</div>
-                                <div><strong>{labels.ready}:</strong> {selectedStats.readyToShip} pcs</div>
-                                <div><strong>{labels.delivered}:</strong> {selectedStats.delivered} pcs</div>
-                                <div><strong>{labels.cancelled}:</strong> {selectedStats.cancelled} pcs</div>
-                                <div><strong>{labels.failed}:</strong> {selectedStats.failed} pcs</div>
-                              </div>
-                            </div>
-                          </Popup>
-                        </Marker>
-                      )}
-                      <FlyTo coords={selectedCoords} />
-                    </MapContainer>
+                            </Popup>
+                          </Marker>
+                        )}
+                        <FlyTo coords={selectedCoords} />
+                      </MapContainer>
+                    </MapErrorBoundary>
                   ) : (
                     <div className="flex h-full items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                   )}
                 </div>
+                {geojsonError && (
+                  <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+                    {geojsonError}
+                  </div>
+                )}
                 {!selectedDistrict && (
                   <div className="p-3 text-center text-xs text-muted-foreground border-t border-border">
                     {labels.clickHint}
