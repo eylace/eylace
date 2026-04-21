@@ -224,6 +224,7 @@ const AdminMapsOrderData = () => {
                     style={{ height: '100%', width: '100%' }}
                     scrollWheelZoom
                   >
+                    <InvalidateOnMount />
                     <TileLayer
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
