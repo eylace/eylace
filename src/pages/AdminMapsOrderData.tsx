@@ -154,6 +154,10 @@ const AdminMapsOrderData = () => {
         noDistricts: 'কোনো জেলা পাওয়া যায়নি',
         mapLoading: 'ম্যাপ লোড হচ্ছে...',
         mapFallback: 'বাউন্ডারি ম্যাপ না পাওয়া গেলে fallback district map চালু থাকবে।',
+        pending: 'পেন্ডিং',
+        processing: 'প্রসেসিং',
+        packaging: 'প্যাকেজিং',
+        inCourier: 'কুরিয়ারে',
       }
     : {
         title: 'Maps Order Data',
@@ -169,6 +173,10 @@ const AdminMapsOrderData = () => {
         noDistricts: 'No districts found',
         mapLoading: 'Loading map...',
         mapFallback: 'Boundary data is unavailable, so the fallback district map will remain active.',
+        pending: 'Pending',
+        processing: 'Processing',
+        packaging: 'Packaging',
+        inCourier: 'In Courier',
       };
 
   return (
