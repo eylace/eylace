@@ -628,44 +628,22 @@ export const AdminOrdersTab = () => {
     setCourierDispatchOrder(order);
   };
 
-  // Deterministic phone-based fraud analysis.
-  // Same phone => identical result every time. No AI randomness.
-  const runFraudCheck = useCallback((order: any) => {
+  // Deterministic phone-based fraud analysis with persistent DB cache.
+  // Same phone => identical result. Persisted in fraud_risk_cache.
+  const runFraudCheck = useCallback(async (order: any, forceRecompute = false) => {
     if (!order?.id) return;
-    const phone = (getOrderCustomerPhone(order) || '').replace(/\D/g, '');
-    // Aggregate this customer's full order history by phone (fallback: by user_id)
+    const phone = normalizePhone(getOrderCustomerPhone(order));
     const history = orders.filter((o: any) => {
-      const oPhone = (getOrderCustomerPhone(o) || '').replace(/\D/g, '');
+      const oPhone = normalizePhone(getOrderCustomerPhone(o));
       if (phone && oPhone) return oPhone === phone;
       if (order.user_id && o.user_id) return o.user_id === order.user_id;
       return o.id === order.id;
     });
-    const successStatuses = new Set(['delivered', 'completed', 'fulfilled']);
-    const failedStatuses = new Set(['cancelled', 'failed', 'refunded']);
-    const total = history.length;
-    const success = history.filter((o: any) => successStatuses.has(o.status)).length;
-    const failed = history.filter((o: any) => failedStatuses.has(o.status)).length;
-    // Deterministic risk score: failure ratio weighted, plus penalties for very new accounts with cancellations
-    const completed = success + failed;
-    let risk_score = 0;
-    if (completed > 0) {
-      risk_score = Math.round((failed / completed) * 100);
-    } else if (total === 0) {
-      risk_score = 25; // unknown baseline
-    } else {
-      risk_score = 15; // pending only — slight unknown
+    const result = computeFraudFromHistory(history);
+    setFraudResults(prev => ({ ...prev, [order.id]: result }));
+    if (phone && (forceRecompute || true)) {
+      void persistFraudCache(phone, result);
     }
-    // Penalty if many failures regardless of ratio
-    if (failed >= 3) risk_score = Math.min(100, risk_score + 10);
-    risk_score = Math.max(0, Math.min(100, risk_score));
-    const risk_level: string =
-      risk_score >= 75 ? 'critical' :
-      risk_score >= 50 ? 'high' :
-      risk_score >= 25 ? 'medium' : 'low';
-    setFraudResults(prev => ({
-      ...prev,
-      [order.id]: { risk_score, risk_level, total, success, failed },
-    }));
   }, [orders]);
 
   const handleDeleteOrder = async () => {
