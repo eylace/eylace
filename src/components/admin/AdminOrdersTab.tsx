@@ -128,6 +128,8 @@ export const AdminOrdersTab = () => {
   const [couriers, setCouriers] = useState<CourierOption[]>([]);
   const [detailPaymentStatus, setDetailPaymentStatus] = useState('unpaid');
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
+  const [fraudResults, setFraudResults] = useState<Record<string, { risk_score: number; risk_level: string }>>({});
+  const [fraudChecking, setFraudChecking] = useState<Record<string, boolean>>({});
   const { t } = useLanguage();
 
   // Synced top horizontal scrollbar for orders table
@@ -320,6 +322,39 @@ export const AdminOrdersTab = () => {
     setDispatchProvider(courier.code);
     setCourierDispatchOrder(order);
   };
+
+  const runFraudCheck = useCallback(async (order: any) => {
+    if (!order?.id || fraudChecking[order.id] || fraudResults[order.id]) return;
+    setFraudChecking(prev => ({ ...prev, [order.id]: true }));
+    try {
+      const shipping = order.shipping_address || {};
+      const { data, error } = await supabase.functions.invoke('fraud-check', {
+        body: {
+          customerEmail: order.profile?.email || order.guest_email || shipping.email || null,
+          customerPhone: order.profile?.phone || order.guest_phone || shipping.phone || null,
+          customerName: getOrderCustomerName(order),
+          orderHistory: [order],
+        },
+      });
+      if (error) throw error;
+      if (data?.analysis) {
+        setFraudResults(prev => ({
+          ...prev,
+          [order.id]: {
+            risk_score: Number(data.analysis.risk_score) || 0,
+            risk_level: String(data.analysis.risk_level || 'low'),
+          },
+        }));
+      }
+    } catch {
+      setFraudResults(prev => ({
+        ...prev,
+        [order.id]: { risk_score: 0, risk_level: 'unknown' },
+      }));
+    } finally {
+      setFraudChecking(prev => ({ ...prev, [order.id]: false }));
+    }
+  }, [fraudChecking, fraudResults]);
 
   const handleDeleteOrder = async () => {
     const orderId = deleteOrderId;
