@@ -580,7 +580,17 @@ export const AdminOrdersTab = () => {
         getOrderCustomerPhone(o).toLowerCase().includes(q)
       );
     }
+    // Fraud level filter
+    if (fraudLevelFilter !== 'all') {
+      result = result.filter(o => fraudResults[o.id]?.risk_level === fraudLevelFilter);
+    }
     result = [...result].sort((a, b) => {
+      // Fraud score sort wins when active
+      if (fraudSort !== 'none') {
+        const sa = fraudResults[a.id]?.risk_score ?? -1;
+        const sb = fraudResults[b.id]?.risk_score ?? -1;
+        return fraudSort === 'asc' ? sa - sb : sb - sa;
+      }
       if (sortField === 'date') {
         const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         return sortDir === 'asc' ? diff : -diff;
@@ -588,7 +598,7 @@ export const AdminOrdersTab = () => {
       return sortDir === 'asc' ? a.total - b.total : b.total - a.total;
     });
     return result;
-  }, [orders, statusFilter, searchQuery, sortField, sortDir]);
+  }, [orders, statusFilter, searchQuery, sortField, sortDir, fraudLevelFilter, fraudSort, fraudResults]);
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / perPage));
   const paginatedOrders = filteredOrders.slice((currentPage - 1) * perPage, currentPage * perPage);
