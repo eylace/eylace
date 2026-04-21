@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Component, type ErrorInfo, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,9 +18,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const BD_GEOJSON_URL = 'https://raw.githubusercontent.com/strativ-dev/technical-test-task/main/bd-districts.json';
-// Fallback: a well-known BD districts geojson
-const BD_GEOJSON_FALLBACK = 'https://raw.githubusercontent.com/Akash-goyal-github/Bangladesh-GeoJSON/master/bd_districts.geojson';
+const BD_GEOJSON_SOURCES = [
+  'https://raw.githubusercontent.com/ifahimreza/bangladesh-geojson/master/bangladesh.geojson',
+];
+
+interface GeoJsonFeatureCollection {
+  type: 'FeatureCollection';
+  features: any[];
+}
 
 interface DistrictStats {
   total: number;
@@ -28,6 +33,33 @@ interface DistrictStats {
   delivered: number;
   cancelled: number;
   failed: number;
+}
+
+const isFeatureCollection = (value: unknown): value is GeoJsonFeatureCollection => {
+  return !!value && typeof value === 'object' && (value as GeoJsonFeatureCollection).type === 'FeatureCollection' && Array.isArray((value as GeoJsonFeatureCollection).features);
+};
+
+const getFeatureDistrictKey = (feature: any) => {
+  const props = feature?.properties || {};
+  const featureName: string = props.NAME_2 || props.NAME_3 || props.name || props.District || props.district || props.DIST_NAME || '';
+  return normalizeDistrict(featureName);
+};
+
+class MapErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('AdminMapsOrderData map render failed:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
 }
 
 function FlyTo({ coords }: { coords: [number, number] | null }) {
@@ -56,6 +88,7 @@ const AdminMapsOrderData = () => {
   const [search, setSearch] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [geojson, setGeojson] = useState<any>(null);
+  const [geojsonError, setGeojsonError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   // Fetch orders
@@ -77,20 +110,29 @@ const AdminMapsOrderData = () => {
 
   // Fetch GeoJSON boundaries
   useEffect(() => {
-    (async () => {
+      let mounted = true;
+
+    void (async () => {
       try {
-        const res = await fetch(BD_GEOJSON_URL);
-        if (res.ok) {
+        for (const url of BD_GEOJSON_SOURCES) {
+          const res = await fetch(url);
+          if (!res.ok) continue;
           const json = await res.json();
-          setGeojson(json);
-          return;
+          if (mounted && isFeatureCollection(json)) {
+            setGeojson(json);
+            setGeojsonError(null);
+            return;
+          }
         }
-      } catch {}
-      try {
-        const res2 = await fetch(BD_GEOJSON_FALLBACK);
-        if (res2.ok) setGeojson(await res2.json());
-      } catch {}
+        if (mounted) setGeojsonError('District boundary data is unavailable right now.');
+      } catch {
+        if (mounted) setGeojsonError('Failed to load district boundary data.');
+      }
     })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Compute stats per district
@@ -120,7 +162,7 @@ const AdminMapsOrderData = () => {
     );
   }, [search]);
 
-  const selectedCoords: [number, number] | null = selectedDistrict
+  const selectedCoords: [number, number] | null = selectedDistrict && BD_DISTRICT_COORDS[selectedDistrict]
     ? [BD_DISTRICT_COORDS[selectedDistrict].lat, BD_DISTRICT_COORDS[selectedDistrict].lng]
     : null;
 
@@ -128,21 +170,17 @@ const AdminMapsOrderData = () => {
 
   // GeoJSON style — highlight selected district orange
   const geoJsonStyle = (feature: any) => {
-    const props = feature?.properties || {};
-    const featureName: string = props.NAME_2 || props.name || props.District || props.district || props.DIST_NAME || '';
-    const isSelected = selectedDistrict && normalizeDistrict(featureName) === selectedDistrict;
+    const isSelected = selectedDistrict && getFeatureDistrictKey(feature) === selectedDistrict;
     return {
-      color: isSelected ? 'hsl(24, 95%, 53%)' : 'hsl(215, 20%, 65%)',
+      color: isSelected ? 'hsl(var(--primary))' : 'hsl(var(--border))',
       weight: isSelected ? 2.5 : 0.6,
-      fillColor: isSelected ? 'hsl(24, 95%, 53%)' : 'hsl(215, 20%, 90%)',
+      fillColor: isSelected ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
       fillOpacity: isSelected ? 0.45 : 0.05,
     };
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
-    const props = feature?.properties || {};
-    const featureName: string = props.NAME_2 || props.name || props.District || props.district || props.DIST_NAME || '';
-    const key = normalizeDistrict(featureName);
+    const key = getFeatureDistrictKey(feature);
     if (!key) return;
     layer.on({
       click: () => setSelectedDistrict(key),
@@ -226,51 +264,65 @@ const AdminMapsOrderData = () => {
               <CardContent className="p-0">
                 <div className="h-[600px] w-full bg-muted/20">
                   {mapReady ? (
-                    <MapContainer
-                      center={[23.685, 90.3563]}
-                      zoom={7}
-                      style={{ height: '100%', width: '100%' }}
-                      scrollWheelZoom
+                    <MapErrorBoundary
+                      fallback={
+                        <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+                          <p className="text-sm font-medium text-foreground">Map preview is temporarily unavailable.</p>
+                          <p className="text-xs text-muted-foreground">District list and order totals are still available on the left.</p>
+                        </div>
+                      }
                     >
-                      <InvalidateOnMount />
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      {geojson && (
-                        <GeoJSON
-                          key={selectedDistrict || 'none'}
-                          data={geojson}
-                          style={geoJsonStyle as any}
-                          onEachFeature={onEachFeature}
+                      <MapContainer
+                        center={[23.685, 90.3563]}
+                        zoom={7}
+                        style={{ height: '100%', width: '100%' }}
+                        scrollWheelZoom
+                      >
+                        <InvalidateOnMount />
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
-                      )}
-                      {selectedDistrict && selectedCoords && selectedStats && (
-                        <Marker position={selectedCoords}>
-                          <Popup>
-                            <div className="min-w-[180px]">
-                              <div className="font-bold text-sm mb-1.5 text-foreground">
-                                {(language === 'bn' ? BD_DISTRICT_COORDS[selectedDistrict].nameBn : selectedDistrict)} District, Bangladesh
+                        {geojson && (
+                          <GeoJSON
+                            key={selectedDistrict || 'none'}
+                            data={geojson}
+                            style={geoJsonStyle as any}
+                            onEachFeature={onEachFeature}
+                          />
+                        )}
+                        {selectedDistrict && selectedCoords && selectedStats && (
+                          <Marker position={selectedCoords}>
+                            <Popup>
+                              <div className="min-w-[180px]">
+                                <div className="font-bold text-sm mb-1.5 text-foreground">
+                                  {(language === 'bn' ? BD_DISTRICT_COORDS[selectedDistrict].nameBn : selectedDistrict)} District, Bangladesh
+                                </div>
+                                <div className="space-y-0.5 text-xs">
+                                  <div><strong>{labels.total}:</strong> {selectedStats.total} pcs</div>
+                                  <div><strong>{labels.ready}:</strong> {selectedStats.readyToShip} pcs</div>
+                                  <div><strong>{labels.delivered}:</strong> {selectedStats.delivered} pcs</div>
+                                  <div><strong>{labels.cancelled}:</strong> {selectedStats.cancelled} pcs</div>
+                                  <div><strong>{labels.failed}:</strong> {selectedStats.failed} pcs</div>
+                                </div>
                               </div>
-                              <div className="space-y-0.5 text-xs">
-                                <div><strong>{labels.total}:</strong> {selectedStats.total} pcs</div>
-                                <div><strong>{labels.ready}:</strong> {selectedStats.readyToShip} pcs</div>
-                                <div><strong>{labels.delivered}:</strong> {selectedStats.delivered} pcs</div>
-                                <div><strong>{labels.cancelled}:</strong> {selectedStats.cancelled} pcs</div>
-                                <div><strong>{labels.failed}:</strong> {selectedStats.failed} pcs</div>
-                              </div>
-                            </div>
-                          </Popup>
-                        </Marker>
-                      )}
-                      <FlyTo coords={selectedCoords} />
-                    </MapContainer>
+                            </Popup>
+                          </Marker>
+                        )}
+                        <FlyTo coords={selectedCoords} />
+                      </MapContainer>
+                    </MapErrorBoundary>
                   ) : (
                     <div className="flex h-full items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
                   )}
                 </div>
+                {geojsonError && (
+                  <div className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
+                    {geojsonError}
+                  </div>
+                )}
                 {!selectedDistrict && (
                   <div className="p-3 text-center text-xs text-muted-foreground border-t border-border">
                     {labels.clickHint}
