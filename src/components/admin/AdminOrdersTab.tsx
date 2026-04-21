@@ -107,7 +107,7 @@ const getAvatarColor = (name: string) => {
 // =================== Fraud Risk Card (inline in Order Details modal) ===================
 interface OrderFraudCardProps {
   order: any;
-  result?: { risk_score: number; risk_level: string };
+  result?: { risk_score: number; risk_level: string; total: number; success: number; failed: number };
   loading?: boolean;
   onRecheck: () => void;
 }
@@ -115,6 +115,9 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
   const score = result?.risk_score ?? 0;
   const level = result?.risk_level ?? 'unknown';
   const successRate = Math.max(0, Math.min(100, 100 - score));
+  const total = result?.total ?? 0;
+  const success = result?.success ?? 0;
+  const failed = result?.failed ?? 0;
   const ringColor =
     level === 'high' || level === 'critical' ? 'hsl(var(--destructive))' :
     level === 'medium' ? '#f59e0b' :
@@ -165,15 +168,15 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-muted/40 p-2 text-center">
             <div className="text-[10px] text-muted-foreground">Total</div>
-            <div className="text-base font-bold text-foreground">15</div>
+            <div className="text-base font-bold text-foreground">{total}</div>
           </div>
           <div className="rounded-lg bg-emerald-500/10 p-2 text-center">
             <div className="text-[10px] text-emerald-600">Success</div>
-            <div className="text-base font-bold text-emerald-600">11</div>
+            <div className="text-base font-bold text-emerald-600">{success}</div>
           </div>
           <div className="rounded-lg bg-destructive/10 p-2 text-center">
             <div className="text-[10px] text-destructive">Failed</div>
-            <div className="text-base font-bold text-destructive">3</div>
+            <div className="text-base font-bold text-destructive">{failed}</div>
           </div>
         </div>
 
