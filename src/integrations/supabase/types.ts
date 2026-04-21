@@ -203,6 +203,30 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_phones: {
+        Row: {
+          blocked_by: string | null
+          created_at: string
+          id: string
+          phone: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_by?: string | null
+          created_at?: string
+          id?: string
+          phone: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_by?: string | null
+          created_at?: string
+          id?: string
+          phone?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           created_at: string

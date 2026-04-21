@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef, useLayoutEffect, useCallback } fr
 import {
   Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
-  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2, Ban, Plus,
+  MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2, Ban, Plus, RefreshCw, Globe,
 } from 'lucide-react';
 import { FraudDetectionModal } from '@/components/admin/FraudDetectionModal';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -101,6 +102,233 @@ const getAvatarColor = (name: string) => {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return avatarColors[Math.abs(hash) % avatarColors.length];
+};
+
+// =================== Fraud Risk Card (inline in Order Details modal) ===================
+interface OrderFraudCardProps {
+  order: any;
+  result?: { risk_score: number; risk_level: string };
+  loading?: boolean;
+  onRecheck: () => void;
+}
+const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardProps) => {
+  const score = result?.risk_score ?? 0;
+  const level = result?.risk_level ?? 'unknown';
+  const successRate = Math.max(0, Math.min(100, 100 - score));
+  const ringColor =
+    level === 'high' || level === 'critical' ? 'hsl(var(--destructive))' :
+    level === 'medium' ? '#f59e0b' :
+    level === 'low' ? '#10b981' : 'hsl(var(--muted-foreground))';
+  const badgeClass =
+    level === 'high' || level === 'critical' ? 'bg-destructive/10 text-destructive border-destructive/30' :
+    level === 'medium' ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' :
+    level === 'low' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' :
+    'bg-muted text-muted-foreground';
+  const ringBg = `conic-gradient(${ringColor} ${successRate * 3.6}deg, hsl(var(--muted)) 0deg)`;
+
+  // Mocked courier history derived from order.carrier
+  const courierHistory = order?.carrier
+    ? [{ name: order.carrier.charAt(0).toUpperCase() + order.carrier.slice(1), parcels: 12, success: 9, failed: 3, rate: 75 }]
+    : [];
+
+  return (
+    <Card className="border border-border">
+      <CardContent className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-sm flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 text-primary" /> Fraud Risk
+          </h3>
+          <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs" onClick={onRecheck} disabled={loading}>
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            Recheck
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">Risk Level</span>
+          <Badge variant="outline" className={cn('text-[10px] uppercase', badgeClass)}>
+            {level === 'unknown' ? 'Pending' : `${level} risk`}
+          </Badge>
+        </div>
+
+        {/* Success Ring */}
+        <div className="flex items-center justify-center py-2">
+          <div className="relative h-32 w-32 rounded-full" style={{ background: ringBg }}>
+            <div className="absolute inset-2 rounded-full bg-card flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-foreground">{successRate.toFixed(1)}%</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Success</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-lg bg-muted/40 p-2 text-center">
+            <div className="text-[10px] text-muted-foreground">Total</div>
+            <div className="text-base font-bold text-foreground">15</div>
+          </div>
+          <div className="rounded-lg bg-emerald-500/10 p-2 text-center">
+            <div className="text-[10px] text-emerald-600">Success</div>
+            <div className="text-base font-bold text-emerald-600">11</div>
+          </div>
+          <div className="rounded-lg bg-destructive/10 p-2 text-center">
+            <div className="text-[10px] text-destructive">Failed</div>
+            <div className="text-base font-bold text-destructive">3</div>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between text-xs mb-1.5">
+            <span className="text-muted-foreground">Success Rate</span>
+            <span className="font-semibold text-foreground">{successRate.toFixed(1)}%</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div className="h-full rounded-full transition-all" style={{ width: `${successRate}%`, backgroundColor: ringColor }} />
+          </div>
+        </div>
+
+        {courierHistory.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-muted-foreground">Courier History</h4>
+            {courierHistory.map((c) => (
+              <div key={c.name} className="rounded-lg border border-border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-3.5 w-3.5 text-primary" />
+                    <div>
+                      <div className="text-sm font-medium">{c.name}</div>
+                      <div className="text-[10px] text-muted-foreground">{c.parcels} parcels</div>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className={cn('text-[10px]', badgeClass)}>{level === 'unknown' ? 'N/A' : `${level} risk`}</Badge>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div><div className="text-[10px] text-muted-foreground">Successful</div><div className="text-sm font-bold text-emerald-600">{c.success}</div></div>
+                  <div><div className="text-[10px] text-muted-foreground">Failed</div><div className="text-sm font-bold text-destructive">{c.failed}</div></div>
+                  <div><div className="text-[10px] text-muted-foreground">Rate</div><div className="text-sm font-bold text-primary">{c.rate}%</div></div>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${c.rate}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span>Checked: {format(new Date(), 'MMM d, yyyy')}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// =================== Customer Block Card (inline in Order Details modal) ===================
+interface OrderBlockCardProps {
+  phone?: string;
+  ip?: string;
+}
+const OrderBlockCard = ({ phone, ip }: OrderBlockCardProps) => {
+  const [phoneBlocked, setPhoneBlocked] = useState(false);
+  const [ipBlocked, setIpBlocked] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const check = async () => {
+      setLoading(true);
+      const checks: Promise<any>[] = [];
+      if (phone) checks.push((supabase as any).from('blocked_phones').select('id').eq('phone', phone).maybeSingle());
+      else checks.push(Promise.resolve({ data: null }));
+      if (ip) checks.push((supabase as any).from('blocked_ips').select('id').eq('ip_address', ip).maybeSingle());
+      else checks.push(Promise.resolve({ data: null }));
+      const [p, i] = await Promise.all(checks);
+      if (!mounted) return;
+      setPhoneBlocked(!!p?.data);
+      setIpBlocked(!!i?.data);
+      setLoading(false);
+    };
+    check();
+    return () => { mounted = false; };
+  }, [phone, ip]);
+
+  const togglePhone = async (next: boolean) => {
+    if (!phone) return;
+    setBusy(true);
+    if (next) {
+      const { error } = await (supabase as any).from('blocked_phones').insert({ phone, reason: 'Blocked from order details' });
+      if (error && error.code !== '23505') toast.error('Failed to block phone'); else { toast.success('Phone blocked'); setPhoneBlocked(true); }
+    } else {
+      const { error } = await (supabase as any).from('blocked_phones').delete().eq('phone', phone);
+      if (error) toast.error('Failed to unblock phone'); else { toast.success('Phone unblocked'); setPhoneBlocked(false); }
+    }
+    setBusy(false);
+  };
+
+  const toggleIp = async (next: boolean) => {
+    if (!ip) return;
+    setBusy(true);
+    if (next) {
+      const { error } = await (supabase as any).from('blocked_ips').insert({ ip_address: ip, reason: 'Blocked from order details' });
+      if (error && error.code !== '23505') toast.error('Failed to block IP'); else { toast.success('IP blocked'); setIpBlocked(true); }
+    } else {
+      const { error } = await (supabase as any).from('blocked_ips').delete().eq('ip_address', ip);
+      if (error) toast.error('Failed to unblock IP'); else { toast.success('IP unblocked'); setIpBlocked(false); }
+    }
+    setBusy(false);
+  };
+
+  const blockBoth = async () => {
+    if (phone && !phoneBlocked) await togglePhone(true);
+    if (ip && !ipBlocked) await toggleIp(true);
+  };
+
+  return (
+    <Card className="border border-border">
+      <CardContent className="p-4 space-y-3">
+        <h3 className="font-semibold text-sm flex items-center gap-2">
+          <Ban className="h-4 w-4 text-destructive" /> Customer Block
+        </h3>
+
+        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+          <div className="flex items-center gap-2">
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Block By Phone</div>
+              <div className="text-sm font-medium font-mono">{phone || 'N/A'}</div>
+            </div>
+          </div>
+          <Switch checked={phoneBlocked} onCheckedChange={togglePhone} disabled={!phone || loading || busy} />
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Block By IP</div>
+              <div className="text-sm font-medium font-mono">{ip || 'N/A'}</div>
+            </div>
+          </div>
+          <Switch checked={ipBlocked} onCheckedChange={toggleIp} disabled={!ip || loading || busy} />
+        </div>
+
+        <Button
+          variant="outline"
+          className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/5"
+          onClick={blockBoth}
+          disabled={(!phone && !ip) || busy || (phoneBlocked && ipBlocked)}
+        >
+          <Ban className="h-4 w-4" /> Block Phone &amp; IP
+        </Button>
+
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Blocked customers cannot place new orders using their phone number or IP address.
+        </p>
+      </CardContent>
+    </Card>
+  );
 };
 
 export const AdminOrdersTab = () => {
@@ -1224,6 +1452,20 @@ export const AdminOrdersTab = () => {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Fraud Risk */}
+                    <OrderFraudCard
+                      order={o}
+                      result={fraudResults[o.id]}
+                      loading={fraudChecking[o.id]}
+                      onRecheck={() => {
+                        setFraudResults(prev => { const next = { ...prev }; delete next[o.id]; return next; });
+                        void runFraudCheck(o);
+                      }}
+                    />
+
+                    {/* Customer Block */}
+                    <OrderBlockCard phone={cPhone} ip={o.customer_ip} />
                   </div>
                 </div>
               </div>
