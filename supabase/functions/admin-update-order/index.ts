@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { orderId, status, carrier, tracking_number, shipping_address } = await req.json();
+    const { orderId, status, carrier, tracking_number, shipping_address, reason, actor_role: actorRoleOverride } = await req.json();
 
     if (!orderId) {
       return new Response(
@@ -139,19 +139,33 @@ Deno.serve(async (req) => {
       pending: 'Order has been placed and is awaiting processing',
       confirmed: 'Order has been confirmed and accepted',
       processing: 'Order is being prepared for shipment',
+      packaging: 'Order items are being packaged',
+      ready_to_ship: 'Order is packed and ready for courier pickup',
+      sent_to_courier: `Order handed over to courier${carrier ? ` (${carrier})` : ''}`,
       shipped: `Order has been shipped${carrier ? ` via ${carrier}` : ''}${tracking_number ? ` (Tracking: ${tracking_number})` : ''}`,
       out_for_delivery: 'Order is out for delivery to your address',
       delivered: 'Order has been delivered',
+      completed: 'Order has been completed',
+      fulfilled: 'Order has been fully fulfilled',
+      returned: 'Order has been returned by the customer',
+      refunded: 'Refund has been processed for this order',
+      failed: 'Order delivery has failed',
       cancelled: 'Order has been cancelled',
     };
 
     if (status) {
+      const actorName = updateData.assigned_user_name || 'Admin';
+      const actorRole = actorRoleOverride || updateData.assigned_role || 'admin';
+      const baseDescription = statusDescriptions[status] || `Status updated to ${status}`;
+      const reasonSuffix = reason ? ` — Reason: ${reason}` : '';
+      const actorSuffix = ` (by ${actorName} · ${actorRole})`;
       await supabaseAdmin
         .from('order_tracking_events')
         .insert({
           order_id: orderId,
           status,
-          description: statusDescriptions[status] || `Status updated to ${status}`,
+          description: `${baseDescription}${reasonSuffix}${actorSuffix}`,
+          location: actorRole,
         });
     }
 
