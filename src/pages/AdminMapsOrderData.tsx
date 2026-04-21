@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Component, type ErrorInfo, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,9 +18,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const BD_GEOJSON_URL = 'https://raw.githubusercontent.com/strativ-dev/technical-test-task/main/bd-districts.json';
-// Fallback: a well-known BD districts geojson
-const BD_GEOJSON_FALLBACK = 'https://raw.githubusercontent.com/Akash-goyal-github/Bangladesh-GeoJSON/master/bd_districts.geojson';
+const BD_GEOJSON_SOURCES = [
+  'https://raw.githubusercontent.com/ifahimreza/bangladesh-geojson/master/bangladesh.geojson',
+];
+
+interface GeoJsonFeatureCollection {
+  type: 'FeatureCollection';
+  features: any[];
+}
 
 interface DistrictStats {
   total: number;
@@ -28,6 +33,33 @@ interface DistrictStats {
   delivered: number;
   cancelled: number;
   failed: number;
+}
+
+const isFeatureCollection = (value: unknown): value is GeoJsonFeatureCollection => {
+  return !!value && typeof value === 'object' && (value as GeoJsonFeatureCollection).type === 'FeatureCollection' && Array.isArray((value as GeoJsonFeatureCollection).features);
+};
+
+const getFeatureDistrictKey = (feature: any) => {
+  const props = feature?.properties || {};
+  const featureName: string = props.NAME_2 || props.NAME_3 || props.name || props.District || props.district || props.DIST_NAME || '';
+  return normalizeDistrict(featureName);
+};
+
+class MapErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('AdminMapsOrderData map render failed:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
 }
 
 function FlyTo({ coords }: { coords: [number, number] | null }) {
@@ -56,6 +88,7 @@ const AdminMapsOrderData = () => {
   const [search, setSearch] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [geojson, setGeojson] = useState<any>(null);
+  const [geojsonError, setGeojsonError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
 
   // Fetch orders
@@ -78,18 +111,26 @@ const AdminMapsOrderData = () => {
   // Fetch GeoJSON boundaries
   useEffect(() => {
     (async () => {
+      let mounted = true;
       try {
-        const res = await fetch(BD_GEOJSON_URL);
-        if (res.ok) {
+        for (const url of BD_GEOJSON_SOURCES) {
+          const res = await fetch(url);
+          if (!res.ok) continue;
           const json = await res.json();
-          setGeojson(json);
-          return;
+          if (mounted && isFeatureCollection(json)) {
+            setGeojson(json);
+            setGeojsonError(null);
+            return;
+          }
         }
-      } catch {}
-      try {
-        const res2 = await fetch(BD_GEOJSON_FALLBACK);
-        if (res2.ok) setGeojson(await res2.json());
-      } catch {}
+        if (mounted) setGeojsonError('District boundary data is unavailable right now.');
+      } catch {
+        if (mounted) setGeojsonError('Failed to load district boundary data.');
+      }
+
+      return () => {
+        mounted = false;
+      };
     })();
   }, []);
 
@@ -120,7 +161,7 @@ const AdminMapsOrderData = () => {
     );
   }, [search]);
 
-  const selectedCoords: [number, number] | null = selectedDistrict
+  const selectedCoords: [number, number] | null = selectedDistrict && BD_DISTRICT_COORDS[selectedDistrict]
     ? [BD_DISTRICT_COORDS[selectedDistrict].lat, BD_DISTRICT_COORDS[selectedDistrict].lng]
     : null;
 
@@ -128,21 +169,17 @@ const AdminMapsOrderData = () => {
 
   // GeoJSON style — highlight selected district orange
   const geoJsonStyle = (feature: any) => {
-    const props = feature?.properties || {};
-    const featureName: string = props.NAME_2 || props.name || props.District || props.district || props.DIST_NAME || '';
-    const isSelected = selectedDistrict && normalizeDistrict(featureName) === selectedDistrict;
+    const isSelected = selectedDistrict && getFeatureDistrictKey(feature) === selectedDistrict;
     return {
-      color: isSelected ? 'hsl(24, 95%, 53%)' : 'hsl(215, 20%, 65%)',
+      color: isSelected ? 'hsl(var(--primary))' : 'hsl(var(--border))',
       weight: isSelected ? 2.5 : 0.6,
-      fillColor: isSelected ? 'hsl(24, 95%, 53%)' : 'hsl(215, 20%, 90%)',
+      fillColor: isSelected ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
       fillOpacity: isSelected ? 0.45 : 0.05,
     };
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
-    const props = feature?.properties || {};
-    const featureName: string = props.NAME_2 || props.name || props.District || props.district || props.DIST_NAME || '';
-    const key = normalizeDistrict(featureName);
+    const key = getFeatureDistrictKey(feature);
     if (!key) return;
     layer.on({
       click: () => setSelectedDistrict(key),
