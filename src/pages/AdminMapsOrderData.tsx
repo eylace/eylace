@@ -22,6 +22,10 @@ const EMPTY_STATS: DistrictStats = {
   delivered: 0,
   cancelled: 0,
   failed: 0,
+  pending: 0,
+  processing: 0,
+  inCourier: 0,
+  packaging: 0,
 };
 
 const AdminMapsOrderData = () => {
@@ -88,8 +92,20 @@ const AdminMapsOrderData = () => {
 
     for (const order of orders) {
       const shippingAddress = order.shipping_address || {};
-      const candidate = shippingAddress.state || shippingAddress.city || shippingAddress.district || '';
-      const districtKey = normalizeDistrict(candidate);
+      // Try every address-like field; many records only have the district in the freeform `address` line
+      const candidates = [
+        shippingAddress.district,
+        shippingAddress.state,
+        shippingAddress.city,
+        shippingAddress.address,
+        shippingAddress.area,
+      ].filter(Boolean) as string[];
+
+      let districtKey: string | null = null;
+      for (const candidate of candidates) {
+        districtKey = normalizeDistrict(candidate);
+        if (districtKey) break;
+      }
       if (!districtKey) continue;
 
       if (!districtMap[districtKey]) {
@@ -99,10 +115,14 @@ const AdminMapsOrderData = () => {
       districtMap[districtKey].total += 1;
 
       const status = (order.status || '').toLowerCase();
-      if (status === 'processing' || status === 'confirmed' || status === 'pending') districtMap[districtKey].readyToShip += 1;
-      else if (status === 'delivered') districtMap[districtKey].delivered += 1;
+      if (status === 'pending') districtMap[districtKey].pending += 1;
+      else if (status === 'processing' || status === 'confirmed') districtMap[districtKey].processing += 1;
+      else if (status === 'packaging' || status === 'packed') districtMap[districtKey].packaging += 1;
+      else if (status === 'sent_to_courier' || status === 'shipped' || status === 'in_transit' || status === 'out_for_delivery') districtMap[districtKey].inCourier += 1;
+      else if (status === 'ready_to_ship') districtMap[districtKey].readyToShip += 1;
+      else if (status === 'delivered' || status === 'completed') districtMap[districtKey].delivered += 1;
       else if (status === 'cancelled' || status === 'canceled') districtMap[districtKey].cancelled += 1;
-      else if (status === 'failed' || status === 'returned') districtMap[districtKey].failed += 1;
+      else if (status === 'failed' || status === 'returned' || status === 'refunded') districtMap[districtKey].failed += 1;
     }
 
     return districtMap;
