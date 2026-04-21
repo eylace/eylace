@@ -1268,7 +1268,7 @@ export const AdminOrdersTab = () => {
                         }}
                         disabled={updating === order.id}
                       >
-                        <SelectTrigger className="h-7 w-auto min-w-[130px] border-0 p-0 shadow-none focus:ring-0 [&>svg]:ml-1">
+                        <SelectTrigger className="h-7 w-auto border-0 p-0 shadow-none focus:ring-0 gap-1 [&>svg]:ml-0.5">
                           <Badge className={cn('text-[10px] px-2 py-0.5 font-medium whitespace-nowrap cursor-pointer', status.color)}>
                             {updating === order.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                             {status.label}
