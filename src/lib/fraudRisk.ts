@@ -37,14 +37,14 @@ export const normalizePhone = (raw: string | undefined | null): string => {
 };
 
 export const computeFraudFromHistory = (history: any[]): FraudResult => {
-  const counts: Record<string, number> = {
+  const counts = {
     delivered: 0, completed: 0, fulfilled: 0,
     cancelled: 0, failed: 0, refunded: 0,
     pending: 0, processing: 0, sent_to_courier: 0, shipped: 0,
   };
   history.forEach((o: any) => {
     const s = (o?.status || 'pending').toLowerCase();
-    if (counts[s] !== undefined) counts[s] += 1;
+    if (s in counts) (counts as any)[s] += 1;
   });
 
   const success = counts.delivered + counts.completed + counts.fulfilled;
