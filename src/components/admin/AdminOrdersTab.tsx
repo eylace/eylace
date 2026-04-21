@@ -435,6 +435,9 @@ export const AdminOrdersTab = () => {
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
   const [fraudResults, setFraudResults] = useState<Record<string, FraudResult>>({});
   const [fraudChecking, setFraudChecking] = useState<Record<string, boolean>>({});
+  const [fraudLevelFilter, setFraudLevelFilter] = useState<string>('all');
+  const [fraudSort, setFraudSort] = useState<'none' | 'asc' | 'desc'>('none');
+  const [recomputingAll, setRecomputingAll] = useState(false);
   const { t } = useLanguage();
 
   // Synced top horizontal scrollbar for orders table
