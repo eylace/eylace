@@ -622,7 +622,7 @@ export const AdminOrdersTab = () => {
   useEffect(() => {
     paginatedOrders.forEach((order) => {
       if (!fraudResults[order.id] && !fraudChecking[order.id]) {
-        void runFraudCheck(order);
+        runFraudCheck(order);
       }
     });
   }, [paginatedOrders, fraudResults, fraudChecking, runFraudCheck]);
@@ -1218,7 +1218,7 @@ export const AdminOrdersTab = () => {
                             size="sm"
                             className="h-7 px-2 text-[11px] font-medium"
                             onClick={() => {
-                              void runFraudCheck(order);
+                              runFraudCheck(order);
                               setFraudOrder(order);
                             }}
                           >
@@ -1470,7 +1470,7 @@ export const AdminOrdersTab = () => {
                       loading={fraudChecking[o.id]}
                       onRecheck={() => {
                         setFraudResults(prev => { const next = { ...prev }; delete next[o.id]; return next; });
-                        void runFraudCheck(o);
+                        runFraudCheck(o);
                       }}
                     />
 
