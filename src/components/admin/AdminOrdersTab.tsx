@@ -953,6 +953,41 @@ export const AdminOrdersTab = () => {
                 {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={fraudLevelFilter} onValueChange={v => { setFraudLevelFilter(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs">
+                <ShieldAlert className="h-3 w-3 mr-1" />
+                <SelectValue placeholder="Fraud Level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Risk Levels</SelectItem>
+                <SelectItem value="low">Low Risk</SelectItem>
+                <SelectItem value="medium">Medium Risk</SelectItem>
+                <SelectItem value="high">High Risk</SelectItem>
+                <SelectItem value="critical">Critical Risk</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={fraudSort} onValueChange={(v: any) => { setFraudSort(v); setCurrentPage(1); }}>
+              <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs">
+                <ArrowUpDown className="h-3 w-3 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sort: Default</SelectItem>
+                <SelectItem value="desc">Risk: High → Low</SelectItem>
+                <SelectItem value="asc">Risk: Low → High</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={handleRecomputeFiltered}
+              disabled={recomputingAll}
+              title="Recompute fraud risk for all orders using latest history"
+            >
+              {recomputingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              Recompute Fraud
+            </Button>
             <div className="flex items-center gap-2">
               <Select value={String(perPage)} onValueChange={v => { setPerPage(Number(v)); setCurrentPage(1); }}>
                 <SelectTrigger className="w-[64px] h-8 text-xs"><SelectValue /></SelectTrigger>
