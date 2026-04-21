@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { BD_DISTRICT_COORDS, BD_DISTRICT_LIST, normalizeDistrict } from '@/data/bdDistrictCoords';
+import { BD_DISTRICT_LIST, normalizeDistrict } from '@/data/bdDistrictCoords';
 import { Loader2, MapPin, Search } from 'lucide-react';
 
 const BD_GEOJSON_SOURCES = [
