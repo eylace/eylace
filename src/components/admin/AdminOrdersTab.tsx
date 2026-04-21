@@ -603,6 +603,23 @@ export const AdminOrdersTab = () => {
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / perPage));
   const paginatedOrders = filteredOrders.slice((currentPage - 1) * perPage, currentPage * perPage);
 
+  // Bulk recompute fraud stats for currently-filtered orders (admin button)
+  const handleRecomputeFiltered = useCallback(async () => {
+    if (filteredOrders.length === 0) { toast.error('No orders to recompute'); return; }
+    setRecomputingAll(true);
+    const seenPhones = new Set<string>();
+    let count = 0;
+    for (const order of filteredOrders) {
+      const phone = normalizePhone(getOrderCustomerPhone(order));
+      if (phone && seenPhones.has(phone)) continue;
+      if (phone) seenPhones.add(phone);
+      await runFraudCheck(order, true);
+      count++;
+    }
+    setRecomputingAll(false);
+    toast.success(`Recomputed fraud risk for ${count} customer(s)`);
+  }, [filteredOrders, runFraudCheck]);
+
   const toggleSelect = (id: string) => {
     setSelectedOrders(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   };
