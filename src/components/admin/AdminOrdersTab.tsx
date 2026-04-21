@@ -1279,9 +1279,7 @@ export const AdminOrdersTab = () => {
                               className="text-[10px] font-semibold whitespace-nowrap"
                             >
                               <ShieldAlert className="mr-1 h-3 w-3" />
-                              {fraudResults[order.id].risk_level === 'unknown'
-                                ? 'Check'
-                                : `${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
+                              {`${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
                             </Badge>
                             <Button
                               type="button"
