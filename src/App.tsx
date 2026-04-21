@@ -134,6 +134,7 @@ const AdminAISettings = lazy(() => import("./pages/AdminAISettings"));
 const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics"));
 const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
 const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders"));
+const AdminMapsOrderData = lazy(() => import("./pages/AdminMapsOrderData"));
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
 const AdminReturnsRefunds = lazy(() => import("./pages/AdminReturnsRefunds"));
 const AdminAffiliateProgram = lazy(() => import("./pages/AdminAffiliateProgram"));
@@ -307,6 +308,7 @@ const App = () => (
                 <Route path="/admin/tracking" element={<AdminTrackingAnalytics />} />
                 <Route path="/admin/menu-manager" element={<AdminMenuManager />} />
                 <Route path="/admin/incomplete-orders" element={<AdminIncompleteOrders />} />
+                <Route path="/admin/maps-order-data" element={<AdminMapsOrderData />} />
                 <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
                 <Route path="/admin/returns" element={<AdminReturnsRefunds />} />
                 <Route path="/admin/affiliate" element={<AdminAffiliateProgram />} />

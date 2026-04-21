@@ -1033,6 +1033,7 @@ export const translations = {
 
   // ========== Admin Dashboard: Incomplete Orders ==========
   'admin.incomplete.title': { en: 'Incomplete Orders', bn: 'ইনকমপ্লিট অর্ডার' },
+  'admin.mapsOrderData': { en: 'Maps Order Data', bn: 'ম্যাপস অর্ডার ডেটা' },
   'admin.incomplete.abandoned': { en: 'abandoned', bn: 'অ্যাবান্ডনড' },
   'admin.incomplete.total': { en: 'total', bn: 'টোটাল' },
   'admin.incomplete.loading': { en: 'Loading...', bn: 'লোড হচ্ছে...' },
