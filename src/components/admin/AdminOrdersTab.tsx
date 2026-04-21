@@ -864,12 +864,11 @@ export const AdminOrdersTab = () => {
                                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
                               </>
                             ) : (
-                              <>
-                                <span className="text-[10px] px-2 py-1 rounded-md bg-primary text-primary-foreground whitespace-nowrap inline-flex items-center gap-1 shadow-sm hover:opacity-90 transition-opacity">
-                                  <Truck className="h-2.5 w-2.5" /> Send to Courier
-                                  <ChevronDown className="h-3 w-3" />
-                                </span>
-                              </>
+                              <span className="text-xs font-bold px-3 py-1.5 rounded-md bg-primary text-primary-foreground whitespace-nowrap inline-flex items-center gap-1.5 shadow-sm hover:bg-primary/90 transition-colors">
+                                <Truck className="h-3.5 w-3.5" />
+                                Send to Courier
+                                <ChevronDown className="h-3 w-3" />
+                              </span>
                             )}
                           </button>
                         </DropdownMenuTrigger>
