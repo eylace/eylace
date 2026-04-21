@@ -1,4 +1,4 @@
-import { Package, ClipboardCheck, Clock, Truck, Navigation, CheckCircle, MapPin } from 'lucide-react';
+import { Package, ClipboardCheck, Clock, Truck, Navigation, CheckCircle, MapPin, Box, Send, XCircle, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -26,6 +26,9 @@ const statusStepKeys = [
   { key: 'pending', icon: Package, translationKey: 'tracking.pending' },
   { key: 'confirmed', icon: ClipboardCheck, translationKey: 'tracking.confirmed' },
   { key: 'processing', icon: Clock, translationKey: 'tracking.processing' },
+  { key: 'packaging', icon: Box, translationKey: 'tracking.packaging' },
+  { key: 'ready_to_ship', icon: Package, translationKey: 'tracking.readyToShip' },
+  { key: 'sent_to_courier', icon: Send, translationKey: 'tracking.sentToCourier' },
   { key: 'shipped', icon: Truck, translationKey: 'tracking.shipped' },
   { key: 'out_for_delivery', icon: Navigation, translationKey: 'tracking.outForDelivery' },
   { key: 'delivered', icon: CheckCircle, translationKey: 'tracking.delivered' },
@@ -36,10 +39,18 @@ const getStepIndex = (status: string) => {
     pending: 0,
     confirmed: 1,
     processing: 2,
-    shipped: 3,
-    out_for_delivery: 4,
-    delivered: 5,
+    packaging: 3,
+    ready_to_ship: 4,
+    sent_to_courier: 5,
+    shipped: 6,
+    out_for_delivery: 7,
+    delivered: 8,
+    completed: 8,
+    fulfilled: 8,
     cancelled: -1,
+    failed: -1,
+    returned: -2,
+    refunded: -2,
   };
   return map[status] ?? 0;
 };

@@ -14,9 +14,11 @@ import { cn } from "@/lib/utils";
 import { ReturnReceipt } from "@/components/orders/ReturnReceipt";
 
 const orderStatusSteps = [
-  { key: 'pending', icon: Clock, label: 'Order Placed', desc: 'Your order has been placed' },
-  { key: 'confirmed', icon: CheckCircle, label: 'Confirmed', desc: 'Order confirmed by seller' },
+  { key: 'pending', icon: CheckCircle, label: 'Order Placed Confirmed', desc: 'Your order has been placed and confirmed' },
   { key: 'processing', icon: Package, label: 'Processing', desc: 'Order is being prepared' },
+  { key: 'packaging', icon: Package, label: 'Packaging', desc: 'Items are being packaged' },
+  { key: 'ready_to_ship', icon: Package, label: 'Ready to Ship', desc: 'Package is ready for courier pickup' },
+  { key: 'sent_to_courier', icon: Truck, label: 'Sent To Courier', desc: 'Handed over to courier service' },
   { key: 'shipped', icon: Truck, label: 'Shipped', desc: 'On the way to delivery hub' },
   { key: 'out_for_delivery', icon: MapPin, label: 'Out for Delivery', desc: 'Arriving today' },
   { key: 'delivered', icon: CheckCircle, label: 'Delivered', desc: 'Package delivered' },
