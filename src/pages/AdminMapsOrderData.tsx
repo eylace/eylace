@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -56,15 +56,22 @@ const AdminMapsOrderData = () => {
   const [search, setSearch] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [geojson, setGeojson] = useState<any>(null);
-  const popupRef = useRef<L.Popup | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   // Fetch orders
   useEffect(() => {
+    setMapReady(true);
+  }, []);
+
+  useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase.functions.invoke('admin-get-orders');
-      setOrders(data?.orders || []);
-      setLoading(false);
+      try {
+        const { data } = await supabase.functions.invoke('admin-get-orders');
+        setOrders(data?.orders || []);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
