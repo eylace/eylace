@@ -31,6 +31,7 @@ import { CreateOrderModal } from '@/components/admin/CreateOrderModal';
 import { CustomerContactBlock } from '@/components/orders/CustomerContactBlock';
 import { formatRoleLabel } from '@/lib/roleLabels';
 import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
+import { computeFraudFromHistory, persistFraudCache, loadFraudCache, normalizePhone, type FraudResult } from '@/lib/fraudRisk';
 
 interface CourierOption {
   id: string;
