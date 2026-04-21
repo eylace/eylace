@@ -29,6 +29,8 @@ import { EditOrderModal } from '@/components/admin/EditOrderModal';
 import { CourierDispatchModal } from '@/components/admin/CourierDispatchModal';
 import { CreateOrderModal } from '@/components/admin/CreateOrderModal';
 import { CustomerContactBlock } from '@/components/orders/CustomerContactBlock';
+import { OrderStatusLegend } from '@/components/orders/OrderStatusLegend';
+import { AdminOrderStatusPanel } from '@/components/admin/AdminOrderStatusPanel';
 import { formatRoleLabel } from '@/lib/roleLabels';
 import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
 import { computeFraudFromHistory, persistFraudCache, loadFraudCache, normalizePhone, type FraudResult } from '@/lib/fraudRisk';
@@ -956,6 +958,7 @@ export const AdminOrdersTab = () => {
                 {Object.entries(statusConfig).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
               </SelectContent>
             </Select>
+            <OrderStatusLegend triggerLabel="Status guide" />
             <Select value={fraudLevelFilter} onValueChange={v => { setFraudLevelFilter(v); setCurrentPage(1); }}>
               <SelectTrigger className="w-full sm:w-[140px] h-8 text-xs">
                 <ShieldAlert className="h-3 w-3 mr-1" />
