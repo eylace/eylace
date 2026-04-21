@@ -359,7 +359,7 @@ export const AdminOrdersTab = () => {
   const [couriers, setCouriers] = useState<CourierOption[]>([]);
   const [detailPaymentStatus, setDetailPaymentStatus] = useState('unpaid');
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
-  const [fraudResults, setFraudResults] = useState<Record<string, { risk_score: number; risk_level: string }>>({});
+  const [fraudResults, setFraudResults] = useState<Record<string, { risk_score: number; risk_level: string; total: number; success: number; failed: number }>>({});
   const [fraudChecking, setFraudChecking] = useState<Record<string, boolean>>({});
   const { t } = useLanguage();
 
