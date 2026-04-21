@@ -1068,7 +1068,7 @@ export const AdminOrdersTab = () => {
           <div style={{ width: tableScrollWidth, height: 1 }} />
         </div>
         <div ref={tableScrollRef} onScroll={onTableScroll} className="overflow-x-auto">
-          <Table className="[&_th]:pl-[-0.625rem] [&_th]:pr-[-0.625rem] [&_td]:pl-[-0.625rem] [&_td]:pr-[-0.625rem] [&_th]:py-2 [&_td]:py-1.5">
+          <Table className="[&_th]:px-2 [&_td]:px-2 [&_th]:py-2 [&_td]:py-1.5">
             <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="w-6 pr-0">
@@ -1268,7 +1268,7 @@ export const AdminOrdersTab = () => {
                         }}
                         disabled={updating === order.id}
                       >
-                        <SelectTrigger className="h-7 w-auto min-w-[130px] border-0 p-0 shadow-none focus:ring-0 [&>svg]:ml-1">
+                        <SelectTrigger className="h-7 w-auto border-0 p-0 shadow-none focus:ring-0 gap-1 [&>svg]:ml-0.5">
                           <Badge className={cn('text-[10px] px-2 py-0.5 font-medium whitespace-nowrap cursor-pointer', status.color)}>
                             {updating === order.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                             {status.label}
