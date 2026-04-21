@@ -76,7 +76,7 @@ const ADDRESS_STOPWORDS = [
 ];
 
 const DISTRICT_ALIAS_GROUPS: Partial<Record<string, string[]>> = {
-  Barguna: ['barguna', 'borguna', 'বরগুনা'],
+  Barguna: ['barguna', 'borguna', 'borgona', 'বরগুনা'],
   Barisal: ['barisal', 'barishal', 'বরিশাল'],
   Bhola: ['bhola', 'ভোলা'],
   Jhalokati: ['jhalokati', 'jhalakati', 'jhalakathi', 'ঝালকাঠি'],
