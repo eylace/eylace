@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L, { type GeoJSON as LeafletGeoJSON, type Layer, type Map as LeafletMap } from 'leaflet';
 import { Loader2 } from 'lucide-react';
-import { BD_DISTRICT_COORDS, BD_DISTRICT_LIST, normalizeDistrict } from '@/data/bdDistrictCoords';
+import { BD_DISTRICT_COORDS, BD_DISTRICT_LIST } from '@/data/bdDistrictCoords';
+import { getDistrictStatusLegend, getFeatureDistrictKey, type DistrictMapLabels } from '@/lib/districtMapping';
 import 'leaflet/dist/leaflet.css';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -32,19 +33,7 @@ interface AdminOrderDistrictMapProps {
   geojson: GeoJsonFeatureCollection | null;
   geojsonError: string | null;
   language: string;
-  labels: {
-    total: string;
-    ready: string;
-    delivered: string;
-    cancelled: string;
-    failed: string;
-    mapLoading: string;
-    mapFallback: string;
-    pending: string;
-    processing: string;
-    inCourier: string;
-    packaging: string;
-  };
+  labels: DistrictMapLabels;
   selectedDistrict: string | null;
   statsByDistrict: Record<string, DistrictStats>;
   onSelectDistrict: (district: string) => void;
@@ -68,12 +57,6 @@ const resolveColorToken = (tokenName: string, fallback: string) => {
   return value ? `hsl(${value})` : fallback;
 };
 
-const getFeatureDistrictKey = (feature: any) => {
-  const props = feature?.properties || {};
-  const featureName: string = props.NAME_2 || props.NAME_3 || props.name || props.District || props.district || props.DIST_NAME || '';
-  return normalizeDistrict(featureName);
-};
-
 const getPopupHtml = (
   district: string,
   language: string,
@@ -83,6 +66,22 @@ const getPopupHtml = (
   const districtLabel = language === 'bn'
     ? (BD_DISTRICT_COORDS[district]?.nameBn || district)
     : district;
+
+  const statusColors = {
+    pending: resolveColorToken('--warning', 'hsl(45 93% 47%)'),
+    processing: resolveColorToken('--accent', 'hsl(199 89% 48%)'),
+    packaging: resolveColorToken('--secondary', 'hsl(215 16% 47%)'),
+    readyToShip: resolveColorToken('--primary', 'hsl(24 95% 53%)'),
+    inCourier: resolveColorToken('--primary', 'hsl(24 95% 53%)'),
+    delivered: resolveColorToken('--success', 'hsl(142 71% 45%)'),
+    cancelled: resolveColorToken('--destructive', 'hsl(0 72% 51%)'),
+    failed: resolveColorToken('--destructive', 'hsl(0 72% 51%)'),
+  };
+
+  const legendHtml = getDistrictStatusLegend(labels).map((item) => {
+    const dotColor = statusColors[item.key as keyof typeof statusColors] || statusColors.processing;
+    return `<div style="display:flex;align-items:flex-start;gap:6px;margin-top:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:999px;background:${dotColor};margin-top:4px;"></span><div><div style="font-weight:600;">${item.label}</div><div style="opacity:.72;">${item.description}</div></div></div>`;
+  }).join('');
 
   return `
     <div style="min-width:180px">
@@ -97,6 +96,10 @@ const getPopupHtml = (
         <div><strong>${labels.delivered}:</strong> ${stats.delivered} pcs</div>
         <div><strong>${labels.cancelled}:</strong> ${stats.cancelled} pcs</div>
         <div><strong>${labels.failed}:</strong> ${stats.failed} pcs</div>
+      </div>
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(148,163,184,.3);font-size:11px;line-height:1.45;">
+        <div style="font-weight:700;margin-bottom:2px;">${labels.statusLegend}</div>
+        ${legendHtml}
       </div>
     </div>
   `;
