@@ -1452,6 +1452,20 @@ export const AdminOrdersTab = () => {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Fraud Risk */}
+                    <OrderFraudCard
+                      order={o}
+                      result={fraudResults[o.id]}
+                      loading={fraudChecking[o.id]}
+                      onRecheck={() => {
+                        setFraudResults(prev => { const next = { ...prev }; delete next[o.id]; return next; });
+                        void runFraudCheck(o);
+                      }}
+                    />
+
+                    {/* Customer Block */}
+                    <OrderBlockCard phone={cPhone} ip={o.customer_ip} />
                   </div>
                 </div>
               </div>
