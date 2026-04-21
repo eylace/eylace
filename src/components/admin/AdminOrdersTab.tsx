@@ -700,7 +700,21 @@ export const AdminOrdersTab = () => {
     return () => { cancelled = true; };
   }, [orders]);
 
-  // (handleRecomputeFiltered moved below filteredOrders declaration)
+  // Bulk recompute fraud stats for currently-filtered orders (admin button)
+  const handleRecomputeFiltered = useCallback(async () => {
+    setRecomputingAll(true);
+    const seenPhones = new Set<string>();
+    let count = 0;
+    for (const order of orders) {
+      const phone = normalizePhone(getOrderCustomerPhone(order));
+      if (phone && seenPhones.has(phone)) continue;
+      if (phone) seenPhones.add(phone);
+      await runFraudCheck(order, true);
+      count++;
+    }
+    setRecomputingAll(false);
+    toast.success(`Recomputed fraud risk for ${count} customer(s)`);
+  }, [orders, runFraudCheck]);
 
   const handleDeleteOrder = async () => {
     const orderId = deleteOrderId;
