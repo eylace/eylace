@@ -854,18 +854,19 @@ export const AdminOrdersTab = () => {
                     <TableCell className="hidden xl:table-cell">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="inline-flex items-center gap-1.5 text-[11px] font-medium hover:opacity-80 transition-opacity">
+                          <button className="inline-flex items-center gap-1 text-[11px] font-medium hover:opacity-80 transition-opacity whitespace-nowrap">
                             {order.carrier ? (
                               <>
-                                <Badge className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                  ✓ {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
+                                <Badge className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap inline-flex items-center gap-1">
+                                  <Truck className="h-2.5 w-2.5" />
+                                  {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
                                 </Badge>
                                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
                               </>
                             ) : (
                               <>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-dashed">
-                                  <Truck className="h-2.5 w-2.5 mr-1" /> Send to Courier
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 border-dashed whitespace-nowrap inline-flex items-center gap-1">
+                                  <Truck className="h-2.5 w-2.5" /> Send to Courier
                                 </Badge>
                                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
                               </>
