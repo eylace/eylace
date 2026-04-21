@@ -694,7 +694,7 @@ export const AdminOrdersTab = () => {
                 <TableHead className="text-xs">Status</TableHead>
                 <TableHead className="text-xs hidden xl:table-cell">Courier</TableHead>
                 <TableHead className="text-xs hidden xl:table-cell">Method</TableHead>
-                <TableHead className="text-xs hidden 2xl:table-cell">Fraud</TableHead>
+                <TableHead className="text-xs hidden xl:table-cell min-w-[150px]">Fraud</TableHead>
                 <TableHead className="text-xs text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
                   <span className="inline-flex items-center gap-1">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
@@ -945,14 +945,49 @@ export const AdminOrdersTab = () => {
                         <span className="text-xs uppercase">{order.payment_method || '—'}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden 2xl:table-cell">
-                      {isGuestLikeOrder(order) ? (
-                        <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
-                          New Customer (0%)
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                    <TableCell className="hidden xl:table-cell">
+                      <div className="flex items-center justify-end gap-2 min-w-[150px]">
+                        {fraudChecking[order.id] ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Checking
+                          </span>
+                        ) : fraudResults[order.id] ? (
+                          <>
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold whitespace-nowrap"
+                            >
+                              <ShieldAlert className="mr-1 h-3 w-3" />
+                              {fraudResults[order.id].risk_level === 'unknown'
+                                ? 'Check'
+                                : `${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
+                            </Badge>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2 text-[11px] font-medium"
+                              onClick={() => setFraudOrder(order)}
+                            >
+                              Details
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-[11px] font-medium"
+                            onClick={() => {
+                              void runFraudCheck(order);
+                              setFraudOrder(order);
+                            }}
+                          >
+                            Check
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="text-xs font-bold whitespace-nowrap">৳{Number(order.total).toLocaleString()}</span>
