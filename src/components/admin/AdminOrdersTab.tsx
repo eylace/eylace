@@ -31,6 +31,7 @@ import { CreateOrderModal } from '@/components/admin/CreateOrderModal';
 import { CustomerContactBlock } from '@/components/orders/CustomerContactBlock';
 import { formatRoleLabel } from '@/lib/roleLabels';
 import { printSingleInvoice, printBulkInvoices, downloadSingleInvoice, downloadBulkInvoices } from '@/lib/invoiceGenerator';
+import { computeFraudFromHistory, persistFraudCache, loadFraudCache, normalizePhone, type FraudResult } from '@/lib/fraudRisk';
 
 interface CourierOption {
   id: string;
@@ -104,25 +105,46 @@ const getAvatarColor = (name: string) => {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 };
 
-// Colorized badge classes per payment method
-const paymentMethodStyle = (method: string) => {
-  const m = (method || '').toLowerCase();
-  if (m === 'cod' || m.includes('cash')) return 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50';
-  if (m.includes('bkash')) return 'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-700/50';
-  if (m.includes('nagad')) return 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700/50';
-  if (m.includes('rocket')) return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700/50';
-  if (m.includes('upay')) return 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700/50';
-  if (m.includes('ssl') || m.includes('amarpay')) return 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700/50';
-  if (m.includes('stripe') || m.includes('card')) return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50';
-  if (m.includes('paypal')) return 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700/50';
-  if (m.includes('bank')) return 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50';
-  return 'bg-muted text-muted-foreground border-border';
+// Expanded payment method mapping → consistent label + color across the panel
+const PAYMENT_METHOD_MAP: Record<string, { label: string; cls: string }> = {
+  cod:           { label: 'COD',          cls: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50' },
+  cash:          { label: 'Cash',         cls: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50' },
+  bkash:         { label: 'bKash',        cls: 'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-700/50' },
+  nagad:         { label: 'Nagad',        cls: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700/50' },
+  rocket:        { label: 'Rocket',       cls: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700/50' },
+  upay:          { label: 'Upay',         cls: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700/50' },
+  tap:           { label: 'Tap',          cls: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700/50' },
+  sslcommerz:    { label: 'SSLCommerz',   cls: 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700/50' },
+  ssl:           { label: 'SSLCommerz',   cls: 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700/50' },
+  amarpay:       { label: 'aamarPay',     cls: 'bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-700/50' },
+  shurjopay:     { label: 'ShurjoPay',    cls: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700/50' },
+  portwallet:    { label: 'PortWallet',   cls: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-300 dark:bg-fuchsia-900/30 dark:text-fuchsia-400 dark:border-fuchsia-700/50' },
+  stripe:        { label: 'Stripe',       cls: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50' },
+  card:          { label: 'Card',         cls: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50' },
+  paypal:        { label: 'PayPal',       cls: 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700/50' },
+  razorpay:      { label: 'Razorpay',     cls: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50' },
+  paystack:      { label: 'Paystack',     cls: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50' },
+  bank:          { label: 'Bank Transfer',cls: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50' },
+  wallet:        { label: 'Wallet',       cls: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-700/50' },
 };
+const resolvePaymentMethod = (method: string) => {
+  const m = (method || '').toLowerCase().trim();
+  if (!m) return { label: '—', cls: 'bg-muted text-muted-foreground border-border' };
+  // Direct match
+  if (PAYMENT_METHOD_MAP[m]) return PAYMENT_METHOD_MAP[m];
+  // Fuzzy match on substring
+  for (const key of Object.keys(PAYMENT_METHOD_MAP)) {
+    if (m.includes(key)) return PAYMENT_METHOD_MAP[key];
+  }
+  return { label: method, cls: 'bg-muted text-muted-foreground border-border' };
+};
+const paymentMethodStyle = (method: string) => resolvePaymentMethod(method).cls;
+const paymentMethodLabel = (method: string) => resolvePaymentMethod(method).label;
 
 // =================== Fraud Risk Card (inline in Order Details modal) ===================
 interface OrderFraudCardProps {
   order: any;
-  result?: { risk_score: number; risk_level: string; total: number; success: number; failed: number };
+  result?: FraudResult;
   loading?: boolean;
   onRecheck: () => void;
 }
@@ -133,6 +155,8 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
   const total = result?.total ?? 0;
   const success = result?.success ?? 0;
   const failed = result?.failed ?? 0;
+  const pending = result?.pending ?? 0;
+  const breakdown = result?.breakdown;
   const ringColor =
     level === 'high' || level === 'critical' ? 'hsl(var(--destructive))' :
     level === 'medium' ? '#f59e0b' :
@@ -144,10 +168,8 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
     'bg-muted text-muted-foreground';
   const ringBg = `conic-gradient(${ringColor} ${successRate * 3.6}deg, hsl(var(--muted)) 0deg)`;
 
-  // Mocked courier history derived from order.carrier
-  const courierHistory = order?.carrier
-    ? [{ name: order.carrier.charAt(0).toUpperCase() + order.carrier.slice(1), parcels: 12, success: 9, failed: 3, rate: 75 }]
-    : [];
+  // REAL courier history pulled from the customer's order data
+  const courierHistory = breakdown?.courier_history || [];
 
   return (
     <Card className="border border-border">
@@ -195,6 +217,37 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
           </div>
         </div>
 
+        {/* === Fraud Breakdown — exact calculation transparency === */}
+        {breakdown && (
+          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+            <h4 className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              Fraud Breakdown
+            </h4>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+              <span className="text-muted-foreground">Delivered</span>
+              <span className="text-right font-mono font-medium text-emerald-600">{breakdown.delivered ?? 0}</span>
+              <span className="text-muted-foreground">Completed</span>
+              <span className="text-right font-mono font-medium text-emerald-600">{breakdown.completed ?? 0}</span>
+              <span className="text-muted-foreground">Fulfilled</span>
+              <span className="text-right font-mono font-medium text-emerald-600">{breakdown.fulfilled ?? 0}</span>
+              <span className="text-muted-foreground">Cancelled</span>
+              <span className="text-right font-mono font-medium text-destructive">{breakdown.cancelled ?? 0}</span>
+              <span className="text-muted-foreground">Failed</span>
+              <span className="text-right font-mono font-medium text-destructive">{breakdown.failed ?? 0}</span>
+              <span className="text-muted-foreground">Refunded</span>
+              <span className="text-right font-mono font-medium text-destructive">{breakdown.refunded ?? 0}</span>
+              <span className="text-muted-foreground">Pending</span>
+              <span className="text-right font-mono font-medium text-amber-600">{pending}</span>
+              <Separator className="col-span-2 my-1" />
+              <span className="text-muted-foreground font-semibold">Risk Score</span>
+              <span className="text-right font-mono font-bold text-foreground">{score}%</span>
+            </div>
+            <div className="rounded-md bg-card border border-border px-2 py-1.5 text-[10px] font-mono text-muted-foreground leading-relaxed">
+              {breakdown.formula || '—'}
+            </div>
+          </div>
+        )}
+
         <div>
           <div className="flex items-center justify-between text-xs mb-1.5">
             <span className="text-muted-foreground">Success Rate</span>
@@ -218,7 +271,9 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
                       <div className="text-[10px] text-muted-foreground">{c.parcels} parcels</div>
                     </div>
                   </div>
-                  <Badge variant="outline" className={cn('text-[10px]', badgeClass)}>{level === 'unknown' ? 'N/A' : `${level} risk`}</Badge>
+                  <Badge variant="outline" className={cn('text-[10px]', c.rate >= 75 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' : c.rate >= 50 ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' : 'bg-destructive/10 text-destructive border-destructive/30')}>
+                    {c.rate}% rate
+                  </Badge>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div><div className="text-[10px] text-muted-foreground">Successful</div><div className="text-sm font-bold text-emerald-600">{c.success}</div></div>
@@ -226,7 +281,7 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
                   <div><div className="text-[10px] text-muted-foreground">Rate</div><div className="text-sm font-bold text-primary">{c.rate}%</div></div>
                 </div>
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${c.rate}%` }} />
+                  <div className="h-full rounded-full" style={{ width: `${c.rate}%`, backgroundColor: ringColor }} />
                 </div>
               </div>
             ))}
@@ -235,7 +290,11 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
 
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <Clock className="h-3 w-3" />
-          <span>Checked: {format(new Date(), 'MMM d, yyyy')}</span>
+          <span>
+            {breakdown?.computed_at
+              ? `Cached: ${format(new Date(breakdown.computed_at), 'MMM d, yyyy HH:mm')}`
+              : 'Not yet computed'}
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -374,7 +433,7 @@ export const AdminOrdersTab = () => {
   const [couriers, setCouriers] = useState<CourierOption[]>([]);
   const [detailPaymentStatus, setDetailPaymentStatus] = useState('unpaid');
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
-  const [fraudResults, setFraudResults] = useState<Record<string, { risk_score: number; risk_level: string; total: number; success: number; failed: number }>>({});
+  const [fraudResults, setFraudResults] = useState<Record<string, FraudResult>>({});
   const [fraudChecking, setFraudChecking] = useState<Record<string, boolean>>({});
   const { t } = useLanguage();
 
@@ -569,44 +628,22 @@ export const AdminOrdersTab = () => {
     setCourierDispatchOrder(order);
   };
 
-  // Deterministic phone-based fraud analysis.
-  // Same phone => identical result every time. No AI randomness.
-  const runFraudCheck = useCallback((order: any) => {
+  // Deterministic phone-based fraud analysis with persistent DB cache.
+  // Same phone => identical result. Persisted in fraud_risk_cache.
+  const runFraudCheck = useCallback(async (order: any, forceRecompute = false) => {
     if (!order?.id) return;
-    const phone = (getOrderCustomerPhone(order) || '').replace(/\D/g, '');
-    // Aggregate this customer's full order history by phone (fallback: by user_id)
+    const phone = normalizePhone(getOrderCustomerPhone(order));
     const history = orders.filter((o: any) => {
-      const oPhone = (getOrderCustomerPhone(o) || '').replace(/\D/g, '');
+      const oPhone = normalizePhone(getOrderCustomerPhone(o));
       if (phone && oPhone) return oPhone === phone;
       if (order.user_id && o.user_id) return o.user_id === order.user_id;
       return o.id === order.id;
     });
-    const successStatuses = new Set(['delivered', 'completed', 'fulfilled']);
-    const failedStatuses = new Set(['cancelled', 'failed', 'refunded']);
-    const total = history.length;
-    const success = history.filter((o: any) => successStatuses.has(o.status)).length;
-    const failed = history.filter((o: any) => failedStatuses.has(o.status)).length;
-    // Deterministic risk score: failure ratio weighted, plus penalties for very new accounts with cancellations
-    const completed = success + failed;
-    let risk_score = 0;
-    if (completed > 0) {
-      risk_score = Math.round((failed / completed) * 100);
-    } else if (total === 0) {
-      risk_score = 25; // unknown baseline
-    } else {
-      risk_score = 15; // pending only — slight unknown
+    const result = computeFraudFromHistory(history);
+    setFraudResults(prev => ({ ...prev, [order.id]: result }));
+    if (phone && (forceRecompute || true)) {
+      void persistFraudCache(phone, result);
     }
-    // Penalty if many failures regardless of ratio
-    if (failed >= 3) risk_score = Math.min(100, risk_score + 10);
-    risk_score = Math.max(0, Math.min(100, risk_score));
-    const risk_level: string =
-      risk_score >= 75 ? 'critical' :
-      risk_score >= 50 ? 'high' :
-      risk_score >= 25 ? 'medium' : 'low';
-    setFraudResults(prev => ({
-      ...prev,
-      [order.id]: { risk_score, risk_level, total, success, failed },
-    }));
   }, [orders]);
 
   const handleDeleteOrder = async () => {
@@ -1220,9 +1257,7 @@ export const AdminOrdersTab = () => {
                               className="text-[10px] font-semibold whitespace-nowrap"
                             >
                               <ShieldAlert className="mr-1 h-3 w-3" />
-                              {fraudResults[order.id].risk_level === 'unknown'
-                                ? 'Check'
-                                : `${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
+                              {`${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
                             </Badge>
                             <Button
                               type="button"
