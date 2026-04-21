@@ -934,21 +934,21 @@ export const AdminOrdersTab = () => {
                 <TableHead className="w-6 pr-0">
                   <Checkbox checked={paginatedOrders.length > 0 && selectedOrders.size === paginatedOrders.length} onCheckedChange={toggleSelectAll} />
                 </TableHead>
-                <TableHead className="w-8 text-xs pl-1">Actions</TableHead>
-                <TableHead className="text-xs">Product</TableHead>
-                <TableHead className="text-xs">Order</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell w-[120px]">Assigned To</TableHead>
-                <TableHead className="text-xs cursor-pointer select-none" onClick={() => toggleSort('date')}>
+                <TableHead className="text-xs font-bold text-foreground pl-1 w-8">Actions</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">Product</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">Order</TableHead>
+                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell w-[120px]">Assigned To</TableHead>
+                <TableHead className="text-xs font-bold text-foreground cursor-pointer select-none" onClick={() => toggleSort('date')}>
                   <span className="inline-flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
-                <TableHead className="text-xs">Customer</TableHead>
-                <TableHead className="text-xs">IP</TableHead>
-                <TableHead className="text-xs">Payment</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell">Courier</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell">Method</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell min-w-[150px]">Fraud</TableHead>
-                <TableHead className="text-xs text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
+                <TableHead className="text-xs font-bold text-foreground">Customer</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">IP</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">Payment</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
+                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
+                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell">Method</TableHead>
+                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell min-w-[150px]">Fraud</TableHead>
+                <TableHead className="text-xs font-bold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
                   <span className="inline-flex items-center gap-1">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
               </TableRow>
@@ -1194,8 +1194,16 @@ export const AdminOrdersTab = () => {
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
                       <div className="flex items-center gap-1">
-                        <CreditCard className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs uppercase">{order.payment_method || '—'}</span>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border',
+                            paymentMethodStyle(order.payment_method)
+                          )}
+                        >
+                          <CreditCard className="h-3 w-3" />
+                          {order.payment_method || '—'}
+                        </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
