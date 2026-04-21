@@ -70,9 +70,17 @@ const statusColors: Record<string, string> = {
   pending: 'bg-warning/10 text-warning border-warning/20',
   confirmed: 'bg-accent/10 text-accent border-accent/20',
   processing: 'bg-primary/10 text-primary border-primary/20',
+  packaging: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
+  ready_to_ship: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
+  sent_to_courier: 'bg-teal-500/10 text-teal-600 border-teal-500/20',
   shipped: 'bg-prime/10 text-prime border-prime/20',
   out_for_delivery: 'bg-primary/10 text-primary border-primary/20',
   delivered: 'bg-success/10 text-success border-success/20',
+  completed: 'bg-success/10 text-success border-success/20',
+  fulfilled: 'bg-success/10 text-success border-success/20',
+  returned: 'bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/20',
+  refunded: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+  failed: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
   cancelled: 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
