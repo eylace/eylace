@@ -854,23 +854,25 @@ export const AdminOrdersTab = () => {
                     <TableCell className="hidden xl:table-cell">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="inline-flex items-center gap-1 text-[11px] font-medium hover:opacity-80 transition-opacity whitespace-nowrap">
-                            {order.carrier ? (
-                              <>
-                                <Badge className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap inline-flex items-center gap-1">
-                                  <Truck className="h-2.5 w-2.5" />
-                                  {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
-                                </Badge>
-                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                              </>
-                            ) : (
-                              <span className="text-xs font-bold px-3 py-1.5 rounded-md bg-primary text-primary-foreground whitespace-nowrap inline-flex items-center gap-1.5 shadow-sm hover:bg-primary/90 transition-colors">
-                                <Truck className="h-3.5 w-3.5" />
-                                Send to Courier
-                                <ChevronDown className="h-3 w-3" />
-                              </span>
-                            )}
-                          </button>
+                          {order.carrier ? (
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap shadow-sm transition-colors"
+                            >
+                              <Truck className="h-3.5 w-3.5" />
+                              {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
+                              <ChevronDown className="h-3 w-3 opacity-90" />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold whitespace-nowrap shadow-sm transition-colors"
+                            >
+                              <Truck className="h-3.5 w-3.5" />
+                              Send to Courier
+                              <ChevronDown className="h-3 w-3 opacity-90" />
+                            </button>
+                          )}
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-48">
                           {couriers.length === 0 ? (
