@@ -144,7 +144,7 @@ const paymentMethodLabel = (method: string) => resolvePaymentMethod(method).labe
 // =================== Fraud Risk Card (inline in Order Details modal) ===================
 interface OrderFraudCardProps {
   order: any;
-  result?: { risk_score: number; risk_level: string; total: number; success: number; failed: number };
+  result?: FraudResult;
   loading?: boolean;
   onRecheck: () => void;
 }
@@ -155,6 +155,8 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
   const total = result?.total ?? 0;
   const success = result?.success ?? 0;
   const failed = result?.failed ?? 0;
+  const pending = result?.pending ?? 0;
+  const breakdown = result?.breakdown;
   const ringColor =
     level === 'high' || level === 'critical' ? 'hsl(var(--destructive))' :
     level === 'medium' ? '#f59e0b' :
@@ -166,10 +168,8 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
     'bg-muted text-muted-foreground';
   const ringBg = `conic-gradient(${ringColor} ${successRate * 3.6}deg, hsl(var(--muted)) 0deg)`;
 
-  // Mocked courier history derived from order.carrier
-  const courierHistory = order?.carrier
-    ? [{ name: order.carrier.charAt(0).toUpperCase() + order.carrier.slice(1), parcels: 12, success: 9, failed: 3, rate: 75 }]
-    : [];
+  // REAL courier history pulled from the customer's order data
+  const courierHistory = breakdown?.courier_history || [];
 
   return (
     <Card className="border border-border">
@@ -217,6 +217,37 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
           </div>
         </div>
 
+        {/* === Fraud Breakdown — exact calculation transparency === */}
+        {breakdown && (
+          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+            <h4 className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+              Fraud Breakdown
+            </h4>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+              <span className="text-muted-foreground">Delivered</span>
+              <span className="text-right font-mono font-medium text-emerald-600">{breakdown.delivered ?? 0}</span>
+              <span className="text-muted-foreground">Completed</span>
+              <span className="text-right font-mono font-medium text-emerald-600">{breakdown.completed ?? 0}</span>
+              <span className="text-muted-foreground">Fulfilled</span>
+              <span className="text-right font-mono font-medium text-emerald-600">{breakdown.fulfilled ?? 0}</span>
+              <span className="text-muted-foreground">Cancelled</span>
+              <span className="text-right font-mono font-medium text-destructive">{breakdown.cancelled ?? 0}</span>
+              <span className="text-muted-foreground">Failed</span>
+              <span className="text-right font-mono font-medium text-destructive">{breakdown.failed ?? 0}</span>
+              <span className="text-muted-foreground">Refunded</span>
+              <span className="text-right font-mono font-medium text-destructive">{breakdown.refunded ?? 0}</span>
+              <span className="text-muted-foreground">Pending</span>
+              <span className="text-right font-mono font-medium text-amber-600">{pending}</span>
+              <Separator className="col-span-2 my-1" />
+              <span className="text-muted-foreground font-semibold">Risk Score</span>
+              <span className="text-right font-mono font-bold text-foreground">{score}%</span>
+            </div>
+            <div className="rounded-md bg-card border border-border px-2 py-1.5 text-[10px] font-mono text-muted-foreground leading-relaxed">
+              {breakdown.formula || '—'}
+            </div>
+          </div>
+        )}
+
         <div>
           <div className="flex items-center justify-between text-xs mb-1.5">
             <span className="text-muted-foreground">Success Rate</span>
@@ -240,7 +271,9 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
                       <div className="text-[10px] text-muted-foreground">{c.parcels} parcels</div>
                     </div>
                   </div>
-                  <Badge variant="outline" className={cn('text-[10px]', badgeClass)}>{level === 'unknown' ? 'N/A' : `${level} risk`}</Badge>
+                  <Badge variant="outline" className={cn('text-[10px]', c.rate >= 75 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' : c.rate >= 50 ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' : 'bg-destructive/10 text-destructive border-destructive/30')}>
+                    {c.rate}% rate
+                  </Badge>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div><div className="text-[10px] text-muted-foreground">Successful</div><div className="text-sm font-bold text-emerald-600">{c.success}</div></div>
@@ -248,7 +281,7 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
                   <div><div className="text-[10px] text-muted-foreground">Rate</div><div className="text-sm font-bold text-primary">{c.rate}%</div></div>
                 </div>
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${c.rate}%` }} />
+                  <div className="h-full rounded-full" style={{ width: `${c.rate}%`, backgroundColor: ringColor }} />
                 </div>
               </div>
             ))}
@@ -257,7 +290,11 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
 
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <Clock className="h-3 w-3" />
-          <span>Checked: {format(new Date(), 'MMM d, yyyy')}</span>
+          <span>
+            {breakdown?.computed_at
+              ? `Cached: ${format(new Date(breakdown.computed_at), 'MMM d, yyyy HH:mm')}`
+              : 'Not yet computed'}
+          </span>
         </div>
       </CardContent>
     </Card>
