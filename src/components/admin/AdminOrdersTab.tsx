@@ -104,10 +104,25 @@ const getAvatarColor = (name: string) => {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 };
 
+// Colorized badge classes per payment method
+const paymentMethodStyle = (method: string) => {
+  const m = (method || '').toLowerCase();
+  if (m === 'cod' || m.includes('cash')) return 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50';
+  if (m.includes('bkash')) return 'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-700/50';
+  if (m.includes('nagad')) return 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700/50';
+  if (m.includes('rocket')) return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700/50';
+  if (m.includes('upay')) return 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700/50';
+  if (m.includes('ssl') || m.includes('amarpay')) return 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700/50';
+  if (m.includes('stripe') || m.includes('card')) return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50';
+  if (m.includes('paypal')) return 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700/50';
+  if (m.includes('bank')) return 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50';
+  return 'bg-muted text-muted-foreground border-border';
+};
+
 // =================== Fraud Risk Card (inline in Order Details modal) ===================
 interface OrderFraudCardProps {
   order: any;
-  result?: { risk_score: number; risk_level: string };
+  result?: { risk_score: number; risk_level: string; total: number; success: number; failed: number };
   loading?: boolean;
   onRecheck: () => void;
 }
@@ -115,6 +130,9 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
   const score = result?.risk_score ?? 0;
   const level = result?.risk_level ?? 'unknown';
   const successRate = Math.max(0, Math.min(100, 100 - score));
+  const total = result?.total ?? 0;
+  const success = result?.success ?? 0;
+  const failed = result?.failed ?? 0;
   const ringColor =
     level === 'high' || level === 'critical' ? 'hsl(var(--destructive))' :
     level === 'medium' ? '#f59e0b' :
@@ -165,15 +183,15 @@ const OrderFraudCard = ({ order, result, loading, onRecheck }: OrderFraudCardPro
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-muted/40 p-2 text-center">
             <div className="text-[10px] text-muted-foreground">Total</div>
-            <div className="text-base font-bold text-foreground">15</div>
+            <div className="text-base font-bold text-foreground">{total}</div>
           </div>
           <div className="rounded-lg bg-emerald-500/10 p-2 text-center">
             <div className="text-[10px] text-emerald-600">Success</div>
-            <div className="text-base font-bold text-emerald-600">11</div>
+            <div className="text-base font-bold text-emerald-600">{success}</div>
           </div>
           <div className="rounded-lg bg-destructive/10 p-2 text-center">
             <div className="text-[10px] text-destructive">Failed</div>
-            <div className="text-base font-bold text-destructive">3</div>
+            <div className="text-base font-bold text-destructive">{failed}</div>
           </div>
         </div>
 
@@ -356,7 +374,7 @@ export const AdminOrdersTab = () => {
   const [couriers, setCouriers] = useState<CourierOption[]>([]);
   const [detailPaymentStatus, setDetailPaymentStatus] = useState('unpaid');
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
-  const [fraudResults, setFraudResults] = useState<Record<string, { risk_score: number; risk_level: string }>>({});
+  const [fraudResults, setFraudResults] = useState<Record<string, { risk_score: number; risk_level: string; total: number; success: number; failed: number }>>({});
   const [fraudChecking, setFraudChecking] = useState<Record<string, boolean>>({});
   const { t } = useLanguage();
 
@@ -551,38 +569,45 @@ export const AdminOrdersTab = () => {
     setCourierDispatchOrder(order);
   };
 
-  const runFraudCheck = useCallback(async (order: any) => {
-    if (!order?.id || fraudChecking[order.id] || fraudResults[order.id]) return;
-    setFraudChecking(prev => ({ ...prev, [order.id]: true }));
-    try {
-      const shipping = order.shipping_address || {};
-      const { data, error } = await supabase.functions.invoke('fraud-check', {
-        body: {
-          customerEmail: order.profile?.email || order.guest_email || shipping.email || null,
-          customerPhone: order.profile?.phone || order.guest_phone || shipping.phone || null,
-          customerName: getOrderCustomerName(order),
-          orderHistory: [order],
-        },
-      });
-      if (error) throw error;
-      if (data?.analysis) {
-        setFraudResults(prev => ({
-          ...prev,
-          [order.id]: {
-            risk_score: Number(data.analysis.risk_score) || 0,
-            risk_level: String(data.analysis.risk_level || 'low'),
-          },
-        }));
-      }
-    } catch {
-      setFraudResults(prev => ({
-        ...prev,
-        [order.id]: { risk_score: 0, risk_level: 'unknown' },
-      }));
-    } finally {
-      setFraudChecking(prev => ({ ...prev, [order.id]: false }));
+  // Deterministic phone-based fraud analysis.
+  // Same phone => identical result every time. No AI randomness.
+  const runFraudCheck = useCallback((order: any) => {
+    if (!order?.id) return;
+    const phone = (getOrderCustomerPhone(order) || '').replace(/\D/g, '');
+    // Aggregate this customer's full order history by phone (fallback: by user_id)
+    const history = orders.filter((o: any) => {
+      const oPhone = (getOrderCustomerPhone(o) || '').replace(/\D/g, '');
+      if (phone && oPhone) return oPhone === phone;
+      if (order.user_id && o.user_id) return o.user_id === order.user_id;
+      return o.id === order.id;
+    });
+    const successStatuses = new Set(['delivered', 'completed', 'fulfilled']);
+    const failedStatuses = new Set(['cancelled', 'failed', 'refunded']);
+    const total = history.length;
+    const success = history.filter((o: any) => successStatuses.has(o.status)).length;
+    const failed = history.filter((o: any) => failedStatuses.has(o.status)).length;
+    // Deterministic risk score: failure ratio weighted, plus penalties for very new accounts with cancellations
+    const completed = success + failed;
+    let risk_score = 0;
+    if (completed > 0) {
+      risk_score = Math.round((failed / completed) * 100);
+    } else if (total === 0) {
+      risk_score = 25; // unknown baseline
+    } else {
+      risk_score = 15; // pending only — slight unknown
     }
-  }, [fraudChecking, fraudResults]);
+    // Penalty if many failures regardless of ratio
+    if (failed >= 3) risk_score = Math.min(100, risk_score + 10);
+    risk_score = Math.max(0, Math.min(100, risk_score));
+    const risk_level: string =
+      risk_score >= 75 ? 'critical' :
+      risk_score >= 50 ? 'high' :
+      risk_score >= 25 ? 'medium' : 'low';
+    setFraudResults(prev => ({
+      ...prev,
+      [order.id]: { risk_score, risk_level, total, success, failed },
+    }));
+  }, [orders]);
 
   const handleDeleteOrder = async () => {
     const orderId = deleteOrderId;
@@ -612,7 +637,7 @@ export const AdminOrdersTab = () => {
   useEffect(() => {
     paginatedOrders.forEach((order) => {
       if (!fraudResults[order.id] && !fraudChecking[order.id]) {
-        void runFraudCheck(order);
+        runFraudCheck(order);
       }
     });
   }, [paginatedOrders, fraudResults, fraudChecking, runFraudCheck]);
@@ -909,21 +934,21 @@ export const AdminOrdersTab = () => {
                 <TableHead className="w-6 pr-0">
                   <Checkbox checked={paginatedOrders.length > 0 && selectedOrders.size === paginatedOrders.length} onCheckedChange={toggleSelectAll} />
                 </TableHead>
-                <TableHead className="w-8 text-xs pl-1">Actions</TableHead>
-                <TableHead className="text-xs">Product</TableHead>
-                <TableHead className="text-xs">Order</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell w-[120px]">Assigned To</TableHead>
-                <TableHead className="text-xs cursor-pointer select-none" onClick={() => toggleSort('date')}>
+                <TableHead className="text-xs font-bold text-foreground pl-1 w-8">Actions</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">Product</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">Order</TableHead>
+                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell w-[120px]">Assigned To</TableHead>
+                <TableHead className="text-xs font-bold text-foreground cursor-pointer select-none" onClick={() => toggleSort('date')}>
                   <span className="inline-flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
-                <TableHead className="text-xs">Customer</TableHead>
-                <TableHead className="text-xs">IP</TableHead>
-                <TableHead className="text-xs">Payment</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell">Courier</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell">Method</TableHead>
-                <TableHead className="text-xs hidden xl:table-cell min-w-[150px]">Fraud</TableHead>
-                <TableHead className="text-xs text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
+                <TableHead className="text-xs font-bold text-foreground">Customer</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">IP</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">Payment</TableHead>
+                <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
+                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
+                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell">Method</TableHead>
+                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell min-w-[150px]">Fraud</TableHead>
+                <TableHead className="text-xs font-bold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
                   <span className="inline-flex items-center gap-1">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
               </TableRow>
@@ -1169,8 +1194,16 @@ export const AdminOrdersTab = () => {
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
                       <div className="flex items-center gap-1">
-                        <CreditCard className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs uppercase">{order.payment_method || '—'}</span>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border',
+                            paymentMethodStyle(order.payment_method)
+                          )}
+                        >
+                          <CreditCard className="h-3 w-3" />
+                          {order.payment_method || '—'}
+                        </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
@@ -1208,7 +1241,7 @@ export const AdminOrdersTab = () => {
                             size="sm"
                             className="h-7 px-2 text-[11px] font-medium"
                             onClick={() => {
-                              void runFraudCheck(order);
+                              runFraudCheck(order);
                               setFraudOrder(order);
                             }}
                           >
@@ -1460,7 +1493,7 @@ export const AdminOrdersTab = () => {
                       loading={fraudChecking[o.id]}
                       onRecheck={() => {
                         setFraudResults(prev => { const next = { ...prev }; delete next[o.id]; return next; });
-                        void runFraudCheck(o);
+                        runFraudCheck(o);
                       }}
                     />
 
