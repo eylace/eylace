@@ -22,6 +22,10 @@ export interface DistrictStats {
   delivered: number;
   cancelled: number;
   failed: number;
+  pending: number;
+  processing: number;
+  inCourier: number;
+  packaging: number;
 }
 
 interface AdminOrderDistrictMapProps {
@@ -36,6 +40,10 @@ interface AdminOrderDistrictMapProps {
     failed: string;
     mapLoading: string;
     mapFallback: string;
+    pending: string;
+    processing: string;
+    inCourier: string;
+    packaging: string;
   };
   selectedDistrict: string | null;
   statsByDistrict: Record<string, DistrictStats>;
@@ -48,6 +56,10 @@ const EMPTY_STATS: DistrictStats = {
   delivered: 0,
   cancelled: 0,
   failed: 0,
+  pending: 0,
+  processing: 0,
+  inCourier: 0,
+  packaging: 0,
 };
 
 const resolveColorToken = (tokenName: string, fallback: string) => {
@@ -77,6 +89,10 @@ const getPopupHtml = (
       <div style="font-weight:700;font-size:14px;margin-bottom:6px;">${districtLabel} District, Bangladesh</div>
       <div style="font-size:12px;line-height:1.5;">
         <div><strong>${labels.total}:</strong> ${stats.total} pcs</div>
+        <div><strong>${labels.pending}:</strong> ${stats.pending} pcs</div>
+        <div><strong>${labels.processing}:</strong> ${stats.processing} pcs</div>
+        <div><strong>${labels.packaging}:</strong> ${stats.packaging} pcs</div>
+        <div><strong>${labels.inCourier}:</strong> ${stats.inCourier} pcs</div>
         <div><strong>${labels.ready}:</strong> ${stats.readyToShip} pcs</div>
         <div><strong>${labels.delivered}:</strong> ${stats.delivered} pcs</div>
         <div><strong>${labels.cancelled}:</strong> ${stats.cancelled} pcs</div>
