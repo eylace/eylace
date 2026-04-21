@@ -19,6 +19,7 @@ import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import AdminMapsOrderData from "./pages/AdminMapsOrderData";
 
 // Lazy-loaded pages for performance
 const Cart = lazy(() => import("./pages/Cart"));
@@ -134,7 +135,6 @@ const AdminAISettings = lazy(() => import("./pages/AdminAISettings"));
 const AdminTrackingAnalytics = lazy(() => import("./pages/AdminTrackingAnalytics"));
 const AdminMenuManager = lazy(() => import("./pages/AdminMenuManager"));
 const AdminIncompleteOrders = lazy(() => import("./pages/AdminIncompleteOrders"));
-const AdminMapsOrderData = lazy(() => import("./pages/AdminMapsOrderData"));
 const AdminMarketingAds = lazy(() => import("./pages/AdminMarketingAds"));
 const AdminReturnsRefunds = lazy(() => import("./pages/AdminReturnsRefunds"));
 const AdminAffiliateProgram = lazy(() => import("./pages/AdminAffiliateProgram"));

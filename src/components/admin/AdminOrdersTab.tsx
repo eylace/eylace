@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import {
   Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
@@ -128,6 +128,8 @@ export const AdminOrdersTab = () => {
   const [couriers, setCouriers] = useState<CourierOption[]>([]);
   const [detailPaymentStatus, setDetailPaymentStatus] = useState('unpaid');
   const [detailFulfillmentStatus, setDetailFulfillmentStatus] = useState('pending');
+  const [fraudResults, setFraudResults] = useState<Record<string, { risk_score: number; risk_level: string }>>({});
+  const [fraudChecking, setFraudChecking] = useState<Record<string, boolean>>({});
   const { t } = useLanguage();
 
   // Synced top horizontal scrollbar for orders table
@@ -321,6 +323,39 @@ export const AdminOrdersTab = () => {
     setCourierDispatchOrder(order);
   };
 
+  const runFraudCheck = useCallback(async (order: any) => {
+    if (!order?.id || fraudChecking[order.id] || fraudResults[order.id]) return;
+    setFraudChecking(prev => ({ ...prev, [order.id]: true }));
+    try {
+      const shipping = order.shipping_address || {};
+      const { data, error } = await supabase.functions.invoke('fraud-check', {
+        body: {
+          customerEmail: order.profile?.email || order.guest_email || shipping.email || null,
+          customerPhone: order.profile?.phone || order.guest_phone || shipping.phone || null,
+          customerName: getOrderCustomerName(order),
+          orderHistory: [order],
+        },
+      });
+      if (error) throw error;
+      if (data?.analysis) {
+        setFraudResults(prev => ({
+          ...prev,
+          [order.id]: {
+            risk_score: Number(data.analysis.risk_score) || 0,
+            risk_level: String(data.analysis.risk_level || 'low'),
+          },
+        }));
+      }
+    } catch {
+      setFraudResults(prev => ({
+        ...prev,
+        [order.id]: { risk_score: 0, risk_level: 'unknown' },
+      }));
+    } finally {
+      setFraudChecking(prev => ({ ...prev, [order.id]: false }));
+    }
+  }, [fraudChecking, fraudResults]);
+
   const handleDeleteOrder = async () => {
     const orderId = deleteOrderId;
     if (!orderId) return;
@@ -345,6 +380,14 @@ export const AdminOrdersTab = () => {
       setDeleting(false);
     }
   };
+
+  useEffect(() => {
+    paginatedOrders.forEach((order) => {
+      if (!fraudResults[order.id] && !fraudChecking[order.id]) {
+        void runFraudCheck(order);
+      }
+    });
+  }, [paginatedOrders, fraudResults, fraudChecking, runFraudCheck]);
 
   const handleBulkDeleteOrders = async () => {
     if (selectedOrders.size === 0) return;
@@ -651,7 +694,7 @@ export const AdminOrdersTab = () => {
                 <TableHead className="text-xs">Status</TableHead>
                 <TableHead className="text-xs hidden xl:table-cell">Courier</TableHead>
                 <TableHead className="text-xs hidden xl:table-cell">Method</TableHead>
-                <TableHead className="text-xs hidden 2xl:table-cell">Fraud</TableHead>
+                <TableHead className="text-xs hidden xl:table-cell min-w-[150px]">Fraud</TableHead>
                 <TableHead className="text-xs text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
                   <span className="inline-flex items-center gap-1">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
@@ -902,14 +945,49 @@ export const AdminOrdersTab = () => {
                         <span className="text-xs uppercase">{order.payment_method || '—'}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden 2xl:table-cell">
-                      {isGuestLikeOrder(order) ? (
-                        <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
-                          New Customer (0%)
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                    <TableCell className="hidden xl:table-cell">
+                      <div className="flex items-center justify-end gap-2 min-w-[150px]">
+                        {fraudChecking[order.id] ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Checking
+                          </span>
+                        ) : fraudResults[order.id] ? (
+                          <>
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold whitespace-nowrap"
+                            >
+                              <ShieldAlert className="mr-1 h-3 w-3" />
+                              {fraudResults[order.id].risk_level === 'unknown'
+                                ? 'Check'
+                                : `${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
+                            </Badge>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2 text-[11px] font-medium"
+                              onClick={() => setFraudOrder(order)}
+                            >
+                              Details
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-[11px] font-medium"
+                            onClick={() => {
+                              void runFraudCheck(order);
+                              setFraudOrder(order);
+                            }}
+                          >
+                            Check
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <span className="text-xs font-bold whitespace-nowrap">৳{Number(order.total).toLocaleString()}</span>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -56,15 +56,22 @@ const AdminMapsOrderData = () => {
   const [search, setSearch] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [geojson, setGeojson] = useState<any>(null);
-  const popupRef = useRef<L.Popup | null>(null);
+  const [mapReady, setMapReady] = useState(false);
 
   // Fetch orders
   useEffect(() => {
+    setMapReady(true);
+  }, []);
+
+  useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase.functions.invoke('admin-get-orders');
-      setOrders(data?.orders || []);
-      setLoading(false);
+      try {
+        const { data } = await supabase.functions.invoke('admin-get-orders');
+        setOrders(data?.orders || []);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
@@ -217,46 +224,52 @@ const AdminMapsOrderData = () => {
             {/* Right: Map */}
             <Card className="lg:col-span-8 border border-border overflow-hidden">
               <CardContent className="p-0">
-                <div className="h-[600px] w-full">
-                  <MapContainer
-                    center={[23.685, 90.3563]}
-                    zoom={7}
-                    style={{ height: '100%', width: '100%' }}
-                    scrollWheelZoom
-                  >
-                    <InvalidateOnMount />
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    {geojson && (
-                      <GeoJSON
-                        key={selectedDistrict || 'none'}
-                        data={geojson}
-                        style={geoJsonStyle as any}
-                        onEachFeature={onEachFeature}
+                <div className="h-[600px] w-full bg-muted/20">
+                  {mapReady ? (
+                    <MapContainer
+                      center={[23.685, 90.3563]}
+                      zoom={7}
+                      style={{ height: '100%', width: '100%' }}
+                      scrollWheelZoom
+                    >
+                      <InvalidateOnMount />
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       />
-                    )}
-                    {selectedDistrict && selectedCoords && selectedStats && (
-                      <Marker position={selectedCoords}>
-                        <Popup ref={(r: any) => { popupRef.current = r; }}>
-                          <div className="min-w-[180px]">
-                            <div className="font-bold text-sm mb-1.5 text-foreground">
-                              {(language === 'bn' ? BD_DISTRICT_COORDS[selectedDistrict].nameBn : selectedDistrict)} District, Bangladesh
+                      {geojson && (
+                        <GeoJSON
+                          key={selectedDistrict || 'none'}
+                          data={geojson}
+                          style={geoJsonStyle as any}
+                          onEachFeature={onEachFeature}
+                        />
+                      )}
+                      {selectedDistrict && selectedCoords && selectedStats && (
+                        <Marker position={selectedCoords}>
+                          <Popup>
+                            <div className="min-w-[180px]">
+                              <div className="font-bold text-sm mb-1.5 text-foreground">
+                                {(language === 'bn' ? BD_DISTRICT_COORDS[selectedDistrict].nameBn : selectedDistrict)} District, Bangladesh
+                              </div>
+                              <div className="space-y-0.5 text-xs">
+                                <div><strong>{labels.total}:</strong> {selectedStats.total} pcs</div>
+                                <div><strong>{labels.ready}:</strong> {selectedStats.readyToShip} pcs</div>
+                                <div><strong>{labels.delivered}:</strong> {selectedStats.delivered} pcs</div>
+                                <div><strong>{labels.cancelled}:</strong> {selectedStats.cancelled} pcs</div>
+                                <div><strong>{labels.failed}:</strong> {selectedStats.failed} pcs</div>
+                              </div>
                             </div>
-                            <div className="space-y-0.5 text-xs">
-                              <div><strong>{labels.total}:</strong> {selectedStats.total} pcs</div>
-                              <div><strong>{labels.ready}:</strong> {selectedStats.readyToShip} pcs</div>
-                              <div><strong>{labels.delivered}:</strong> {selectedStats.delivered} pcs</div>
-                              <div><strong>{labels.cancelled}:</strong> {selectedStats.cancelled} pcs</div>
-                              <div><strong>{labels.failed}:</strong> {selectedStats.failed} pcs</div>
-                            </div>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    )}
-                    <FlyTo coords={selectedCoords} />
-                  </MapContainer>
+                          </Popup>
+                        </Marker>
+                      )}
+                      <FlyTo coords={selectedCoords} />
+                    </MapContainer>
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  )}
                 </div>
                 {!selectedDistrict && (
                   <div className="p-3 text-center text-xs text-muted-foreground border-t border-border">
