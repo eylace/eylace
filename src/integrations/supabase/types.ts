@@ -793,6 +793,48 @@ export type Database = {
         }
         Relationships: []
       }
+      fraud_risk_cache: {
+        Row: {
+          breakdown: Json
+          computed_at: string
+          failed_orders: number
+          id: string
+          pending_orders: number
+          phone_normalized: string
+          risk_level: string
+          risk_score: number
+          success_orders: number
+          total_orders: number
+          updated_at: string
+        }
+        Insert: {
+          breakdown?: Json
+          computed_at?: string
+          failed_orders?: number
+          id?: string
+          pending_orders?: number
+          phone_normalized: string
+          risk_level?: string
+          risk_score?: number
+          success_orders?: number
+          total_orders?: number
+          updated_at?: string
+        }
+        Update: {
+          breakdown?: Json
+          computed_at?: string
+          failed_orders?: number
+          id?: string
+          pending_orders?: number
+          phone_normalized?: string
+          risk_level?: string
+          risk_score?: number
+          success_orders?: number
+          total_orders?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       incomplete_orders: {
         Row: {
           address: string | null
