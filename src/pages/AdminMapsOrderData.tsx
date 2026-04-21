@@ -251,10 +251,26 @@ const AdminMapsOrderData = () => {
                 />
 
                 {selectedDistrict && selectedStats ? (
-                  <div className="grid grid-cols-2 gap-3 border-t border-border p-3 md:grid-cols-5">
+                  <div className="grid grid-cols-2 gap-3 border-t border-border p-3 md:grid-cols-3 lg:grid-cols-9">
                     <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
                       <div className="text-[11px] text-muted-foreground">{labels.total}</div>
                       <div className="text-sm font-semibold text-foreground">{selectedStats.total}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
+                      <div className="text-[11px] text-muted-foreground">{labels.pending}</div>
+                      <div className="text-sm font-semibold text-foreground">{selectedStats.pending}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
+                      <div className="text-[11px] text-muted-foreground">{labels.processing}</div>
+                      <div className="text-sm font-semibold text-foreground">{selectedStats.processing}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
+                      <div className="text-[11px] text-muted-foreground">{labels.packaging}</div>
+                      <div className="text-sm font-semibold text-foreground">{selectedStats.packaging}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
+                      <div className="text-[11px] text-muted-foreground">{labels.inCourier}</div>
+                      <div className="text-sm font-semibold text-foreground">{selectedStats.inCourier}</div>
                     </div>
                     <div className="rounded-md border border-border bg-muted/20 px-3 py-2">
                       <div className="text-[11px] text-muted-foreground">{labels.ready}</div>
