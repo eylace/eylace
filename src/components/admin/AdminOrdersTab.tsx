@@ -105,20 +105,41 @@ const getAvatarColor = (name: string) => {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 };
 
-// Colorized badge classes per payment method
-const paymentMethodStyle = (method: string) => {
-  const m = (method || '').toLowerCase();
-  if (m === 'cod' || m.includes('cash')) return 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50';
-  if (m.includes('bkash')) return 'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-700/50';
-  if (m.includes('nagad')) return 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700/50';
-  if (m.includes('rocket')) return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700/50';
-  if (m.includes('upay')) return 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700/50';
-  if (m.includes('ssl') || m.includes('amarpay')) return 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700/50';
-  if (m.includes('stripe') || m.includes('card')) return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50';
-  if (m.includes('paypal')) return 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700/50';
-  if (m.includes('bank')) return 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50';
-  return 'bg-muted text-muted-foreground border-border';
+// Expanded payment method mapping → consistent label + color across the panel
+const PAYMENT_METHOD_MAP: Record<string, { label: string; cls: string }> = {
+  cod:           { label: 'COD',          cls: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50' },
+  cash:          { label: 'Cash',         cls: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50' },
+  bkash:         { label: 'bKash',        cls: 'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-700/50' },
+  nagad:         { label: 'Nagad',        cls: 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700/50' },
+  rocket:        { label: 'Rocket',       cls: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700/50' },
+  upay:          { label: 'Upay',         cls: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700/50' },
+  tap:           { label: 'Tap',          cls: 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700/50' },
+  sslcommerz:    { label: 'SSLCommerz',   cls: 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700/50' },
+  ssl:           { label: 'SSLCommerz',   cls: 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700/50' },
+  amarpay:       { label: 'aamarPay',     cls: 'bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-700/50' },
+  shurjopay:     { label: 'ShurjoPay',    cls: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700/50' },
+  portwallet:    { label: 'PortWallet',   cls: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-300 dark:bg-fuchsia-900/30 dark:text-fuchsia-400 dark:border-fuchsia-700/50' },
+  stripe:        { label: 'Stripe',       cls: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50' },
+  card:          { label: 'Card',         cls: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50' },
+  paypal:        { label: 'PayPal',       cls: 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700/50' },
+  razorpay:      { label: 'Razorpay',     cls: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50' },
+  paystack:      { label: 'Paystack',     cls: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50' },
+  bank:          { label: 'Bank Transfer',cls: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50' },
+  wallet:        { label: 'Wallet',       cls: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-700/50' },
 };
+const resolvePaymentMethod = (method: string) => {
+  const m = (method || '').toLowerCase().trim();
+  if (!m) return { label: '—', cls: 'bg-muted text-muted-foreground border-border' };
+  // Direct match
+  if (PAYMENT_METHOD_MAP[m]) return PAYMENT_METHOD_MAP[m];
+  // Fuzzy match on substring
+  for (const key of Object.keys(PAYMENT_METHOD_MAP)) {
+    if (m.includes(key)) return PAYMENT_METHOD_MAP[key];
+  }
+  return { label: method, cls: 'bg-muted text-muted-foreground border-border' };
+};
+const paymentMethodStyle = (method: string) => resolvePaymentMethod(method).cls;
+const paymentMethodLabel = (method: string) => resolvePaymentMethod(method).label;
 
 // =================== Fraud Risk Card (inline in Order Details modal) ===================
 interface OrderFraudCardProps {
