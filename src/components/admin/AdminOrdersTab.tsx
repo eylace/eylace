@@ -1068,27 +1068,43 @@ export const AdminOrdersTab = () => {
           <div style={{ width: tableScrollWidth, height: 1 }} />
         </div>
         <div ref={tableScrollRef} onScroll={onTableScroll} className="overflow-x-auto">
-          <Table className="[&_th]:px-2 [&_td]:px-2 [&_th]:py-2 [&_td]:py-1.5">
+          <Table data-testid="admin-orders-table" className="table-tight-spacing table-fixed">
+            <colgroup>
+              <col className="w-8" />
+              <col className="w-10" />
+              <col className="w-[180px]" />
+              <col className="w-[110px]" />
+              <col className="hidden xl:table-column w-[120px]" />
+              <col className="w-[110px]" />
+              <col className="w-[200px]" />
+              <col className="w-[120px]" />
+              <col className="w-[80px]" />
+              <col className="w-[140px]" />
+              <col className="hidden xl:table-column w-[150px]" />
+              <col className="hidden xl:table-column w-[80px]" />
+              <col className="hidden xl:table-column w-[150px]" />
+              <col className="w-[90px]" />
+            </colgroup>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-6 pr-0">
+                <TableHead>
                   <Checkbox checked={paginatedOrders.length > 0 && selectedOrders.size === paginatedOrders.length} onCheckedChange={toggleSelectAll} />
                 </TableHead>
-                <TableHead className="text-xs font-bold text-foreground pl-1 w-8">Actions</TableHead>
-                <TableHead className="text-xs font-bold text-foreground">Product</TableHead>
-                <TableHead className="text-xs font-bold text-foreground">Order</TableHead>
-                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell w-[120px]">Assigned To</TableHead>
-                <TableHead className="text-xs font-bold text-foreground cursor-pointer select-none" onClick={() => toggleSort('date')}>
+                <TableHead className="font-bold text-foreground">Actions</TableHead>
+                <TableHead className="font-bold text-foreground">Product</TableHead>
+                <TableHead className="font-bold text-foreground">Order</TableHead>
+                <TableHead className="font-bold text-foreground hidden xl:table-cell">Assigned To</TableHead>
+                <TableHead className="font-bold text-foreground cursor-pointer select-none" onClick={() => toggleSort('date')}>
                   <span className="inline-flex items-center gap-1">Date <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
-                <TableHead className="text-xs font-bold text-foreground">Customer</TableHead>
-                <TableHead className="text-xs font-bold text-foreground">IP</TableHead>
-                <TableHead className="text-xs font-bold text-foreground">Payment</TableHead>
-                <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
-                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
-                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell">Method</TableHead>
-                <TableHead className="text-xs font-bold text-foreground hidden xl:table-cell min-w-[150px]">Fraud</TableHead>
-                <TableHead className="text-xs font-bold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
+                <TableHead className="font-bold text-foreground">Customer</TableHead>
+                <TableHead className="font-bold text-foreground">IP</TableHead>
+                <TableHead className="font-bold text-foreground">Payment</TableHead>
+                <TableHead className="font-bold text-foreground">Status</TableHead>
+                <TableHead className="font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
+                <TableHead className="font-bold text-foreground hidden xl:table-cell">Method</TableHead>
+                <TableHead className="font-bold text-foreground hidden xl:table-cell">Fraud</TableHead>
+                <TableHead className="font-bold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
                   <span className="inline-flex items-center gap-1">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
               </TableRow>
@@ -1182,7 +1198,7 @@ export const AdminOrdersTab = () => {
                         #{order.order_number}
                       </button>
                     </TableCell>
-                    <TableCell className="hidden xl:table-cell w-[120px]">
+                    <TableCell className="hidden xl:table-cell">
                       {order.assigned_role || order.assigned_user_name ? (
                         <div className="flex flex-col leading-tight">
                           <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">
