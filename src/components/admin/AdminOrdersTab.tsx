@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import {
   Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
@@ -380,6 +380,14 @@ export const AdminOrdersTab = () => {
       setDeleting(false);
     }
   };
+
+  useEffect(() => {
+    paginatedOrders.forEach((order) => {
+      if (!fraudResults[order.id] && !fraudChecking[order.id]) {
+        void runFraudCheck(order);
+      }
+    });
+  }, [paginatedOrders, fraudResults, fraudChecking, runFraudCheck]);
 
   const handleBulkDeleteOrders = async () => {
     if (selectedOrders.size === 0) return;
