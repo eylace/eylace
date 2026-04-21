@@ -1,8 +1,10 @@
-import { Package, ClipboardCheck, Clock, Truck, Navigation, CheckCircle, MapPin, Box, Send, XCircle, RotateCcw } from 'lucide-react';
+import { Package, ClipboardCheck, Clock, Truck, Navigation, CheckCircle, MapPin, Box, Send, User, ShieldCheck, Truck as TruckIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Badge } from '@/components/ui/badge';
+import { getStatusMeta } from '@/lib/orderStatusConfig';
 
 interface TrackingEvent {
   id: string;
@@ -67,6 +69,25 @@ export const OrderTrackingTimeline = ({
   const isMobile = useIsMobile();
   const currentStepIndex = getStepIndex(status);
   const isCancelled = status === 'cancelled';
+
+  // Parse "by NAME · ROLE" suffix from event description and split out reason
+  const parseActor = (description: string) => {
+    const m = description.match(/\s*\(by\s+(.+?)\s*·\s*(.+?)\)\s*$/);
+    if (!m) return { actor: null as null | { name: string; role: string }, base: description };
+    return { actor: { name: m[1], role: m[2] }, base: description.replace(m[0], '').trim() };
+  };
+  const splitReason = (base: string) => {
+    const m = base.match(/\s*—\s*Reason:\s*(.+)$/);
+    if (!m) return { reason: null as string | null, headline: base };
+    return { reason: m[1].trim(), headline: base.replace(m[0], '').trim() };
+  };
+  const roleIcon = (role?: string | null) => {
+    const r = (role || '').toLowerCase();
+    if (r.includes('seller') || r.includes('vendor')) return Package;
+    if (r.includes('courier') || r.includes('delivery') || r.includes('shipping')) return TruckIcon;
+    if (r.includes('admin') || r.includes('manager') || r.includes('moderator') || r.includes('support')) return ShieldCheck;
+    return User;
+  };
 
   return (
     <div className="space-y-6">

@@ -169,7 +169,7 @@ export const useAdminOrders = () => {
   const updateOrderStatus = async (
     orderId: string,
     status: string,
-    trackingInfo?: { carrier?: string; tracking_number?: string }
+    trackingInfo?: { carrier?: string; tracking_number?: string; reason?: string }
   ) => {
     const { error } = await supabase.functions.invoke('admin-update-order', {
       body: { orderId, status, ...trackingInfo }
