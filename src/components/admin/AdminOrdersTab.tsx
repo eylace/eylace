@@ -104,6 +104,21 @@ const getAvatarColor = (name: string) => {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 };
 
+// Colorized badge classes per payment method
+const paymentMethodStyle = (method: string) => {
+  const m = (method || '').toLowerCase();
+  if (m === 'cod' || m.includes('cash')) return 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/50';
+  if (m.includes('bkash')) return 'bg-pink-100 text-pink-700 border-pink-300 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-700/50';
+  if (m.includes('nagad')) return 'bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700/50';
+  if (m.includes('rocket')) return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700/50';
+  if (m.includes('upay')) return 'bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-700/50';
+  if (m.includes('ssl') || m.includes('amarpay')) return 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-700/50';
+  if (m.includes('stripe') || m.includes('card')) return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700/50';
+  if (m.includes('paypal')) return 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700/50';
+  if (m.includes('bank')) return 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/50';
+  return 'bg-muted text-muted-foreground border-border';
+};
+
 // =================== Fraud Risk Card (inline in Order Details modal) ===================
 interface OrderFraudCardProps {
   order: any;
