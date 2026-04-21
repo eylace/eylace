@@ -38,6 +38,17 @@ function FlyTo({ coords }: { coords: [number, number] | null }) {
   return null;
 }
 
+function InvalidateOnMount() {
+  const map = useMap();
+  useEffect(() => {
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 400);
+    const t3 = setTimeout(() => map.invalidateSize(), 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [map]);
+  return null;
+}
+
 const AdminMapsOrderData = () => {
   const { language } = useLanguage();
   const [orders, setOrders] = useState<any[]>([]);
@@ -213,6 +224,7 @@ const AdminMapsOrderData = () => {
                     style={{ height: '100%', width: '100%' }}
                     scrollWheelZoom
                   >
+                    <InvalidateOnMount />
                     <TileLayer
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
