@@ -741,14 +741,6 @@ export const AdminOrdersTab = () => {
     }
   };
 
-  useEffect(() => {
-    paginatedOrders.forEach((order) => {
-      if (!fraudResults[order.id] && !fraudChecking[order.id]) {
-        runFraudCheck(order);
-      }
-    });
-  }, [paginatedOrders, fraudResults, fraudChecking, runFraudCheck]);
-
   const handleBulkDeleteOrders = async () => {
     if (selectedOrders.size === 0) return;
     if (!confirm(`Are you sure you want to delete ${selectedOrders.size} order(s)?`)) return;
