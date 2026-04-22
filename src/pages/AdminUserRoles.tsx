@@ -199,6 +199,9 @@ const AdminUserRoles = () => {
   const [selectedRoleForPerms, setSelectedRoleForPerms] = useState<AppRole>('moderator');
   const [savingPerms, setSavingPerms] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ 'Admin Team': true });
+  const [userOverrides, setUserOverrides] = useState<Record<string, string[]>>({});
+  const [savingOverrides, setSavingOverrides] = useState(false);
+  const [overrideUserId, setOverrideUserId] = useState<string>('');
 
   const fetchRoles = useCallback(async () => {
     setLoading(true);
@@ -220,7 +223,33 @@ const AdminUserRoles = () => {
     }
   }, []);
 
-  useEffect(() => { fetchRoles(); fetchPermissions(); }, [fetchRoles, fetchPermissions]);
+  const fetchUserOverrides = useCallback(async () => {
+    const { data } = await supabase.from('system_settings').select('value').eq('key', 'user_permission_overrides').maybeSingle();
+    if (data?.value && typeof data.value === 'object') {
+      setUserOverrides(data.value as Record<string, string[]>);
+    }
+  }, []);
+
+  useEffect(() => { fetchRoles(); fetchPermissions(); fetchUserOverrides(); }, [fetchRoles, fetchPermissions, fetchUserOverrides]);
+
+  const toggleUserPermission = (userId: string, permKey: string) => {
+    setUserOverrides(prev => {
+      const current = prev[userId] || [];
+      const updated = current.includes(permKey) ? current.filter(k => k !== permKey) : [...current, permKey];
+      const next = { ...prev, [userId]: updated };
+      if (updated.length === 0) delete next[userId];
+      return next;
+    });
+  };
+
+  const saveUserOverrides = async () => {
+    setSavingOverrides(true);
+    const { error } = await supabase.from('system_settings').upsert({
+      key: 'user_permission_overrides', value: userOverrides as any, updated_at: new Date().toISOString(),
+    }, { onConflict: 'key' });
+    if (error) toast.error('Failed to save'); else toast.success('User permissions saved');
+    setSavingOverrides(false);
+  };
 
   const handleAddRole = async () => {
     if (!newEmail.trim()) return;
@@ -346,6 +375,7 @@ const AdminUserRoles = () => {
           <TabsTrigger value="users" className="gap-2"><Users className="h-4 w-4" /> Users & Roles</TabsTrigger>
           <TabsTrigger value="hierarchy" className="gap-2"><Crown className="h-4 w-4" /> Role Hierarchy</TabsTrigger>
           <TabsTrigger value="permissions" className="gap-2"><Lock className="h-4 w-4" /> Permissions</TabsTrigger>
+          <TabsTrigger value="user-permissions" className="gap-2"><UserCog className="h-4 w-4" /> User Permissions</TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
