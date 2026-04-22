@@ -10,6 +10,7 @@ import {
   Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw, Link2,
   UploadCloud, LifeBuoy, Ticket, MessageCircle, Contact, Award, PenSquare, FolderOpen, BookOpen,
   Receipt, Undo2, FileCheck, FolderCog,
+  Calculator,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -177,6 +178,15 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'Rejected Refunds', url: '/admin/refunds/rejected', icon: Undo2 },
     { titleKey: 'Refund Configuration', url: '/admin/refunds/config', icon: FolderCog },
     { titleKey: 'Category Based Refund', url: '/admin/refunds/category', icon: Layers },
+  ];
+
+  const accountingItems: NavItem[] = [
+    { titleKey: 'Overview', url: '/admin/accounting?tab=overview', icon: LayoutDashboard },
+    { titleKey: 'Chart of Accounts', url: '/admin/accounting?tab=accounts', icon: FolderOpen },
+    { titleKey: 'Transactions', url: '/admin/accounting?tab=transactions', icon: Activity },
+    { titleKey: 'Invoices', url: '/admin/accounting?tab=invoices', icon: Receipt },
+    { titleKey: 'Bills', url: '/admin/accounting?tab=bills', icon: FileText },
+    { titleKey: 'Reports', url: '/admin/accounting?tab=reports', icon: BarChart3 },
   ];
 
   const contentItems = [
@@ -359,6 +369,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('clubPoint', 'Club Point System', Award, clubPointItems)}
         {renderCollapsible('blogSystem', 'Blog System', BookOpen, blogItems)}
         {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
+        {renderCollapsible('accounting', 'Accounting Management', Calculator, accountingItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
         {canAccess('system') && renderGroup('admin.group.system', systemItems)}
         {renderCollapsible('websiteSetup', 'admin.websiteSetup', Monitor, websiteSetupItems)}

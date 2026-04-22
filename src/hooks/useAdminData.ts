@@ -22,7 +22,7 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
   customer_manager: ['dashboard.view', 'customers.view', 'customers.manage'],
   content_manager: ['dashboard.view', 'content.view', 'content.manage'],
   marketing_manager: ['dashboard.view', 'marketing.view', 'marketing.manage'],
-  finance_manager: ['dashboard.view', 'finance.view', 'finance.manage'],
+  finance_manager: ['dashboard.view', 'finance.view', 'finance.manage', 'accounting.view', 'accounting.manage'],
   support_manager: ['dashboard.view', 'orders.view', 'customers.view', 'customers.manage'],
   moderator: ['dashboard.view', 'products.view', 'products.edit', 'orders.view', 'orders.update', 'customers.view', 'sellers.view', 'marketing.view', 'content.view'],
 };
@@ -44,6 +44,7 @@ export const SECTION_PERMISSION_MAP: Record<string, string> = {
   ai: 'products',
   otp: 'settings',
   tracking: 'dashboard',
+  accounting: 'accounting',
 };
 
 export interface AdminOrder {
