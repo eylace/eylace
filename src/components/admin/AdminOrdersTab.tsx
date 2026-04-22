@@ -1103,13 +1103,23 @@ export const AdminOrdersTab = () => {
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Method</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Fraud</TableHead>
-                <TableHead className="font-bold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
-                  <span className="inline-flex items-center gap-1">Total <ArrowUpDown className="h-3 w-3" /></span>
+                <TableHead className="font-bold text-foreground text-right pr-4 cursor-pointer select-none" onClick={() => toggleSort('total')}>
+                  <span className="inline-flex items-center gap-1 justify-end w-full">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedOrders.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={`loading-${i}`}>
+                    {Array.from({ length: 14 }).map((__, j) => (
+                      <TableCell key={j}>
+                        <div className="h-4 w-full max-w-[120px] rounded bg-muted animate-pulse" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : paginatedOrders.length === 0 ? (
                 <TableRow>
                    <TableCell colSpan={14} className="text-center py-12 text-muted-foreground">
                     {searchQuery ? 'No orders match your search' : 'No orders found'}
