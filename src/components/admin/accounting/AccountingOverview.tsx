@@ -10,7 +10,7 @@ export const AccountingOverview = () => {
   const { invoices } = useAccountingInvoices();
   const { bills } = useAccountingBills();
   const { accounts } = useAccountingAccounts();
-  const { format } = useCurrency();
+  const { formatPrice: format } = useCurrency();
 
   const stats = useMemo(() => {
     const now = new Date();
