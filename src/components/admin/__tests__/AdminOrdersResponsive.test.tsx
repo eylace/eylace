@@ -31,7 +31,9 @@ const SOURCE = readFileSync(SOURCE_PATH, "utf8");
 
 describe("AdminOrders responsive contract", () => {
   it("uses table-fixed so colgroup widths are enforced", () => {
-    expect(SOURCE).toMatch(/admin-orders-table[^"]*table-fixed/);
+    // The table renders with both `table-tight-spacing` (or admin-table-spacing)
+    // and `table-fixed` so its colgroup widths are enforced.
+    expect(SOURCE).toMatch(/className="(?:admin-table-spacing|table-tight-spacing)\s+table-fixed"/);
   });
 
   it("declares every colgroup width explicitly", () => {
