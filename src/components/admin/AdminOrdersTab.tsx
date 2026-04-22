@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import {
-  Package, Truck, CheckCircle, Clock, ChevronDown, Loader2, Send, ShieldAlert, Download,
+  Package, Truck, CheckCircle, Clock, Loader2, Send, ShieldAlert, Download,
   Printer, Search, FileText, CreditCard, MapPin, DollarSign, XCircle, Phone, MessageCircle,
   MoreVertical, Eye, ArrowUpDown, UserPlus, Edit, Trash2, Ban, Plus, RefreshCw, Globe,
 } from 'lucide-react';
@@ -58,6 +58,8 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
   failed: { label: 'Failed', color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400', icon: XCircle },
 };
+
+const statusSelectItemClassName = 'text-foreground focus:bg-muted focus:text-foreground data-[highlighted]:bg-muted data-[highlighted]:text-foreground';
 
 const normalizeShippingAddress = (shippingAddress: any = {}) => ({
   first_name: shippingAddress?.first_name || shippingAddress?.firstName || '',
@@ -915,7 +917,6 @@ export const AdminOrdersTab = () => {
                 >
                   {bulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Truck className="h-3.5 w-3.5" />}
                   Send To Courier {selectedOrders.size > 0 ? `(${selectedOrders.size})` : ''}
-                  <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-52">
@@ -1100,7 +1101,7 @@ export const AdminOrdersTab = () => {
                 <TableHead className="font-bold text-foreground">Customer</TableHead>
                 <TableHead className="font-bold text-foreground">IP</TableHead>
                 <TableHead className="font-bold text-foreground">Payment</TableHead>
-                <TableHead className="font-bold text-foreground">Status</TableHead>
+                <TableHead className="px-2.5 font-bold text-foreground">Status</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Method</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Fraud</TableHead>
@@ -1272,7 +1273,7 @@ export const AdminOrdersTab = () => {
                         {isPaid ? 'Paid' : 'Unpaid'}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="px-2.5">
                       <Select
                         value={order.status}
                         onValueChange={async (newStatus) => {
@@ -1284,27 +1285,27 @@ export const AdminOrdersTab = () => {
                         }}
                         disabled={updating === order.id}
                       >
-                        <SelectTrigger className="h-7 w-auto border-0 p-0 shadow-none focus:ring-0 gap-1 [&>svg]:ml-0.5">
+                        <SelectTrigger className="h-7 w-auto min-w-0 justify-start border-0 px-0 py-0 shadow-none focus:ring-0 gap-0 [&>svg]:hidden">
                           <Badge className={cn('text-[10px] px-2 py-0.5 font-medium whitespace-nowrap cursor-pointer', status.color)}>
                             {updating === order.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                             {status.label}
                           </Badge>
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="processing">Processing</SelectItem>
-                          <SelectItem value="packaging">Packaging</SelectItem>
-                          <SelectItem value="ready_to_ship">Ready to Ship</SelectItem>
-                          <SelectItem value="sent_to_courier">Sent To Courier</SelectItem>
-                          <SelectItem value="shipped">Shipped</SelectItem>
-                          <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
-                          <SelectItem value="delivered">Delivered</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="fulfilled">Fulfilled</SelectItem>
-                          <SelectItem value="returned">Returned</SelectItem>
-                          <SelectItem value="refunded">Refunded</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                          <SelectItem value="failed">Failed</SelectItem>
+                        <SelectContent className="min-w-[12rem]">
+                          <SelectItem value="pending" className={statusSelectItemClassName}>Pending</SelectItem>
+                          <SelectItem value="processing" className={statusSelectItemClassName}>Processing</SelectItem>
+                          <SelectItem value="packaging" className={statusSelectItemClassName}>Packaging</SelectItem>
+                          <SelectItem value="ready_to_ship" className={statusSelectItemClassName}>Ready to Ship</SelectItem>
+                          <SelectItem value="sent_to_courier" className={statusSelectItemClassName}>Sent To Courier</SelectItem>
+                          <SelectItem value="shipped" className={statusSelectItemClassName}>Shipped</SelectItem>
+                          <SelectItem value="out_for_delivery" className={statusSelectItemClassName}>Out for Delivery</SelectItem>
+                          <SelectItem value="delivered" className={statusSelectItemClassName}>Delivered</SelectItem>
+                          <SelectItem value="completed" className={statusSelectItemClassName}>Completed</SelectItem>
+                          <SelectItem value="fulfilled" className={statusSelectItemClassName}>Fulfilled</SelectItem>
+                          <SelectItem value="returned" className={statusSelectItemClassName}>Returned</SelectItem>
+                          <SelectItem value="refunded" className={statusSelectItemClassName}>Refunded</SelectItem>
+                          <SelectItem value="cancelled" className={statusSelectItemClassName}>Cancelled</SelectItem>
+                          <SelectItem value="failed" className={statusSelectItemClassName}>Failed</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -1314,20 +1315,18 @@ export const AdminOrdersTab = () => {
                           {order.carrier ? (
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap shadow-sm transition-colors"
+                              className="inline-flex w-fit items-center gap-1.5 h-8 px-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap shadow-sm transition-colors"
                             >
                               <Truck className="h-3.5 w-3.5" />
                               {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
-                              <ChevronDown className="h-3 w-3 opacity-90" />
                             </button>
                           ) : (
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold whitespace-nowrap shadow-sm transition-colors"
+                              className="inline-flex w-fit items-center gap-1.5 h-8 px-2.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold whitespace-nowrap shadow-sm transition-colors"
                             >
                               <Truck className="h-3.5 w-3.5" />
                               Send to Courier
-                              <ChevronDown className="h-3 w-3 opacity-90" />
                             </button>
                           )}
                         </DropdownMenuTrigger>
