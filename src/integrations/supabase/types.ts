@@ -204,6 +204,42 @@ export type Database = {
           },
         ]
       }
+      accounting_sync_logs: {
+        Row: {
+          account_id: string | null
+          amount: number | null
+          created_at: string
+          id: string
+          message: string | null
+          order_id: string | null
+          order_number: string | null
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          amount?: number | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
       accounting_transactions: {
         Row: {
           account_id: string | null
