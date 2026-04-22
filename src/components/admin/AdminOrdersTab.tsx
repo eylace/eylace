@@ -1416,7 +1416,7 @@ export const AdminOrdersTab = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right pr-4">
                       <span className="text-xs font-bold whitespace-nowrap">৳{Number(order.total).toLocaleString()}</span>
                     </TableCell>
                   </TableRow>
