@@ -1379,17 +1379,18 @@ export const AdminOrdersTab = () => {
                         <Badge
                           variant="outline"
                           className={cn(
-                            'gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border',
+                            'gap-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border max-w-full',
                             paymentMethodStyle(order.payment_method)
                           )}
+                          title={order.payment_method || ''}
                         >
-                          <CreditCard className="h-3 w-3" />
-                          {order.payment_method || '—'}
+                          <CreditCard className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{order.payment_method || '—'}</span>
                         </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
-                      <div className="flex items-center justify-end gap-2 min-w-[150px]">
+                      <div className="flex items-center justify-end gap-2 min-w-0">
                         {fraudChecking[order.id] ? (
                           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1399,7 +1400,8 @@ export const AdminOrdersTab = () => {
                           <>
                             <Badge
                               variant="outline"
-                              className="text-[10px] font-semibold whitespace-nowrap"
+                              className="text-[10px] font-semibold whitespace-nowrap max-w-full truncate"
+                              title={`${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
                             >
                               <ShieldAlert className="mr-1 h-3 w-3" />
                               {`${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
@@ -1430,8 +1432,13 @@ export const AdminOrdersTab = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right pr-4">
-                      <span className="text-xs font-bold whitespace-nowrap">৳{Number(order.total).toLocaleString()}</span>
+                    <TableCell className="text-right">
+                      <span
+                        className="text-xs font-bold whitespace-nowrap block truncate"
+                        title={`৳${Number(order.total).toLocaleString()}`}
+                      >
+                        ৳{Number(order.total).toLocaleString()}
+                      </span>
                     </TableCell>
                   </TableRow>
                 );
