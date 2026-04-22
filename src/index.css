@@ -194,6 +194,10 @@
   .table-tight-spacing td:first-child {
     @apply pl-3 sm:pl-6;
   }
+  .table-tight-spacing th:last-child,
+  .table-tight-spacing td:last-child {
+    @apply pr-4 sm:pr-8;
+  }
 }
 
 @layer utilities {

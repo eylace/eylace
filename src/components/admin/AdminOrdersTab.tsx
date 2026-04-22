@@ -1236,14 +1236,18 @@ export const AdminOrdersTab = () => {
                         const phoneRaw = getOrderCustomerPhone(order);
                         const cleaned = phoneRaw.replace(/[^\d+]/g, '');
                         const wa = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned.startsWith('88') ? cleaned : `88${cleaned}`;
+                        const sa = normalizeShippingAddress(order?.shipping_address);
+                        const addressLine = [sa.address, sa.apartment, sa.city, sa.state, sa.zip_code]
+                          .filter(Boolean)
+                          .join(', ');
                         return (
                           <div className="flex items-center gap-1.5 min-w-0">
                             <div className={cn('h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0', getAvatarColor(customerName))}>
                               {getInitials(customerName)}
                             </div>
                             <div className="min-w-0 leading-tight">
-                              <p className="text-xs font-medium truncate max-w-[140px]">{customerName}</p>
-                              <p className="text-[10px] text-muted-foreground truncate max-w-[140px]">{customerEmail}</p>
+                              <p className="text-xs font-medium truncate max-w-[180px]">{customerName}</p>
+                              <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{customerEmail}</p>
                               {phoneRaw && (
                                 <div className="flex items-center gap-1 mt-0.5">
                                   <span className="text-[10px] font-mono text-foreground">{phoneRaw}</span>
@@ -1265,6 +1269,14 @@ export const AdminOrdersTab = () => {
                                   >
                                     <MessageCircle className="h-2.5 w-2.5" />
                                   </a>
+                                </div>
+                              )}
+                              {addressLine && (
+                                <div className="flex items-start gap-1 mt-0.5">
+                                  <MapPin className="h-2.5 w-2.5 text-muted-foreground shrink-0 mt-[2px]" />
+                                  <span className="text-[10px] text-muted-foreground truncate max-w-[180px]" title={addressLine}>
+                                    {addressLine}
+                                  </span>
                                 </div>
                               )}
                             </div>
