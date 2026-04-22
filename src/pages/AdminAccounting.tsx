@@ -10,13 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, FileText, Receipt, BookOpen, BarChart3, LayoutDashboard, Loader2 } from 'lucide-react';
+import { Plus, Trash2, FileText, Receipt, BookOpen, BarChart3, LayoutDashboard, Loader2, Download, Settings as SettingsIcon, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { useAccountingAccounts, useAccountingTransactions, useAccountingInvoices, useAccountingBills, generateRefNumber } from '@/hooks/useAccounting';
+import { useAccountingAccounts, useAccountingTransactions, useAccountingInvoices, useAccountingBills, useAccountingPermissions, generateRefNumber } from '@/hooks/useAccounting';
 import { AccountingOverview } from '@/components/admin/accounting/AccountingOverview';
+import { JournalEntriesTab } from '@/components/admin/accounting/JournalEntriesTab';
+import { AccountingSettingsTab } from '@/components/admin/accounting/AccountingSettingsTab';
+import { exportToCSV } from '@/lib/csvExport';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const ACCOUNT_TYPES = ['asset', 'liability', 'equity', 'income', 'expense'] as const;
 
