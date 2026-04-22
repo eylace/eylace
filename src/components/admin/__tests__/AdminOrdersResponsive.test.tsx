@@ -61,6 +61,8 @@ describe("AdminOrders responsive contract", () => {
     );
     // Method badge truncates payment method label.
     expect(SOURCE).toMatch(/order\.payment_method[\s\S]{0,200}truncate/);
+    // Fraud badge and action keep both controls visible.
+    expect(SOURCE).toMatch(/fraudResults\[order\.id\][\s\S]{0,250}Details/);
     // Total cell truncates currency value.
     expect(SOURCE).toMatch(/block truncate"[\s\S]{0,200}order\.total/);
   });
