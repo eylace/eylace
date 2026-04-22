@@ -188,15 +188,11 @@
   }
   .table-tight-spacing th,
   .table-tight-spacing td {
-    @apply px-1.5 py-1.5 sm:px-2 sm:py-2 align-middle;
+    @apply px-1.5 py-1.5 sm:px-6 sm:py-2 align-middle;
   }
   .table-tight-spacing th:first-child,
   .table-tight-spacing td:first-child {
-    @apply pl-2 sm:pl-3;
-  }
-  .table-tight-spacing th:last-child,
-  .table-tight-spacing td:last-child {
-    @apply pr-2 sm:pr-3;
+    @apply pl-3 sm:pl-6;
   }
 }
 
