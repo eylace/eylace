@@ -817,8 +817,6 @@ export const AdminOrdersTab = () => {
     else { setSortField(field); setSortDir('desc'); }
   };
 
-  if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>;
-
   return (
     <>
       {/* Summary Cards */}
@@ -1072,8 +1070,8 @@ export const AdminOrdersTab = () => {
           <Table data-testid="admin-orders-table" className="table-tight-spacing table-fixed">
             <colgroup>
               <col className="w-8" />
-              <col className="w-[60px]" />
-              <col className="w-[180px]" />
+              <col className="w-[44px]" />
+              <col className="w-[210px]" />
               <col className="w-[110px]" />
               <col className="hidden xl:table-column w-[120px]" />
               <col className="w-[110px]" />
@@ -1084,7 +1082,7 @@ export const AdminOrdersTab = () => {
               <col className="hidden xl:table-column w-[130px]" />
               <col className="hidden xl:table-column w-[80px]" />
               <col className="hidden xl:table-column w-[110px]" />
-              <col className="w-[110px]" />
+              <col className="w-[120px]" />
             </colgroup>
             <TableHeader>
               <TableRow className="bg-muted/50">
@@ -1105,13 +1103,23 @@ export const AdminOrdersTab = () => {
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Method</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Fraud</TableHead>
-                <TableHead className="font-bold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
-                  <span className="inline-flex items-center gap-1">Total <ArrowUpDown className="h-3 w-3" /></span>
+                <TableHead className="font-bold text-foreground text-right pr-4 cursor-pointer select-none" onClick={() => toggleSort('total')}>
+                  <span className="inline-flex items-center gap-1 justify-end w-full">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedOrders.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <TableRow key={`loading-${i}`}>
+                    {Array.from({ length: 14 }).map((__, j) => (
+                      <TableCell key={j}>
+                        <div className="h-4 w-full max-w-[120px] rounded bg-muted animate-pulse" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : paginatedOrders.length === 0 ? (
                 <TableRow>
                    <TableCell colSpan={14} className="text-center py-12 text-muted-foreground">
                     {searchQuery ? 'No orders match your search' : 'No orders found'}
@@ -1408,7 +1416,7 @@ export const AdminOrdersTab = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right pr-4">
                       <span className="text-xs font-bold whitespace-nowrap">৳{Number(order.total).toLocaleString()}</span>
                     </TableCell>
                   </TableRow>
