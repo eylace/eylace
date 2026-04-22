@@ -1,5 +1,50 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
+import { AdminOrdersTab } from "../AdminOrdersTab";
+
+// Mock the data hook so the component renders without network/auth.
+vi.mock("@/hooks/useAdminData", () => ({
+  useAdminOrders: () => ({
+    orders: [],
+    isLoading: false,
+    refetch: () => {},
+    updateOrderStatus: async () => ({ error: null }),
+    deleteOrders: async () => ({ error: null }),
+  }),
+  useCouriers: () => ({ data: [] }),
+}));
+
+// Mock supabase client (component imports it for couriers/fraud).
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({ order: () => ({ data: [], error: null }) }),
+      insert: () => ({ data: null, error: null }),
+      update: () => ({ eq: () => ({ data: null, error: null }) }),
+    }),
+    functions: { invoke: async () => ({ data: null, error: null }) },
+    auth: { getSession: async () => ({ data: { session: null } }) },
+  },
+}));
+
+// Expected column widths in source order. Update intentionally if the layout
+// contract changes — this test guards against accidental drift.
+const EXPECTED_COL_CLASSES = [
+  "w-8",
+  "w-[44px]",
+  "w-[210px]",
+  "w-[110px]",
+  "w-[120px]",
+  "w-[110px]",
+  "w-[200px]",
+  "w-[120px]",
+  "w-[80px]",
+  "w-[120px]",
+  "w-[130px]",
+  "w-[80px]",
+  "w-[110px]",
+  "w-[120px]",
+];
 
 /**
  * Layout regression test for the Admin Orders table.
