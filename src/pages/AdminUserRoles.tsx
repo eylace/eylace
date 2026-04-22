@@ -604,6 +604,64 @@ const AdminUserRoles = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* User Permissions Tab — per-user accounting overrides */}
+        <TabsContent value="user-permissions">
+          <Card className="border border-border">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2"><UserCog className="h-5 w-5" /> Per-User Permission Overrides</CardTitle>
+                <CardDescription>Grant additional accounting tab access to specific users (on top of their role).</CardDescription>
+              </div>
+              <div className="flex items-center gap-3">
+                <Select value={overrideUserId} onValueChange={setOverrideUserId}>
+                  <SelectTrigger className="w-[260px]"><SelectValue placeholder="Select user..." /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {[...new Map(roles.map(r => [r.user_id, r])).values()].map(r => (
+                      <SelectItem key={r.user_id} value={r.user_id}>{r.email}</SelectItem>
+                    ))}
+                    {roles.length === 0 && <div className="px-2 py-3 text-xs text-muted-foreground">No users with roles yet</div>}
+                  </SelectContent>
+                </Select>
+                <Button onClick={saveUserOverrides} disabled={savingOverrides} size="sm">
+                  {savingOverrides && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!overrideUserId ? (
+                <div className="text-center py-12 text-sm text-muted-foreground">Select a user to manage their accounting permissions.</div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-muted/30 border text-xs text-muted-foreground">
+                    Overrides are <span className="font-medium text-foreground">additive</span> — they grant extra access without removing role-based defaults. Useful for giving select admins access to specific Accounting tabs.
+                  </div>
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="p-3 bg-muted/30 flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-semibold text-sm">Accounting Tabs</span>
+                      <Badge variant="outline" className="text-[10px]">{(userOverrides[overrideUserId] || []).filter(p => p.startsWith('accounting.')).length}/{ACCOUNTING_PERMISSIONS.length}</Badge>
+                    </div>
+                    <div className="divide-y">
+                      {ACCOUNTING_PERMISSIONS.map(perm => {
+                        const isActive = (userOverrides[overrideUserId] || []).includes(perm.key);
+                        return (
+                          <div key={perm.key} className="p-3 flex items-center justify-between hover:bg-muted/20">
+                            <div>
+                              <p className="text-sm font-medium">{perm.label}</p>
+                              <p className="text-xs text-muted-foreground">{perm.description}</p>
+                            </div>
+                            <Switch checked={isActive} onCheckedChange={() => toggleUserPermission(overrideUserId, perm.key)} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </AdminLayout>
   );
