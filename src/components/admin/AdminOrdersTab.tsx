@@ -1072,7 +1072,7 @@ export const AdminOrdersTab = () => {
           <Table data-testid="admin-orders-table" className="table-tight-spacing table-fixed">
             <colgroup>
               <col className="w-8" />
-              <col className="w-10" />
+              <col className="w-[60px]" />
               <col className="w-[180px]" />
               <col className="w-[110px]" />
               <col className="hidden xl:table-column w-[120px]" />
@@ -1080,11 +1080,11 @@ export const AdminOrdersTab = () => {
               <col className="w-[200px]" />
               <col className="w-[120px]" />
               <col className="w-[80px]" />
-              <col className="w-[140px]" />
-              <col className="hidden xl:table-column w-[150px]" />
+              <col className="w-[120px]" />
+              <col className="hidden xl:table-column w-[130px]" />
               <col className="hidden xl:table-column w-[80px]" />
-              <col className="hidden xl:table-column w-[150px]" />
-              <col className="w-[90px]" />
+              <col className="hidden xl:table-column w-[110px]" />
+              <col className="w-[110px]" />
             </colgroup>
             <TableHeader>
               <TableRow className="bg-muted/50">
