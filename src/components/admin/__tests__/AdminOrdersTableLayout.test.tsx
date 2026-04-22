@@ -24,18 +24,18 @@ const SOURCE = readFileSync(SOURCE_PATH, "utf8");
 const EXPECTED_COL_CLASSES = [
   'w-8',
   'w-[44px]',
-  'w-[210px]',
-  'w-[110px]',
-  'hidden xl:table-column w-[120px]',
-  'w-[110px]',
-  'w-[200px]',
-  'w-[120px]',
-  'w-[80px]',
+  'w-[220px]',
   'w-[120px]',
   'hidden xl:table-column w-[130px]',
-  'hidden xl:table-column w-[80px]',
-  'hidden xl:table-column w-[110px]',
   'w-[120px]',
+  'w-[230px]',
+  'w-[130px]',
+  'w-[90px]',
+  'w-[130px]',
+  'hidden xl:table-column w-[140px]',
+  'hidden xl:table-column w-[90px]',
+  'hidden xl:table-column w-[120px]',
+  'w-[130px]',
 ];
 
 describe("AdminOrders table layout contract", () => {
