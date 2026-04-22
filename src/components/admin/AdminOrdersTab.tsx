@@ -1101,7 +1101,7 @@ export const AdminOrdersTab = () => {
                 <TableHead className="font-bold text-foreground">Customer</TableHead>
                 <TableHead className="font-bold text-foreground">IP</TableHead>
                 <TableHead className="font-bold text-foreground">Payment</TableHead>
-                <TableHead className="px-2.5 font-bold text-foreground">Status</TableHead>
+                <TableHead className="font-bold text-foreground">Status</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Method</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Fraud</TableHead>
@@ -1273,7 +1273,7 @@ export const AdminOrdersTab = () => {
                         {isPaid ? 'Paid' : 'Unpaid'}
                       </span>
                     </TableCell>
-                    <TableCell className="px-2.5">
+                    <TableCell>
                       <Select
                         value={order.status}
                         onValueChange={async (newStatus) => {
