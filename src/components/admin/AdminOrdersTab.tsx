@@ -1070,19 +1070,19 @@ export const AdminOrdersTab = () => {
           <Table data-testid="admin-orders-table" className="table-tight-spacing table-fixed">
             <colgroup>
               <col className="w-8" />
-              <col className="w-[70px]" />
+              <col className="w-[64px]" />
               <col className="w-[210px]" />
-              <col className="w-[160px]" />
-              <col className="hidden xl:table-column w-[130px]" />
+              <col className="w-[152px]" />
+              <col className="hidden xl:table-column w-[124px]" />
               <col className="w-[120px]" />
               <col className="w-[220px]" />
-              <col className="w-[130px]" />
+              <col className="w-[124px]" />
               <col className="w-[110px]" />
-              <col className="w-[130px]" />
-              <col className="hidden xl:table-column w-[120px]" />
+              <col className="w-[124px]" />
+              <col className="hidden xl:table-column w-[152px]" />
               <col className="hidden xl:table-column w-[110px]" />
-              <col className="hidden xl:table-column w-[120px]" />
-              <col className="w-[140px]" />
+              <col className="hidden xl:table-column w-[150px]" />
+              <col className="w-[128px]" />
             </colgroup>
             <TableHeader>
               <TableRow className="bg-muted/50">
@@ -1336,19 +1336,19 @@ export const AdminOrdersTab = () => {
                             <button
                               type="button"
                               title={(couriers.find(c => c.code === order.carrier)?.name) || order.carrier}
-                              className="inline-flex max-w-full items-center gap-1.5 h-8 px-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-colors"
+                              className="inline-flex max-w-full min-w-0 items-center gap-1 h-8 rounded-md bg-emerald-600 px-2 text-white text-xs font-semibold shadow-sm transition-colors hover:bg-emerald-700"
                             >
                               <Truck className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate">{(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}</span>
+                              <span className="min-w-0 truncate text-left">{(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}</span>
                             </button>
                           ) : (
                             <button
                               type="button"
                               title="Send to Courier"
-                              className="inline-flex max-w-full items-center gap-1.5 h-8 px-2.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-sm transition-colors"
+                              className="inline-flex max-w-full min-w-0 items-center gap-1 h-8 rounded-md bg-primary px-2 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
                             >
                               <Truck className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate">Send to Courier</span>
+                              <span className="min-w-0 truncate text-left">Send to Courier</span>
                             </button>
                           )}
                         </DropdownMenuTrigger>
@@ -1390,7 +1390,7 @@ export const AdminOrdersTab = () => {
                       </div>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
-                      <div className="flex items-center justify-end gap-2 min-w-0">
+                      <div className="flex min-w-0 items-center gap-1.5">
                         {fraudChecking[order.id] ? (
                           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1400,7 +1400,7 @@ export const AdminOrdersTab = () => {
                           <>
                             <Badge
                               variant="outline"
-                              className="text-[10px] font-semibold whitespace-nowrap max-w-full truncate"
+                              className="max-w-full shrink-0 whitespace-nowrap border px-1.5 py-0.5 text-[10px] font-semibold"
                               title={`${fraudResults[order.id].risk_level.toUpperCase()} ${fraudResults[order.id].risk_score}%`}
                             >
                               <ShieldAlert className="mr-1 h-3 w-3" />
@@ -1410,7 +1410,7 @@ export const AdminOrdersTab = () => {
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-7 px-2 text-[11px] font-medium"
+                              className="h-7 shrink-0 px-2 text-[10px] font-medium"
                               onClick={() => setFraudOrder(order)}
                             >
                               Details
