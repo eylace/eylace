@@ -10,13 +10,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, FileText, Receipt, BookOpen, BarChart3, LayoutDashboard, Loader2 } from 'lucide-react';
+import { Plus, Trash2, FileText, Receipt, BookOpen, BarChart3, LayoutDashboard, Loader2, Download, Settings as SettingsIcon, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { useAccountingAccounts, useAccountingTransactions, useAccountingInvoices, useAccountingBills, generateRefNumber } from '@/hooks/useAccounting';
+import { useAccountingAccounts, useAccountingTransactions, useAccountingInvoices, useAccountingBills, useAccountingPermissions, generateRefNumber } from '@/hooks/useAccounting';
 import { AccountingOverview } from '@/components/admin/accounting/AccountingOverview';
+import { JournalEntriesTab } from '@/components/admin/accounting/JournalEntriesTab';
+import { AccountingSettingsTab } from '@/components/admin/accounting/AccountingSettingsTab';
+import { exportToCSV } from '@/lib/csvExport';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const ACCOUNT_TYPES = ['asset', 'liability', 'equity', 'income', 'expense'] as const;
 
@@ -424,12 +429,92 @@ const ReportsTab = () => {
   const liabilities = accounts.filter(a => a.type === 'liability').reduce((s, a) => s + Number(a.current_balance), 0);
   const equity = accounts.filter(a => a.type === 'equity').reduce((s, a) => s + Number(a.current_balance), 0);
 
+  const exportCSV = (kind: 'pl' | 'bs' | 'cf') => {
+    if (kind === 'pl') {
+      const rows = [
+        ...grouped('income').map(([k, v]) => ({ section: 'Income', account: k, amount: v })),
+        { section: 'Income', account: 'Total Income', amount: income },
+        ...grouped('expense').map(([k, v]) => ({ section: 'Expense', account: k, amount: v })),
+        { section: 'Expense', account: 'Total Expense', amount: expense },
+        { section: 'Summary', account: 'Net Profit', amount: profit },
+      ];
+      exportToCSV(rows, [{ key: 'section', label: 'Section' }, { key: 'account', label: 'Account' }, { key: 'amount', label: 'Amount' }], `profit-loss-${from}-to-${to}`);
+    } else if (kind === 'bs') {
+      const rows = [
+        { item: 'Total Assets', amount: assets },
+        { item: 'Total Liabilities', amount: liabilities },
+        { item: 'Total Equity', amount: equity },
+        { item: 'Net Worth', amount: assets - liabilities },
+      ];
+      exportToCSV(rows, [{ key: 'item', label: 'Item' }, { key: 'amount', label: 'Amount' }], `balance-sheet-${to}`);
+    } else {
+      const rows = [
+        { item: 'Cash Inflow', amount: income },
+        { item: 'Cash Outflow', amount: expense },
+        { item: 'Net Cash Flow', amount: profit },
+      ];
+      exportToCSV(rows, [{ key: 'item', label: 'Item' }, { key: 'amount', label: 'Amount' }], `cash-flow-${from}-to-${to}`);
+    }
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Accounting Reports', 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Period: ${from} to ${to}`, 14, 22);
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['Profit & Loss', 'Amount']],
+      body: [
+        ...grouped('income').map(([k, v]) => [`Income — ${k}`, formatPrice(v)]),
+        ['Total Income', formatPrice(income)],
+        ...grouped('expense').map(([k, v]) => [`Expense — ${k}`, formatPrice(v)]),
+        ['Total Expense', formatPrice(expense)],
+        ['Net Profit', formatPrice(profit)],
+      ],
+      styles: { fontSize: 9 },
+    });
+
+    autoTable(doc, {
+      head: [['Balance Sheet', 'Amount']],
+      body: [
+        ['Total Assets', formatPrice(assets)],
+        ['Total Liabilities', formatPrice(liabilities)],
+        ['Total Equity', formatPrice(equity)],
+        ['Net Worth', formatPrice(assets - liabilities)],
+      ],
+      styles: { fontSize: 9 },
+    });
+
+    autoTable(doc, {
+      head: [['Cash Flow', 'Amount']],
+      body: [
+        ['Inflow', formatPrice(income)],
+        ['Outflow', formatPrice(expense)],
+        ['Net Cash Flow', formatPrice(profit)],
+      ],
+      styles: { fontSize: 9 },
+    });
+
+    doc.save(`accounting-reports-${from}-to-${to}.pdf`);
+  };
+
   return (
     <div className="space-y-4">
       <Card>
-        <CardContent className="p-4 flex flex-wrap items-end gap-3">
+        <CardContent className="p-4 flex flex-wrap items-end gap-3 justify-between">
+          <div className="flex flex-wrap items-end gap-3">
           <div><Label className="text-xs">From</Label><Input type="date" value={from} onChange={e => setFrom(e.target.value)} className="w-40" /></div>
           <div><Label className="text-xs">To</Label><Input type="date" value={to} onChange={e => setTo(e.target.value)} className="w-40" /></div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => exportCSV('pl')}><Download className="h-3.5 w-3.5 mr-1" />P&L CSV</Button>
+            <Button variant="outline" size="sm" onClick={() => exportCSV('bs')}><Download className="h-3.5 w-3.5 mr-1" />Balance CSV</Button>
+            <Button variant="outline" size="sm" onClick={() => exportCSV('cf')}><Download className="h-3.5 w-3.5 mr-1" />Cash Flow CSV</Button>
+            <Button size="sm" onClick={exportPDF}><Download className="h-3.5 w-3.5 mr-1" />All as PDF</Button>
+          </div>
         </CardContent>
       </Card>
 

@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, Search, Loader2, Plus, Trash2, UserCog, Users, Settings, ShoppingBag, Package, BarChart3, FileText, Megaphone, Lock, Truck, DollarSign, Star, Headphones, Store, ChevronDown, ChevronRight, Crown } from 'lucide-react';
+import { Shield, Search, Loader2, Plus, Trash2, UserCog, Users, Settings, ShoppingBag, Package, BarChart3, FileText, Megaphone, Lock, Truck, DollarSign, Star, Headphones, Store, ChevronDown, ChevronRight, Crown, Calculator } from 'lucide-react';
+import { ACCOUNTING_PERMISSIONS } from '@/lib/accountingPermissions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -149,6 +150,7 @@ const roleModules = [
     { key: 'finance.view', label: 'View Finance', description: 'See transactions' },
     { key: 'finance.manage', label: 'Manage Finance', description: 'Process payouts' },
   ]},
+  { module: 'Accounting', icon: Calculator, permissions: ACCOUNTING_PERMISSIONS.map(p => ({ key: p.key, label: p.label, description: p.description })) },
   { module: 'Delivery', icon: Truck, permissions: [
     { key: 'delivery.view', label: 'View Deliveries', description: 'See shipments' },
     { key: 'delivery.manage', label: 'Manage Deliveries', description: 'Update tracking' },
@@ -171,7 +173,14 @@ const defaultRolePermissions: Record<string, string[]> = {
   customer_manager: ['dashboard.view', 'customers.view', 'customers.manage'],
   content_manager: ['dashboard.view', 'content.view', 'content.manage'],
   marketing_manager: ['dashboard.view', 'marketing.view', 'marketing.manage'],
-  finance_manager: ['dashboard.view', 'finance.view', 'finance.manage'],
+  finance_manager: [
+    'dashboard.view', 'finance.view', 'finance.manage',
+    'accounting.overview', 'accounting.accounts.view',
+    'accounting.transactions.view', 'accounting.transactions.manage',
+    'accounting.invoices.view', 'accounting.invoices.manage',
+    'accounting.bills.view', 'accounting.bills.manage',
+    'accounting.reports.view', 'accounting.reports.export',
+  ],
   support_manager: ['dashboard.view', 'orders.view', 'customers.view', 'customers.manage'],
   user: [],
 };
@@ -190,6 +199,9 @@ const AdminUserRoles = () => {
   const [selectedRoleForPerms, setSelectedRoleForPerms] = useState<AppRole>('moderator');
   const [savingPerms, setSavingPerms] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({ 'Admin Team': true });
+  const [userOverrides, setUserOverrides] = useState<Record<string, string[]>>({});
+  const [savingOverrides, setSavingOverrides] = useState(false);
+  const [overrideUserId, setOverrideUserId] = useState<string>('');
 
   const fetchRoles = useCallback(async () => {
     setLoading(true);
@@ -211,7 +223,33 @@ const AdminUserRoles = () => {
     }
   }, []);
 
-  useEffect(() => { fetchRoles(); fetchPermissions(); }, [fetchRoles, fetchPermissions]);
+  const fetchUserOverrides = useCallback(async () => {
+    const { data } = await supabase.from('system_settings').select('value').eq('key', 'user_permission_overrides').maybeSingle();
+    if (data?.value && typeof data.value === 'object') {
+      setUserOverrides(data.value as Record<string, string[]>);
+    }
+  }, []);
+
+  useEffect(() => { fetchRoles(); fetchPermissions(); fetchUserOverrides(); }, [fetchRoles, fetchPermissions, fetchUserOverrides]);
+
+  const toggleUserPermission = (userId: string, permKey: string) => {
+    setUserOverrides(prev => {
+      const current = prev[userId] || [];
+      const updated = current.includes(permKey) ? current.filter(k => k !== permKey) : [...current, permKey];
+      const next = { ...prev, [userId]: updated };
+      if (updated.length === 0) delete next[userId];
+      return next;
+    });
+  };
+
+  const saveUserOverrides = async () => {
+    setSavingOverrides(true);
+    const { error } = await supabase.from('system_settings').upsert({
+      key: 'user_permission_overrides', value: userOverrides as any, updated_at: new Date().toISOString(),
+    }, { onConflict: 'key' });
+    if (error) toast.error('Failed to save'); else toast.success('User permissions saved');
+    setSavingOverrides(false);
+  };
 
   const handleAddRole = async () => {
     if (!newEmail.trim()) return;
@@ -337,6 +375,7 @@ const AdminUserRoles = () => {
           <TabsTrigger value="users" className="gap-2"><Users className="h-4 w-4" /> Users & Roles</TabsTrigger>
           <TabsTrigger value="hierarchy" className="gap-2"><Crown className="h-4 w-4" /> Role Hierarchy</TabsTrigger>
           <TabsTrigger value="permissions" className="gap-2"><Lock className="h-4 w-4" /> Permissions</TabsTrigger>
+          <TabsTrigger value="user-permissions" className="gap-2"><UserCog className="h-4 w-4" /> User Permissions</TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -562,6 +601,64 @@ const AdminUserRoles = () => {
                   );
                 })}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* User Permissions Tab — per-user accounting overrides */}
+        <TabsContent value="user-permissions">
+          <Card className="border border-border">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2"><UserCog className="h-5 w-5" /> Per-User Permission Overrides</CardTitle>
+                <CardDescription>Grant additional accounting tab access to specific users (on top of their role).</CardDescription>
+              </div>
+              <div className="flex items-center gap-3">
+                <Select value={overrideUserId} onValueChange={setOverrideUserId}>
+                  <SelectTrigger className="w-[260px]"><SelectValue placeholder="Select user..." /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {[...new Map(roles.map(r => [r.user_id, r])).values()].map(r => (
+                      <SelectItem key={r.user_id} value={r.user_id}>{r.email}</SelectItem>
+                    ))}
+                    {roles.length === 0 && <div className="px-2 py-3 text-xs text-muted-foreground">No users with roles yet</div>}
+                  </SelectContent>
+                </Select>
+                <Button onClick={saveUserOverrides} disabled={savingOverrides} size="sm">
+                  {savingOverrides && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!overrideUserId ? (
+                <div className="text-center py-12 text-sm text-muted-foreground">Select a user to manage their accounting permissions.</div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-muted/30 border text-xs text-muted-foreground">
+                    Overrides are <span className="font-medium text-foreground">additive</span> — they grant extra access without removing role-based defaults. Useful for giving select admins access to specific Accounting tabs.
+                  </div>
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="p-3 bg-muted/30 flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-semibold text-sm">Accounting Tabs</span>
+                      <Badge variant="outline" className="text-[10px]">{(userOverrides[overrideUserId] || []).filter(p => p.startsWith('accounting.')).length}/{ACCOUNTING_PERMISSIONS.length}</Badge>
+                    </div>
+                    <div className="divide-y">
+                      {ACCOUNTING_PERMISSIONS.map(perm => {
+                        const isActive = (userOverrides[overrideUserId] || []).includes(perm.key);
+                        return (
+                          <div key={perm.key} className="p-3 flex items-center justify-between hover:bg-muted/20">
+                            <div>
+                              <p className="text-sm font-medium">{perm.label}</p>
+                              <p className="text-xs text-muted-foreground">{perm.description}</p>
+                            </div>
+                            <Switch checked={isActive} onCheckedChange={() => toggleUserPermission(overrideUserId, perm.key)} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
