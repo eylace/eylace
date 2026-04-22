@@ -1335,18 +1335,20 @@ export const AdminOrdersTab = () => {
                           {order.carrier ? (
                             <button
                               type="button"
-                              className="inline-flex w-fit items-center gap-1.5 h-8 px-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap shadow-sm transition-colors"
+                              title={(couriers.find(c => c.code === order.carrier)?.name) || order.carrier}
+                              className="inline-flex max-w-full items-center gap-1.5 h-8 px-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-colors"
                             >
-                              <Truck className="h-3.5 w-3.5" />
-                              {(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}
+                              <Truck className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">{(couriers.find(c => c.code === order.carrier)?.name) || order.carrier.toUpperCase()}</span>
                             </button>
                           ) : (
                             <button
                               type="button"
-                              className="inline-flex w-fit items-center gap-1.5 h-8 px-2.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold whitespace-nowrap shadow-sm transition-colors"
+                              title="Send to Courier"
+                              className="inline-flex max-w-full items-center gap-1.5 h-8 px-2.5 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-sm transition-colors"
                             >
-                              <Truck className="h-3.5 w-3.5" />
-                              Send to Courier
+                              <Truck className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">Send to Courier</span>
                             </button>
                           )}
                         </DropdownMenuTrigger>
