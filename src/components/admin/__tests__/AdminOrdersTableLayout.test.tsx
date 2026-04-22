@@ -23,19 +23,19 @@ const SOURCE = readFileSync(SOURCE_PATH, "utf8");
 // layout contract changes.
 const EXPECTED_COL_CLASSES = [
   'w-8',
-  'w-[60px]',
-  'w-[200px]',
-  'w-[150px]',
-  'hidden xl:table-column w-[120px]',
-  'w-[110px]',
+  'w-[70px]',
   'w-[210px]',
+  'w-[160px]',
+  'hidden xl:table-column w-[130px]',
   'w-[120px]',
-  'w-[100px]',
+  'w-[220px]',
+  'w-[130px]',
   'w-[110px]',
+  'w-[130px]',
+  'hidden xl:table-column w-[120px]',
   'hidden xl:table-column w-[110px]',
-  'hidden xl:table-column w-[90px]',
-  'hidden xl:table-column w-[100px]',
-  'w-[120px]',
+  'hidden xl:table-column w-[120px]',
+  'w-[140px]',
 ];
 
 describe("AdminOrders table layout contract", () => {
