@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Trash2, FileText, Receipt, BookOpen, BarChart3, LayoutDashboard, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAccountingAccounts, useAccountingTransactions, useAccountingInvoices, useAccountingBills, generateRefNumber } from '@/hooks/useAccounting';
 import { AccountingOverview } from '@/components/admin/accounting/AccountingOverview';
@@ -476,9 +477,13 @@ const ReportsTab = () => {
 };
 
 const AdminAccounting = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || 'overview';
+  const validTabs = ['overview', 'accounts', 'transactions', 'invoices', 'bills', 'reports'];
+  const activeTab = validTabs.includes(tab) ? tab : 'overview';
   return (
     <AdminLayout title="Accounting Management" description="Financial records, transactions, invoices, bills and reports">
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })} className="space-y-4">
         <TabsList className="bg-card border h-auto p-1 flex-wrap">
           <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="h-3.5 w-3.5" />Overview</TabsTrigger>
           <TabsTrigger value="accounts" className="gap-1.5"><BookOpen className="h-3.5 w-3.5" />Chart of Accounts</TabsTrigger>
