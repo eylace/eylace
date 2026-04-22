@@ -183,20 +183,37 @@
   /* Reusable tight spacing for data tables (Admin / Seller / Customer orders).
      Locks consistent horizontal padding and row height across all breakpoints
      so column gaps never drift on different screen sizes. */
+  .admin-table-spacing,
   .table-tight-spacing {
     @apply text-xs;
   }
+  .admin-table-spacing th,
+  .admin-table-spacing td,
   .table-tight-spacing th,
   .table-tight-spacing td {
     @apply px-2 py-1.5 sm:px-4 sm:py-2 align-middle;
   }
+  .admin-table-spacing th:first-child,
+  .admin-table-spacing td:first-child,
   .table-tight-spacing th:first-child,
   .table-tight-spacing td:first-child {
     @apply pl-3 sm:pl-5;
   }
+  .admin-table-spacing th:last-child,
+  .admin-table-spacing td:last-child,
   .table-tight-spacing th:last-child,
   .table-tight-spacing td:last-child {
     @apply pr-4 sm:pr-6;
+  }
+  /* Cell content helpers: long text truncates with ellipsis instead of
+     breaking the column grid. Pair with `title` attr or Tooltip for full text. */
+  .admin-table-spacing td > .cell-truncate,
+  .table-tight-spacing td > .cell-truncate {
+    @apply block truncate min-w-0;
+  }
+  .admin-table-spacing td > .cell-wrap,
+  .table-tight-spacing td > .cell-wrap {
+    @apply break-words min-w-0;
   }
 }
 
