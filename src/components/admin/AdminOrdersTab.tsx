@@ -1103,7 +1103,7 @@ export const AdminOrdersTab = () => {
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Courier</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Method</TableHead>
                 <TableHead className="font-bold text-foreground hidden xl:table-cell">Fraud</TableHead>
-                <TableHead className="font-bold text-foreground text-right pr-4 cursor-pointer select-none" onClick={() => toggleSort('total')}>
+                <TableHead className="font-bold text-foreground text-right cursor-pointer select-none" onClick={() => toggleSort('total')}>
                   <span className="inline-flex items-center gap-1 justify-end w-full">Total <ArrowUpDown className="h-3 w-3" /></span>
                 </TableHead>
               </TableRow>
