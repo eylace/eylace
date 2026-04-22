@@ -173,7 +173,14 @@ const defaultRolePermissions: Record<string, string[]> = {
   customer_manager: ['dashboard.view', 'customers.view', 'customers.manage'],
   content_manager: ['dashboard.view', 'content.view', 'content.manage'],
   marketing_manager: ['dashboard.view', 'marketing.view', 'marketing.manage'],
-  finance_manager: ['dashboard.view', 'finance.view', 'finance.manage'],
+  finance_manager: [
+    'dashboard.view', 'finance.view', 'finance.manage',
+    'accounting.overview', 'accounting.accounts.view',
+    'accounting.transactions.view', 'accounting.transactions.manage',
+    'accounting.invoices.view', 'accounting.invoices.manage',
+    'accounting.bills.view', 'accounting.bills.manage',
+    'accounting.reports.view', 'accounting.reports.export',
+  ],
   support_manager: ['dashboard.view', 'orders.view', 'customers.view', 'customers.manage'],
   user: [],
 };
