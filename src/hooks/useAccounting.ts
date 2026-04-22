@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  ALL_ACCOUNTING_KEYS,
+  resolveAccountingPermissions,
+  type ResolvedAccountingPermissions,
+  type AccountingPermissionKey,
+} from '@/lib/accountingPermissions';
 
 export interface AccountingAccount {
   id: string;
@@ -162,3 +169,108 @@ export const generateRefNumber = (prefix: string) => {
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `${prefix}-${ts}-${rand}`;
 };
+
+export interface AccountingSyncLog {
+  id: string;
+  order_id: string | null;
+  order_number: string | null;
+  status: 'success' | 'skipped' | 'failed' | string;
+  message: string | null;
+  amount: number | null;
+  account_id: string | null;
+  transaction_id: string | null;
+  created_at: string;
+}
+
+export const useAccountingSyncLogs = (limit = 100) => {
+  const [logs, setLogs] = useState<AccountingSyncLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetch = useCallback(async () => {
+    setIsLoading(true);
+    const { data, error } = await (supabase as any)
+      .from('accounting_sync_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (!error && data) setLogs(data as AccountingSyncLog[]);
+    setIsLoading(false);
+  }, [limit]);
+
+  useEffect(() => { fetch(); }, [fetch]);
+
+  return { logs, isLoading, refetch: fetch };
+};
+
+export interface AccountingSettings {
+  auto_sync_enabled: boolean;
+  revenue_account_code: string;
+}
+
+const DEFAULT_SETTINGS: AccountingSettings = {
+  auto_sync_enabled: true,
+  revenue_account_code: '4000',
+};
+
+export const useAccountingSettings = () => {
+  const [settings, setSettings] = useState<AccountingSettings>(DEFAULT_SETTINGS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetch = useCallback(async () => {
+    setIsLoading(true);
+    const { data } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'accounting_settings')
+      .maybeSingle();
+    if (data?.value && typeof data.value === 'object') {
+      setSettings({ ...DEFAULT_SETTINGS, ...(data.value as Partial<AccountingSettings>) });
+    }
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => { fetch(); }, [fetch]);
+
+  const save = async (next: AccountingSettings) => {
+    setIsSaving(true);
+    const { error } = await supabase.from('system_settings').upsert({
+      key: 'accounting_settings',
+      value: next as any,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'key' });
+    setIsSaving(false);
+    if (!error) setSettings(next);
+    return { error };
+  };
+
+  return { settings, isLoading, isSaving, save, refetch: fetch };
+};
+
+/** Resolve the current user's accounting permissions (role + per-user overrides). */
+export const useAccountingPermissions = (): { perms: ResolvedAccountingPermissions; isLoading: boolean } => {
+  const { user } = useAuth();
+  const [perms, setPerms] = useState<ResolvedAccountingPermissions>({ granted: new Set(), hasFullAccess: false });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!user) {
+        if (!cancelled) { setPerms({ granted: new Set(), hasFullAccess: false }); setIsLoading(false); }
+        return;
+      }
+      const { data } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
+      const roles = (data || []).map((r: any) => r.role as string);
+      const resolved = await resolveAccountingPermissions(user.id, roles);
+      if (!cancelled) { setPerms(resolved); setIsLoading(false); }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  return { perms, isLoading };
+};
+
+export { ALL_ACCOUNTING_KEYS };
+export type { AccountingPermissionKey };
