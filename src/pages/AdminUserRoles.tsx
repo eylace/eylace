@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, Search, Loader2, Plus, Trash2, UserCog, Users, Settings, ShoppingBag, Package, BarChart3, FileText, Megaphone, Lock, Truck, DollarSign, Star, Headphones, Store, ChevronDown, ChevronRight, Crown } from 'lucide-react';
+import { Shield, Search, Loader2, Plus, Trash2, UserCog, Users, Settings, ShoppingBag, Package, BarChart3, FileText, Megaphone, Lock, Truck, DollarSign, Star, Headphones, Store, ChevronDown, ChevronRight, Crown, Calculator } from 'lucide-react';
+import { ACCOUNTING_PERMISSIONS } from '@/lib/accountingPermissions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -149,6 +150,7 @@ const roleModules = [
     { key: 'finance.view', label: 'View Finance', description: 'See transactions' },
     { key: 'finance.manage', label: 'Manage Finance', description: 'Process payouts' },
   ]},
+  { module: 'Accounting', icon: Calculator, permissions: ACCOUNTING_PERMISSIONS.map(p => ({ key: p.key, label: p.label, description: p.description })) },
   { module: 'Delivery', icon: Truck, permissions: [
     { key: 'delivery.view', label: 'View Deliveries', description: 'See shipments' },
     { key: 'delivery.manage', label: 'Manage Deliveries', description: 'Update tracking' },
