@@ -2093,6 +2093,7 @@ export type Database = {
           rating: number | null
           review_count: number | null
           seller_id: string | null
+          size_guide_id: string | null
           slug: string
           sold_count: number
           stock: number | null
@@ -2125,6 +2126,7 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           seller_id?: string | null
+          size_guide_id?: string | null
           slug: string
           sold_count?: number
           stock?: number | null
@@ -2157,6 +2159,7 @@ export type Database = {
           rating?: number | null
           review_count?: number | null
           seller_id?: string | null
+          size_guide_id?: string | null
           slug?: string
           sold_count?: number
           stock?: number | null
@@ -2198,6 +2201,13 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_size_guide_id_fkey"
+            columns: ["size_guide_id"]
+            isOneToOne: false
+            referencedRelation: "size_guides"
             referencedColumns: ["id"]
           },
           {

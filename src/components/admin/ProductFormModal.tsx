@@ -28,7 +28,7 @@ interface ProductFormModalProps {
 const defaultForm = {
   name: '', slug: '', description: '', short_description: '',
   price: '', original_price: '', cost_per_item: '', discount: '', stock: '', sku: '',
-  category_id: '', brand_id: '', warranty_id: '', label_id: '',
+  category_id: '', brand_id: '', warranty_id: '', label_id: '', size_guide_id: '',
   images: [] as string[],
   is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
   digital_file_url: '',
@@ -47,6 +47,9 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
   const [brands, setBrands] = useState<any[]>([]);
   const [warranties, setWarranties] = useState<any[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
+  const [predefinedAttributes, setPredefinedAttributes] = useState<{ id: string; name: string; values: string[] }[]>([]);
+  const [predefinedColors, setPredefinedColors] = useState<{ id: string; name: string; hex_code: string }[]>([]);
+  const [sizeGuides, setSizeGuides] = useState<{ id: string; name: string }[]>([]);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [activeTab, setActiveTab] = useState('general');
@@ -68,6 +71,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
         sku: product.sku || '',
         category_id: product.category_id || '', brand_id: product.brand_id || '',
         warranty_id: product.warranty_id || '', label_id: product.label_id || '',
+        size_guide_id: product.size_guide_id || '',
         images: product.images || [],
         is_active: product.is_active ?? true, is_flash_sale: product.is_flash_sale ?? false,
         is_free_shipping: product.is_free_shipping ?? false, is_prime: product.is_prime ?? false,
@@ -95,11 +99,17 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
       supabase.from('brands').select('id, name').eq('is_active', true).order('name'),
       supabase.from('warranties').select('id, name').eq('is_active', true).order('name'),
       supabase.from('product_labels').select('id, name, color').eq('is_active', true).order('name'),
-    ]).then(([cats, brs, wars, lbls]) => {
+      supabase.from('product_attributes').select('id, name, values').eq('is_active', true).order('name'),
+      supabase.from('colors').select('id, name, hex_code').eq('is_active', true).order('name'),
+      supabase.from('size_guides').select('id, name').eq('is_active', true).order('name'),
+    ]).then(([cats, brs, wars, lbls, attrs, cols, sgs]) => {
       if (cats.data) setCategories(cats.data);
       if (brs.data) setBrands(brs.data);
       if (wars.data) setWarranties(wars.data);
       if (lbls.data) setLabels(lbls.data);
+      if (attrs.data) setPredefinedAttributes(attrs.data as any);
+      if (cols.data) setPredefinedColors(cols.data as any);
+      if (sgs.data) setSizeGuides(sgs.data as any);
     });
   }, [open]);
 
@@ -147,6 +157,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
       brand_id: form.brand_id || null,
       warranty_id: form.warranty_id || null,
       label_id: form.label_id || null,
+      size_guide_id: form.size_guide_id || null,
       images: form.images,
       is_active: form.is_active, is_flash_sale: form.is_flash_sale,
       is_free_shipping: form.is_free_shipping, is_prime: form.is_prime,
@@ -411,11 +422,36 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
               </div>
             </div>
 
+            <div>
+              <Label>Size Guide</Label>
+              <Select value={form.size_guide_id} onValueChange={v => setForm(f => ({ ...f, size_guide_id: v }))}>
+                <SelectTrigger><SelectValue placeholder={sizeGuides.length ? "Attach a pre-created size guide" : "No size guides — create one in Size Guides page"} /></SelectTrigger>
+                <SelectContent>{sizeGuides.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground mt-1">Customers see this on the product page. Manage guides under Admin → Size Guides.</p>
+            </div>
+
             {/* Variations */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label className="font-semibold">Variations (Color, Size, etc.)</Label>
-                <Button variant="outline" size="sm" onClick={addVariation} className="gap-1 h-7 text-xs"><Plus className="h-3 w-3" /> Add Variation</Button>
+                <div className="flex items-center gap-2">
+                  <Select value="" onValueChange={(name) => {
+                    if (form.variations.some(v => v.name.toLowerCase() === name.toLowerCase())) {
+                      toast.info(`${name} variation already added`); return;
+                    }
+                    setForm(f => ({ ...f, variations: [...f.variations, { name, options: [''] }] }));
+                  }}>
+                    <SelectTrigger className="h-7 w-36 text-xs"><SelectValue placeholder="Quick add..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Color">Color</SelectItem>
+                      <SelectItem value="Size">Size</SelectItem>
+                      <SelectItem value="Material">Material</SelectItem>
+                      <SelectItem value="Style">Style</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={addVariation} className="gap-1 h-7 text-xs"><Plus className="h-3 w-3" /> Custom</Button>
+                </div>
               </div>
               {form.variations.map((v, vi) => (
                 <div key={vi} className="p-3 border border-border rounded-lg mb-2 space-y-2">
@@ -423,6 +459,41 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
                     <Input placeholder="e.g. Color, Size" value={v.name} onChange={e => updateVariation(vi, 'name', e.target.value)} className="flex-1" />
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeVariation(vi)}><X className="h-4 w-4" /></Button>
                   </div>
+                  {v.name.toLowerCase() === 'color' && predefinedColors.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pb-1 border-b border-border/50">
+                      <span className="text-[10px] text-muted-foreground self-center mr-1">Quick add:</span>
+                      {predefinedColors.map(c => {
+                        const already = v.options.includes(c.name);
+                        return (
+                          <button key={c.id} type="button" disabled={already}
+                            onClick={() => {
+                              const cleaned = v.options.filter(o => o.trim());
+                              updateVariation(vi, 'options', [...cleaned, c.name]);
+                            }}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] transition ${already ? 'opacity-40 cursor-not-allowed' : 'hover:bg-accent hover:text-accent-foreground'}`}>
+                            <span className="h-2.5 w-2.5 rounded-full border border-border" style={{ backgroundColor: c.hex_code }} />
+                            {c.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {v.name.toLowerCase() === 'size' && (
+                    <div className="flex flex-wrap gap-1.5 pb-1 border-b border-border/50">
+                      <span className="text-[10px] text-muted-foreground self-center mr-1">Quick add:</span>
+                      {['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'].map(s => {
+                        const already = v.options.includes(s);
+                        return (
+                          <button key={s} type="button" disabled={already}
+                            onClick={() => {
+                              const cleaned = v.options.filter(o => o.trim());
+                              updateVariation(vi, 'options', [...cleaned, s]);
+                            }}
+                            className={`px-2 py-0.5 rounded-full border text-[10px] transition ${already ? 'opacity-40 cursor-not-allowed' : 'hover:bg-accent hover:text-accent-foreground'}`}>{s}</button>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2">
                     {v.options.map((opt, oi) => (
                       <div key={oi} className="flex items-center gap-1">
@@ -442,21 +513,56 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label className="font-semibold">Product Attributes</Label>
-                <Button variant="outline" size="sm" onClick={addAttribute} className="gap-1 h-7 text-xs"><Plus className="h-3 w-3" /> Add Attribute</Button>
+                <div className="flex items-center gap-2">
+                  {predefinedAttributes.length > 0 && (
+                    <Select value="" onValueChange={(attrId) => {
+                      const attr = predefinedAttributes.find(a => a.id === attrId);
+                      if (!attr) return;
+                      if (form.attributes.some(a => a.name.toLowerCase() === attr.name.toLowerCase())) {
+                        toast.info(`${attr.name} attribute already added`); return;
+                      }
+                      setForm(f => ({ ...f, attributes: [...f.attributes, { name: attr.name, value: '' }] }));
+                    }}>
+                      <SelectTrigger className="h-7 w-44 text-xs"><SelectValue placeholder="Pick from library..." /></SelectTrigger>
+                      <SelectContent>
+                        {predefinedAttributes.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button variant="outline" size="sm" onClick={addAttribute} className="gap-1 h-7 text-xs"><Plus className="h-3 w-3" /> Custom</Button>
+                </div>
               </div>
-              {form.attributes.map((attr, ai) => (
+              {predefinedAttributes.length === 0 && (
+                <p className="text-[10px] text-muted-foreground mb-2">Tip: Pre-create attributes (Material, Fabric, etc.) under Admin → Attributes for faster reuse.</p>
+              )}
+              {form.attributes.map((attr, ai) => {
+                const matched = predefinedAttributes.find(p => p.name.toLowerCase() === attr.name.toLowerCase());
+                return (
                 <div key={ai} className="flex items-center gap-2 mb-2">
                   <Input placeholder="e.g. Material" value={attr.name} onChange={e => {
                     const newAttrs = [...form.attributes]; newAttrs[ai] = { ...attr, name: e.target.value };
                     setForm(f => ({ ...f, attributes: newAttrs }));
                   }} className="flex-1" />
-                  <Input placeholder="e.g. Cotton" value={attr.value} onChange={e => {
-                    const newAttrs = [...form.attributes]; newAttrs[ai] = { ...attr, value: e.target.value };
-                    setForm(f => ({ ...f, attributes: newAttrs }));
-                  }} className="flex-1" />
+                  {matched && matched.values?.length > 0 ? (
+                    <Select value={attr.value} onValueChange={v => {
+                      const newAttrs = [...form.attributes]; newAttrs[ai] = { ...attr, value: v };
+                      setForm(f => ({ ...f, attributes: newAttrs }));
+                    }}>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder={`Pick ${matched.name}`} /></SelectTrigger>
+                      <SelectContent>
+                        {matched.values.map((val, i) => <SelectItem key={i} value={val}>{val}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input placeholder="e.g. Cotton" value={attr.value} onChange={e => {
+                      const newAttrs = [...form.attributes]; newAttrs[ai] = { ...attr, value: e.target.value };
+                      setForm(f => ({ ...f, attributes: newAttrs }));
+                    }} className="flex-1" />
+                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeAttribute(ai)}><X className="h-4 w-4" /></Button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </TabsContent>
 
