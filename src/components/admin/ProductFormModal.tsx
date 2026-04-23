@@ -99,11 +99,17 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
       supabase.from('brands').select('id, name').eq('is_active', true).order('name'),
       supabase.from('warranties').select('id, name').eq('is_active', true).order('name'),
       supabase.from('product_labels').select('id, name, color').eq('is_active', true).order('name'),
-    ]).then(([cats, brs, wars, lbls]) => {
+      supabase.from('product_attributes').select('id, name, values').eq('is_active', true).order('name'),
+      supabase.from('colors').select('id, name, hex_code').eq('is_active', true).order('name'),
+      supabase.from('size_guides').select('id, name').eq('is_active', true).order('name'),
+    ]).then(([cats, brs, wars, lbls, attrs, cols, sgs]) => {
       if (cats.data) setCategories(cats.data);
       if (brs.data) setBrands(brs.data);
       if (wars.data) setWarranties(wars.data);
       if (lbls.data) setLabels(lbls.data);
+      if (attrs.data) setPredefinedAttributes(attrs.data as any);
+      if (cols.data) setPredefinedColors(cols.data as any);
+      if (sgs.data) setSizeGuides(sgs.data as any);
     });
   }, [open]);
 
