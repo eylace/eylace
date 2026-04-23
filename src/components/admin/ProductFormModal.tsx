@@ -28,7 +28,7 @@ interface ProductFormModalProps {
 const defaultForm = {
   name: '', slug: '', description: '', short_description: '',
   price: '', original_price: '', cost_per_item: '', discount: '', stock: '', sku: '',
-  category_id: '', brand_id: '', warranty_id: '', label_id: '',
+  category_id: '', brand_id: '', warranty_id: '', label_id: '', size_guide_id: '',
   images: [] as string[],
   is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
   digital_file_url: '',
@@ -47,6 +47,9 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
   const [brands, setBrands] = useState<any[]>([]);
   const [warranties, setWarranties] = useState<any[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
+  const [predefinedAttributes, setPredefinedAttributes] = useState<{ id: string; name: string; values: string[] }[]>([]);
+  const [predefinedColors, setPredefinedColors] = useState<{ id: string; name: string; hex_code: string }[]>([]);
+  const [sizeGuides, setSizeGuides] = useState<{ id: string; name: string }[]>([]);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [activeTab, setActiveTab] = useState('general');
