@@ -459,6 +459,41 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
                     <Input placeholder="e.g. Color, Size" value={v.name} onChange={e => updateVariation(vi, 'name', e.target.value)} className="flex-1" />
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeVariation(vi)}><X className="h-4 w-4" /></Button>
                   </div>
+                  {v.name.toLowerCase() === 'color' && predefinedColors.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pb-1 border-b border-border/50">
+                      <span className="text-[10px] text-muted-foreground self-center mr-1">Quick add:</span>
+                      {predefinedColors.map(c => {
+                        const already = v.options.includes(c.name);
+                        return (
+                          <button key={c.id} type="button" disabled={already}
+                            onClick={() => {
+                              const cleaned = v.options.filter(o => o.trim());
+                              updateVariation(vi, 'options', [...cleaned, c.name]);
+                            }}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] transition ${already ? 'opacity-40 cursor-not-allowed' : 'hover:bg-accent hover:text-accent-foreground'}`}>
+                            <span className="h-2.5 w-2.5 rounded-full border border-border" style={{ backgroundColor: c.hex_code }} />
+                            {c.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {v.name.toLowerCase() === 'size' && (
+                    <div className="flex flex-wrap gap-1.5 pb-1 border-b border-border/50">
+                      <span className="text-[10px] text-muted-foreground self-center mr-1">Quick add:</span>
+                      {['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'].map(s => {
+                        const already = v.options.includes(s);
+                        return (
+                          <button key={s} type="button" disabled={already}
+                            onClick={() => {
+                              const cleaned = v.options.filter(o => o.trim());
+                              updateVariation(vi, 'options', [...cleaned, s]);
+                            }}
+                            className={`px-2 py-0.5 rounded-full border text-[10px] transition ${already ? 'opacity-40 cursor-not-allowed' : 'hover:bg-accent hover:text-accent-foreground'}`}>{s}</button>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2">
                     {v.options.map((opt, oi) => (
                       <div key={oi} className="flex items-center gap-1">
