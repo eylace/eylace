@@ -175,10 +175,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const priceMap = new Map<string, { price: number; cost: number; name: string; image: string | null; active: boolean }>();
+    const priceMap = new Map<string, { price: number; cost: number; name: string; image: string | null; active: boolean; stock: number | null }>();
     const { data: prodRows, error: prodErr } = await supabaseAdmin
       .from('products')
-      .select('id, name, price, original_price, cost_per_item, images, is_active')
+      .select('id, name, price, original_price, cost_per_item, images, is_active, stock')
       .in('id', productIds as string[]);
 
     if (prodErr) {
@@ -196,6 +196,7 @@ Deno.serve(async (req) => {
         name: p.name,
         image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
         active: p.is_active !== false,
+        stock: p.stock == null ? null : Number(p.stock),
       });
     });
 
@@ -221,6 +222,15 @@ Deno.serve(async (req) => {
         );
       }
       const qty = Math.max(1, Math.floor(Number(item.quantity) || 0));
+      // Stock validation: reject when requested qty exceeds available stock.
+      // stock === null means "untracked" (digital/services) — allow.
+      if (product.stock !== null && qty > product.stock) {
+        await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+        return new Response(
+          JSON.stringify({ error: `Insufficient stock for ${product.name} (available: ${product.stock})` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
       const serverPrice = product.price;
       serverSubtotal += serverPrice * qty;
       orderItems.push({

@@ -19,64 +19,55 @@ Deno.serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
 
-    // Verify the user
-    const anonClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!)
-    const { data: { user }, error: userError } = await anonClient.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (userError || !user) {
+    // Use a per-user client so the RPC runs with the caller's auth.uid().
+    // The RPC itself enforces the order-ownership check and returns the URL
+    // ONLY when the authenticated user owns a fulfilled order containing
+    // the requested product.
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    })
+
+    const { data: claims, error: claimsError } = await userClient.auth.getClaims(
+      authHeader.replace('Bearer ', ''),
+    )
+    if (claimsError || !claims?.claims?.sub) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    const { product_id } = await req.json()
-    if (!product_id) {
-      return new Response(JSON.stringify({ error: 'product_id is required' }), {
+    const { product_id, order_id } = await req.json()
+    if (!product_id || !order_id) {
+      return new Response(JSON.stringify({ error: 'product_id and order_id are required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    // Check if user has a completed order containing this product
-    const { data: orderItems, error: orderError } = await supabase
-      .from('order_items')
-      .select('id, order_id, orders!inner(user_id, status)')
-      .eq('product_id', product_id)
-      .eq('orders.user_id', user.id)
-      .in('orders.status', ['delivered', 'completed', 'shipped', 'processing'])
-      .limit(1)
+    const { data, error } = await userClient.rpc('get_digital_download_url', {
+      _product_id: product_id,
+      _order_id: order_id,
+    })
 
-    if (orderError) {
-      console.error('Order check error:', orderError)
-      return new Response(JSON.stringify({ error: 'Failed to verify purchase' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    if (error) {
+      // RPC raises 42501 ("Not authorized") for ownership failures
+      const status = String(error.code) === '42501' ? 403 : 500
+      return new Response(JSON.stringify({ error: error.message }), {
+        status, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    if (!orderItems || orderItems.length === 0) {
-      return new Response(JSON.stringify({ error: 'No valid purchase found for this product' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
-    }
-
-    // Get the digital file URL (using service role to bypass RLS/view)
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .select('digital_file_url, name')
-      .eq('id', product_id)
-      .eq('is_digital', true)
-      .single()
-
-    if (productError || !product?.digital_file_url) {
+    const row = Array.isArray(data) ? data[0] : data
+    if (!row?.download_url) {
       return new Response(JSON.stringify({ error: 'Digital file not found' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    return new Response(JSON.stringify({ 
-      download_url: product.digital_file_url,
-      product_name: product.name 
+    return new Response(JSON.stringify({
+      download_url: row.download_url,
+      product_name: row.product_name,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
