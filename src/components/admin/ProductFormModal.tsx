@@ -71,6 +71,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
         sku: product.sku || '',
         category_id: product.category_id || '', brand_id: product.brand_id || '',
         warranty_id: product.warranty_id || '', label_id: product.label_id || '',
+        size_guide_id: product.size_guide_id || '',
         images: product.images || [],
         is_active: product.is_active ?? true, is_flash_sale: product.is_flash_sale ?? false,
         is_free_shipping: product.is_free_shipping ?? false, is_prime: product.is_prime ?? false,
