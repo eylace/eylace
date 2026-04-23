@@ -14,6 +14,33 @@ import { CompareBar } from "@/components/compare/CompareBar";
 import { CompareModal } from "@/components/compare/CompareModal";
 import { lazy, Suspense, useEffect } from "react";
 
+// Retry wrapper for lazy imports — handles stale chunk hashes after deploys.
+// If a dynamic import fails (chunk no longer exists), reload the page once.
+const lazyWithRetry = <T extends { default: React.ComponentType<any> }>(
+  factory: () => Promise<T>
+) =>
+  lazy(async () => {
+    const STORAGE_KEY = "lovable:chunk-reload";
+    try {
+      const mod = await factory();
+      sessionStorage.removeItem(STORAGE_KEY);
+      return mod;
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      const isChunkError =
+        msg.includes("Failed to fetch dynamically imported module") ||
+        msg.includes("Importing a module script failed") ||
+        msg.includes("error loading dynamically imported module");
+      if (isChunkError && !sessionStorage.getItem(STORAGE_KEY)) {
+        sessionStorage.setItem(STORAGE_KEY, "1");
+        window.location.reload();
+        // Return a never-resolving promise so Suspense keeps showing fallback until reload.
+        return new Promise<T>(() => {});
+      }
+      throw err;
+    }
+  });
+
 // Critical pages - eager load
 import Index from "./pages/Index";
 import ProductDetail from "./pages/ProductDetail";
