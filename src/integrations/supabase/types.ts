@@ -3221,6 +3221,14 @@ export type Database = {
     }
     Functions: {
       can_access_accounting: { Args: { _user_id: string }; Returns: boolean }
+      cleanup_expired_otp_codes: { Args: never; Returns: number }
+      get_digital_download_url: {
+        Args: { _order_id: string; _product_id: string }
+        Returns: {
+          download_url: string
+          product_name: string
+        }[]
+      }
       get_user_role_and_name: {
         Args: { _user_id: string }
         Returns: {
