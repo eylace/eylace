@@ -112,21 +112,30 @@ const TrackOrder = () => {
 
     setOrderData(order);
 
-    // Fetch order items
-    const { data: items } = await supabase
-      .from('order_items')
-      .select('*')
-      .eq('order_id', order.id);
-    setOrderItems(items || []);
-
-    // Fetch tracking events
-    const { data: events } = await supabase
-      .from('order_tracking_events')
-      .select('*')
-      .eq('order_id', order.id)
-      .order('created_at', { ascending: true });
-
-    setOrderEvents(events || []);
+    // Fetch order items + tracking events.
+    // For guest orders we MUST use secure RPCs (anonymous direct table access is locked down).
+    if (!order.user_id) {
+      const [{ data: items }, { data: events }] = await Promise.all([
+        supabase.rpc('lookup_guest_order_items', {
+          _order_number: orderNumber.trim(),
+          _contact: phoneNumber.trim(),
+        }),
+        supabase.rpc('lookup_guest_order_tracking', {
+          _order_number: orderNumber.trim(),
+          _contact: phoneNumber.trim(),
+        }),
+      ]);
+      setOrderItems(Array.isArray(items) ? items : []);
+      setOrderEvents(Array.isArray(events) ? events : []);
+    } else {
+      // Authenticated user — RLS allows them to read their own order data.
+      const [{ data: items }, { data: events }] = await Promise.all([
+        supabase.from('order_items').select('*').eq('order_id', order.id),
+        supabase.from('order_tracking_events').select('*').eq('order_id', order.id).order('created_at', { ascending: true }),
+      ]);
+      setOrderItems(items || []);
+      setOrderEvents(events || []);
+    }
     setOrderSearched(true);
     setOrderLoading(false);
   };
