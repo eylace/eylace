@@ -513,21 +513,56 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label className="font-semibold">Product Attributes</Label>
-                <Button variant="outline" size="sm" onClick={addAttribute} className="gap-1 h-7 text-xs"><Plus className="h-3 w-3" /> Add Attribute</Button>
+                <div className="flex items-center gap-2">
+                  {predefinedAttributes.length > 0 && (
+                    <Select value="" onValueChange={(attrId) => {
+                      const attr = predefinedAttributes.find(a => a.id === attrId);
+                      if (!attr) return;
+                      if (form.attributes.some(a => a.name.toLowerCase() === attr.name.toLowerCase())) {
+                        toast.info(`${attr.name} attribute already added`); return;
+                      }
+                      setForm(f => ({ ...f, attributes: [...f.attributes, { name: attr.name, value: '' }] }));
+                    }}>
+                      <SelectTrigger className="h-7 w-44 text-xs"><SelectValue placeholder="Pick from library..." /></SelectTrigger>
+                      <SelectContent>
+                        {predefinedAttributes.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button variant="outline" size="sm" onClick={addAttribute} className="gap-1 h-7 text-xs"><Plus className="h-3 w-3" /> Custom</Button>
+                </div>
               </div>
-              {form.attributes.map((attr, ai) => (
+              {predefinedAttributes.length === 0 && (
+                <p className="text-[10px] text-muted-foreground mb-2">Tip: Pre-create attributes (Material, Fabric, etc.) under Admin → Attributes for faster reuse.</p>
+              )}
+              {form.attributes.map((attr, ai) => {
+                const matched = predefinedAttributes.find(p => p.name.toLowerCase() === attr.name.toLowerCase());
+                return (
                 <div key={ai} className="flex items-center gap-2 mb-2">
                   <Input placeholder="e.g. Material" value={attr.name} onChange={e => {
                     const newAttrs = [...form.attributes]; newAttrs[ai] = { ...attr, name: e.target.value };
                     setForm(f => ({ ...f, attributes: newAttrs }));
                   }} className="flex-1" />
-                  <Input placeholder="e.g. Cotton" value={attr.value} onChange={e => {
-                    const newAttrs = [...form.attributes]; newAttrs[ai] = { ...attr, value: e.target.value };
-                    setForm(f => ({ ...f, attributes: newAttrs }));
-                  }} className="flex-1" />
+                  {matched && matched.values?.length > 0 ? (
+                    <Select value={attr.value} onValueChange={v => {
+                      const newAttrs = [...form.attributes]; newAttrs[ai] = { ...attr, value: v };
+                      setForm(f => ({ ...f, attributes: newAttrs }));
+                    }}>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder={`Pick ${matched.name}`} /></SelectTrigger>
+                      <SelectContent>
+                        {matched.values.map((val, i) => <SelectItem key={i} value={val}>{val}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input placeholder="e.g. Cotton" value={attr.value} onChange={e => {
+                      const newAttrs = [...form.attributes]; newAttrs[ai] = { ...attr, value: e.target.value };
+                      setForm(f => ({ ...f, attributes: newAttrs }));
+                    }} className="flex-1" />
+                  )}
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeAttribute(ai)}><X className="h-4 w-4" /></Button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </TabsContent>
 
