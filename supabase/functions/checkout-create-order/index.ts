@@ -66,10 +66,9 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const {
       order_number,
-      subtotal,
-      shipping,
-      tax,
-      discount,
+      shipping: clientShipping,
+      tax: clientTax,
+      discount: clientDiscount,
       total,
       payment_method,
       shipping_address,
@@ -79,7 +78,7 @@ Deno.serve(async (req) => {
     } = body;
 
     // Validate required fields
-    if (!order_number || subtotal == null || total == null || !payment_method || !items?.length) {
+    if (!order_number || total == null || !payment_method || !items?.length) {
       return new Response(
         JSON.stringify({ error: 'Missing required order fields' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -135,11 +134,12 @@ Deno.serve(async (req) => {
     const orderPayload: Record<string, unknown> = {
       order_number,
       status: 'pending',
-      subtotal,
-      shipping: shipping ?? 0,
-      tax: tax ?? 0,
-      discount: discount ?? 0,
-      total,
+      // Placeholder amounts — overwritten after server-side price validation below.
+      subtotal: 0,
+      shipping: 0,
+      tax: 0,
+      discount: 0,
+      total: 0,
       payment_method,
       shipping_address: shipping_address ?? null,
       customer_ip: customerIp,
@@ -168,26 +168,104 @@ Deno.serve(async (req) => {
 
     // 5. Fetch cost_per_item from products (for accurate historical profit calc)
     const productIds = Array.from(new Set(items.map((i: any) => i.product_id).filter(Boolean)));
-    const costMap = new Map<string, number>();
-    if (productIds.length > 0) {
-      const { data: prodRows } = await supabaseAdmin
-        .from('products')
-        .select('id, cost_per_item')
-        .in('id', productIds as string[]);
-      prodRows?.forEach((p: any) => costMap.set(String(p.id), Number(p.cost_per_item) || 0));
+    if (productIds.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid items: missing product_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
-    // 6. Create order items
-    const orderItems = items.map((item: any) => ({
-      order_id: orderData.id,
-      product_id: item.product_id,
-      product_name: item.product_name,
-      product_image: item.product_image || null,
-      price: item.price,
-      cost_per_item: costMap.get(String(item.product_id)) ?? 0,
-      quantity: item.quantity,
-      variations: item.variations || null,
-    }));
+    const priceMap = new Map<string, { price: number; cost: number; name: string; image: string | null; active: boolean }>();
+    const { data: prodRows, error: prodErr } = await supabaseAdmin
+      .from('products')
+      .select('id, name, price, original_price, cost_per_item, images, is_active')
+      .in('id', productIds as string[]);
+
+    if (prodErr) {
+      console.error('Product price lookup error:', prodErr);
+      return new Response(
+        JSON.stringify({ error: 'Failed to validate product prices' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    prodRows?.forEach((p: any) => {
+      priceMap.set(String(p.id), {
+        price: Number(p.price) || 0,
+        cost: Number(p.cost_per_item) || 0,
+        name: p.name,
+        image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
+        active: p.is_active !== false,
+      });
+    });
+
+    // Validate every item exists, is active, and use server-side prices
+    let serverSubtotal = 0;
+    const orderItems: Array<Record<string, unknown>> = [];
+    for (const item of items) {
+      const pid = String(item.product_id);
+      const product = priceMap.get(pid);
+      if (!product) {
+        // Roll back: delete the order shell we just inserted
+        await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+        return new Response(
+          JSON.stringify({ error: `Product not found: ${pid}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      if (!product.active) {
+        await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+        return new Response(
+          JSON.stringify({ error: `Product unavailable: ${product.name}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      const qty = Math.max(1, Math.floor(Number(item.quantity) || 0));
+      const serverPrice = product.price;
+      serverSubtotal += serverPrice * qty;
+      orderItems.push({
+        order_id: orderData.id,
+        product_id: pid,
+        product_name: product.name,
+        product_image: product.image,
+        price: serverPrice,
+        cost_per_item: product.cost,
+        quantity: qty,
+        variations: item.variations || null,
+      });
+    }
+
+    // Recompute totals server-side from authenticated prices
+    const safeShipping = Math.max(0, Number(clientShipping) || 0);
+    const safeTax = Math.max(0, Number(clientTax) || 0);
+    const safeDiscount = Math.max(0, Number(clientDiscount) || 0);
+    const serverTotal = Math.max(0, serverSubtotal + safeShipping + safeTax - safeDiscount);
+
+    // Reject if client-submitted total deviates by more than 1 unit (rounding tolerance)
+    if (Math.abs(Number(total) - serverTotal) > 1) {
+      await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+      console.warn('Price tampering detected', { clientTotal: total, serverTotal });
+      return new Response(
+        JSON.stringify({ error: 'Order total mismatch — please refresh your cart and try again' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Update the order shell with verified server-side amounts
+    const { data: updatedOrder } = await supabaseAdmin
+      .from('orders')
+      .update({
+        subtotal: serverSubtotal,
+        shipping: safeShipping,
+        tax: safeTax,
+        discount: safeDiscount,
+        total: serverTotal,
+      })
+      .eq('id', orderData.id)
+      .select()
+      .single();
+
+    const finalOrder = updatedOrder ?? { ...orderData, subtotal: serverSubtotal, shipping: safeShipping, tax: safeTax, discount: safeDiscount, total: serverTotal };
 
     const { error: itemsError } = await supabaseAdmin
       .from('order_items')
@@ -197,14 +275,14 @@ Deno.serve(async (req) => {
       console.error('Order items insert error:', itemsError);
       // Still return order since it was created
       return new Response(
-        JSON.stringify({ order: orderData, items_error: itemsError.message }),
+        JSON.stringify({ order: finalOrder, items_error: itemsError.message }),
         { status: 207, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
     return new Response(
       JSON.stringify({
-        order: orderData,
+        order: finalOrder,
         is_guest: !userId,
         customer_ip: customerIp,
       }),
