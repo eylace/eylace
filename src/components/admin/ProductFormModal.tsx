@@ -422,11 +422,36 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
               </div>
             </div>
 
+            <div>
+              <Label>Size Guide</Label>
+              <Select value={form.size_guide_id} onValueChange={v => setForm(f => ({ ...f, size_guide_id: v }))}>
+                <SelectTrigger><SelectValue placeholder={sizeGuides.length ? "Attach a pre-created size guide" : "No size guides — create one in Size Guides page"} /></SelectTrigger>
+                <SelectContent>{sizeGuides.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground mt-1">Customers see this on the product page. Manage guides under Admin → Size Guides.</p>
+            </div>
+
             {/* Variations */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <Label className="font-semibold">Variations (Color, Size, etc.)</Label>
-                <Button variant="outline" size="sm" onClick={addVariation} className="gap-1 h-7 text-xs"><Plus className="h-3 w-3" /> Add Variation</Button>
+                <div className="flex items-center gap-2">
+                  <Select value="" onValueChange={(name) => {
+                    if (form.variations.some(v => v.name.toLowerCase() === name.toLowerCase())) {
+                      toast.info(`${name} variation already added`); return;
+                    }
+                    setForm(f => ({ ...f, variations: [...f.variations, { name, options: [''] }] }));
+                  }}>
+                    <SelectTrigger className="h-7 w-36 text-xs"><SelectValue placeholder="Quick add..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Color">Color</SelectItem>
+                      <SelectItem value="Size">Size</SelectItem>
+                      <SelectItem value="Material">Material</SelectItem>
+                      <SelectItem value="Style">Style</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={addVariation} className="gap-1 h-7 text-xs"><Plus className="h-3 w-3" /> Custom</Button>
+                </div>
               </div>
               {form.variations.map((v, vi) => (
                 <div key={vi} className="p-3 border border-border rounded-lg mb-2 space-y-2">
