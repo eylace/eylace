@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
     }
 
     // Update the order shell with verified server-side amounts
-    await supabaseAdmin
+    const { data: updatedOrder } = await supabaseAdmin
       .from('orders')
       .update({
         subtotal: serverSubtotal,
@@ -261,7 +261,11 @@ Deno.serve(async (req) => {
         discount: safeDiscount,
         total: serverTotal,
       })
-      .eq('id', orderData.id);
+      .eq('id', orderData.id)
+      .select()
+      .single();
+
+    const finalOrder = updatedOrder ?? { ...orderData, subtotal: serverSubtotal, shipping: safeShipping, tax: safeTax, discount: safeDiscount, total: serverTotal };
 
     const { error: itemsError } = await supabaseAdmin
       .from('order_items')
@@ -271,14 +275,14 @@ Deno.serve(async (req) => {
       console.error('Order items insert error:', itemsError);
       // Still return order since it was created
       return new Response(
-        JSON.stringify({ order: orderData, items_error: itemsError.message }),
+        JSON.stringify({ order: finalOrder, items_error: itemsError.message }),
         { status: 207, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
     return new Response(
       JSON.stringify({
-        order: orderData,
+        order: finalOrder,
         is_guest: !userId,
         customer_ip: customerIp,
       }),
