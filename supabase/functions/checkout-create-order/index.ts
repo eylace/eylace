@@ -134,11 +134,12 @@ Deno.serve(async (req) => {
     const orderPayload: Record<string, unknown> = {
       order_number,
       status: 'pending',
-      subtotal,
-      shipping: shipping ?? 0,
-      tax: tax ?? 0,
-      discount: discount ?? 0,
-      total,
+      // Placeholder amounts — overwritten after server-side price validation below.
+      subtotal: 0,
+      shipping: 0,
+      tax: 0,
+      discount: 0,
+      total: 0,
       payment_method,
       shipping_address: shipping_address ?? null,
       customer_ip: customerIp,
