@@ -3278,6 +3278,31 @@ export type Database = {
           updated_at: string
         }[]
       }
+      lookup_guest_order_items: {
+        Args: { _contact: string; _order_number: string }
+        Returns: {
+          created_at: string
+          id: string
+          order_id: string
+          price: number
+          product_id: string
+          product_image: string
+          product_name: string
+          quantity: number
+          variations: Json
+        }[]
+      }
+      lookup_guest_order_tracking: {
+        Args: { _contact: string; _order_number: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          location: string
+          order_id: string
+          status: string
+        }[]
+      }
       lookup_return_by_tracking: {
         Args: { tracking_number: string }
         Returns: {
