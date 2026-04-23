@@ -157,6 +157,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
       brand_id: form.brand_id || null,
       warranty_id: form.warranty_id || null,
       label_id: form.label_id || null,
+      size_guide_id: form.size_guide_id || null,
       images: form.images,
       is_active: form.is_active, is_flash_sale: form.is_flash_sale,
       is_free_shipping: form.is_free_shipping, is_prime: form.is_prime,
