@@ -9,9 +9,14 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { format } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart, Video, FileText, Sparkles, AlertTriangle, FolderOpen, Tag } from 'lucide-react';
+import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart, Video, FileText, Sparkles, AlertTriangle, FolderOpen, Tag, Calendar as CalendarIcon, ChevronDown, Palette, RefreshCw } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MediaManagerModal } from '@/components/admin/MediaManagerModal';
 
@@ -24,7 +29,10 @@ interface ProductFormState {
   cost_per_item: string;
   discount: string;
   discount_type: string;
+  discount_starts_at: string;
+  discount_ends_at: string;
   stock: string;
+  sku: string;
   category_id: string;
   brand_id: string;
   warranty_id: string;
@@ -41,6 +49,10 @@ interface ProductFormState {
   is_prime: boolean;
   is_digital: boolean;
   variations: { name: string; options: string[] }[];
+  selected_color_ids: string[];
+  selected_attribute_ids: string[];
+  attribute_values: Record<string, string[]>; // attributeId -> selected values
+  variation_enabled: boolean;
   unit: string;
   weight: string;
   min_qty: string;
@@ -67,10 +79,12 @@ interface ProductFormState {
 
 const defaultForm: ProductFormState = {
   name: '', slug: '', description: '', price: '', original_price: '', cost_per_item: '', discount: '', discount_type: 'flat',
-  stock: '', category_id: '', brand_id: '', warranty_id: '', label_id: '',
+  discount_starts_at: '', discount_ends_at: '',
+  stock: '', sku: '', category_id: '', brand_id: '', warranty_id: '', label_id: '',
   images: [], thumbnail: '', videos: [], video_thumbnails: [], youtube_link: '', pdf_url: '',
   is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
-  variations: [], unit: '', weight: '', min_qty: '1', barcode: '',
+  variations: [], selected_color_ids: [], selected_attribute_ids: [], attribute_values: {}, variation_enabled: false,
+  unit: '', weight: '', min_qty: '1', barcode: '',
   meta_title: '', meta_description: '', meta_keywords: '',
   meta_image: '', canonical_url: '', short_description: '',
   shipping_type: 'free', shipping_cost: '', is_product_quantity_multiply: false, estimated_shipping_days: '',
@@ -102,6 +116,8 @@ const AdminAddProduct = () => {
   const [brands, setBrands] = useState<any[]>([]);
   const [warranties, setWarranties] = useState<any[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
+  const [colors, setColors] = useState<Array<{ id: string; name: string; hex_code: string }>>([]);
+  const [attributes, setAttributes] = useState<Array<{ id: string; name: string; values: string[] }>>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -117,12 +133,16 @@ const AdminAddProduct = () => {
       supabase.from('warranties').select('id, name, duration').eq('is_active', true).order('name'),
       supabase.from('product_labels').select('id, name, color').eq('is_active', true).order('name'),
       supabase.from('products').select('id, name, images').eq('is_active', true).order('name').limit(100),
-    ]).then(([catRes, brandRes, warrantyRes, labelRes, prodRes]) => {
+      supabase.from('colors').select('id, name, hex_code').eq('is_active', true).order('name'),
+      supabase.from('product_attributes').select('id, name, values').eq('is_active', true).order('name'),
+    ]).then(([catRes, brandRes, warrantyRes, labelRes, prodRes, colorRes, attrRes]) => {
       if (catRes.data) setCategories(catRes.data);
       if (brandRes.data) setBrands(brandRes.data);
       if (warrantyRes.data) setWarranties(warrantyRes.data);
       if (labelRes.data) setLabels(labelRes.data);
       if (prodRes.data) setAllProducts(prodRes.data);
+      if (colorRes.data) setColors(colorRes.data as any);
+      if (attrRes.data) setAttributes(attrRes.data as any);
     });
   }, []);
 
@@ -142,7 +162,10 @@ const AdminAddProduct = () => {
         cost_per_item: String((data as any).cost_per_item ?? ''),
         discount: String(data.discount || ''),
         discount_type: attrs.discount_type || 'flat',
+        discount_starts_at: attrs.discount_starts_at || '',
+        discount_ends_at: attrs.discount_ends_at || (data.flash_sale_ends ? String(data.flash_sale_ends).slice(0, 10) : ''),
         stock: String(data.stock || ''),
+        sku: attrs.sku || '',
         category_id: data.category_id || '',
         brand_id: data.brand_id || '',
         warranty_id: data.warranty_id || '',
@@ -159,6 +182,10 @@ const AdminAddProduct = () => {
         is_prime: data.is_prime ?? false,
         is_digital: data.is_digital ?? false,
         variations: (data.variations as any) || [],
+        selected_color_ids: attrs.selected_color_ids || [],
+        selected_attribute_ids: attrs.selected_attribute_ids || [],
+        attribute_values: attrs.attribute_values || {},
+        variation_enabled: attrs.variation_enabled ?? ((data.variations as any)?.length > 0),
         unit: attrs.unit || '',
         weight: attrs.weight || '',
         min_qty: attrs.min_qty || '1',
@@ -311,9 +338,111 @@ const AdminAddProduct = () => {
     }));
   };
 
+  // === Variation Configuration helpers ======================================
+  const toggleColor = (colorId: string) => {
+    setForm(f => ({
+      ...f,
+      selected_color_ids: f.selected_color_ids.includes(colorId)
+        ? f.selected_color_ids.filter(id => id !== colorId)
+        : [...f.selected_color_ids, colorId],
+    }));
+  };
+
+  const toggleAttribute = (attrId: string) => {
+    setForm(f => {
+      const isSelected = f.selected_attribute_ids.includes(attrId);
+      const next_attribute_values = { ...f.attribute_values };
+      if (isSelected) {
+        delete next_attribute_values[attrId];
+      } else {
+        next_attribute_values[attrId] = next_attribute_values[attrId] || [];
+      }
+      return {
+        ...f,
+        selected_attribute_ids: isSelected
+          ? f.selected_attribute_ids.filter(id => id !== attrId)
+          : [...f.selected_attribute_ids, attrId],
+        attribute_values: next_attribute_values,
+      };
+    });
+  };
+
+  const toggleAttributeValue = (attrId: string, value: string) => {
+    setForm(f => {
+      const current = f.attribute_values[attrId] || [];
+      const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
+      return { ...f, attribute_values: { ...f.attribute_values, [attrId]: next } };
+    });
+  };
+
+  // Build the canonical `variations` payload from color + attribute selections.
+  const buildVariationsPayload = (
+    colorIds: string[],
+    attrIds: string[],
+    attrValues: Record<string, string[]>,
+  ) => {
+    const out: { name: string; options: string[] }[] = [];
+    if (colorIds.length > 0) {
+      out.push({
+        name: 'Color',
+        options: colorIds
+          .map(id => colors.find(c => c.id === id)?.name)
+          .filter((n): n is string => !!n),
+      });
+    }
+    for (const attrId of attrIds) {
+      const attr = attributes.find(a => a.id === attrId);
+      const values = attrValues[attrId] || [];
+      if (attr && values.length > 0) {
+        out.push({ name: attr.name, options: values });
+      }
+    }
+    return out;
+  };
+
+  // === SKU Generator ========================================================
+  // Standard format: {NAMEPREFIX}-{CATPREFIX}-{TIMESTAMP}-{RAND}
+  // Example: WIRE-AUDI-K9X4-7B3
+  const generateSku = () => {
+    const slug = (form.name || 'PRD')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '')
+      .slice(0, 4) || 'PRD';
+    const cat = categories.find(c => c.id === form.category_id)?.name || '';
+    const catPrefix = cat
+      ? cat.toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 4)
+      : 'GEN';
+    const ts = Date.now().toString(36).toUpperCase().slice(-4);
+    const rand = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
+    const sku = `${slug}-${catPrefix}-${ts}-${rand}`;
+    setForm(f => ({ ...f, sku }));
+    toast.success(`SKU generated: ${sku}`);
+  };
+
+  // === Discount Date Range ===================================================
+  const discountRange: DateRange | undefined = (form.discount_starts_at || form.discount_ends_at)
+    ? {
+        from: form.discount_starts_at ? new Date(form.discount_starts_at) : undefined,
+        to: form.discount_ends_at ? new Date(form.discount_ends_at) : undefined,
+      }
+    : undefined;
+
+  const setDiscountRange = (range: DateRange | undefined) => {
+    setForm(f => ({
+      ...f,
+      discount_starts_at: range?.from ? format(range.from, 'yyyy-MM-dd') : '',
+      discount_ends_at: range?.to ? format(range.to, 'yyyy-MM-dd') : '',
+    }));
+  };
+
   const handleSubmit = async () => {
     if (!form.name || !form.slug || !form.price) { toast.error('Name, slug and price are required'); return; }
     setLoading(true);
+    // Build variations from the new color/attribute selectors when enabled,
+    // otherwise fall back to the legacy `variations` array.
+    const builtVariations = form.variation_enabled
+      ? buildVariationsPayload(form.selected_color_ids, form.selected_attribute_ids, form.attribute_values)
+      : form.variations;
     const payload: any = {
       name: form.name, slug: form.slug, description: form.description || null,
       price: parseFloat(form.price),
@@ -326,7 +455,10 @@ const AdminAddProduct = () => {
       images: form.images, is_active: form.is_active, is_flash_sale: form.is_flash_sale,
       is_free_shipping: form.shipping_type === 'free' || form.is_free_shipping,
       is_prime: form.is_prime, is_digital: form.is_digital,
-      variations: form.variations.length > 0 ? form.variations : [],
+      variations: builtVariations.length > 0 ? builtVariations : [],
+      // Discount window — drives both display countdown and flash-sale expiry
+      flash_sale_starts: form.discount_starts_at ? new Date(form.discount_starts_at).toISOString() : null,
+      flash_sale_ends: form.discount_ends_at ? new Date(form.discount_ends_at).toISOString() : null,
       // ✅ SEO fields saved to dedicated top-level columns (with server-side validation)
       meta_title: form.meta_title?.trim() || null,
       meta_description: form.meta_description?.trim() || null,
@@ -337,6 +469,7 @@ const AdminAddProduct = () => {
       tags: tags.length > 0 ? tags : [],
       attributes: {
         unit: form.unit, weight: form.weight, min_qty: form.min_qty, barcode: form.barcode,
+        sku: form.sku || null,
         thumbnail: form.thumbnail, videos: form.videos, video_thumbnails: form.video_thumbnails,
         youtube_link: form.youtube_link, pdf_url: form.pdf_url,
         shipping_type: form.shipping_type, shipping_cost: form.shipping_cost,
@@ -345,6 +478,12 @@ const AdminAddProduct = () => {
         is_featured: form.is_featured, is_todays_deal: form.is_todays_deal, flash_deal_title: form.flash_deal_title,
         hsn_code: form.hsn_code, gst_rate: form.gst_rate, frequently_bought_ids: form.frequently_bought_ids,
         note: form.note, discount_type: form.discount_type,
+        discount_starts_at: form.discount_starts_at || null,
+        discount_ends_at: form.discount_ends_at || null,
+        variation_enabled: form.variation_enabled,
+        selected_color_ids: form.selected_color_ids,
+        selected_attribute_ids: form.selected_attribute_ids,
+        attribute_values: form.attribute_values,
       },
     };
 
@@ -717,14 +856,275 @@ const AdminAddProduct = () => {
                   </Select>
                 </div>
               </div>
+
+              {/* Discount Date Range */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <Label className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> Discount Date Range</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal mt-1"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        {discountRange?.from ? (
+                          discountRange.to ? (
+                            <>
+                              {format(discountRange.from, 'PP')} – {format(discountRange.to, 'PP')}
+                            </>
+                          ) : (
+                            format(discountRange.from, 'PP')
+                          )
+                        ) : (
+                          <span className="text-muted-foreground">Select Date</span>
+                        )}
+                        {discountRange?.from && (
+                          <X
+                            className="ml-auto h-3.5 w-3.5 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDiscountRange(undefined); }}
+                          />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="range"
+                        selected={discountRange}
+                        onSelect={setDiscountRange}
+                        numberOfMonths={2}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Optional. The discount will only be active between these dates.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
+
+          {/* ===== Product Variation Configuration ===== */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Palette className="h-4 w-4" /> Product Variation Configuration
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{form.variation_enabled ? 'Enabled' : 'Disabled'}</span>
+                <Switch
+                  checked={form.variation_enabled}
+                  onCheckedChange={v => setForm(f => ({ ...f, variation_enabled: v }))}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Colors row */}
+              <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3 items-start">
+                <Label className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm font-medium">
+                  Colors
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!form.variation_enabled}
+                      className="w-full justify-between text-left font-normal h-auto min-h-10 py-2"
+                    >
+                      {form.selected_color_ids.length === 0 ? (
+                        <span className="text-muted-foreground">Nothing selected</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {form.selected_color_ids.map(id => {
+                            const c = colors.find(x => x.id === id);
+                            if (!c) return null;
+                            return (
+                              <Badge key={id} variant="secondary" className="gap-1 pl-1.5 pr-1 py-0.5">
+                                <span className="h-3 w-3 rounded-full border border-border" style={{ backgroundColor: c.hex_code }} />
+                                {c.name}
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleColor(id); }}
+                                  className="hover:bg-destructive/20 rounded-full p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-2" align="start">
+                    <div className="text-xs font-medium px-2 py-1 text-muted-foreground">Select colors</div>
+                    <div className="max-h-[280px] overflow-y-auto space-y-1">
+                      {colors.length === 0 && (
+                        <p className="text-xs text-muted-foreground p-2">
+                          No colors found. Create some in Products → Colors.
+                        </p>
+                      )}
+                      {colors.map(c => {
+                        const checked = form.selected_color_ids.includes(c.id);
+                        return (
+                          <button
+                            type="button"
+                            key={c.id}
+                            onClick={() => toggleColor(c.id)}
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${checked ? 'bg-accent/15' : 'hover:bg-muted'}`}
+                          >
+                            <Checkbox checked={checked} className="pointer-events-none" />
+                            <span className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: c.hex_code }} />
+                            <span className="flex-1 text-left">{c.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Attributes row */}
+              <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3 items-start">
+                <Label className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm font-medium">
+                  Attributes
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!form.variation_enabled}
+                      className="w-full justify-between text-left font-normal h-auto min-h-10 py-2"
+                    >
+                      {form.selected_attribute_ids.length === 0 ? (
+                        <span className="text-muted-foreground">Nothing selected</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {form.selected_attribute_ids.map(id => {
+                            const a = attributes.find(x => x.id === id);
+                            if (!a) return null;
+                            const count = (form.attribute_values[id] || []).length;
+                            return (
+                              <Badge key={id} variant="secondary" className="gap-1 pl-2 pr-1 py-0.5">
+                                {a.name}{count > 0 && <span className="text-[10px] text-muted-foreground">×{count}</span>}
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleAttribute(id); }}
+                                  className="hover:bg-destructive/20 rounded-full p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-2" align="start">
+                    <div className="text-xs font-medium px-2 py-1 text-muted-foreground">Select attributes</div>
+                    <div className="max-h-[280px] overflow-y-auto space-y-1">
+                      {attributes.length === 0 && (
+                        <p className="text-xs text-muted-foreground p-2">
+                          No attributes found. Create some in Products → Attributes.
+                        </p>
+                      )}
+                      {attributes.map(a => {
+                        const checked = form.selected_attribute_ids.includes(a.id);
+                        return (
+                          <button
+                            type="button"
+                            key={a.id}
+                            onClick={() => toggleAttribute(a.id)}
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${checked ? 'bg-accent/15' : 'hover:bg-muted'}`}
+                          >
+                            <Checkbox checked={checked} className="pointer-events-none" />
+                            <span className="flex-1 text-left">{a.name}</span>
+                            <span className="text-[10px] text-muted-foreground">{a.values?.length || 0} options</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Per-attribute value selectors (cascading) */}
+              {form.variation_enabled && form.selected_attribute_ids.length > 0 && (
+                <div className="space-y-3 pt-1">
+                  {form.selected_attribute_ids.map(attrId => {
+                    const attr = attributes.find(a => a.id === attrId);
+                    if (!attr) return null;
+                    const selected = form.attribute_values[attrId] || [];
+                    return (
+                      <div key={attrId} className="rounded-lg border border-border bg-muted/20 p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs font-semibold flex items-center gap-1.5">
+                            <Tag className="h-3 w-3" /> {attr.name}
+                            <span className="text-muted-foreground font-normal">({selected.length}/{attr.values?.length || 0} selected)</span>
+                          </Label>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(attr.values || []).map(value => {
+                            const isSel = selected.includes(value);
+                            return (
+                              <button
+                                type="button"
+                                key={value}
+                                onClick={() => toggleAttributeValue(attrId, value)}
+                                className={`px-2.5 py-1 rounded-md text-xs border transition-all ${
+                                  isSel
+                                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                    : 'bg-background text-foreground border-border hover:border-primary/40'
+                                }`}
+                              >
+                                {value}
+                              </button>
+                            );
+                          })}
+                          {(!attr.values || attr.values.length === 0) && (
+                            <span className="text-xs text-muted-foreground italic">No values defined for this attribute</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Choose the attributes of this product and then input values of each attribute.
+              </p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle className="text-sm">Stock Management</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div><Label>Current Stock *</Label><Input type="number" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} placeholder="0" /></div>
-                <div><Label>SKU</Label><Input placeholder="Auto-generated or custom SKU" value={form.slug} readOnly className="bg-muted/50" /></div>
+                <div>
+                  <Label>SKU</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Product SKU"
+                      value={form.sku}
+                      onChange={e => setForm(f => ({ ...f, sku: e.target.value }))}
+                    />
+                    <Button type="button" variant="secondary" onClick={generateSku} className="gap-1.5 shrink-0">
+                      <RefreshCw className="h-3.5 w-3.5" /> Generate
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Click <span className="font-medium">Generate</span> for an automatic SKU using the product name & category.
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.is_prime} onCheckedChange={v => setForm(f => ({ ...f, is_prime: v }))} />
