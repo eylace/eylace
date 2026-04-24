@@ -438,6 +438,11 @@ const AdminAddProduct = () => {
   const handleSubmit = async () => {
     if (!form.name || !form.slug || !form.price) { toast.error('Name, slug and price are required'); return; }
     setLoading(true);
+    // Build variations from the new color/attribute selectors when enabled,
+    // otherwise fall back to the legacy `variations` array.
+    const builtVariations = form.variation_enabled
+      ? buildVariationsPayload(form.selected_color_ids, form.selected_attribute_ids, form.attribute_values)
+      : form.variations;
     const payload: any = {
       name: form.name, slug: form.slug, description: form.description || null,
       price: parseFloat(form.price),
@@ -450,7 +455,10 @@ const AdminAddProduct = () => {
       images: form.images, is_active: form.is_active, is_flash_sale: form.is_flash_sale,
       is_free_shipping: form.shipping_type === 'free' || form.is_free_shipping,
       is_prime: form.is_prime, is_digital: form.is_digital,
-      variations: form.variations.length > 0 ? form.variations : [],
+      variations: builtVariations.length > 0 ? builtVariations : [],
+      // Discount window — drives both display countdown and flash-sale expiry
+      flash_sale_starts: form.discount_starts_at ? new Date(form.discount_starts_at).toISOString() : null,
+      flash_sale_ends: form.discount_ends_at ? new Date(form.discount_ends_at).toISOString() : null,
       // ✅ SEO fields saved to dedicated top-level columns (with server-side validation)
       meta_title: form.meta_title?.trim() || null,
       meta_description: form.meta_description?.trim() || null,
@@ -461,6 +469,7 @@ const AdminAddProduct = () => {
       tags: tags.length > 0 ? tags : [],
       attributes: {
         unit: form.unit, weight: form.weight, min_qty: form.min_qty, barcode: form.barcode,
+        sku: form.sku || null,
         thumbnail: form.thumbnail, videos: form.videos, video_thumbnails: form.video_thumbnails,
         youtube_link: form.youtube_link, pdf_url: form.pdf_url,
         shipping_type: form.shipping_type, shipping_cost: form.shipping_cost,
@@ -469,6 +478,12 @@ const AdminAddProduct = () => {
         is_featured: form.is_featured, is_todays_deal: form.is_todays_deal, flash_deal_title: form.flash_deal_title,
         hsn_code: form.hsn_code, gst_rate: form.gst_rate, frequently_bought_ids: form.frequently_bought_ids,
         note: form.note, discount_type: form.discount_type,
+        discount_starts_at: form.discount_starts_at || null,
+        discount_ends_at: form.discount_ends_at || null,
+        variation_enabled: form.variation_enabled,
+        selected_color_ids: form.selected_color_ids,
+        selected_attribute_ids: form.selected_attribute_ids,
+        attribute_values: form.attribute_values,
       },
     };
 
