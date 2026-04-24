@@ -23,6 +23,13 @@ export interface Product {
   soldCount?: number;
   createdAt: Date;
   updatedAt: Date;
+  shortDescription?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  metaImage?: string;
+  canonicalUrl?: string;
+  tags?: string[];
 }
 
 export interface ProductVariation {
