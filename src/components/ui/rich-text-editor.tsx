@@ -48,6 +48,17 @@ const HIGHLIGHT_COLORS = [
   '#f783ac', '#ff8787', '#ffffff',
 ];
 
+const FONT_FAMILIES = [
+  { label: 'Default', value: '' },
+  { label: 'Sans Serif', value: 'ui-sans-serif, system-ui, sans-serif' },
+  { label: 'Serif', value: 'ui-serif, Georgia, serif' },
+  { label: 'Monospace', value: 'ui-monospace, SFMono-Regular, Menlo, monospace' },
+  { label: 'Inter', value: 'Inter, sans-serif' },
+  { label: 'Arial', value: 'Arial, sans-serif' },
+  { label: 'Georgia', value: 'Georgia, serif' },
+  { label: 'Times New Roman', value: '"Times New Roman", Times, serif' },
+];
+
 const ToolbarBtn = ({
   onClick, active, disabled, children, title,
 }: {
@@ -83,6 +94,9 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Write product d
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       TextStyle,
       Color,
+      FontFamily.configure({ types: ['textStyle'] }),
+      Subscript,
+      Superscript,
       Link.configure({ openOnClick: false, HTMLAttributes: { rel: 'noopener noreferrer nofollow' } }),
       Image.configure({ inline: false, allowBase64: true }),
       Table.configure({ resizable: true }),
