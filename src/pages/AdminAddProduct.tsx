@@ -116,6 +116,8 @@ const AdminAddProduct = () => {
   const [brands, setBrands] = useState<any[]>([]);
   const [warranties, setWarranties] = useState<any[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
+  const [colors, setColors] = useState<Array<{ id: string; name: string; hex_code: string }>>([]);
+  const [attributes, setAttributes] = useState<Array<{ id: string; name: string; values: string[] }>>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -131,12 +133,16 @@ const AdminAddProduct = () => {
       supabase.from('warranties').select('id, name, duration').eq('is_active', true).order('name'),
       supabase.from('product_labels').select('id, name, color').eq('is_active', true).order('name'),
       supabase.from('products').select('id, name, images').eq('is_active', true).order('name').limit(100),
-    ]).then(([catRes, brandRes, warrantyRes, labelRes, prodRes]) => {
+      supabase.from('colors').select('id, name, hex_code').eq('is_active', true).order('name'),
+      supabase.from('product_attributes').select('id, name, values').eq('is_active', true).order('name'),
+    ]).then(([catRes, brandRes, warrantyRes, labelRes, prodRes, colorRes, attrRes]) => {
       if (catRes.data) setCategories(catRes.data);
       if (brandRes.data) setBrands(brandRes.data);
       if (warrantyRes.data) setWarranties(warrantyRes.data);
       if (labelRes.data) setLabels(labelRes.data);
       if (prodRes.data) setAllProducts(prodRes.data);
+      if (colorRes.data) setColors(colorRes.data as any);
+      if (attrRes.data) setAttributes(attrRes.data as any);
     });
   }, []);
 
