@@ -1525,6 +1525,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_secrets: {
+        Row: {
+          created_at: string
+          credentials: Json
+          gateway_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credentials?: Json
+          gateway_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credentials?: Json
+          gateway_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateway_secrets_gateway_id_fkey"
+            columns: ["gateway_id"]
+            isOneToOne: true
+            referencedRelation: "payment_gateways"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_gateway_secrets_gateway_id_fkey"
+            columns: ["gateway_id"]
+            isOneToOne: true
+            referencedRelation: "payment_gateways_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_gateways: {
         Row: {
           created_at: string
@@ -3306,6 +3345,51 @@ export type Database = {
         Args: { _order_item_id: string }
         Returns: number
       }
+      admin_get_order_item_costs: {
+        Args: { _order_id: string }
+        Returns: {
+          cost_per_item: number
+          id: string
+          price: number
+          product_id: string
+          product_name: string
+          quantity: number
+          total_cost: number
+        }[]
+      }
+      admin_get_payment_gateway_secrets: {
+        Args: { _gateway_id: string }
+        Returns: Json
+      }
+      admin_list_courier_tokens: {
+        Args: never
+        Returns: {
+          client_id: string
+          created_at: string
+          environment: string
+          expires_at: string
+          has_refresh: boolean
+          id: string
+          provider: string
+          updated_at: string
+        }[]
+      }
+      admin_list_otp_audit: {
+        Args: { _limit?: number; _phone?: string }
+        Returns: {
+          attempts: number
+          created_at: string
+          expires_at: string
+          id: string
+          is_used: boolean
+          max_attempts: number
+          phone: string
+        }[]
+      }
+      admin_save_payment_gateway_secrets: {
+        Args: { _credentials: Json; _gateway_id: string }
+        Returns: undefined
+      }
       can_access_accounting: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_otp_codes: { Args: never; Returns: number }
       find_seo_duplicates: {
@@ -3327,6 +3411,12 @@ export type Database = {
         Returns: {
           download_url: string
           product_name: string
+        }[]
+      }
+      get_realtime_topics_for_user: {
+        Args: never
+        Returns: {
+          topic: string
         }[]
       }
       get_user_role_and_name: {
