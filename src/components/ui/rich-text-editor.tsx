@@ -157,6 +157,52 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Write product d
     )}>
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-border bg-muted/20">
+        {/* Headings / Paragraph */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="p-2 rounded-md hover:bg-muted transition-colors flex items-center gap-0.5 min-w-[70px]" title="Paragraph style">
+              {editor.isActive('heading', { level: 1 }) ? <Heading1 className={boldIconClass} /> :
+               editor.isActive('heading', { level: 2 }) ? <Heading2 className={boldIconClass} /> :
+               editor.isActive('heading', { level: 3 }) ? <Heading3 className={boldIconClass} /> :
+               <Pilcrow className={boldIconClass} />}
+              <ChevronDown className="h-3 w-3 stroke-[2.5]" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 p-1" align="start">
+            <button type="button" onClick={() => editor.chain().focus().setParagraph().run()} className={cn('flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm hover:bg-muted', editor.isActive('paragraph') && !editor.isActive('heading') && 'bg-primary/10 text-primary')}>
+              <Pilcrow className="h-4 w-4" /> Paragraph
+            </button>
+            <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={cn('flex items-center gap-2 w-full px-2 py-1.5 rounded text-base font-bold hover:bg-muted', editor.isActive('heading', { level: 1 }) && 'bg-primary/10 text-primary')}>
+              <Heading1 className="h-4 w-4" /> Heading 1
+            </button>
+            <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={cn('flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-bold hover:bg-muted', editor.isActive('heading', { level: 2 }) && 'bg-primary/10 text-primary')}>
+              <Heading2 className="h-4 w-4" /> Heading 2
+            </button>
+            <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={cn('flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm font-semibold hover:bg-muted', editor.isActive('heading', { level: 3 }) && 'bg-primary/10 text-primary')}>
+              <Heading3 className="h-4 w-4" /> Heading 3
+            </button>
+          </PopoverContent>
+        </Popover>
+
+        {/* Font family */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button type="button" className="p-2 rounded-md hover:bg-muted transition-colors flex items-center gap-1 text-xs font-medium max-w-[110px] truncate" title="Font family">
+              <span className="truncate">{FONT_FAMILIES.find(f => f.value && editor.getAttributes('textStyle').fontFamily === f.value)?.label || 'Font'}</span>
+              <ChevronDown className="h-3 w-3 stroke-[2.5] shrink-0" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-44 p-1" align="start">
+            {FONT_FAMILIES.map(f => (
+              <button key={f.label} type="button" onClick={() => f.value ? editor.chain().focus().setFontFamily(f.value).run() : editor.chain().focus().unsetFontFamily().run()} style={{ fontFamily: f.value || undefined }} className={cn('flex items-center w-full px-2 py-1.5 rounded text-sm hover:bg-muted', editor.getAttributes('textStyle').fontFamily === f.value && 'bg-primary/10 text-primary')}>
+                {f.label}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
+
+        <Divider />
+
         {/* Bold / Underline / Italic / Strikethrough */}
         <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold (Ctrl+B)">
           <Bold className={boldIconClass} />
@@ -169,6 +215,15 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Write product d
         </ToolbarBtn>
         <ToolbarBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough">
           <Strikethrough className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => (editor.chain().focus() as any).toggleSubscript().run()} active={editor.isActive('subscript')} title="Subscript">
+          <SubscriptIcon className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => (editor.chain().focus() as any).toggleSuperscript().run()} active={editor.isActive('superscript')} title="Superscript">
+          <SuperscriptIcon className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} title="Clear formatting">
+          <Eraser className={boldIconClass} />
         </ToolbarBtn>
 
         <Divider />
