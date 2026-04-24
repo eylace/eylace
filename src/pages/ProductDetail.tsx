@@ -30,6 +30,18 @@ import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { Loader2 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 
+// Inject/update a meta tag in <head>
+const setMeta = (selector: string, attrs: Record<string, string>) => {
+  let el = document.head.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
+  if (!el) {
+    const tagName = selector.startsWith('link') ? 'link' : 'meta';
+    el = document.createElement(tagName) as any;
+    document.head.appendChild(el);
+  }
+  Object.entries(attrs).forEach(([k, v]) => el!.setAttribute(k, v));
+  return el;
+};
+
 const ProductDetail = () => {
   const { slug } = useParams();
   const [quantity, setQuantity] = useState(1);
