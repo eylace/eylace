@@ -12,13 +12,18 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import Highlight from '@tiptap/extension-highlight';
 import Placeholder from '@tiptap/extension-placeholder';
+import Subscript from '@tiptap/extension-subscript';
+import Superscript from '@tiptap/extension-superscript';
+import { FontFamily } from '@tiptap/extension-font-family';
 import { useEffect, useCallback, useState } from 'react';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, AlignLeft, AlignCenter, AlignRight,
   Link as LinkIcon, Image as ImageIcon, Table as TableIcon,
   Undo, Redo, Highlighter, Type, Maximize2, Minimize2,
-  Video, ChevronDown,
+  Video, ChevronDown, Heading1, Heading2, Heading3,
+  Quote, Code, Code2, Minus, SuperscriptIcon, SubscriptIcon,
+  Eraser, IndentIncrease, IndentDecrease, Pilcrow,
 } from 'lucide-react';
 import { Button } from './button';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
