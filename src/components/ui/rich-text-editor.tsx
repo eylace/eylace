@@ -235,6 +235,24 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Write product d
         <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered List">
           <ListOrdered className={boldIconClass} />
         </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().liftListItem('listItem').run()} disabled={!editor.can().liftListItem('listItem')} title="Decrease indent">
+          <IndentDecrease className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().sinkListItem('listItem').run()} disabled={!editor.can().sinkListItem('listItem')} title="Increase indent">
+          <IndentIncrease className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Quote">
+          <Quote className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleCode().run()} active={editor.isActive('code')} title="Inline code">
+          <Code className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} title="Code block">
+          <Code2 className={boldIconClass} />
+        </ToolbarBtn>
+        <ToolbarBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal rule">
+          <Minus className={boldIconClass} />
+        </ToolbarBtn>
 
         {/* Alignment Dropdown */}
         <Popover>
