@@ -55,6 +55,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
   const [tagInput, setTagInput] = useState('');
   const [activeTab, setActiveTab] = useState('general');
   const [mediaManagerOpen, setMediaManagerOpen] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState<'images' | 'meta_image'>('images');
 
   const [form, setForm] = useState({ ...defaultForm });
 
@@ -360,7 +361,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
                 </div>
               ))}
               <div
-                onClick={() => setMediaManagerOpen(true)}
+                onClick={() => { setMediaTarget('images'); setMediaManagerOpen(true); }}
                 className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors"
               >
                 <FolderOpen className="h-5 w-5 text-muted-foreground" />
@@ -680,7 +681,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
                   onChange={e => setForm(f => ({ ...f, meta_image: e.target.value }))}
                   placeholder="https://... (1200×630 recommended)"
                 />
-                <Button type="button" variant="outline" size="sm" onClick={() => setMediaManagerOpen(true)}>
+                <Button type="button" variant="outline" size="sm" onClick={() => { setMediaTarget('meta_image'); setMediaManagerOpen(true); }}>
                   <FolderOpen className="h-3.5 w-3.5 mr-1" /> Browse
                 </Button>
               </div>
@@ -799,10 +800,16 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
     <MediaManagerModal
       open={mediaManagerOpen}
       onOpenChange={setMediaManagerOpen}
-      multiple
+      multiple={mediaTarget === 'images'}
       acceptedKinds={['image']}
       uploadFolder="products"
-      onSelect={(urls) => setForm(f => ({ ...f, images: Array.from(new Set([...f.images, ...urls])) }))}
+      onSelect={(urls) => {
+        if (mediaTarget === 'meta_image') {
+          setForm(f => ({ ...f, meta_image: urls[0] || '' }));
+        } else {
+          setForm(f => ({ ...f, images: Array.from(new Set([...f.images, ...urls])) }));
+        }
+      }}
     />
     </>
   );
