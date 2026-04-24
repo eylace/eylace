@@ -338,6 +338,103 @@ const AdminAddProduct = () => {
     }));
   };
 
+  // === Variation Configuration helpers ======================================
+  const toggleColor = (colorId: string) => {
+    setForm(f => ({
+      ...f,
+      selected_color_ids: f.selected_color_ids.includes(colorId)
+        ? f.selected_color_ids.filter(id => id !== colorId)
+        : [...f.selected_color_ids, colorId],
+    }));
+  };
+
+  const toggleAttribute = (attrId: string) => {
+    setForm(f => {
+      const isSelected = f.selected_attribute_ids.includes(attrId);
+      const next_attribute_values = { ...f.attribute_values };
+      if (isSelected) {
+        delete next_attribute_values[attrId];
+      } else {
+        next_attribute_values[attrId] = next_attribute_values[attrId] || [];
+      }
+      return {
+        ...f,
+        selected_attribute_ids: isSelected
+          ? f.selected_attribute_ids.filter(id => id !== attrId)
+          : [...f.selected_attribute_ids, attrId],
+        attribute_values: next_attribute_values,
+      };
+    });
+  };
+
+  const toggleAttributeValue = (attrId: string, value: string) => {
+    setForm(f => {
+      const current = f.attribute_values[attrId] || [];
+      const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
+      return { ...f, attribute_values: { ...f.attribute_values, [attrId]: next } };
+    });
+  };
+
+  // Build the canonical `variations` payload from color + attribute selections.
+  const buildVariationsPayload = (
+    colorIds: string[],
+    attrIds: string[],
+    attrValues: Record<string, string[]>,
+  ) => {
+    const out: { name: string; options: string[] }[] = [];
+    if (colorIds.length > 0) {
+      out.push({
+        name: 'Color',
+        options: colorIds
+          .map(id => colors.find(c => c.id === id)?.name)
+          .filter((n): n is string => !!n),
+      });
+    }
+    for (const attrId of attrIds) {
+      const attr = attributes.find(a => a.id === attrId);
+      const values = attrValues[attrId] || [];
+      if (attr && values.length > 0) {
+        out.push({ name: attr.name, options: values });
+      }
+    }
+    return out;
+  };
+
+  // === SKU Generator ========================================================
+  // Standard format: {NAMEPREFIX}-{CATPREFIX}-{TIMESTAMP}-{RAND}
+  // Example: WIRE-AUDI-K9X4-7B3
+  const generateSku = () => {
+    const slug = (form.name || 'PRD')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '')
+      .slice(0, 4) || 'PRD';
+    const cat = categories.find(c => c.id === form.category_id)?.name || '';
+    const catPrefix = cat
+      ? cat.toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 4)
+      : 'GEN';
+    const ts = Date.now().toString(36).toUpperCase().slice(-4);
+    const rand = Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
+    const sku = `${slug}-${catPrefix}-${ts}-${rand}`;
+    setForm(f => ({ ...f, sku }));
+    toast.success(`SKU generated: ${sku}`);
+  };
+
+  // === Discount Date Range ===================================================
+  const discountRange: DateRange | undefined = (form.discount_starts_at || form.discount_ends_at)
+    ? {
+        from: form.discount_starts_at ? new Date(form.discount_starts_at) : undefined,
+        to: form.discount_ends_at ? new Date(form.discount_ends_at) : undefined,
+      }
+    : undefined;
+
+  const setDiscountRange = (range: DateRange | undefined) => {
+    setForm(f => ({
+      ...f,
+      discount_starts_at: range?.from ? format(range.from, 'yyyy-MM-dd') : '',
+      discount_ends_at: range?.to ? format(range.to, 'yyyy-MM-dd') : '',
+    }));
+  };
+
   const handleSubmit = async () => {
     if (!form.name || !form.slug || !form.price) { toast.error('Name, slug and price are required'); return; }
     setLoading(true);
