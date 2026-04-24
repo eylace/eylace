@@ -230,6 +230,72 @@ const AdminAddProduct = () => {
   const addTag = () => { const t = tagInput.trim(); if (t && !tags.includes(t)) { setTags(prev => [...prev, t]); setTagInput(''); } };
   const removeTag = (tag: string) => setTags(prev => prev.filter(t => t !== tag));
 
+  // === SEO helpers ===========================================================
+  const stripHtml = (s: string) => (s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const handleAutoFillSeo = () => {
+    if (!form.name) {
+      toast.error('Please enter a product name first');
+      return;
+    }
+    const cat = categories.find(c => c.id === form.category_id)?.name || '';
+    const brand = brands.find(b => b.id === form.brand_id)?.name || '';
+    const baseTitle = [form.name, brand, cat].filter(Boolean).join(' | ').slice(0, 60);
+    const cleanShort = stripHtml(form.short_description || form.description);
+    const baseDesc = (cleanShort || `Buy ${form.name}${cat ? ' from ' + cat : ''} online. Best price, fast delivery.`).slice(0, 160);
+    const keywordParts = [form.name, brand, cat, ...tags].filter(Boolean);
+    const baseKeywords = Array.from(new Set(keywordParts.flatMap(p => p.split(/\s+/)))).slice(0, 12).join(', ');
+    const slug = form.slug || generateSlug(form.name);
+    const canonical = form.canonical_url || `${window.location.origin}/product/${slug}`;
+    setForm(f => ({
+      ...f,
+      meta_title: f.meta_title || baseTitle,
+      meta_description: f.meta_description || baseDesc,
+      meta_keywords: f.meta_keywords || baseKeywords,
+      canonical_url: f.canonical_url || canonical,
+      meta_image: f.meta_image || f.thumbnail || f.images[0] || f.video_thumbnails[0] || '',
+    }));
+    toast.success('SEO fields auto-filled — review and save.');
+  };
+
+  // Duplicate detection
+  const [seoDuplicates, setSeoDuplicates] = useState<Array<{ id: string; name: string; slug: string; match_type: string }>>([]);
+  const [duplicateChecking, setDuplicateChecking] = useState(false);
+  const checkSeoDuplicates = async () => {
+    setDuplicateChecking(true);
+    try {
+      const { data, error } = await (supabase as any).rpc('find_seo_duplicates', {
+        _product_id: editId || null,
+        _meta_title: form.meta_title || null,
+        _meta_description: form.meta_description || null,
+        _canonical_url: form.canonical_url || null,
+      });
+      if (error) throw error;
+      setSeoDuplicates(data || []);
+    } catch (err: any) {
+      console.error('Duplicate check failed', err);
+      toast.error('Could not check for duplicates');
+    } finally {
+      setDuplicateChecking(false);
+    }
+  };
+
+  // Auto-run duplicate check (debounced) when SEO fields settle
+  useEffect(() => {
+    if (!form.meta_title && !form.meta_description && !form.canonical_url) {
+      setSeoDuplicates([]);
+      return;
+    }
+    const t = setTimeout(() => { checkSeoDuplicates(); }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.meta_title, form.meta_description, form.canonical_url]);
+
+  // Effective values (with fallbacks) used in previews
+  const effectiveMetaImage = form.meta_image || form.thumbnail || form.images[0] || form.video_thumbnails[0] || '';
+  const effectiveTitle = form.meta_title || form.name || 'Product Title';
+  const effectiveDescription = form.meta_description || form.short_description || stripHtml(form.description).slice(0, 160) || 'Product description will appear here...';
+
   const addVariation = () => setForm(f => ({ ...f, variations: [...f.variations, { name: '', options: [''] }] }));
   const removeVariation = (index: number) => setForm(f => ({ ...f, variations: f.variations.filter((_, i) => i !== index) }));
   const updateVariation = (index: number, field: string, value: any) => {
