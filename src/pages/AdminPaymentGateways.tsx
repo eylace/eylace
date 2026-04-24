@@ -212,20 +212,25 @@ export default function AdminPaymentGateways() {
   useEffect(() => { fetchGateways(); }, []);
 
   const fetchGateways = async () => {
-    const { data } = await supabase.from('payment_gateways').select('*');
+    const { data } = await supabase
+      .from('payment_gateways')
+      .select('id, gateway_key, display_name, is_enabled, is_sandbox, settings, sort_order');
     const map: Record<string, GatewayData> = {};
-    data?.forEach((g: any) => {
+    for (const g of data || []) {
+      // Credentials live in admin-only payment_gateway_secrets — fetch via RPC
+      const { data: creds } = await supabase
+        .rpc('admin_get_payment_gateway_secrets', { _gateway_id: g.id });
       map[g.gateway_key] = {
         id: g.id,
         gateway_key: g.gateway_key,
         display_name: g.display_name,
         is_enabled: g.is_enabled,
         is_sandbox: g.is_sandbox,
-        credentials: (g.credentials as Record<string, string>) || {},
+        credentials: ((creds as Record<string, string>) || {}),
         settings: (g.settings as Record<string, string>) || {},
         sort_order: g.sort_order,
       };
-    });
+    }
     setGateways(map);
     setLoading(false);
   };
@@ -264,20 +269,26 @@ export default function AdminPaymentGateways() {
           display_name: data.display_name,
           is_enabled: data.is_enabled,
           is_sandbox: data.is_sandbox,
-          credentials: data.credentials as any,
           settings: data.settings as any,
         }).eq('id', data.id);
+        await supabase.rpc('admin_save_payment_gateway_secrets', {
+          _gateway_id: data.id,
+          _credentials: data.credentials as any,
+        });
       } else {
         const { data: inserted } = await supabase.from('payment_gateways').insert({
           gateway_key: config.key,
           display_name: data.display_name || config.name,
           is_enabled: data.is_enabled,
           is_sandbox: data.is_sandbox,
-          credentials: data.credentials as any,
           settings: data.settings as any,
           sort_order: 0,
         }).select().single();
         if (inserted) {
+          await supabase.rpc('admin_save_payment_gateway_secrets', {
+            _gateway_id: inserted.id,
+            _credentials: data.credentials as any,
+          });
           setGateways(prev => ({ ...prev, [config.key]: { ...data, id: inserted.id } }));
         }
       }
@@ -300,11 +311,14 @@ export default function AdminPaymentGateways() {
         display_name: customForm.name,
         is_enabled: false,
         is_sandbox: false,
-        credentials: creds as any,
         settings: { description: customForm.description, custom_fields: fields } as any,
         sort_order: 99,
       }).select().single();
       if (data) {
+        await supabase.rpc('admin_save_payment_gateway_secrets', {
+          _gateway_id: data.id,
+          _credentials: creds as any,
+        });
         setGateways(prev => ({ ...prev, [key]: { id: data.id, gateway_key: key, display_name: customForm.name, is_enabled: false, is_sandbox: false, credentials: creds, settings: { description: customForm.description, custom_fields: fields } as any, sort_order: 99 } }));
         toast.success('Custom gateway যোগ হয়েছে');
         setCustomOpen(false);
@@ -463,7 +477,10 @@ export default function AdminPaymentGateways() {
                           </div>
                         ))}
                         <Button className="w-full" onClick={async () => {
-                          await supabase.from('payment_gateways').update({ credentials: g.credentials as any }).eq('id', g.id!);
+                          await supabase.rpc('admin_save_payment_gateway_secrets', {
+                            _gateway_id: g.id!,
+                            _credentials: g.credentials as any,
+                          });
                           toast.success('সংরক্ষিত');
                         }}><Save className="h-4 w-4 mr-2" />সংরক্ষণ করুন</Button>
                       </CardContent>

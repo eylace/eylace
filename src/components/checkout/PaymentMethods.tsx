@@ -59,7 +59,7 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
   useEffect(() => {
     const fetchGateways = async () => {
       const { data } = await supabase
-        .from('payment_gateways')
+        .from('payment_gateways_public')
         .select('gateway_key, display_name, settings')
         .eq('is_enabled', true)
         .order('sort_order');
