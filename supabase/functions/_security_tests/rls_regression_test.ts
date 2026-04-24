@@ -7,8 +7,14 @@ import {
   assertEquals,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SUPABASE_URL =
+  Deno.env.get("SUPABASE_URL") ??
+  "https://jmowninkqcfgwldyjeqo.supabase.co";
+// Publishable anon key is safe to embed; tests need it to act as anon role.
+const ANON_KEY =
+  Deno.env.get("SUPABASE_ANON_KEY") ??
+  Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imptb3duaW5rcWNmZ3dsZHlqZXFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5OTI2MzAsImV4cCI6MjA4NTU2ODYzMH0.EGU2yA5SjBnpM_PYbsYVGizl1OBTvlW59S-r-99Ifxw";
 
 function anonClient() {
   return createClient(SUPABASE_URL, ANON_KEY, {
