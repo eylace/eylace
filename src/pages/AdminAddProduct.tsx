@@ -856,14 +856,275 @@ const AdminAddProduct = () => {
                   </Select>
                 </div>
               </div>
+
+              {/* Discount Date Range */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <Label className="flex items-center gap-1.5"><CalendarIcon className="h-3.5 w-3.5" /> Discount Date Range</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal mt-1"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                        {discountRange?.from ? (
+                          discountRange.to ? (
+                            <>
+                              {format(discountRange.from, 'PP')} – {format(discountRange.to, 'PP')}
+                            </>
+                          ) : (
+                            format(discountRange.from, 'PP')
+                          )
+                        ) : (
+                          <span className="text-muted-foreground">Select Date</span>
+                        )}
+                        {discountRange?.from && (
+                          <X
+                            className="ml-auto h-3.5 w-3.5 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDiscountRange(undefined); }}
+                          />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="range"
+                        selected={discountRange}
+                        onSelect={setDiscountRange}
+                        numberOfMonths={2}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Optional. The discount will only be active between these dates.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
+
+          {/* ===== Product Variation Configuration ===== */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Palette className="h-4 w-4" /> Product Variation Configuration
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{form.variation_enabled ? 'Enabled' : 'Disabled'}</span>
+                <Switch
+                  checked={form.variation_enabled}
+                  onCheckedChange={v => setForm(f => ({ ...f, variation_enabled: v }))}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Colors row */}
+              <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3 items-start">
+                <Label className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm font-medium">
+                  Colors
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!form.variation_enabled}
+                      className="w-full justify-between text-left font-normal h-auto min-h-10 py-2"
+                    >
+                      {form.selected_color_ids.length === 0 ? (
+                        <span className="text-muted-foreground">Nothing selected</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {form.selected_color_ids.map(id => {
+                            const c = colors.find(x => x.id === id);
+                            if (!c) return null;
+                            return (
+                              <Badge key={id} variant="secondary" className="gap-1 pl-1.5 pr-1 py-0.5">
+                                <span className="h-3 w-3 rounded-full border border-border" style={{ backgroundColor: c.hex_code }} />
+                                {c.name}
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleColor(id); }}
+                                  className="hover:bg-destructive/20 rounded-full p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-2" align="start">
+                    <div className="text-xs font-medium px-2 py-1 text-muted-foreground">Select colors</div>
+                    <div className="max-h-[280px] overflow-y-auto space-y-1">
+                      {colors.length === 0 && (
+                        <p className="text-xs text-muted-foreground p-2">
+                          No colors found. Create some in Products → Colors.
+                        </p>
+                      )}
+                      {colors.map(c => {
+                        const checked = form.selected_color_ids.includes(c.id);
+                        return (
+                          <button
+                            type="button"
+                            key={c.id}
+                            onClick={() => toggleColor(c.id)}
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${checked ? 'bg-accent/15' : 'hover:bg-muted'}`}
+                          >
+                            <Checkbox checked={checked} className="pointer-events-none" />
+                            <span className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: c.hex_code }} />
+                            <span className="flex-1 text-left">{c.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Attributes row */}
+              <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3 items-start">
+                <Label className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm font-medium">
+                  Attributes
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!form.variation_enabled}
+                      className="w-full justify-between text-left font-normal h-auto min-h-10 py-2"
+                    >
+                      {form.selected_attribute_ids.length === 0 ? (
+                        <span className="text-muted-foreground">Nothing selected</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {form.selected_attribute_ids.map(id => {
+                            const a = attributes.find(x => x.id === id);
+                            if (!a) return null;
+                            const count = (form.attribute_values[id] || []).length;
+                            return (
+                              <Badge key={id} variant="secondary" className="gap-1 pl-2 pr-1 py-0.5">
+                                {a.name}{count > 0 && <span className="text-[10px] text-muted-foreground">×{count}</span>}
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleAttribute(id); }}
+                                  className="hover:bg-destructive/20 rounded-full p-0.5"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-2" align="start">
+                    <div className="text-xs font-medium px-2 py-1 text-muted-foreground">Select attributes</div>
+                    <div className="max-h-[280px] overflow-y-auto space-y-1">
+                      {attributes.length === 0 && (
+                        <p className="text-xs text-muted-foreground p-2">
+                          No attributes found. Create some in Products → Attributes.
+                        </p>
+                      )}
+                      {attributes.map(a => {
+                        const checked = form.selected_attribute_ids.includes(a.id);
+                        return (
+                          <button
+                            type="button"
+                            key={a.id}
+                            onClick={() => toggleAttribute(a.id)}
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${checked ? 'bg-accent/15' : 'hover:bg-muted'}`}
+                          >
+                            <Checkbox checked={checked} className="pointer-events-none" />
+                            <span className="flex-1 text-left">{a.name}</span>
+                            <span className="text-[10px] text-muted-foreground">{a.values?.length || 0} options</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Per-attribute value selectors (cascading) */}
+              {form.variation_enabled && form.selected_attribute_ids.length > 0 && (
+                <div className="space-y-3 pt-1">
+                  {form.selected_attribute_ids.map(attrId => {
+                    const attr = attributes.find(a => a.id === attrId);
+                    if (!attr) return null;
+                    const selected = form.attribute_values[attrId] || [];
+                    return (
+                      <div key={attrId} className="rounded-lg border border-border bg-muted/20 p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-xs font-semibold flex items-center gap-1.5">
+                            <Tag className="h-3 w-3" /> {attr.name}
+                            <span className="text-muted-foreground font-normal">({selected.length}/{attr.values?.length || 0} selected)</span>
+                          </Label>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(attr.values || []).map(value => {
+                            const isSel = selected.includes(value);
+                            return (
+                              <button
+                                type="button"
+                                key={value}
+                                onClick={() => toggleAttributeValue(attrId, value)}
+                                className={`px-2.5 py-1 rounded-md text-xs border transition-all ${
+                                  isSel
+                                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                    : 'bg-background text-foreground border-border hover:border-primary/40'
+                                }`}
+                              >
+                                {value}
+                              </button>
+                            );
+                          })}
+                          {(!attr.values || attr.values.length === 0) && (
+                            <span className="text-xs text-muted-foreground italic">No values defined for this attribute</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Choose the attributes of this product and then input values of each attribute.
+              </p>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle className="text-sm">Stock Management</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div><Label>Current Stock *</Label><Input type="number" value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value }))} placeholder="0" /></div>
-                <div><Label>SKU</Label><Input placeholder="Auto-generated or custom SKU" value={form.slug} readOnly className="bg-muted/50" /></div>
+                <div>
+                  <Label>SKU</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Product SKU"
+                      value={form.sku}
+                      onChange={e => setForm(f => ({ ...f, sku: e.target.value }))}
+                    />
+                    <Button type="button" variant="secondary" onClick={generateSku} className="gap-1.5 shrink-0">
+                      <RefreshCw className="h-3.5 w-3.5" /> Generate
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Click <span className="font-medium">Generate</span> for an automatic SKU using the product name & category.
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.is_prime} onCheckedChange={v => setForm(f => ({ ...f, is_prime: v }))} />
