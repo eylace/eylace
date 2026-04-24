@@ -36,6 +36,7 @@ const defaultForm = {
   attributes: [] as { name: string; value: string }[],
   tags: [] as string[],
   meta_title: '', meta_description: '', meta_keywords: '',
+  meta_image: '', canonical_url: '',
   weight: '', length: '', width: '', height: '',
   flash_sale_ends: '',
   flash_sale_starts: '',
@@ -81,6 +82,8 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
         tags: product.tags || [],
         meta_title: product.meta_title || '', meta_description: product.meta_description || '',
         meta_keywords: product.meta_keywords || '',
+        meta_image: product.meta_image || '',
+        canonical_url: product.canonical_url || '',
         weight: String(product.weight || ''), length: String(product.length || ''),
         width: String(product.width || ''), height: String(product.height || ''),
         flash_sale_ends: product.flash_sale_ends ? product.flash_sale_ends.slice(0, 16) : '',
@@ -167,6 +170,13 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
       attributes: form.attributes.filter(a => a.name.trim()) || [],
       flash_sale_ends: form.is_flash_sale && form.flash_sale_ends ? form.flash_sale_ends : null,
       flash_sale_starts: form.is_flash_sale && form.flash_sale_starts ? form.flash_sale_starts : null,
+      short_description: form.short_description?.trim() || null,
+      tags: form.tags.length > 0 ? form.tags : [],
+      meta_title: form.meta_title?.trim() || null,
+      meta_description: form.meta_description?.trim() || null,
+      meta_keywords: form.meta_keywords?.trim() || null,
+      meta_image: form.meta_image?.trim() || null,
+      canonical_url: form.canonical_url?.trim() || null,
     };
 
     let error;
