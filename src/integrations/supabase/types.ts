@@ -3253,6 +3253,20 @@ export type Database = {
     Functions: {
       can_access_accounting: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_otp_codes: { Args: never; Returns: number }
+      find_seo_duplicates: {
+        Args: {
+          _canonical_url: string
+          _meta_description: string
+          _meta_title: string
+          _product_id: string
+        }
+        Returns: {
+          id: string
+          match_type: string
+          name: string
+          slug: string
+        }[]
+      }
       get_digital_download_url: {
         Args: { _order_id: string; _product_id: string }
         Returns: {

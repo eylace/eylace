@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart, Video, FileText } from 'lucide-react';
+import { Loader2, Plus, X, Upload, Save, ArrowLeft, Package, Image as ImageIcon, DollarSign, Search, Truck, Shield, ShoppingCart, Video, FileText, Sparkles, AlertTriangle, FolderOpen, Tag } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MediaManagerModal } from '@/components/admin/MediaManagerModal';
 
@@ -48,6 +48,9 @@ interface ProductFormState {
   meta_title: string;
   meta_description: string;
   meta_keywords: string;
+  meta_image: string;
+  canonical_url: string;
+  short_description: string;
   shipping_type: string;
   shipping_cost: string;
   is_product_quantity_multiply: boolean;
@@ -69,12 +72,13 @@ const defaultForm: ProductFormState = {
   is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
   variations: [], unit: '', weight: '', min_qty: '1', barcode: '',
   meta_title: '', meta_description: '', meta_keywords: '',
+  meta_image: '', canonical_url: '', short_description: '',
   shipping_type: 'free', shipping_cost: '', is_product_quantity_multiply: false, estimated_shipping_days: '',
   is_refundable: true, is_featured: false, is_todays_deal: false, flash_deal_title: '',
   hsn_code: '', gst_rate: '', frequently_bought_ids: [], note: '',
 };
 
-type MediaTarget = 'gallery' | 'thumbnail' | 'videos' | 'video_thumbnails' | 'pdf';
+type MediaTarget = 'gallery' | 'thumbnail' | 'videos' | 'video_thumbnails' | 'pdf' | 'meta_image';
 
 const MEDIA_TARGET_CONFIG: Record<MediaTarget, { acceptedKinds: ('image' | 'video' | 'document')[]; multiple: boolean; uploadFolder: string }> = {
   gallery: { acceptedKinds: ['image'], multiple: true, uploadFolder: 'gallery' },
@@ -82,6 +86,7 @@ const MEDIA_TARGET_CONFIG: Record<MediaTarget, { acceptedKinds: ('image' | 'vide
   videos: { acceptedKinds: ['video'], multiple: true, uploadFolder: 'videos' },
   video_thumbnails: { acceptedKinds: ['image'], multiple: true, uploadFolder: 'video-thumbs' },
   pdf: { acceptedKinds: ['document'], multiple: false, uploadFolder: 'pdfs' },
+  meta_image: { acceptedKinds: ['image'], multiple: false, uploadFolder: 'seo' },
 };
 
 const mergeUnique = (existing: string[], incoming: string[]) => Array.from(new Set([...existing, ...incoming]));
@@ -158,9 +163,12 @@ const AdminAddProduct = () => {
         weight: attrs.weight || '',
         min_qty: attrs.min_qty || '1',
         barcode: attrs.barcode || '',
-        meta_title: attrs.meta_title || '',
-        meta_description: attrs.meta_description || '',
-        meta_keywords: attrs.meta_keywords || '',
+        meta_title: (data as any).meta_title || attrs.meta_title || '',
+        meta_description: (data as any).meta_description || attrs.meta_description || '',
+        meta_keywords: (data as any).meta_keywords || attrs.meta_keywords || '',
+        meta_image: (data as any).meta_image || attrs.meta_image || '',
+        canonical_url: (data as any).canonical_url || attrs.canonical_url || '',
+        short_description: (data as any).short_description || attrs.short_description || '',
         shipping_type: attrs.shipping_type || 'free',
         shipping_cost: attrs.shipping_cost || '',
         is_product_quantity_multiply: attrs.is_product_quantity_multiply || false,
@@ -174,7 +182,7 @@ const AdminAddProduct = () => {
         frequently_bought_ids: attrs.frequently_bought_ids || [],
         note: attrs.note || '',
       });
-      setTags(attrs.tags || []);
+      setTags((data as any).tags || attrs.tags || []);
       setLoadingProduct(false);
     });
   }, [editId, navigate]);
@@ -211,11 +219,82 @@ const AdminAddProduct = () => {
       return;
     }
 
+    if (mediaTarget === 'meta_image') {
+      setForm((currentForm) => ({ ...currentForm, meta_image: urls[0] }));
+      return;
+    }
+
     setForm((currentForm) => ({ ...currentForm, pdf_url: urls[0] }));
   };
 
   const addTag = () => { const t = tagInput.trim(); if (t && !tags.includes(t)) { setTags(prev => [...prev, t]); setTagInput(''); } };
   const removeTag = (tag: string) => setTags(prev => prev.filter(t => t !== tag));
+
+  // === SEO helpers ===========================================================
+  const stripHtml = (s: string) => (s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const handleAutoFillSeo = () => {
+    if (!form.name) {
+      toast.error('Please enter a product name first');
+      return;
+    }
+    const cat = categories.find(c => c.id === form.category_id)?.name || '';
+    const brand = brands.find(b => b.id === form.brand_id)?.name || '';
+    const baseTitle = [form.name, brand, cat].filter(Boolean).join(' | ').slice(0, 60);
+    const cleanShort = stripHtml(form.short_description || form.description);
+    const baseDesc = (cleanShort || `Buy ${form.name}${cat ? ' from ' + cat : ''} online. Best price, fast delivery.`).slice(0, 160);
+    const keywordParts = [form.name, brand, cat, ...tags].filter(Boolean);
+    const baseKeywords = Array.from(new Set(keywordParts.flatMap(p => p.split(/\s+/)))).slice(0, 12).join(', ');
+    const slug = form.slug || generateSlug(form.name);
+    const canonical = form.canonical_url || `${window.location.origin}/product/${slug}`;
+    setForm(f => ({
+      ...f,
+      meta_title: f.meta_title || baseTitle,
+      meta_description: f.meta_description || baseDesc,
+      meta_keywords: f.meta_keywords || baseKeywords,
+      canonical_url: f.canonical_url || canonical,
+      meta_image: f.meta_image || f.thumbnail || f.images[0] || f.video_thumbnails[0] || '',
+    }));
+    toast.success('SEO fields auto-filled — review and save.');
+  };
+
+  // Duplicate detection
+  const [seoDuplicates, setSeoDuplicates] = useState<Array<{ id: string; name: string; slug: string; match_type: string }>>([]);
+  const [duplicateChecking, setDuplicateChecking] = useState(false);
+  const checkSeoDuplicates = async () => {
+    setDuplicateChecking(true);
+    try {
+      const { data, error } = await (supabase as any).rpc('find_seo_duplicates', {
+        _product_id: editId || null,
+        _meta_title: form.meta_title || null,
+        _meta_description: form.meta_description || null,
+        _canonical_url: form.canonical_url || null,
+      });
+      if (error) throw error;
+      setSeoDuplicates(data || []);
+    } catch (err: any) {
+      console.error('Duplicate check failed', err);
+      toast.error('Could not check for duplicates');
+    } finally {
+      setDuplicateChecking(false);
+    }
+  };
+
+  // Auto-run duplicate check (debounced) when SEO fields settle
+  useEffect(() => {
+    if (!form.meta_title && !form.meta_description && !form.canonical_url) {
+      setSeoDuplicates([]);
+      return;
+    }
+    const t = setTimeout(() => { checkSeoDuplicates(); }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.meta_title, form.meta_description, form.canonical_url]);
+
+  // Effective values (with fallbacks) used in previews
+  const effectiveMetaImage = form.meta_image || form.thumbnail || form.images[0] || form.video_thumbnails[0] || '';
+  const effectiveTitle = form.meta_title || form.name || 'Product Title';
+  const effectiveDescription = form.meta_description || form.short_description || stripHtml(form.description).slice(0, 160) || 'Product description will appear here...';
 
   const addVariation = () => setForm(f => ({ ...f, variations: [...f.variations, { name: '', options: [''] }] }));
   const removeVariation = (index: number) => setForm(f => ({ ...f, variations: f.variations.filter((_, i) => i !== index) }));
@@ -235,7 +314,7 @@ const AdminAddProduct = () => {
   const handleSubmit = async () => {
     if (!form.name || !form.slug || !form.price) { toast.error('Name, slug and price are required'); return; }
     setLoading(true);
-    const payload = {
+    const payload: any = {
       name: form.name, slug: form.slug, description: form.description || null,
       price: parseFloat(form.price),
       original_price: form.original_price ? parseFloat(form.original_price) : null,
@@ -248,11 +327,18 @@ const AdminAddProduct = () => {
       is_free_shipping: form.shipping_type === 'free' || form.is_free_shipping,
       is_prime: form.is_prime, is_digital: form.is_digital,
       variations: form.variations.length > 0 ? form.variations : [],
+      // ✅ SEO fields saved to dedicated top-level columns (with server-side validation)
+      meta_title: form.meta_title?.trim() || null,
+      meta_description: form.meta_description?.trim() || null,
+      meta_keywords: form.meta_keywords?.trim() || null,
+      meta_image: form.meta_image?.trim() || null,
+      canonical_url: form.canonical_url?.trim() || null,
+      short_description: form.short_description?.trim() || null,
+      tags: tags.length > 0 ? tags : [],
       attributes: {
-        unit: form.unit, weight: form.weight, min_qty: form.min_qty, barcode: form.barcode, tags,
+        unit: form.unit, weight: form.weight, min_qty: form.min_qty, barcode: form.barcode,
         thumbnail: form.thumbnail, videos: form.videos, video_thumbnails: form.video_thumbnails,
         youtube_link: form.youtube_link, pdf_url: form.pdf_url,
-        meta_title: form.meta_title, meta_description: form.meta_description, meta_keywords: form.meta_keywords,
         shipping_type: form.shipping_type, shipping_cost: form.shipping_cost,
         is_product_quantity_multiply: form.is_product_quantity_multiply,
         estimated_shipping_days: form.estimated_shipping_days, is_refundable: form.is_refundable,
@@ -268,8 +354,18 @@ const AdminAddProduct = () => {
     } else {
       ({ error } = await supabase.from('products').insert(payload));
     }
-    if (error) { toast.error('Failed to save: ' + error.message); }
-    else { toast.success(isEdit ? 'Product updated!' : 'Product created!'); navigate('/admin/products'); }
+    if (error) {
+      // Surface SEO validation errors with friendly wording
+      const msg = error.message || 'Unknown error';
+      if (/meta title|meta description|canonical url|tags list/i.test(msg)) {
+        toast.error('SEO validation: ' + msg);
+      } else {
+        toast.error('Failed to save: ' + msg);
+      }
+    } else {
+      toast.success(isEdit ? 'Product updated!' : 'Product created!');
+      navigate('/admin/products');
+    }
     setLoading(false);
   };
 
@@ -641,18 +737,209 @@ const AdminAddProduct = () => {
         {/* ======== SEO TAB ======== */}
         <TabsContent value="seo" className="mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Search Engine Optimization</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div><Label>Meta Title</Label><Input value={form.meta_title} onChange={e => setForm(f => ({ ...f, meta_title: e.target.value }))} placeholder="Product meta title" maxLength={60} /><p className="text-xs text-muted-foreground mt-1">{form.meta_title.length}/60 characters</p></div>
-              <div><Label>Meta Description</Label><Textarea value={form.meta_description} onChange={e => setForm(f => ({ ...f, meta_description: e.target.value }))} placeholder="Product meta description" rows={3} maxLength={160} /><p className="text-xs text-muted-foreground mt-1">{form.meta_description.length}/160 characters</p></div>
-              <div><Label>Meta Keywords</Label><Input value={form.meta_keywords} onChange={e => setForm(f => ({ ...f, meta_keywords: e.target.value }))} placeholder="keyword1, keyword2, keyword3" /></div>
-              <div><Label>Slug</Label><Input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="product-slug" /></div>
-              <div className="p-4 border border-border rounded-lg bg-muted/30">
-                <p className="text-sm font-medium text-primary mb-1">Google Search Preview</p>
-                <p className="text-base font-medium text-primary truncate">{form.meta_title || form.name || 'Product Title'}</p>
-                <p className="text-xs text-muted-foreground truncate">https://yourstore.com/products/{form.slug || 'product-slug'}</p>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{form.meta_description || form.description || 'Product description will appear here...'}</p>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-sm flex items-center gap-2"><Search className="h-4 w-4" /> Search Engine Optimization</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Control how this product appears on Google, Facebook, Twitter and WhatsApp.</p>
               </div>
+              <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={handleAutoFillSeo}>
+                <Sparkles className="h-3.5 w-3.5" /> Auto-fill SEO
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Duplicate warning */}
+              {seoDuplicates.length > 0 && (
+                <div className="rounded-lg border border-[hsl(var(--warning,38_92%_50%))] bg-[hsl(var(--warning,38_92%_50%)/0.08)] p-3">
+                  <p className="text-xs font-semibold flex items-center gap-1.5 text-[hsl(var(--warning,38_92%_50%))] mb-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Possible duplicate SEO ({seoDuplicates.length})
+                  </p>
+                  <ul className="text-xs space-y-1 text-foreground/90">
+                    {seoDuplicates.slice(0, 5).map((d) => (
+                      <li key={`${d.id}-${d.match_type}`} className="flex items-center justify-between gap-2">
+                        <span className="truncate">
+                          <span className="font-medium">{d.name}</span>
+                          <span className="text-muted-foreground"> — same {d.match_type.replace('_', ' ')}</span>
+                        </span>
+                        <a href={`/admin/products/edit/${d.id}`} target="_blank" rel="noreferrer" className="text-primary hover:underline whitespace-nowrap">View</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Short description */}
+              <div>
+                <Label>Short Description <span className="text-muted-foreground font-normal text-xs">(used as fallback meta description)</span></Label>
+                <Textarea
+                  value={form.short_description}
+                  onChange={e => setForm(f => ({ ...f, short_description: e.target.value }))}
+                  placeholder="One or two sentences summarising the product"
+                  rows={2}
+                  maxLength={300}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Meta Title</Label>
+                  <Input
+                    value={form.meta_title}
+                    onChange={e => setForm(f => ({ ...f, meta_title: e.target.value }))}
+                    placeholder="SEO title (50–60 chars recommended)"
+                    maxLength={70}
+                  />
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-muted-foreground">{form.meta_title.length}/60 characters</p>
+                    <span className={`text-xs font-medium ${form.meta_title.length > 60 ? 'text-destructive' : form.meta_title.length >= 30 ? 'text-[hsl(var(--success,142_71%_45%))]' : 'text-muted-foreground'}`}>
+                      {form.meta_title.length > 60 ? 'Too long' : form.meta_title.length >= 30 ? 'Good' : 'Add more'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <Label>Canonical URL <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+                  <Input
+                    value={form.canonical_url}
+                    onChange={e => setForm(f => ({ ...f, canonical_url: e.target.value }))}
+                    placeholder="https://yourstore.com/product/..."
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Use to point duplicates to the original URL.</p>
+                </div>
+              </div>
+
+              <div>
+                <Label>Meta Description</Label>
+                <Textarea
+                  value={form.meta_description}
+                  onChange={e => setForm(f => ({ ...f, meta_description: e.target.value }))}
+                  placeholder="A concise summary that appears in search results (140–160 chars)"
+                  rows={3}
+                  maxLength={200}
+                />
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">{form.meta_description.length}/160 characters</p>
+                  <span className={`text-xs font-medium ${form.meta_description.length > 160 ? 'text-destructive' : form.meta_description.length >= 120 ? 'text-[hsl(var(--success,142_71%_45%))]' : 'text-muted-foreground'}`}>
+                    {form.meta_description.length > 160 ? 'Too long' : form.meta_description.length >= 120 ? 'Good' : 'Add more'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <Label>Focus Keywords</Label>
+                <Input
+                  value={form.meta_keywords}
+                  onChange={e => setForm(f => ({ ...f, meta_keywords: e.target.value }))}
+                  placeholder="primary keyword, secondary keyword, brand name"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Comma-separated. Helps with internal search & some engines.</p>
+              </div>
+
+              <div>
+                <Label>Slug</Label>
+                <Input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="product-slug" />
+              </div>
+
+              {/* SEO Tags */}
+              <div>
+                <Label className="flex items-center gap-1.5"><Tag className="h-3.5 w-3.5" /> SEO Tags <span className="text-muted-foreground font-normal text-xs">({tags.length}/30)</span></Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    placeholder="Type a tag and press Enter"
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={addTag}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                  </Button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {tags.map((tag, i) => (
+                      <Badge key={i} variant="secondary" className="gap-1 text-xs pl-2 pr-1 py-1">
+                        <Tag className="h-3 w-3" />{tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-0.5 hover:bg-destructive/20 rounded-full p-0.5"
+                          aria-label={`Remove tag ${tag}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Meta Image */}
+              <div>
+                <Label className="flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Social Share Image (Open Graph)</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={form.meta_image}
+                    onChange={e => setForm(f => ({ ...f, meta_image: e.target.value }))}
+                    placeholder="https://… (1200×630 recommended)"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={() => setMediaTarget('meta_image')}>
+                    <FolderOpen className="h-3.5 w-3.5 mr-1" /> Browse
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Used when shared on Facebook, Twitter, WhatsApp. Falls back to thumbnail / first gallery image / video thumbnail.
+                </p>
+                {effectiveMetaImage && (
+                  <div className="mt-2 inline-block rounded-md border border-border overflow-hidden bg-muted/30">
+                    <img
+                      src={effectiveMetaImage}
+                      alt="Social share preview"
+                      className="h-24 w-44 object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Google Search Preview */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-1">
+                <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <Search className="h-3 w-3" /> Google Search Preview
+                </p>
+                <p className="text-xs text-[hsl(var(--success,142_71%_45%))] truncate">
+                  yourstore.com › product › {form.slug || 'product-slug'}
+                </p>
+                <p className="text-base text-[#1a0dab] dark:text-[#8ab4f8] font-medium leading-snug line-clamp-1 hover:underline cursor-pointer">
+                  {effectiveTitle}
+                </p>
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  {effectiveDescription}
+                </p>
+              </div>
+
+              {/* Social Share Card */}
+              {effectiveMetaImage && (
+                <div className="rounded-lg border border-border overflow-hidden bg-card max-w-md">
+                  <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground px-4 pt-3 flex items-center gap-1.5">
+                    <ImageIcon className="h-3 w-3" /> Social Share Preview
+                  </p>
+                  <img
+                    src={effectiveMetaImage}
+                    alt=""
+                    className="w-full h-44 object-cover mt-2 border-y border-border"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <div className="p-3 bg-muted/30">
+                    <p className="text-[11px] uppercase text-muted-foreground tracking-wide">yourstore.com</p>
+                    <p className="text-sm font-semibold text-foreground line-clamp-1">{effectiveTitle}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{effectiveDescription}</p>
+                  </div>
+                </div>
+              )}
+
+              {duplicateChecking && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Checking for duplicate SEO across products…
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
