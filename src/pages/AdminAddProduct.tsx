@@ -29,7 +29,10 @@ interface ProductFormState {
   cost_per_item: string;
   discount: string;
   discount_type: string;
+  discount_starts_at: string;
+  discount_ends_at: string;
   stock: string;
+  sku: string;
   category_id: string;
   brand_id: string;
   warranty_id: string;
@@ -46,6 +49,10 @@ interface ProductFormState {
   is_prime: boolean;
   is_digital: boolean;
   variations: { name: string; options: string[] }[];
+  selected_color_ids: string[];
+  selected_attribute_ids: string[];
+  attribute_values: Record<string, string[]>; // attributeId -> selected values
+  variation_enabled: boolean;
   unit: string;
   weight: string;
   min_qty: string;
@@ -72,10 +79,12 @@ interface ProductFormState {
 
 const defaultForm: ProductFormState = {
   name: '', slug: '', description: '', price: '', original_price: '', cost_per_item: '', discount: '', discount_type: 'flat',
-  stock: '', category_id: '', brand_id: '', warranty_id: '', label_id: '',
+  discount_starts_at: '', discount_ends_at: '',
+  stock: '', sku: '', category_id: '', brand_id: '', warranty_id: '', label_id: '',
   images: [], thumbnail: '', videos: [], video_thumbnails: [], youtube_link: '', pdf_url: '',
   is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
-  variations: [], unit: '', weight: '', min_qty: '1', barcode: '',
+  variations: [], selected_color_ids: [], selected_attribute_ids: [], attribute_values: {}, variation_enabled: false,
+  unit: '', weight: '', min_qty: '1', barcode: '',
   meta_title: '', meta_description: '', meta_keywords: '',
   meta_image: '', canonical_url: '', short_description: '',
   shipping_type: 'free', shipping_cost: '', is_product_quantity_multiply: false, estimated_shipping_days: '',
