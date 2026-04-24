@@ -39,10 +39,13 @@
         "@tanstack/react-query": "^5.83.0",
         "@testing-library/dom": "^10.4.0",
         "@tiptap/extension-color": "^3.22.2",
+        "@tiptap/extension-font-family": "^3.22.2",
         "@tiptap/extension-highlight": "^3.22.2",
         "@tiptap/extension-image": "^3.22.2",
         "@tiptap/extension-link": "^3.22.2",
         "@tiptap/extension-placeholder": "^3.22.2",
+        "@tiptap/extension-subscript": "^3.22.2",
+        "@tiptap/extension-superscript": "^3.22.2",
         "@tiptap/extension-table": "^3.22.2",
         "@tiptap/extension-table-cell": "^3.22.2",
         "@tiptap/extension-table-header": "^3.22.2",
@@ -460,6 +463,8 @@
 
     "@tiptap/extension-floating-menu": ["@tiptap/extension-floating-menu@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-floating-menu/-/extension-floating-menu-3.22.4.tgz", { "peerDependencies": { "@floating-ui/dom": "^1.0.0", "@tiptap/core": "3.22.4", "@tiptap/pm": "3.22.4" } }, "sha512-DFuyYxgaZPgxum5z1yvJPbfYCvDdO8geXsdyqt0qYYdiat3aGE4ncJhiLRIFDhSHBhaZg5eCgu/YPYAN6jZnrA=="],
 
+    "@tiptap/extension-font-family": ["@tiptap/extension-font-family@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-font-family/-/extension-font-family-3.22.4.tgz", { "peerDependencies": { "@tiptap/extension-text-style": "3.22.4" } }, "sha512-e4DSZTQeM0P/ko3mMeZIb/otLUWCv/vobtEX5FGwstl9RJzaso5cTA6avMQaAff+xerovxvhkCMfye0+PL8YGw=="],
+
     "@tiptap/extension-gapcursor": ["@tiptap/extension-gapcursor@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-gapcursor/-/extension-gapcursor-3.22.4.tgz", { "peerDependencies": { "@tiptap/extensions": "3.22.4" } }, "sha512-UYBEUj3SFpKINIE7AdzcyeS3xICK+ee+YLBbuqNXyHStYChjJOohzJehqiqhjR16A88KQQ+ZjgyDcItKGygSog=="],
 
     "@tiptap/extension-hard-break": ["@tiptap/extension-hard-break@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-hard-break/-/extension-hard-break-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4" } }, "sha512-xq+a4dE7T6VwApCkh/yU3p30gn3F8g8Arb9CyEZm58/WIJUIGvHSTjDdHmvU16+kiWSBg+wOOsaFHhYjJjxcKA=="],
@@ -489,6 +494,10 @@
     "@tiptap/extension-placeholder": ["@tiptap/extension-placeholder@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-placeholder/-/extension-placeholder-3.22.4.tgz", { "peerDependencies": { "@tiptap/extensions": "3.22.4" } }, "sha512-Z3wtWL+KufwkC7CkJge5enAxx4q8C3oOYixme02snY9zfjX3V/1pjAmEfP4wxScgM5GIuTEJ83B9Yz3wRzPA6Q=="],
 
     "@tiptap/extension-strike": ["@tiptap/extension-strike@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-strike/-/extension-strike-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4" } }, "sha512-aRHWQj42HiailXSC9LkKYM3jWMcSeGwOjbqM4PiuxQZmHVDRFmeHkfJItOdn2cSHaO0vuEVK+TvrWUWsBFi3pg=="],
+
+    "@tiptap/extension-subscript": ["@tiptap/extension-subscript@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-subscript/-/extension-subscript-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4", "@tiptap/pm": "3.22.4" } }, "sha512-95Uwi8jEYVr/qil7tGZhG87wR0SNIUBZXSFcDkDeFBzRdccofwD2XL2HU5FqWm2IPNuE21lQWPImVspXR0Kzyw=="],
+
+    "@tiptap/extension-superscript": ["@tiptap/extension-superscript@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-superscript/-/extension-superscript-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4", "@tiptap/pm": "3.22.4" } }, "sha512-VGNR67uTmdTfRC5+1HqtAfA+kK6Lbh9tXitcIs8Scwxlq89PBOUEs11RnzcXfwv5hYq94WjgQJF3A99Jc9Cg2w=="],
 
     "@tiptap/extension-table": ["@tiptap/extension-table@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-table/-/extension-table-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4", "@tiptap/pm": "3.22.4" } }, "sha512-kjvLv3Z4JI+1tLDqZKa+bKU8VcxY+ZOyMCKWQA7wYmy8nKWkLJ60W+xy8AcXXpHB2goCIgSFLhsTyswx0GXH4w=="],
 
