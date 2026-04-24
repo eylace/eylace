@@ -2071,6 +2071,7 @@ export type Database = {
         Row: {
           attributes: Json | null
           brand_id: string | null
+          canonical_url: string | null
           category_id: string | null
           cost_per_item: number
           created_at: string
@@ -2087,16 +2088,22 @@ export type Database = {
           is_free_shipping: boolean | null
           is_prime: boolean | null
           label_id: string | null
+          meta_description: string | null
+          meta_image: string | null
+          meta_keywords: string | null
+          meta_title: string | null
           name: string
           original_price: number | null
           price: number
           rating: number | null
           review_count: number | null
           seller_id: string | null
+          short_description: string | null
           size_guide_id: string | null
           slug: string
           sold_count: number
           stock: number | null
+          tags: string[] | null
           updated_at: string
           variations: Json | null
           warranty_id: string | null
@@ -2104,6 +2111,7 @@ export type Database = {
         Insert: {
           attributes?: Json | null
           brand_id?: string | null
+          canonical_url?: string | null
           category_id?: string | null
           cost_per_item?: number
           created_at?: string
@@ -2120,16 +2128,22 @@ export type Database = {
           is_free_shipping?: boolean | null
           is_prime?: boolean | null
           label_id?: string | null
+          meta_description?: string | null
+          meta_image?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
           name: string
           original_price?: number | null
           price: number
           rating?: number | null
           review_count?: number | null
           seller_id?: string | null
+          short_description?: string | null
           size_guide_id?: string | null
           slug: string
           sold_count?: number
           stock?: number | null
+          tags?: string[] | null
           updated_at?: string
           variations?: Json | null
           warranty_id?: string | null
@@ -2137,6 +2151,7 @@ export type Database = {
         Update: {
           attributes?: Json | null
           brand_id?: string | null
+          canonical_url?: string | null
           category_id?: string | null
           cost_per_item?: number
           created_at?: string
@@ -2153,16 +2168,22 @@ export type Database = {
           is_free_shipping?: boolean | null
           is_prime?: boolean | null
           label_id?: string | null
+          meta_description?: string | null
+          meta_image?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
           name?: string
           original_price?: number | null
           price?: number
           rating?: number | null
           review_count?: number | null
           seller_id?: string | null
+          short_description?: string | null
           size_guide_id?: string | null
           slug?: string
           sold_count?: number
           stock?: number | null
+          tags?: string[] | null
           updated_at?: string
           variations?: Json | null
           warranty_id?: string | null
