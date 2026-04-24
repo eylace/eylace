@@ -477,7 +477,10 @@ export default function AdminPaymentGateways() {
                           </div>
                         ))}
                         <Button className="w-full" onClick={async () => {
-                          await supabase.from('payment_gateways').update({ credentials: g.credentials as any }).eq('id', g.id!);
+                          await supabase.rpc('admin_save_payment_gateway_secrets', {
+                            _gateway_id: g.id!,
+                            _credentials: g.credentials as any,
+                          });
                           toast.success('সংরক্ষিত');
                         }}><Save className="h-4 w-4 mr-2" />সংরক্ষণ করুন</Button>
                       </CardContent>
