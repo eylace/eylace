@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -6,7 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-serve(async (req) => {
+// Per-phone verification rate limit: max 10 attempts in 10 minutes.
+const VERIFY_RATE_WINDOW_MS = 10 * 60 * 1000;
+const VERIFY_RATE_MAX = 10;
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -14,8 +17,16 @@ serve(async (req) => {
   try {
     const { phone, code, purpose } = await req.json();
     const verificationPurpose = purpose === 'checkout' ? 'checkout' : 'auth';
-    if (!phone || !code) {
+    if (!phone || !code || typeof phone !== "string" || typeof code !== "string") {
       return new Response(JSON.stringify({ error: "Phone and code are required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Strict format: 4-8 digits only, never echo back to client
+    if (!/^\d{4,8}$/.test(code)) {
+      return new Response(JSON.stringify({ error: "Invalid code format" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -25,6 +36,21 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Rate limit per phone: count recent OTP rows touched
+    const windowStart = new Date(Date.now() - VERIFY_RATE_WINDOW_MS).toISOString();
+    const { count: recentCount } = await supabase
+      .from("otp_codes")
+      .select("id", { count: "exact", head: true })
+      .eq("phone", phone)
+      .gte("created_at", windowStart);
+
+    if ((recentCount ?? 0) > VERIFY_RATE_MAX) {
+      return new Response(JSON.stringify({ error: "Too many attempts. Try again later." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Find the latest unused OTP for this phone
     const { data: otpRecord, error: fetchError } = await supabase
@@ -67,8 +93,14 @@ serve(async (req) => {
       .update({ attempts: otpRecord.attempts + 1 })
       .eq("id", otpRecord.id);
 
-    // Verify code
-    if (otpRecord.code !== code) {
+    // Constant-time-ish compare; never log or echo the code
+    const expected = String(otpRecord.code);
+    const submitted = String(code);
+    let mismatch = expected.length !== submitted.length ? 1 : 0;
+    for (let i = 0; i < Math.max(expected.length, submitted.length); i++) {
+      mismatch |= (expected.charCodeAt(i) ^ submitted.charCodeAt(i)) || 0;
+    }
+    if (mismatch !== 0) {
       const remaining = otpRecord.max_attempts - otpRecord.attempts - 1;
       return new Response(JSON.stringify({ error: `Invalid OTP. ${remaining} attempt(s) remaining.` }), {
         status: 400,
@@ -76,14 +108,18 @@ serve(async (req) => {
       });
     }
 
-    // Mark OTP as used
-    await supabase.from("otp_codes").update({ is_used: true }).eq("id", otpRecord.id);
+    // IMMEDIATELY invalidate this OTP and any other unused OTPs for this phone
+    await supabase
+      .from("otp_codes")
+      .update({ is_used: true })
+      .eq("phone", phone)
+      .eq("is_used", false);
 
     if (verificationPurpose === 'checkout') {
+      // Boolean-only response — never expose code/internal record
       return new Response(JSON.stringify({
         success: true,
         verified: true,
-        purpose: verificationPurpose,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
