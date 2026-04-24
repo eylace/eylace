@@ -354,8 +354,18 @@ const AdminAddProduct = () => {
     } else {
       ({ error } = await supabase.from('products').insert(payload));
     }
-    if (error) { toast.error('Failed to save: ' + error.message); }
-    else { toast.success(isEdit ? 'Product updated!' : 'Product created!'); navigate('/admin/products'); }
+    if (error) {
+      // Surface SEO validation errors with friendly wording
+      const msg = error.message || 'Unknown error';
+      if (/meta title|meta description|canonical url|tags list/i.test(msg)) {
+        toast.error('SEO validation: ' + msg);
+      } else {
+        toast.error('Failed to save: ' + msg);
+      }
+    } else {
+      toast.success(isEdit ? 'Product updated!' : 'Product created!');
+      navigate('/admin/products');
+    }
     setLoading(false);
   };
 
