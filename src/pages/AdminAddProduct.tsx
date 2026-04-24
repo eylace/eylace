@@ -737,18 +737,209 @@ const AdminAddProduct = () => {
         {/* ======== SEO TAB ======== */}
         <TabsContent value="seo" className="mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Search Engine Optimization</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div><Label>Meta Title</Label><Input value={form.meta_title} onChange={e => setForm(f => ({ ...f, meta_title: e.target.value }))} placeholder="Product meta title" maxLength={60} /><p className="text-xs text-muted-foreground mt-1">{form.meta_title.length}/60 characters</p></div>
-              <div><Label>Meta Description</Label><Textarea value={form.meta_description} onChange={e => setForm(f => ({ ...f, meta_description: e.target.value }))} placeholder="Product meta description" rows={3} maxLength={160} /><p className="text-xs text-muted-foreground mt-1">{form.meta_description.length}/160 characters</p></div>
-              <div><Label>Meta Keywords</Label><Input value={form.meta_keywords} onChange={e => setForm(f => ({ ...f, meta_keywords: e.target.value }))} placeholder="keyword1, keyword2, keyword3" /></div>
-              <div><Label>Slug</Label><Input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="product-slug" /></div>
-              <div className="p-4 border border-border rounded-lg bg-muted/30">
-                <p className="text-sm font-medium text-primary mb-1">Google Search Preview</p>
-                <p className="text-base font-medium text-primary truncate">{form.meta_title || form.name || 'Product Title'}</p>
-                <p className="text-xs text-muted-foreground truncate">https://yourstore.com/products/{form.slug || 'product-slug'}</p>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{form.meta_description || form.description || 'Product description will appear here...'}</p>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-sm flex items-center gap-2"><Search className="h-4 w-4" /> Search Engine Optimization</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Control how this product appears on Google, Facebook, Twitter and WhatsApp.</p>
               </div>
+              <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={handleAutoFillSeo}>
+                <Sparkles className="h-3.5 w-3.5" /> Auto-fill SEO
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Duplicate warning */}
+              {seoDuplicates.length > 0 && (
+                <div className="rounded-lg border border-[hsl(var(--warning,38_92%_50%))] bg-[hsl(var(--warning,38_92%_50%)/0.08)] p-3">
+                  <p className="text-xs font-semibold flex items-center gap-1.5 text-[hsl(var(--warning,38_92%_50%))] mb-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Possible duplicate SEO ({seoDuplicates.length})
+                  </p>
+                  <ul className="text-xs space-y-1 text-foreground/90">
+                    {seoDuplicates.slice(0, 5).map((d) => (
+                      <li key={`${d.id}-${d.match_type}`} className="flex items-center justify-between gap-2">
+                        <span className="truncate">
+                          <span className="font-medium">{d.name}</span>
+                          <span className="text-muted-foreground"> — same {d.match_type.replace('_', ' ')}</span>
+                        </span>
+                        <a href={`/admin/products/edit/${d.id}`} target="_blank" rel="noreferrer" className="text-primary hover:underline whitespace-nowrap">View</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Short description */}
+              <div>
+                <Label>Short Description <span className="text-muted-foreground font-normal text-xs">(used as fallback meta description)</span></Label>
+                <Textarea
+                  value={form.short_description}
+                  onChange={e => setForm(f => ({ ...f, short_description: e.target.value }))}
+                  placeholder="One or two sentences summarising the product"
+                  rows={2}
+                  maxLength={300}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Meta Title</Label>
+                  <Input
+                    value={form.meta_title}
+                    onChange={e => setForm(f => ({ ...f, meta_title: e.target.value }))}
+                    placeholder="SEO title (50–60 chars recommended)"
+                    maxLength={70}
+                  />
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-muted-foreground">{form.meta_title.length}/60 characters</p>
+                    <span className={`text-xs font-medium ${form.meta_title.length > 60 ? 'text-destructive' : form.meta_title.length >= 30 ? 'text-[hsl(var(--success,142_71%_45%))]' : 'text-muted-foreground'}`}>
+                      {form.meta_title.length > 60 ? 'Too long' : form.meta_title.length >= 30 ? 'Good' : 'Add more'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <Label>Canonical URL <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+                  <Input
+                    value={form.canonical_url}
+                    onChange={e => setForm(f => ({ ...f, canonical_url: e.target.value }))}
+                    placeholder="https://yourstore.com/product/..."
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Use to point duplicates to the original URL.</p>
+                </div>
+              </div>
+
+              <div>
+                <Label>Meta Description</Label>
+                <Textarea
+                  value={form.meta_description}
+                  onChange={e => setForm(f => ({ ...f, meta_description: e.target.value }))}
+                  placeholder="A concise summary that appears in search results (140–160 chars)"
+                  rows={3}
+                  maxLength={200}
+                />
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">{form.meta_description.length}/160 characters</p>
+                  <span className={`text-xs font-medium ${form.meta_description.length > 160 ? 'text-destructive' : form.meta_description.length >= 120 ? 'text-[hsl(var(--success,142_71%_45%))]' : 'text-muted-foreground'}`}>
+                    {form.meta_description.length > 160 ? 'Too long' : form.meta_description.length >= 120 ? 'Good' : 'Add more'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <Label>Focus Keywords</Label>
+                <Input
+                  value={form.meta_keywords}
+                  onChange={e => setForm(f => ({ ...f, meta_keywords: e.target.value }))}
+                  placeholder="primary keyword, secondary keyword, brand name"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Comma-separated. Helps with internal search & some engines.</p>
+              </div>
+
+              <div>
+                <Label>Slug</Label>
+                <Input value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="product-slug" />
+              </div>
+
+              {/* SEO Tags */}
+              <div>
+                <Label className="flex items-center gap-1.5"><Tag className="h-3.5 w-3.5" /> SEO Tags <span className="text-muted-foreground font-normal text-xs">({tags.length}/30)</span></Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    placeholder="Type a tag and press Enter"
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={addTag}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                  </Button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {tags.map((tag, i) => (
+                      <Badge key={i} variant="secondary" className="gap-1 text-xs pl-2 pr-1 py-1">
+                        <Tag className="h-3 w-3" />{tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-0.5 hover:bg-destructive/20 rounded-full p-0.5"
+                          aria-label={`Remove tag ${tag}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Meta Image */}
+              <div>
+                <Label className="flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Social Share Image (Open Graph)</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={form.meta_image}
+                    onChange={e => setForm(f => ({ ...f, meta_image: e.target.value }))}
+                    placeholder="https://… (1200×630 recommended)"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={() => setMediaTarget('meta_image')}>
+                    <FolderOpen className="h-3.5 w-3.5 mr-1" /> Browse
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Used when shared on Facebook, Twitter, WhatsApp. Falls back to thumbnail / first gallery image / video thumbnail.
+                </p>
+                {effectiveMetaImage && (
+                  <div className="mt-2 inline-block rounded-md border border-border overflow-hidden bg-muted/30">
+                    <img
+                      src={effectiveMetaImage}
+                      alt="Social share preview"
+                      className="h-24 w-44 object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Google Search Preview */}
+              <div className="rounded-lg border border-border bg-card p-4 space-y-1">
+                <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <Search className="h-3 w-3" /> Google Search Preview
+                </p>
+                <p className="text-xs text-[hsl(var(--success,142_71%_45%))] truncate">
+                  yourstore.com › product › {form.slug || 'product-slug'}
+                </p>
+                <p className="text-base text-[#1a0dab] dark:text-[#8ab4f8] font-medium leading-snug line-clamp-1 hover:underline cursor-pointer">
+                  {effectiveTitle}
+                </p>
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  {effectiveDescription}
+                </p>
+              </div>
+
+              {/* Social Share Card */}
+              {effectiveMetaImage && (
+                <div className="rounded-lg border border-border overflow-hidden bg-card max-w-md">
+                  <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground px-4 pt-3 flex items-center gap-1.5">
+                    <ImageIcon className="h-3 w-3" /> Social Share Preview
+                  </p>
+                  <img
+                    src={effectiveMetaImage}
+                    alt=""
+                    className="w-full h-44 object-cover mt-2 border-y border-border"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <div className="p-3 bg-muted/30">
+                    <p className="text-[11px] uppercase text-muted-foreground tracking-wide">yourstore.com</p>
+                    <p className="text-sm font-semibold text-foreground line-clamp-1">{effectiveTitle}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{effectiveDescription}</p>
+                  </div>
+                </div>
+              )}
+
+              {duplicateChecking && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Checking for duplicate SEO across products…
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
