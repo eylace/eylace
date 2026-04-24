@@ -72,6 +72,7 @@ const defaultForm: ProductFormState = {
   is_active: true, is_flash_sale: false, is_free_shipping: false, is_prime: false, is_digital: false,
   variations: [], unit: '', weight: '', min_qty: '1', barcode: '',
   meta_title: '', meta_description: '', meta_keywords: '',
+  meta_image: '', canonical_url: '', short_description: '',
   shipping_type: 'free', shipping_cost: '', is_product_quantity_multiply: false, estimated_shipping_days: '',
   is_refundable: true, is_featured: false, is_todays_deal: false, flash_deal_title: '',
   hsn_code: '', gst_rate: '', frequently_bought_ids: [], note: '',
@@ -161,9 +162,12 @@ const AdminAddProduct = () => {
         weight: attrs.weight || '',
         min_qty: attrs.min_qty || '1',
         barcode: attrs.barcode || '',
-        meta_title: attrs.meta_title || '',
-        meta_description: attrs.meta_description || '',
-        meta_keywords: attrs.meta_keywords || '',
+        meta_title: (data as any).meta_title || attrs.meta_title || '',
+        meta_description: (data as any).meta_description || attrs.meta_description || '',
+        meta_keywords: (data as any).meta_keywords || attrs.meta_keywords || '',
+        meta_image: (data as any).meta_image || attrs.meta_image || '',
+        canonical_url: (data as any).canonical_url || attrs.canonical_url || '',
+        short_description: (data as any).short_description || attrs.short_description || '',
         shipping_type: attrs.shipping_type || 'free',
         shipping_cost: attrs.shipping_cost || '',
         is_product_quantity_multiply: attrs.is_product_quantity_multiply || false,
@@ -177,7 +181,7 @@ const AdminAddProduct = () => {
         frequently_bought_ids: attrs.frequently_bought_ids || [],
         note: attrs.note || '',
       });
-      setTags(attrs.tags || []);
+      setTags((data as any).tags || attrs.tags || []);
       setLoadingProduct(false);
     });
   }, [editId, navigate]);
