@@ -28,6 +28,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { Loader2 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -473,10 +474,21 @@ const ProductDetail = () => {
           </TabsList>
 
           <TabsContent value="description" className="pt-6">
-            <div className="prose prose-sm max-w-none">
-              <div className="whitespace-pre-line text-muted-foreground leading-relaxed">
-                {product.description}
-              </div>
+            <div className="prose prose-sm sm:prose-base max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-a:text-accent prose-li:text-muted-foreground prose-blockquote:border-accent prose-blockquote:text-foreground prose-code:text-accent prose-img:rounded-lg">
+              {product.description && /<[a-z][\s\S]*>/i.test(product.description) ? (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(product.description, {
+                      ADD_TAGS: ['iframe'],
+                      ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling', 'target'],
+                    }),
+                  }}
+                />
+              ) : (
+                <p className="whitespace-pre-line text-muted-foreground leading-relaxed">
+                  {product.description}
+                </p>
+              )}
             </div>
           </TabsContent>
 
