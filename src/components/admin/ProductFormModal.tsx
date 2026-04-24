@@ -36,6 +36,7 @@ const defaultForm = {
   attributes: [] as { name: string; value: string }[],
   tags: [] as string[],
   meta_title: '', meta_description: '', meta_keywords: '',
+  meta_image: '', canonical_url: '',
   weight: '', length: '', width: '', height: '',
   flash_sale_ends: '',
   flash_sale_starts: '',
@@ -54,6 +55,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
   const [tagInput, setTagInput] = useState('');
   const [activeTab, setActiveTab] = useState('general');
   const [mediaManagerOpen, setMediaManagerOpen] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState<'images' | 'meta_image'>('images');
 
   const [form, setForm] = useState({ ...defaultForm });
 
@@ -81,6 +83,8 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
         tags: product.tags || [],
         meta_title: product.meta_title || '', meta_description: product.meta_description || '',
         meta_keywords: product.meta_keywords || '',
+        meta_image: product.meta_image || '',
+        canonical_url: product.canonical_url || '',
         weight: String(product.weight || ''), length: String(product.length || ''),
         width: String(product.width || ''), height: String(product.height || ''),
         flash_sale_ends: product.flash_sale_ends ? product.flash_sale_ends.slice(0, 16) : '',
@@ -167,6 +171,13 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
       attributes: form.attributes.filter(a => a.name.trim()) || [],
       flash_sale_ends: form.is_flash_sale && form.flash_sale_ends ? form.flash_sale_ends : null,
       flash_sale_starts: form.is_flash_sale && form.flash_sale_starts ? form.flash_sale_starts : null,
+      short_description: form.short_description?.trim() || null,
+      tags: form.tags.length > 0 ? form.tags : [],
+      meta_title: form.meta_title?.trim() || null,
+      meta_description: form.meta_description?.trim() || null,
+      meta_keywords: form.meta_keywords?.trim() || null,
+      meta_image: form.meta_image?.trim() || null,
+      canonical_url: form.canonical_url?.trim() || null,
     };
 
     let error;
@@ -350,7 +361,7 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
                 </div>
               ))}
               <div
-                onClick={() => setMediaManagerOpen(true)}
+                onClick={() => { setMediaTarget('images'); setMediaManagerOpen(true); }}
                 className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-accent transition-colors"
               >
                 <FolderOpen className="h-5 w-5 text-muted-foreground" />
@@ -567,27 +578,161 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
           </TabsContent>
 
           {/* === SEO === */}
-          <TabsContent value="seo" className="space-y-4 mt-4">
-            <div>
-              <Label>Meta Title</Label>
-              <Input value={form.meta_title} onChange={e => setForm(f => ({ ...f, meta_title: e.target.value }))} placeholder="SEO title (max 60 chars)" maxLength={60} />
-              <p className="text-xs text-muted-foreground mt-1">{form.meta_title.length}/60 characters</p>
+          <TabsContent value="seo" className="space-y-5 mt-4">
+            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground mb-1 flex items-center gap-1.5"><Search className="h-3.5 w-3.5" /> Search Engine Optimization</p>
+              Optimize how this product appears on Google, Bing, Facebook and Twitter. Leave blank to auto-fill from product details.
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Meta Title</Label>
+                <Input
+                  value={form.meta_title}
+                  onChange={e => setForm(f => ({ ...f, meta_title: e.target.value }))}
+                  placeholder="SEO title (50-60 chars recommended)"
+                  maxLength={70}
+                />
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">{form.meta_title.length}/60 chars</p>
+                  <span className={`text-xs font-medium ${form.meta_title.length > 60 ? 'text-destructive' : form.meta_title.length >= 30 ? 'text-[hsl(var(--success))]' : 'text-muted-foreground'}`}>
+                    {form.meta_title.length > 60 ? 'Too long' : form.meta_title.length >= 30 ? 'Good' : 'Add more'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <Label>Canonical URL <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+                <Input
+                  value={form.canonical_url}
+                  onChange={e => setForm(f => ({ ...f, canonical_url: e.target.value }))}
+                  placeholder="https://yourstore.com/product/..."
+                />
+                <p className="text-xs text-muted-foreground mt-1">Use to point duplicates to the original URL</p>
+              </div>
+            </div>
+
             <div>
               <Label>Meta Description</Label>
-              <Textarea value={form.meta_description} onChange={e => setForm(f => ({ ...f, meta_description: e.target.value }))} placeholder="SEO description (max 160 chars)" maxLength={160} rows={3} />
-              <p className="text-xs text-muted-foreground mt-1">{form.meta_description.length}/160 characters</p>
+              <Textarea
+                value={form.meta_description}
+                onChange={e => setForm(f => ({ ...f, meta_description: e.target.value }))}
+                placeholder="A concise summary that appears in search results (140-160 chars)"
+                maxLength={200}
+                rows={3}
+              />
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-muted-foreground">{form.meta_description.length}/160 chars</p>
+                <span className={`text-xs font-medium ${form.meta_description.length > 160 ? 'text-destructive' : form.meta_description.length >= 120 ? 'text-[hsl(var(--success))]' : 'text-muted-foreground'}`}>
+                  {form.meta_description.length > 160 ? 'Too long' : form.meta_description.length >= 120 ? 'Good' : 'Add more'}
+                </span>
+              </div>
             </div>
+
             <div>
-              <Label>Meta Keywords</Label>
-              <Input value={form.meta_keywords} onChange={e => setForm(f => ({ ...f, meta_keywords: e.target.value }))} placeholder="keyword1, keyword2, keyword3" />
+              <Label>Focus Keywords</Label>
+              <Input
+                value={form.meta_keywords}
+                onChange={e => setForm(f => ({ ...f, meta_keywords: e.target.value }))}
+                placeholder="primary keyword, secondary keyword, brand name"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Comma-separated. Helps with internal search & some engines.</p>
             </div>
-            <div className="p-3 bg-muted/50 rounded-lg border border-border">
-              <p className="text-xs font-medium text-foreground mb-1">Preview</p>
-              <p className="text-sm text-primary font-medium truncate">{form.meta_title || form.name || 'Product Title'}</p>
-              <p className="text-xs text-[hsl(var(--success))]">yourstore.com/product/{form.slug || 'product-slug'}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{form.meta_description || form.description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Product description will appear here...'}</p>
+
+            {/* SEO Tags */}
+            <div>
+              <Label className="flex items-center gap-1.5"><Tag className="h-3.5 w-3.5" /> SEO Tags</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  placeholder="Type a tag and press Enter..."
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
+                />
+                <Button type="button" variant="outline" size="sm" onClick={addTag}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                </Button>
+              </div>
+              {form.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {form.tags.map((tag, i) => (
+                    <Badge key={i} variant="secondary" className="gap-1 text-xs pl-2 pr-1 py-1">
+                      <Tag className="h-3 w-3" />{tag}
+                      <button
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, tags: f.tags.filter((_, idx) => idx !== i) }))}
+                        className="ml-0.5 hover:bg-destructive/20 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1.5">Used for search filters, related products, and structured data.</p>
             </div>
+
+            {/* Meta Image / Social Share Image */}
+            <div>
+              <Label className="flex items-center gap-1.5"><ImageIcon className="h-3.5 w-3.5" /> Social Share Image (Open Graph)</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={form.meta_image}
+                  onChange={e => setForm(f => ({ ...f, meta_image: e.target.value }))}
+                  placeholder="https://... (1200×630 recommended)"
+                />
+                <Button type="button" variant="outline" size="sm" onClick={() => { setMediaTarget('meta_image'); setMediaManagerOpen(true); }}>
+                  <FolderOpen className="h-3.5 w-3.5 mr-1" /> Browse
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Image shown when shared on Facebook, Twitter, WhatsApp. Falls back to first product image.</p>
+              {(form.meta_image || form.images[0]) && (
+                <div className="mt-2 inline-block rounded-md border border-border overflow-hidden bg-muted/30">
+                  <img
+                    src={form.meta_image || form.images[0]}
+                    alt="Social share preview"
+                    className="h-24 w-44 object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Google SERP Preview */}
+            <div className="rounded-lg border border-border bg-card p-4 space-y-1">
+              <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Search className="h-3 w-3" /> Google Search Preview
+              </p>
+              <p className="text-xs text-[hsl(var(--success))] truncate">
+                yourstore.com › product › {form.slug || 'product-slug'}
+              </p>
+              <p className="text-base text-[#1a0dab] dark:text-[#8ab4f8] font-medium leading-snug line-clamp-1 hover:underline cursor-pointer">
+                {form.meta_title || form.name || 'Product Title'}
+              </p>
+              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                {form.meta_description || form.short_description || form.description?.replace(/<[^>]*>/g, '').slice(0, 160) || 'Product description will appear here...'}
+              </p>
+            </div>
+
+            {/* Social Card Preview */}
+            {(form.meta_image || form.images[0]) && (
+              <div className="rounded-lg border border-border overflow-hidden bg-card max-w-md">
+                <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground px-4 pt-3 flex items-center gap-1.5">
+                  <ImageIcon className="h-3 w-3" /> Social Share Preview
+                </p>
+                <img
+                  src={form.meta_image || form.images[0]}
+                  alt=""
+                  className="w-full h-44 object-cover mt-2 border-y border-border"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+                <div className="p-3 bg-muted/30">
+                  <p className="text-[11px] uppercase text-muted-foreground tracking-wide">yourstore.com</p>
+                  <p className="text-sm font-semibold text-foreground line-clamp-1">{form.meta_title || form.name || 'Product Title'}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{form.meta_description || form.short_description || 'Description...'}</p>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* === SHIPPING === */}
@@ -655,10 +800,16 @@ export const AdminProductFormModal = ({ open, onOpenChange, product, onSaved }: 
     <MediaManagerModal
       open={mediaManagerOpen}
       onOpenChange={setMediaManagerOpen}
-      multiple
+      multiple={mediaTarget === 'images'}
       acceptedKinds={['image']}
       uploadFolder="products"
-      onSelect={(urls) => setForm(f => ({ ...f, images: Array.from(new Set([...f.images, ...urls])) }))}
+      onSelect={(urls) => {
+        if (mediaTarget === 'meta_image') {
+          setForm(f => ({ ...f, meta_image: urls[0] || '' }));
+        } else {
+          setForm(f => ({ ...f, images: Array.from(new Set([...f.images, ...urls])) }));
+        }
+      }}
     />
     </>
   );

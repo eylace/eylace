@@ -30,6 +30,18 @@ import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { Loader2 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 
+// Inject/update a meta tag in <head>
+const setMeta = (selector: string, attrs: Record<string, string>) => {
+  let el = document.head.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
+  if (!el) {
+    const tagName = selector.startsWith('link') ? 'link' : 'meta';
+    el = document.createElement(tagName) as any;
+    document.head.appendChild(el);
+  }
+  Object.entries(attrs).forEach(([k, v]) => el!.setAttribute(k, v));
+  return el;
+};
+
 const ProductDetail = () => {
   const { slug } = useParams();
   const [quantity, setQuantity] = useState(1);
@@ -59,6 +71,68 @@ const ProductDetail = () => {
   useEffect(() => {
     setLiveReviewStats(null);
   }, [slug]);
+
+  // === SEO: inject meta tags + JSON-LD structured data ===
+  useEffect(() => {
+    if (!product) return;
+    const cleanDesc = (product.description || '').replace(/<[^>]*>/g, '').trim();
+    const title = product.metaTitle || `${product.name} | ${product.category?.name || 'Shop'}`;
+    const description = product.metaDescription || product.shortDescription || cleanDesc.slice(0, 160) || `Buy ${product.name} online.`;
+    const keywords = product.metaKeywords || (product.tags || []).join(', ') || product.name;
+    const image = product.metaImage || product.images?.[0] || '';
+    const url = product.canonicalUrl || `${window.location.origin}/product/${product.slug}`;
+
+    document.title = title;
+    setMeta('meta[name="description"]', { name: 'description', content: description });
+    setMeta('meta[name="keywords"]', { name: 'keywords', content: keywords });
+    setMeta('link[rel="canonical"]', { rel: 'canonical', href: url });
+    // Open Graph
+    setMeta('meta[property="og:title"]', { property: 'og:title', content: title });
+    setMeta('meta[property="og:description"]', { property: 'og:description', content: description });
+    setMeta('meta[property="og:type"]', { property: 'og:type', content: 'product' });
+    setMeta('meta[property="og:url"]', { property: 'og:url', content: url });
+    if (image) setMeta('meta[property="og:image"]', { property: 'og:image', content: image });
+    // Twitter
+    setMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: image ? 'summary_large_image' : 'summary' });
+    setMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: title });
+    setMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: description });
+    if (image) setMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: image });
+
+    // JSON-LD structured data
+    let ld = document.getElementById('product-jsonld') as HTMLScriptElement | null;
+    if (!ld) {
+      ld = document.createElement('script');
+      ld.id = 'product-jsonld';
+      ld.type = 'application/ld+json';
+      document.head.appendChild(ld);
+    }
+    ld.textContent = JSON.stringify({
+      '@context': 'https://schema.org/',
+      '@type': 'Product',
+      name: product.name,
+      description,
+      image: image ? [image, ...(product.images || []).slice(0, 4)] : product.images,
+      sku: product.id,
+      brand: product.seller?.name ? { '@type': 'Brand', name: product.seller.name } : undefined,
+      aggregateRating: displayReviewCount > 0 ? {
+        '@type': 'AggregateRating',
+        ratingValue: displayRating,
+        reviewCount: displayReviewCount,
+      } : undefined,
+      offers: {
+        '@type': 'Offer',
+        url,
+        priceCurrency: 'BDT',
+        price: product.price,
+        availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      },
+    });
+
+    return () => {
+      // Reset title on unmount
+      document.title = 'Eylace';
+    };
+  }, [product, displayRating, displayReviewCount]);
 
   // Auto-switch to reviews tab and scroll when #reviews hash is present
   useEffect(() => {

@@ -139,6 +139,13 @@ export const adaptDBProduct = (dbProduct: DBProduct): Product => {
     soldCount: (dbProduct as any).sold_count || 0,
     createdAt: new Date(dbProduct.created_at),
     updatedAt: new Date(dbProduct.updated_at),
+    shortDescription: (dbProduct as any).short_description || undefined,
+    metaTitle: (dbProduct as any).meta_title || undefined,
+    metaDescription: (dbProduct as any).meta_description || undefined,
+    metaKeywords: (dbProduct as any).meta_keywords || undefined,
+    metaImage: (dbProduct as any).meta_image || undefined,
+    canonicalUrl: (dbProduct as any).canonical_url || undefined,
+    tags: Array.isArray((dbProduct as any).tags) ? (dbProduct as any).tags : undefined,
   };
 };
  
