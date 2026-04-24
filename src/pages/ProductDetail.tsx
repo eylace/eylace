@@ -76,10 +76,15 @@ const ProductDetail = () => {
   useEffect(() => {
     if (!product) return;
     const cleanDesc = (product.description || '').replace(/<[^>]*>/g, '').trim();
-    const title = product.metaTitle || `${product.name} | ${product.category?.name || 'Shop'}`;
+    // Variant-aware title (e.g. "Shirt — Red, M | Shop")
+    const variantSuffix = Object.values(selectedVariations || {}).filter(Boolean).join(', ');
+    const baseName = variantSuffix ? `${product.name} — ${variantSuffix}` : product.name;
+    const title = product.metaTitle || `${baseName} | ${product.category?.name || 'Shop'}`;
     const description = product.metaDescription || product.shortDescription || cleanDesc.slice(0, 160) || `Buy ${product.name} online.`;
     const keywords = product.metaKeywords || (product.tags || []).join(', ') || product.name;
-    const image = product.metaImage || product.images?.[0] || '';
+    // Best-available image: explicit meta image → first product image → first video thumbnail (if exposed via attributes)
+    const fallbackVideoThumb = (product as any)?.attributes?.video_thumbnails?.[0] || '';
+    const image = product.metaImage || product.images?.[0] || fallbackVideoThumb || '';
     const url = product.canonicalUrl || `${window.location.origin}/product/${product.slug}`;
 
     document.title = title;
@@ -109,7 +114,7 @@ const ProductDetail = () => {
     ld.textContent = JSON.stringify({
       '@context': 'https://schema.org/',
       '@type': 'Product',
-      name: product.name,
+      name: baseName,
       description,
       image: image ? [image, ...(product.images || []).slice(0, 4)] : product.images,
       sku: product.id,
@@ -124,7 +129,8 @@ const ProductDetail = () => {
         url,
         priceCurrency: 'BDT',
         price: product.price,
-        availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        availability: (product.stock ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        itemCondition: 'https://schema.org/NewCondition',
       },
     });
 
@@ -132,7 +138,7 @@ const ProductDetail = () => {
       // Reset title on unmount
       document.title = 'Eylace';
     };
-  }, [product, displayRating, displayReviewCount]);
+  }, [product, displayRating, displayReviewCount, selectedVariations]);
 
   // Auto-switch to reviews tab and scroll when #reviews hash is present
   useEffect(() => {
