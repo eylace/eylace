@@ -42,7 +42,7 @@ describe('Product SEO server-side validation rules', () => {
     it('rejects a title longer than 70 chars', () => {
       const r = validateProductSeo({ meta_title: 'a'.repeat(71) });
       expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.field).toBe('meta_title');
+      expect((r as { ok: false; field: string }).field).toBe('meta_title');
     });
 
     it('allows null/empty meta_title', () => {
@@ -60,7 +60,7 @@ describe('Product SEO server-side validation rules', () => {
     it('rejects a description longer than 200 chars', () => {
       const r = validateProductSeo({ meta_description: 'a'.repeat(201) });
       expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.field).toBe('meta_description');
+      expect((r as { ok: false; field: string }).field).toBe('meta_description');
     });
   });
 
@@ -74,7 +74,7 @@ describe('Product SEO server-side validation rules', () => {
     it('rejects a URL without protocol', () => {
       const r = validateProductSeo({ canonical_url: 'shop.example.com/product/x' });
       expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.field).toBe('canonical_url');
+      expect((r as { ok: false; field: string }).field).toBe('canonical_url');
     });
     it('rejects javascript: URLs', () => {
       const r = validateProductSeo({ canonical_url: 'javascript:alert(1)' });
@@ -93,7 +93,7 @@ describe('Product SEO server-side validation rules', () => {
     it('rejects more than 30 tags', () => {
       const r = validateProductSeo({ tags: Array.from({ length: 31 }, (_, i) => `tag-${i}`) });
       expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.field).toBe('tags');
+      expect((r as { ok: false; field: string }).field).toBe('tags');
     });
     it('allows empty tag list', () => {
       expect(validateProductSeo({ tags: [] }).ok).toBe(true);
