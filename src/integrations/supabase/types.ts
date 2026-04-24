@@ -2394,6 +2394,13 @@ export type Database = {
             referencedRelation: "order_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "return_requests_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       review_votes: {
@@ -2946,6 +2953,50 @@ export type Database = {
       }
     }
     Views: {
+      order_items_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          order_id: string | null
+          price: number | null
+          product_id: string | null
+          product_image: string | null
+          product_name: string | null
+          quantity: number | null
+          variations: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          order_id?: string | null
+          price?: number | null
+          product_id?: string | null
+          product_image?: string | null
+          product_name?: string | null
+          quantity?: number | null
+          variations?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          order_id?: string | null
+          price?: number | null
+          product_id?: string | null
+          product_image?: string | null
+          product_name?: string | null
+          quantity?: number | null
+          variations?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_gateways_public: {
         Row: {
           display_name: string | null
@@ -3251,6 +3302,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_get_order_item_cost: {
+        Args: { _order_item_id: string }
+        Returns: number
+      }
       can_access_accounting: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_otp_codes: { Args: never; Returns: number }
       find_seo_duplicates: {
