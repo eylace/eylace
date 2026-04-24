@@ -28,6 +28,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { Loader2 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 const ProductDetail = () => {
   const { slug } = useParams();
