@@ -78,7 +78,7 @@ const defaultForm: ProductFormState = {
   hsn_code: '', gst_rate: '', frequently_bought_ids: [], note: '',
 };
 
-type MediaTarget = 'gallery' | 'thumbnail' | 'videos' | 'video_thumbnails' | 'pdf';
+type MediaTarget = 'gallery' | 'thumbnail' | 'videos' | 'video_thumbnails' | 'pdf' | 'meta_image';
 
 const MEDIA_TARGET_CONFIG: Record<MediaTarget, { acceptedKinds: ('image' | 'video' | 'document')[]; multiple: boolean; uploadFolder: string }> = {
   gallery: { acceptedKinds: ['image'], multiple: true, uploadFolder: 'gallery' },
@@ -86,6 +86,7 @@ const MEDIA_TARGET_CONFIG: Record<MediaTarget, { acceptedKinds: ('image' | 'vide
   videos: { acceptedKinds: ['video'], multiple: true, uploadFolder: 'videos' },
   video_thumbnails: { acceptedKinds: ['image'], multiple: true, uploadFolder: 'video-thumbs' },
   pdf: { acceptedKinds: ['document'], multiple: false, uploadFolder: 'pdfs' },
+  meta_image: { acceptedKinds: ['image'], multiple: false, uploadFolder: 'seo' },
 };
 
 const mergeUnique = (existing: string[], incoming: string[]) => Array.from(new Set([...existing, ...incoming]));
@@ -215,6 +216,11 @@ const AdminAddProduct = () => {
 
     if (mediaTarget === 'video_thumbnails') {
       setForm((currentForm) => ({ ...currentForm, video_thumbnails: mergeUnique(currentForm.video_thumbnails, urls) }));
+      return;
+    }
+
+    if (mediaTarget === 'meta_image') {
+      setForm((currentForm) => ({ ...currentForm, meta_image: urls[0] }));
       return;
     }
 
