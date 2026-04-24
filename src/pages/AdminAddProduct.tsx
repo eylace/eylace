@@ -242,7 +242,7 @@ const AdminAddProduct = () => {
   const handleSubmit = async () => {
     if (!form.name || !form.slug || !form.price) { toast.error('Name, slug and price are required'); return; }
     setLoading(true);
-    const payload = {
+    const payload: any = {
       name: form.name, slug: form.slug, description: form.description || null,
       price: parseFloat(form.price),
       original_price: form.original_price ? parseFloat(form.original_price) : null,
@@ -255,11 +255,18 @@ const AdminAddProduct = () => {
       is_free_shipping: form.shipping_type === 'free' || form.is_free_shipping,
       is_prime: form.is_prime, is_digital: form.is_digital,
       variations: form.variations.length > 0 ? form.variations : [],
+      // ✅ SEO fields saved to dedicated top-level columns (with server-side validation)
+      meta_title: form.meta_title?.trim() || null,
+      meta_description: form.meta_description?.trim() || null,
+      meta_keywords: form.meta_keywords?.trim() || null,
+      meta_image: form.meta_image?.trim() || null,
+      canonical_url: form.canonical_url?.trim() || null,
+      short_description: form.short_description?.trim() || null,
+      tags: tags.length > 0 ? tags : [],
       attributes: {
-        unit: form.unit, weight: form.weight, min_qty: form.min_qty, barcode: form.barcode, tags,
+        unit: form.unit, weight: form.weight, min_qty: form.min_qty, barcode: form.barcode,
         thumbnail: form.thumbnail, videos: form.videos, video_thumbnails: form.video_thumbnails,
         youtube_link: form.youtube_link, pdf_url: form.pdf_url,
-        meta_title: form.meta_title, meta_description: form.meta_description, meta_keywords: form.meta_keywords,
         shipping_type: form.shipping_type, shipping_cost: form.shipping_cost,
         is_product_quantity_multiply: form.is_product_quantity_multiply,
         estimated_shipping_days: form.estimated_shipping_days, is_refundable: form.is_refundable,
