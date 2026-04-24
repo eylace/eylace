@@ -119,3 +119,72 @@ test.describe('Security regression: RLS + checkout tamper guards', () => {
     expect(res.status()).toBe(400);
   });
 });
+
+/**
+ * SEO validation regression — exercises the real `validate_product_seo()`
+ * Postgres trigger via a service-role insert. Skipped automatically when
+ * SUPABASE_SERVICE_ROLE_KEY is not provided (e.g. in PR CI). The pure-rule
+ * mirror in `src/lib/__tests__/seoValidation.test.ts` always runs.
+ */
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+test.describe('SEO validation regression: products trigger', () => {
+  test.skip(!SUPABASE_URL || !SERVICE_KEY, 'Service-role key not configured — server-side SEO trigger checks skipped');
+
+  const insertProduct = async (overrides: Record<string, unknown>) => {
+    const ctx = await request.newContext();
+    const suffix = Math.random().toString(36).slice(2, 10);
+    const base = {
+      name: `SEO Test ${suffix}`,
+      slug: `seo-test-${suffix}`,
+      price: 1,
+      is_active: false,
+    };
+    return ctx.post(`${SUPABASE_URL}/rest/v1/products`, {
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      data: { ...base, ...overrides },
+    });
+  };
+
+  test('rejects meta_title longer than 70 chars', async () => {
+    const res = await insertProduct({ meta_title: 'x'.repeat(71) });
+    expect(res.status()).toBeGreaterThanOrEqual(400);
+    expect((await res.text()).toLowerCase()).toContain('meta title');
+  });
+
+  test('rejects meta_description longer than 200 chars', async () => {
+    const res = await insertProduct({ meta_description: 'x'.repeat(201) });
+    expect(res.status()).toBeGreaterThanOrEqual(400);
+    expect((await res.text()).toLowerCase()).toContain('meta description');
+  });
+
+  test('rejects canonical_url without http(s) prefix', async () => {
+    const res = await insertProduct({ canonical_url: 'shop.example.com/x' });
+    expect(res.status()).toBeGreaterThanOrEqual(400);
+    expect((await res.text()).toLowerCase()).toContain('canonical url');
+  });
+
+  test('rejects more than 30 tags', async () => {
+    const tags = Array.from({ length: 31 }, (_, i) => `t${i}`);
+    const res = await insertProduct({ tags });
+    expect(res.status()).toBeGreaterThanOrEqual(400);
+    expect((await res.text()).toLowerCase()).toContain('tags');
+  });
+
+  test('accepts a fully valid SEO payload', async () => {
+    const res = await insertProduct({
+      meta_title: 'Valid SEO Title within limits',
+      meta_description: 'A reasonable description that fits well within the 200-character cap.',
+      canonical_url: 'https://eylace.com/product/seo-valid',
+      tags: ['a', 'b', 'c'],
+    });
+    // 201 Created with Prefer: return=minimal, but accept any 2xx.
+    expect(res.status()).toBeGreaterThanOrEqual(200);
+    expect(res.status()).toBeLessThan(300);
+  });
+});
