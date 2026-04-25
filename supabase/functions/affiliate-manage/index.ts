@@ -292,6 +292,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Unknown action' }, 400)
   } catch (err) {
     console.error('affiliate-manage error:', err)
-    return json({ error: err.message || 'Internal error' }, 500)
+    const message = err instanceof Error ? err.message : String(err)
+    return json({ error: message || 'Internal error' }, 500)
   }
 })

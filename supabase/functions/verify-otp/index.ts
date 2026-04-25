@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       if (tokenError || !tokenData) {
         // Fallback: update user and create session via password
         const tempPassword = crypto.randomUUID();
-        await supabase.auth.admin.updateUser(existingUser.id, { password: tempPassword });
+        await supabase.auth.admin.updateUserById(existingUser.id, { password: tempPassword });
         
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: existingUser.email!,
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
         // If magic link approach didn't yield a session, use password fallback
         if (!session) {
           const tempPassword = crypto.randomUUID();
-          await supabase.auth.admin.updateUser(existingUser.id, { password: tempPassword });
+          await supabase.auth.admin.updateUserById(existingUser.id, { password: tempPassword });
           const { data: signInData } = await supabase.auth.signInWithPassword({
             email: existingUser.email!,
             password: tempPassword,
