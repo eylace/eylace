@@ -219,6 +219,7 @@ const AdminAddProduct = () => {
         gst_rate: attrs.gst_rate || '',
         frequently_bought_ids: attrs.frequently_bought_ids || [],
         note: attrs.note || '',
+        variant_rows: Array.isArray(attrs.variant_rows) ? attrs.variant_rows : [],
       });
       setTags((data as any).tags || attrs.tags || []);
       setLoadingProduct(false);
