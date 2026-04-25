@@ -65,6 +65,34 @@ const ProductDetail = () => {
   const product = dbProduct ? adaptDBProduct(dbProduct) : null;
   const relatedProducts = adaptDBProducts(relatedDbProducts);
 
+  // === Variant resolution ====================================================
+  // When the customer picks a Color/Size combination, look up the matching
+  // variant row (authored in the admin/seller editor) and override price,
+  // stock and the lead gallery image. This makes per-variant images and
+  // prices appear instantly on the product page.
+  const matchedVariant = (() => {
+    if (!product?.variantRows || product.variantRows.length === 0) return undefined;
+    const sel = selectedVariations || {};
+    return product.variantRows.find(r =>
+      Object.entries(r.combination).every(([k, v]) => sel[k] === v),
+    );
+  })();
+
+  const variantPrice = matchedVariant && matchedVariant.price !== '' && matchedVariant.price !== null
+    ? Number(matchedVariant.price) || undefined
+    : undefined;
+  const variantStock = matchedVariant && matchedVariant.stock !== '' && matchedVariant.stock !== null
+    ? Number(matchedVariant.stock)
+    : undefined;
+  const galleryImages = (() => {
+    if (!product) return [] as string[];
+    if (matchedVariant?.image) {
+      // Put the variant's hero image first, keep the rest as fallbacks
+      return Array.from(new Set([matchedVariant.image, ...(product.images || [])]));
+    }
+    return product.images || [];
+  })();
+
   const displayRating = liveReviewStats?.averageRating ?? product?.rating ?? 0;
   const displayReviewCount = liveReviewStats?.totalReviews ?? product?.reviewCount ?? 0;
 
@@ -249,7 +277,7 @@ const ProductDetail = () => {
         {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <ImageGallery images={product.images} productName={product.name} />
+            <ImageGallery images={galleryImages} productName={product.name} />
           </div>
 
           <div className="space-y-6">
@@ -311,7 +339,7 @@ const ProductDetail = () => {
             <div className="space-y-2">
               <div className="flex items-baseline gap-3 flex-wrap">
                 <span className="text-3xl md:text-4xl font-bold text-foreground">
-                  {formatPrice(product.price)}
+                  {formatPrice(variantPrice ?? product.price)}
                 </span>
                 {hasDiscount && product.originalPrice && (
                   <>

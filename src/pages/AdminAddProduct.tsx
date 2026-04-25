@@ -75,6 +75,16 @@ interface ProductFormState {
   gst_rate: string;
   frequently_bought_ids: string[];
   note: string;
+  variant_rows: VariantRow[];
+}
+
+export interface VariantRow {
+  key: string;            // stable key like "Color:Black|Size:XS"
+  combination: Record<string, string>; // { Color: "Black", Size: "XS" }
+  sku: string;
+  price: string;          // empty string => uses base price
+  stock: string;
+  image: string;
 }
 
 const defaultForm: ProductFormState = {
@@ -90,6 +100,7 @@ const defaultForm: ProductFormState = {
   shipping_type: 'free', shipping_cost: '', is_product_quantity_multiply: false, estimated_shipping_days: '',
   is_refundable: true, is_featured: false, is_todays_deal: false, flash_deal_title: '',
   hsn_code: '', gst_rate: '', frequently_bought_ids: [], note: '',
+  variant_rows: [],
 };
 
 type MediaTarget = 'gallery' | 'thumbnail' | 'videos' | 'video_thumbnails' | 'pdf' | 'meta_image';
@@ -208,6 +219,7 @@ const AdminAddProduct = () => {
         gst_rate: attrs.gst_rate || '',
         frequently_bought_ids: attrs.frequently_bought_ids || [],
         note: attrs.note || '',
+        variant_rows: Array.isArray(attrs.variant_rows) ? attrs.variant_rows : [],
       });
       setTags((data as any).tags || attrs.tags || []);
       setLoadingProduct(false);
@@ -225,6 +237,17 @@ const AdminAddProduct = () => {
 
   const handleMediaSelect = (urls: string[]) => {
     if (!mediaTarget || !urls.length) return;
+
+    // Variant-row image picker takes precedence
+    if (variantImageTargetKey) {
+      const key = variantImageTargetKey;
+      setForm((cf) => ({
+        ...cf,
+        variant_rows: cf.variant_rows.map(r => r.key === key ? { ...r, image: urls[0] } : r),
+      }));
+      setVariantImageTargetKey(null);
+      return;
+    }
 
     if (mediaTarget === 'gallery') {
       setForm((currentForm) => ({ ...currentForm, images: mergeUnique(currentForm.images, urls) }));
@@ -400,6 +423,75 @@ const AdminAddProduct = () => {
     return out;
   };
 
+  // === Variant Rows (Cartesian Product) =====================================
+  // Build all combinations of selected color × selected attribute values.
+  // Each row holds its own SKU, price, stock and image — exactly like the
+  // screenshot reference (Variants table with Color/Size combos).
+  const variantAxes = (() => {
+    const axes: { name: string; values: string[] }[] = [];
+    if (form.selected_color_ids.length > 0) {
+      axes.push({
+        name: 'Color',
+        values: form.selected_color_ids
+          .map(id => colors.find(c => c.id === id)?.name)
+          .filter((n): n is string => !!n),
+      });
+    }
+    for (const attrId of form.selected_attribute_ids) {
+      const attr = attributes.find(a => a.id === attrId);
+      const vals = form.attribute_values[attrId] || [];
+      if (attr && vals.length > 0) axes.push({ name: attr.name, values: vals });
+    }
+    return axes;
+  })();
+
+  const generatedCombinations: { key: string; combination: Record<string, string> }[] = (() => {
+    if (variantAxes.length === 0) return [];
+    const result: Record<string, string>[] = [{}];
+    for (const axis of variantAxes) {
+      const next: Record<string, string>[] = [];
+      for (const partial of result) {
+        for (const v of axis.values) {
+          next.push({ ...partial, [axis.name]: v });
+        }
+      }
+      result.splice(0, result.length, ...next);
+    }
+    return result.map(combo => ({
+      key: Object.entries(combo).map(([k, v]) => `${k}:${v}`).join('|'),
+      combination: combo,
+    }));
+  })();
+
+  // Sync variant_rows whenever combinations change (preserve user-entered values)
+  useEffect(() => {
+    if (!form.variation_enabled) return;
+    setForm(f => {
+      const existingByKey = new Map(f.variant_rows.map(r => [r.key, r]));
+      const baseSku = f.sku || (f.name || 'PRD').toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 6);
+      const next: VariantRow[] = generatedCombinations.map(({ key, combination }) => {
+        const prev = existingByKey.get(key);
+        const autoSku = `${baseSku}-${Object.values(combination).map(v => v.toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 4)).join('-')}`;
+        return prev ?? { key, combination, sku: autoSku, price: '', stock: '0', image: '' };
+      });
+      // Avoid loop: only update when actually different
+      if (next.length === f.variant_rows.length && next.every((r, i) => r.key === f.variant_rows[i].key)) {
+        return f;
+      }
+      return { ...f, variant_rows: next };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(generatedCombinations.map(g => g.key)), form.variation_enabled, form.sku, form.name]);
+
+  const updateVariantRow = (key: string, patch: Partial<VariantRow>) => {
+    setForm(f => ({
+      ...f,
+      variant_rows: f.variant_rows.map(r => (r.key === key ? { ...r, ...patch } : r)),
+    }));
+  };
+
+  const [variantImageTargetKey, setVariantImageTargetKey] = useState<string | null>(null);
+
   // === SKU Generator ========================================================
   // Standard format: {NAMEPREFIX}-{CATPREFIX}-{TIMESTAMP}-{RAND}
   // Example: WIRE-AUDI-K9X4-7B3
@@ -484,6 +576,7 @@ const AdminAddProduct = () => {
         selected_color_ids: form.selected_color_ids,
         selected_attribute_ids: form.selected_attribute_ids,
         attribute_values: form.attribute_values,
+        variant_rows: form.variation_enabled ? form.variant_rows : [],
       },
     };
 
@@ -1101,6 +1194,102 @@ const AdminAddProduct = () => {
               <p className="text-xs text-muted-foreground">
                 Choose the attributes of this product and then input values of each attribute.
               </p>
+
+              {/* ===== Variants Table (auto cartesian product) ===== */}
+              {form.variation_enabled && form.variant_rows.length > 0 && (
+                <div className="rounded-lg border border-border bg-background overflow-hidden">
+                  <div className="px-3 py-2 border-b border-border bg-muted/40 flex items-center justify-between">
+                    <h4 className="text-sm font-semibold">Variants ({form.variant_rows.length})</h4>
+                    <span className="text-[11px] text-muted-foreground">
+                      Each combination has its own SKU, price, stock and image.
+                    </span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted/30">
+                        <tr className="text-left">
+                          <th className="px-3 py-2 font-medium">VARIANT</th>
+                          <th className="px-3 py-2 font-medium">SKU</th>
+                          <th className="px-3 py-2 font-medium">PRICE (৳)</th>
+                          <th className="px-3 py-2 font-medium">STOCK</th>
+                          <th className="px-3 py-2 font-medium">IMAGE</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {form.variant_rows.map((row) => (
+                          <tr key={row.key} className="hover:bg-muted/20">
+                            <td className="px-3 py-2 align-top">
+                              <div className="flex flex-col gap-0.5">
+                                {Object.entries(row.combination).map(([k, v]) => (
+                                  <span key={k} className="text-[11px]">
+                                    <span className="text-muted-foreground">{k}:</span>{' '}
+                                    <span className="font-medium">{v}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input
+                                value={row.sku}
+                                onChange={(e) => updateVariantRow(row.key, { sku: e.target.value })}
+                                className="h-8 text-xs w-32"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input
+                                type="number"
+                                placeholder="Uses base price"
+                                value={row.price}
+                                onChange={(e) => updateVariantRow(row.key, { price: e.target.value })}
+                                className="h-8 text-xs w-28"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input
+                                type="number"
+                                value={row.stock}
+                                onChange={(e) => updateVariantRow(row.key, { stock: e.target.value })}
+                                className="h-8 text-xs w-20"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                {row.image ? (
+                                  <img src={row.image} alt="" className="h-8 w-8 rounded object-cover border border-border" />
+                                ) : (
+                                  <div className="h-8 w-8 rounded border border-dashed border-border flex items-center justify-center">
+                                    <ImageIcon className="h-3 w-3 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-[11px]"
+                                  onClick={() => { setVariantImageTargetKey(row.key); setMediaTarget('gallery'); }}
+                                >
+                                  Pick
+                                </Button>
+                                {row.image && (
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-destructive"
+                                    onClick={() => updateVariantRow(row.key, { image: '' })}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -869,6 +869,92 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_expense_settings: {
+        Row: {
+          area_zone: string
+          courier_provider: string
+          created_at: string
+          default_amount: number
+          id: string
+          is_active: boolean
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          area_zone: string
+          courier_provider: string
+          created_at?: string
+          default_amount?: number
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          area_zone?: string
+          courier_provider?: string
+          created_at?: string
+          default_amount?: number
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      courier_expenses: {
+        Row: {
+          amount: number
+          area_zone: string | null
+          courier_provider: string | null
+          created_at: string
+          created_by: string | null
+          expense_date: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          order_number: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          area_zone?: string | null
+          courier_provider?: string | null
+          created_at?: string
+          created_by?: string | null
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          area_zone?: string | null
+          courier_provider?: string | null
+          created_at?: string
+          created_by?: string | null
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_expenses_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       couriers: {
         Row: {
           base_cost: number | null
@@ -3392,6 +3478,17 @@ export type Database = {
       }
       can_access_accounting: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_otp_codes: { Args: never; Returns: number }
+      courier_expense_summary: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          avg_per_delivery: number
+          delivery_count: number
+          month_expense: number
+          today_expense: number
+          total_expense: number
+          week_expense: number
+        }[]
+      }
       find_seo_duplicates: {
         Args: {
           _canonical_url: string

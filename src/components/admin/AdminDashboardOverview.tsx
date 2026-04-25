@@ -20,6 +20,7 @@ import { useAISettings } from '@/hooks/useAISettings';
 import { DashboardDailyReport } from './DashboardDailyReport';
 import { DashboardFeatureCards } from './DashboardFeatureCards';
 import { DashboardIncompleteOrders } from './DashboardIncompleteOrders';
+import { DashboardCourierExpenseWidget } from './DashboardCourierExpenseWidget';
 
 interface DashboardStats {
   // Last 30 days
@@ -343,6 +344,9 @@ export const AdminDashboardOverview = () => {
 
       {/* Daily Report */}
       <DashboardDailyReport orders={allOrders} />
+
+      {/* Courier Expense quick summary */}
+      <DashboardCourierExpenseWidget />
 
       {/* Incomplete Orders + Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

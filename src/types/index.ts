@@ -30,6 +30,18 @@ export interface Product {
   metaImage?: string;
   canonicalUrl?: string;
   tags?: string[];
+  /** Per-combination variant rows authored in the admin/seller editor.
+   *  Each row carries its own SKU, optional price override, stock and image. */
+  variantRows?: VariantRow[];
+}
+
+export interface VariantRow {
+  key: string;
+  combination: Record<string, string>;
+  sku: string;
+  price: string | number;
+  stock: string | number;
+  image: string;
 }
 
 export interface ProductVariation {
