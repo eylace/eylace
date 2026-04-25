@@ -277,7 +277,7 @@ const ProductDetail = () => {
         {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <ImageGallery images={product.images} productName={product.name} />
+            <ImageGallery images={galleryImages} productName={product.name} />
           </div>
 
           <div className="space-y-6">
@@ -339,7 +339,7 @@ const ProductDetail = () => {
             <div className="space-y-2">
               <div className="flex items-baseline gap-3 flex-wrap">
                 <span className="text-3xl md:text-4xl font-bold text-foreground">
-                  {formatPrice(product.price)}
+                  {formatPrice(variantPrice ?? product.price)}
                 </span>
                 {hasDiscount && product.originalPrice && (
                   <>
