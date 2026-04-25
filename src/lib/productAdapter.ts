@@ -131,6 +131,15 @@ export const adaptDBProduct = (dbProduct: DBProduct): Product => {
     stock: dbProduct.stock || 0,
     variations: normalizeVariations(dbProduct.variations),
     attributes: normalizeProductAttributes(dbProduct.attributes),
+    // Preserve raw variant rows from the admin/seller editor so the product
+    // detail page can show per-variant image/price/stock when a customer
+    // picks a specific Color/Size combination.
+    variantRows: (() => {
+      const a = dbProduct.attributes as any;
+      if (!a || typeof a !== 'object' || Array.isArray(a)) return undefined;
+      const rows = a.variant_rows;
+      return Array.isArray(rows) ? rows : undefined;
+    })(),
     isFlashSale: dbProduct.is_flash_sale || false,
     flashSaleEnds: dbProduct.flash_sale_ends ? new Date(dbProduct.flash_sale_ends) : undefined,
     isPrime: dbProduct.is_prime || false,
