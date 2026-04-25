@@ -3022,6 +3022,173 @@ export type Database = {
           },
         ]
       }
+      support_managers: {
+        Row: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          is_active: boolean | null
+          max_concurrent_tickets: number | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          max_concurrent_tickets?: number | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          max_concurrent_tickets?: number | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          attachments: Json | null
+          created_at: string
+          id: string
+          is_internal_note: boolean | null
+          message: string
+          read_by_admin: boolean | null
+          read_by_customer: boolean | null
+          sender_avatar: string | null
+          sender_id: string | null
+          sender_name: string
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean | null
+          message: string
+          read_by_admin?: boolean | null
+          read_by_customer?: boolean | null
+          sender_avatar?: string | null
+          sender_id?: string | null
+          sender_name: string
+          sender_type: string
+          ticket_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean | null
+          message?: string
+          read_by_admin?: boolean | null
+          read_by_customer?: boolean | null
+          sender_avatar?: string | null
+          sender_id?: string | null
+          sender_name?: string
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          closed_at: string | null
+          created_at: string
+          customer_avatar: string | null
+          customer_email: string
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string | null
+          description: string | null
+          id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          order_id: string | null
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          tags: string[] | null
+          ticket_number: string
+          unread_admin_count: number | null
+          unread_customer_count: number | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_avatar?: string | null
+          customer_email: string
+          customer_id?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          description?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          order_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          tags?: string[] | null
+          ticket_number?: string
+          unread_admin_count?: number | null
+          unread_customer_count?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_avatar?: string | null
+          customer_email?: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          description?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          order_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          tags?: string[] | null
+          ticket_number?: string
+          unread_admin_count?: number | null
+          unread_customer_count?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           id: string
@@ -3608,6 +3775,7 @@ export type Database = {
         Args: { tracking_order_id: string }
         Returns: boolean
       }
+      is_support_staff: { Args: { _user_id: string }; Returns: boolean }
       lookup_coupon: {
         Args: { _code: string }
         Returns: {
