@@ -1194,6 +1194,102 @@ const AdminAddProduct = () => {
               <p className="text-xs text-muted-foreground">
                 Choose the attributes of this product and then input values of each attribute.
               </p>
+
+              {/* ===== Variants Table (auto cartesian product) ===== */}
+              {form.variation_enabled && form.variant_rows.length > 0 && (
+                <div className="rounded-lg border border-border bg-background overflow-hidden">
+                  <div className="px-3 py-2 border-b border-border bg-muted/40 flex items-center justify-between">
+                    <h4 className="text-sm font-semibold">Variants ({form.variant_rows.length})</h4>
+                    <span className="text-[11px] text-muted-foreground">
+                      Each combination has its own SKU, price, stock and image.
+                    </span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted/30">
+                        <tr className="text-left">
+                          <th className="px-3 py-2 font-medium">VARIANT</th>
+                          <th className="px-3 py-2 font-medium">SKU</th>
+                          <th className="px-3 py-2 font-medium">PRICE (৳)</th>
+                          <th className="px-3 py-2 font-medium">STOCK</th>
+                          <th className="px-3 py-2 font-medium">IMAGE</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {form.variant_rows.map((row) => (
+                          <tr key={row.key} className="hover:bg-muted/20">
+                            <td className="px-3 py-2 align-top">
+                              <div className="flex flex-col gap-0.5">
+                                {Object.entries(row.combination).map(([k, v]) => (
+                                  <span key={k} className="text-[11px]">
+                                    <span className="text-muted-foreground">{k}:</span>{' '}
+                                    <span className="font-medium">{v}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input
+                                value={row.sku}
+                                onChange={(e) => updateVariantRow(row.key, { sku: e.target.value })}
+                                className="h-8 text-xs w-32"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input
+                                type="number"
+                                placeholder="Uses base price"
+                                value={row.price}
+                                onChange={(e) => updateVariantRow(row.key, { price: e.target.value })}
+                                className="h-8 text-xs w-28"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <Input
+                                type="number"
+                                value={row.stock}
+                                onChange={(e) => updateVariantRow(row.key, { stock: e.target.value })}
+                                className="h-8 text-xs w-20"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                {row.image ? (
+                                  <img src={row.image} alt="" className="h-8 w-8 rounded object-cover border border-border" />
+                                ) : (
+                                  <div className="h-8 w-8 rounded border border-dashed border-border flex items-center justify-center">
+                                    <ImageIcon className="h-3 w-3 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-[11px]"
+                                  onClick={() => { setVariantImageTargetKey(row.key); setMediaTarget('gallery'); }}
+                                >
+                                  Pick
+                                </Button>
+                                {row.image && (
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-7 w-7 text-destructive"
+                                    onClick={() => updateVariantRow(row.key, { image: '' })}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
