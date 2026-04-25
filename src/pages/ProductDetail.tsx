@@ -225,7 +225,14 @@ const ProductDetail = () => {
 
   const isWishlisted = isInWishlist(product.id);
   const hasDiscount = product.discount && product.discount > 0;
-  const isOutOfStock = product.stock === 0;
+  // Effective stock: when a variant is selected, use that variant's stock;
+  // otherwise fall back to the parent product stock.
+  const hasVariantSelection = !!matchedVariant;
+  const variantPickRequired = !!product.variations && product.variations.length > 0 && !hasVariantSelection;
+  const effectiveStock = hasVariantSelection
+    ? (typeof variantStock === 'number' ? variantStock : (product.stock ?? 0))
+    : (product.stock ?? 0);
+  const isOutOfStock = effectiveStock === 0;
   const savings = product.originalPrice 
     ? (product.originalPrice - product.price) * quantity 
     : 0;
@@ -380,19 +387,36 @@ const ProductDetail = () => {
                 <QuantitySelector 
                   value={quantity}
                   onChange={setQuantity}
-                  max={product.stock || 99}
+                  max={Math.max(1, effectiveStock || 99)}
                 />
                 <span className="text-sm text-muted-foreground">
-                  {product.stock > 0 ? (
+                  {effectiveStock > 0 ? (
                     <span className="text-success">
                       <Check className="h-4 w-4 inline mr-1" />
-                      {product.stock} {t('product.inStock')}
+                      {effectiveStock} {t('product.inStock')}
+                      {hasVariantSelection && (
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          ({Object.values(selectedVariations).filter(Boolean).join(' / ')})
+                        </span>
+                      )}
                     </span>
                   ) : (
-                    <span className="text-destructive">{t('product.outOfStock')}</span>
+                    <span className="text-destructive font-medium">
+                      {t('product.outOfStock')}
+                      {hasVariantSelection && (
+                        <span className="ml-1 text-xs">
+                          ({Object.values(selectedVariations).filter(Boolean).join(' / ')})
+                        </span>
+                      )}
+                    </span>
                   )}
                 </span>
               </div>
+              {variantPickRequired && (
+                <p className="text-xs text-muted-foreground">
+                  Please select a variation to see availability.
+                </p>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -403,6 +427,7 @@ const ProductDetail = () => {
                   size="xl" 
                   className="w-full"
                   onClick={handleBookNow}
+                  disabled={variantPickRequired}
                 >
                   <Package className="h-5 w-5 mr-2" />
                   {t('product.bookNow')}
@@ -414,6 +439,7 @@ const ProductDetail = () => {
                     size="xl" 
                     className="w-full"
                     onClick={handleAddToCart}
+                    disabled={variantPickRequired || isOutOfStock}
                   >
                     <ShoppingCart className="h-5 w-5 mr-2" />
                     {t('product.addToCart')}
@@ -423,6 +449,7 @@ const ProductDetail = () => {
                     size="xl" 
                     className="w-full"
                     onClick={handleBuyNow}
+                    disabled={variantPickRequired || isOutOfStock}
                   >
                     <Zap className="h-5 w-5 mr-2" />
                     {t('product.buyNow')}
