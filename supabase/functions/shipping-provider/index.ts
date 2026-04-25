@@ -690,6 +690,71 @@ async function carrybeeTrack(config: ProviderConfig, trackingNumber: string) {
   }));
 }
 
+// ─── Actual delivered cost fetch (Steadfast / Pathao / Carrybee / RedX) ──────
+// Fetches actual courier-side cost for a delivered consignment. Each provider
+// exposes the data slightly differently — we normalize to a single number.
+async function fetchActualDeliveredCost(
+  providerCode: string,
+  config: ProviderConfig,
+  trackingNumber: string,
+  supabaseAdmin: any,
+): Promise<{ amount: number | null; currency: string; raw: any }> {
+  const trackingId = String(trackingNumber || '').trim();
+  if (!trackingId) throw new Error('Tracking / consignment ID is required');
+
+  if (providerCode === 'steadfast') {
+    const base = trimSlash(config.apiUrl) || 'https://portal.packzy.com/api/v1';
+    const res = await fetch(`${base}/status_by_trackingcode/${trackingId}`, {
+      headers: { 'Api-Key': config.apiKey, 'Secret-Key': config.apiSecret },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`Steadfast: ${data?.message || JSON.stringify(data)}`);
+    // Steadfast charges a per-parcel delivery fee — exposed as `delivery_fee` or `charge`
+    const amt = Number(data?.delivery_fee ?? data?.charge ?? data?.cost ?? data?.amount ?? 0) || null;
+    return { amount: amt, currency: 'BDT', raw: data };
+  }
+
+  if (providerCode === 'pathao') {
+    const token = await pathaoGetToken(supabaseAdmin, config);
+    const base = pathaoBaseUrl(config);
+    const res = await fetch(`${base}/aladdin/api/v1/orders/${trackingId}/info`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`Pathao: ${formatPathaoError(data)}`);
+    const inner = data?.data || data;
+    const amt = Number(inner?.delivery_fee ?? inner?.collected_amount_fee ?? inner?.total_fee ?? 0) || null;
+    return { amount: amt, currency: 'BDT', raw: data };
+  }
+
+  if (providerCode === 'carrybee') {
+    const base = trimSlash(config.apiUrl) || 'https://api.carrybee.com.bd/api/v1';
+    const headers: Record<string, string> = {};
+    if (config.apiKey) headers['Authorization'] = `Bearer ${config.apiKey}`;
+    if (config.clientId) headers['Client-Id'] = config.clientId;
+    const res = await fetch(`${base}/order/track/${trackingId}`, { headers });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`Carrybee: ${data?.message || JSON.stringify(data)}`);
+    const inner = data?.data || data;
+    const amt = Number(inner?.delivery_charge ?? inner?.delivery_fee ?? inner?.charge ?? 0) || null;
+    return { amount: amt, currency: 'BDT', raw: data };
+  }
+
+  if (providerCode === 'redx') {
+    const base = trimSlash(config.apiUrl) || 'https://openapi.redx.com.bd/v1.0.0-beta';
+    const res = await fetch(`${base}/parcel/info/${trackingId}`, {
+      headers: { 'API-ACCESS-TOKEN': `Bearer ${config.apiKey}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`RedX: ${data?.message || JSON.stringify(data)}`);
+    const inner = data?.data || data;
+    const amt = Number(inner?.delivery_fee ?? inner?.charge ?? 0) || null;
+    return { amount: amt, currency: 'BDT', raw: data };
+  }
+
+  throw new Error(`Cost fetch not supported for provider ${providerCode}`);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -750,6 +815,22 @@ Deno.serve(async (req) => {
       case 'steadfast': {
         if (action === 'create_order') result = await steadfastCreateOrder(config, payload);
         else if (action === 'track') result = { events: await steadfastTrack(config, payload.tracking_number) };
+        else if (action === 'fetch_actual_cost') {
+          const cost = await fetchActualDeliveredCost('steadfast', config, payload?.tracking_number, supabaseAdmin);
+          let expenseId: string | null = null;
+          if (payload?.order_id && cost.amount && cost.amount > 0) {
+            const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
+              _order_id: payload.order_id,
+              _provider: 'steadfast',
+              _amount: cost.amount,
+              _zone: payload?.zone || null,
+              _notes: `Steadfast actual cost (${payload?.tracking_number})`,
+            });
+            if (rpcErr) throw new Error(rpcErr.message);
+            expenseId = rpcData as string;
+          }
+          result = { ...cost, expense_id: expenseId };
+        }
         else throw new Error(`Unknown action: ${action}`);
         break;
       }
@@ -780,6 +861,22 @@ Deno.serve(async (req) => {
           const token = await pathaoGetToken(supabaseAdmin, config);
           if (action === 'create_order') result = await pathaoCreateOrder(token, payload, config);
           else if (action === 'track') result = { events: await pathaoTrack(token, payload.tracking_number, config) };
+          else if (action === 'fetch_actual_cost') {
+            const cost = await fetchActualDeliveredCost('pathao', config, payload?.tracking_number, supabaseAdmin);
+            let expenseId: string | null = null;
+            if (payload?.order_id && cost.amount && cost.amount > 0) {
+              const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
+                _order_id: payload.order_id,
+                _provider: 'pathao',
+                _amount: cost.amount,
+                _zone: payload?.zone || null,
+                _notes: `Pathao actual cost (${payload?.tracking_number})`,
+              });
+              if (rpcErr) throw new Error(rpcErr.message);
+              expenseId = rpcData as string;
+            }
+            result = { ...cost, expense_id: expenseId };
+          }
           else throw new Error(`Unknown action: ${action}`);
         }
         break;
@@ -787,12 +884,44 @@ Deno.serve(async (req) => {
       case 'redx': {
         if (action === 'create_order') result = await redxCreateOrder(config, payload);
         else if (action === 'track') result = { events: await redxTrack(config, payload.tracking_number) };
+        else if (action === 'fetch_actual_cost') {
+          const cost = await fetchActualDeliveredCost('redx', config, payload?.tracking_number, supabaseAdmin);
+          let expenseId: string | null = null;
+          if (payload?.order_id && cost.amount && cost.amount > 0) {
+            const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
+              _order_id: payload.order_id,
+              _provider: 'redx',
+              _amount: cost.amount,
+              _zone: payload?.zone || null,
+              _notes: `RedX actual cost (${payload?.tracking_number})`,
+            });
+            if (rpcErr) throw new Error(rpcErr.message);
+            expenseId = rpcData as string;
+          }
+          result = { ...cost, expense_id: expenseId };
+        }
         else throw new Error(`Unknown action: ${action}`);
         break;
       }
       case 'carrybee': {
         if (action === 'create_order') result = await carrybeeCreateOrder(config, payload);
         else if (action === 'track') result = { events: await carrybeeTrack(config, payload.tracking_number) };
+        else if (action === 'fetch_actual_cost') {
+          const cost = await fetchActualDeliveredCost('carrybee', config, payload?.tracking_number, supabaseAdmin);
+          let expenseId: string | null = null;
+          if (payload?.order_id && cost.amount && cost.amount > 0) {
+            const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
+              _order_id: payload.order_id,
+              _provider: 'carrybee',
+              _amount: cost.amount,
+              _zone: payload?.zone || null,
+              _notes: `Carrybee actual cost (${payload?.tracking_number})`,
+            });
+            if (rpcErr) throw new Error(rpcErr.message);
+            expenseId = rpcData as string;
+          }
+          result = { ...cost, expense_id: expenseId };
+        }
         else throw new Error(`Unknown action: ${action}`);
         break;
       }
