@@ -23,6 +23,7 @@ interface CourierExpense {
   amount: number;
   expense_date: string;
   source: string;
+  override_status?: string;
   notes: string | null;
   created_at: string;
 }
@@ -34,6 +35,18 @@ interface CourierSetting {
   default_amount: number;
   is_active: boolean;
   notes: string | null;
+}
+
+interface AuditEntry {
+  id: string;
+  expense_id: string | null;
+  action: string;
+  before_data: any;
+  after_data: any;
+  changed_by: string | null;
+  changed_by_email: string | null;
+  source: string | null;
+  created_at: string;
 }
 
 const ZONES = [
@@ -49,6 +62,19 @@ export default function AdminCourierExpenses() {
   const [loading, setLoading] = useState(true);
   const [expenses, setExpenses] = useState<CourierExpense[]>([]);
   const [settings, setSettings] = useState<CourierSetting[]>([]);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+
+  // Rate simulator widget state
+  const [simZone, setSimZone] = useState('inside_dhaka');
+  const [simProvider, setSimProvider] = useState('default');
+  const [simWeight, setSimWeight] = useState('0.5');
+  const [simAddress, setSimAddress] = useState('');
+
+  // Auto-fetch actual cost dialog state
+  const [fetchOpen, setFetchOpen] = useState(false);
+  const [fetchForm, setFetchForm] = useState({ provider: 'steadfast', tracking_number: '', order_id: '', zone: 'inside_dhaka' });
+  const [fetchingCost, setFetchingCost] = useState(false);
   const [summary, setSummary] = useState({
     total_expense: 0,
     delivery_count: 0,
@@ -94,6 +120,51 @@ export default function AdminCourierExpenses() {
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [dateFrom, dateTo, providerFilter]);
+
+  const loadAudit = async () => {
+    setAuditLoading(true);
+    const { data, error } = await (supabase as any).rpc('admin_list_courier_expense_audit', { _limit: 200, _expense: null });
+    if (!error && data) setAuditEntries(data);
+    setAuditLoading(false);
+  };
+
+  const simulatedRate = (() => {
+    const match = settings.find(
+      s => s.area_zone === simZone && (s.courier_provider === simProvider || s.courier_provider === 'default'),
+    );
+    const base = match ? Number(match.default_amount) : 0;
+    const weight = Math.max(0, parseFloat(simWeight) || 0);
+    // Simple rule: +20 BDT for every kg over 0.5kg
+    const surcharge = weight > 0.5 ? Math.ceil((weight - 0.5) / 0.5) * 20 : 0;
+    return { base, surcharge, total: base + surcharge, source: match?.courier_provider === simProvider ? 'exact' : (match ? 'default-fallback' : 'no-rate') };
+  })();
+
+  const fetchActualCost = async () => {
+    if (!fetchForm.tracking_number) { toast.error('Tracking number required'); return; }
+    setFetchingCost(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('shipping-provider', {
+        body: {
+          action: 'fetch_actual_cost',
+          provider: fetchForm.provider,
+          payload: {
+            tracking_number: fetchForm.tracking_number,
+            order_id: fetchForm.order_id || undefined,
+            zone: fetchForm.zone,
+          },
+        },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Cost fetch failed');
+      toast.success(`Actual cost recorded: ${formatPrice(Number(data?.amount || 0))}`);
+      setFetchOpen(false);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to fetch cost');
+    } finally {
+      setFetchingCost(false);
+    }
+  };
 
   const addExpense = async () => {
     if (!newExpense.amount || parseFloat(newExpense.amount) <= 0) {
@@ -210,6 +281,7 @@ export default function AdminCourierExpenses() {
           <TabsTrigger value="expenses">Expenses</TabsTrigger>
           <TabsTrigger value="daily">Daily Report</TabsTrigger>
           <TabsTrigger value="settings">Default Rates</TabsTrigger>
+          <TabsTrigger value="audit" onClick={() => loadAudit()}>Audit Log</TabsTrigger>
         </TabsList>
 
         {/* Filters + Expense list */}
@@ -271,6 +343,46 @@ export default function AdminCourierExpenses() {
                     <DialogFooter><Button onClick={addExpense}>Save</Button></DialogFooter>
                   </DialogContent>
                 </Dialog>
+                <Dialog open={fetchOpen} onOpenChange={setFetchOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="h-8"><TrendingUp className="h-3.5 w-3.5 mr-1" />API Cost Fetch</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader><DialogTitle>Fetch Actual Delivered Cost</DialogTitle></DialogHeader>
+                    <p className="text-xs text-muted-foreground">Pull the real delivery charge from the courier API and overwrite the recorded expense for the order.</p>
+                    <div className="space-y-3 mt-2">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Provider</Label>
+                          <Select value={fetchForm.provider} onValueChange={v => setFetchForm({ ...fetchForm, provider: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="steadfast">Steadfast</SelectItem>
+                              <SelectItem value="pathao">Pathao</SelectItem>
+                              <SelectItem value="carrybee">Carrybee</SelectItem>
+                              <SelectItem value="redx">RedX</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Zone</Label>
+                          <Select value={fetchForm.zone} onValueChange={v => setFetchForm({ ...fetchForm, zone: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{ZONES.map(z => <SelectItem key={z.value} value={z.value}>{z.label}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div><Label>Tracking / Consignment #</Label><Input value={fetchForm.tracking_number} onChange={e => setFetchForm({ ...fetchForm, tracking_number: e.target.value })} /></div>
+                      <div><Label>Order ID (UUID, optional — to update existing expense)</Label><Input value={fetchForm.order_id} onChange={e => setFetchForm({ ...fetchForm, order_id: e.target.value })} placeholder="orders.id" /></div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={fetchActualCost} disabled={fetchingCost}>
+                        {fetchingCost && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                        Fetch & Apply
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
@@ -286,6 +398,7 @@ export default function AdminCourierExpenses() {
                       <TableHead>Zone</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Source</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Notes</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
@@ -299,12 +412,22 @@ export default function AdminCourierExpenses() {
                         <TableCell className="text-xs"><Badge variant="secondary">{e.area_zone}</Badge></TableCell>
                         <TableCell className="text-xs font-semibold">{formatPrice(Number(e.amount))}</TableCell>
                         <TableCell><Badge variant={e.source === 'manual' ? 'outline' : 'default'} className="text-[10px]">{e.source}</Badge></TableCell>
+                        <TableCell>
+                          {e.override_status && (
+                            <Badge
+                              variant={e.override_status === 'manual_override' ? 'destructive' : (e.override_status === 'api_overwrite' || e.override_status === 'auto_api') ? 'default' : 'secondary'}
+                              className="text-[10px]"
+                            >
+                              {e.override_status.replace('_', ' ')}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{e.notes || '—'}</TableCell>
                         <TableCell><Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteExpense(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
                       </TableRow>
                     ))}
                     {expenses.length === 0 && (
-                      <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground text-sm">No courier expenses in selected range</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground text-sm">No courier expenses in selected range</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -338,6 +461,62 @@ export default function AdminCourierExpenses() {
 
         {/* Default Rates Settings */}
         <TabsContent value="settings" className="mt-4">
+          {/* Rate Simulator Widget */}
+          <Card className="mb-4 border-accent/30">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-accent" /> Rate Simulator
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Estimate the courier expense before saving rates. Combines the saved default rate for the chosen provider × zone with a weight surcharge (+৳20 per extra 0.5 kg).</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs">Provider</Label>
+                  <Select value={simProvider} onValueChange={setSimProvider}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{PROVIDERS.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Zone</Label>
+                  <Select value={simZone} onValueChange={setSimZone}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{ZONES.map(z => <SelectItem key={z.value} value={z.value}>{z.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Weight (kg)</Label>
+                  <Input type="number" step="0.1" value={simWeight} onChange={e => setSimWeight(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Address (optional)</Label>
+                  <Input value={simAddress} onChange={e => setSimAddress(e.target.value)} placeholder="e.g. Mirpur, Dhaka" />
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-[11px] text-muted-foreground">Base Rate</p>
+                  <p className="text-lg font-bold">{formatPrice(simulatedRate.base)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50">
+                  <p className="text-[11px] text-muted-foreground">Weight Surcharge</p>
+                  <p className="text-lg font-bold">{formatPrice(simulatedRate.surcharge)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-accent/10 border border-accent/30">
+                  <p className="text-[11px] text-muted-foreground">Estimated Total</p>
+                  <p className="text-lg font-bold text-accent">{formatPrice(simulatedRate.total)}</p>
+                </div>
+              </div>
+              {simulatedRate.source === 'no-rate' && (
+                <p className="text-xs text-destructive mt-2">No saved rate matches this provider/zone. Add one below.</p>
+              )}
+              {simulatedRate.source === 'default-fallback' && (
+                <p className="text-xs text-amber-600 mt-2">Using the generic “default” provider rate. Add a provider-specific rate for more accuracy.</p>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-sm">Default Rates per Provider × Zone</CardTitle>
@@ -385,6 +564,62 @@ export default function AdminCourierExpenses() {
                       <TableCell><Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteSetting(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
                     </TableRow>
                   ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Audit Log */}
+        <TabsContent value="audit" className="mt-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-sm">Courier Expense Audit Trail</CardTitle>
+              <Button size="sm" variant="outline" onClick={loadAudit} disabled={auditLoading}>
+                {auditLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Refresh'}
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Before</TableHead>
+                    <TableHead>After</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {auditEntries.map(a => {
+                    const beforeAmt = a.before_data?.amount;
+                    const afterAmt = a.after_data?.amount;
+                    return (
+                      <TableRow key={a.id}>
+                        <TableCell className="text-xs">{new Date(a.created_at).toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={a.action === 'DELETE' ? 'destructive' : a.action === 'INSERT' ? 'default' : 'secondary'} className="text-[10px]">
+                            {a.action}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">{a.source || '—'}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{a.changed_by_email || (a.changed_by ? a.changed_by.slice(0, 8) : 'system')}</TableCell>
+                        <TableCell className="text-xs">
+                          {beforeAmt !== undefined && beforeAmt !== null ? formatPrice(Number(beforeAmt)) : '—'}
+                        </TableCell>
+                        <TableCell className="text-xs font-semibold">
+                          {afterAmt !== undefined && afterAmt !== null ? formatPrice(Number(afterAmt)) : '—'}
+                          {a.after_data?.override_status && (
+                            <Badge variant="outline" className="ml-2 text-[10px]">{a.after_data.override_status.replace('_',' ')}</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {auditEntries.length === 0 && (
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">{auditLoading ? 'Loading…' : 'No audit entries yet'}</TableCell></TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
