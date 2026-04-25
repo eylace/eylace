@@ -238,6 +238,17 @@ const AdminAddProduct = () => {
   const handleMediaSelect = (urls: string[]) => {
     if (!mediaTarget || !urls.length) return;
 
+    // Variant-row image picker takes precedence
+    if (variantImageTargetKey) {
+      const key = variantImageTargetKey;
+      setForm((cf) => ({
+        ...cf,
+        variant_rows: cf.variant_rows.map(r => r.key === key ? { ...r, image: urls[0] } : r),
+      }));
+      setVariantImageTargetKey(null);
+      return;
+    }
+
     if (mediaTarget === 'gallery') {
       setForm((currentForm) => ({ ...currentForm, images: mergeUnique(currentForm.images, urls) }));
       return;
@@ -565,6 +576,7 @@ const AdminAddProduct = () => {
         selected_color_ids: form.selected_color_ids,
         selected_attribute_ids: form.selected_attribute_ids,
         attribute_values: form.attribute_values,
+        variant_rows: form.variation_enabled ? form.variant_rows : [],
       },
     };
 
