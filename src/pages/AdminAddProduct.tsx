@@ -412,6 +412,75 @@ const AdminAddProduct = () => {
     return out;
   };
 
+  // === Variant Rows (Cartesian Product) =====================================
+  // Build all combinations of selected color × selected attribute values.
+  // Each row holds its own SKU, price, stock and image — exactly like the
+  // screenshot reference (Variants table with Color/Size combos).
+  const variantAxes = (() => {
+    const axes: { name: string; values: string[] }[] = [];
+    if (form.selected_color_ids.length > 0) {
+      axes.push({
+        name: 'Color',
+        values: form.selected_color_ids
+          .map(id => colors.find(c => c.id === id)?.name)
+          .filter((n): n is string => !!n),
+      });
+    }
+    for (const attrId of form.selected_attribute_ids) {
+      const attr = attributes.find(a => a.id === attrId);
+      const vals = form.attribute_values[attrId] || [];
+      if (attr && vals.length > 0) axes.push({ name: attr.name, values: vals });
+    }
+    return axes;
+  })();
+
+  const generatedCombinations: { key: string; combination: Record<string, string> }[] = (() => {
+    if (variantAxes.length === 0) return [];
+    const result: Record<string, string>[] = [{}];
+    for (const axis of variantAxes) {
+      const next: Record<string, string>[] = [];
+      for (const partial of result) {
+        for (const v of axis.values) {
+          next.push({ ...partial, [axis.name]: v });
+        }
+      }
+      result.splice(0, result.length, ...next);
+    }
+    return result.map(combo => ({
+      key: Object.entries(combo).map(([k, v]) => `${k}:${v}`).join('|'),
+      combination: combo,
+    }));
+  })();
+
+  // Sync variant_rows whenever combinations change (preserve user-entered values)
+  useEffect(() => {
+    if (!form.variation_enabled) return;
+    setForm(f => {
+      const existingByKey = new Map(f.variant_rows.map(r => [r.key, r]));
+      const baseSku = f.sku || (f.name || 'PRD').toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 6);
+      const next: VariantRow[] = generatedCombinations.map(({ key, combination }) => {
+        const prev = existingByKey.get(key);
+        const autoSku = `${baseSku}-${Object.values(combination).map(v => v.toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 4)).join('-')}`;
+        return prev ?? { key, combination, sku: autoSku, price: '', stock: '0', image: '' };
+      });
+      // Avoid loop: only update when actually different
+      if (next.length === f.variant_rows.length && next.every((r, i) => r.key === f.variant_rows[i].key)) {
+        return f;
+      }
+      return { ...f, variant_rows: next };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(generatedCombinations.map(g => g.key)), form.variation_enabled, form.sku, form.name]);
+
+  const updateVariantRow = (key: string, patch: Partial<VariantRow>) => {
+    setForm(f => ({
+      ...f,
+      variant_rows: f.variant_rows.map(r => (r.key === key ? { ...r, ...patch } : r)),
+    }));
+  };
+
+  const [variantImageTargetKey, setVariantImageTargetKey] = useState<string | null>(null);
+
   // === SKU Generator ========================================================
   // Standard format: {NAMEPREFIX}-{CATPREFIX}-{TIMESTAMP}-{RAND}
   // Example: WIRE-AUDI-K9X4-7B3
