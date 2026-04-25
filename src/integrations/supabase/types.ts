@@ -914,6 +914,7 @@ export type Database = {
           notes: string | null
           order_id: string | null
           order_number: string | null
+          override_status: string
           source: string
           updated_at: string
         }
@@ -928,6 +929,7 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           order_number?: string | null
+          override_status?: string
           source?: string
           updated_at?: string
         }
@@ -942,6 +944,7 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           order_number?: string | null
+          override_status?: string
           source?: string
           updated_at?: string
         }
@@ -954,6 +957,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      courier_expenses_audit: {
+        Row: {
+          action: string
+          after_data: Json | null
+          before_data: Json | null
+          changed_by: string | null
+          changed_by_email: string | null
+          created_at: string
+          expense_id: string | null
+          id: string
+          reason: string | null
+          source: string | null
+        }
+        Insert: {
+          action: string
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          expense_id?: string | null
+          id?: string
+          reason?: string | null
+          source?: string | null
+        }
+        Update: {
+          action?: string
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          expense_id?: string | null
+          id?: string
+          reason?: string | null
+          source?: string | null
+        }
+        Relationships: []
       }
       couriers: {
         Row: {
@@ -3447,6 +3489,27 @@ export type Database = {
         Args: { _gateway_id: string }
         Returns: Json
       }
+      admin_list_courier_expense_audit: {
+        Args: { _expense?: string; _limit?: number }
+        Returns: {
+          action: string
+          after_data: Json | null
+          before_data: Json | null
+          changed_by: string | null
+          changed_by_email: string | null
+          created_at: string
+          expense_id: string | null
+          id: string
+          reason: string | null
+          source: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "courier_expenses_audit"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_list_courier_tokens: {
         Args: never
         Returns: {
@@ -3475,6 +3538,16 @@ export type Database = {
       admin_save_payment_gateway_secrets: {
         Args: { _credentials: Json; _gateway_id: string }
         Returns: undefined
+      }
+      apply_courier_api_cost: {
+        Args: {
+          _amount: number
+          _notes?: string
+          _order_id: string
+          _provider: string
+          _zone?: string
+        }
+        Returns: string
       }
       can_access_accounting: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_otp_codes: { Args: never; Returns: number }
