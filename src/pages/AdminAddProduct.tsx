@@ -75,6 +75,16 @@ interface ProductFormState {
   gst_rate: string;
   frequently_bought_ids: string[];
   note: string;
+  variant_rows: VariantRow[];
+}
+
+export interface VariantRow {
+  key: string;            // stable key like "Color:Black|Size:XS"
+  combination: Record<string, string>; // { Color: "Black", Size: "XS" }
+  sku: string;
+  price: string;          // empty string => uses base price
+  stock: string;
+  image: string;
 }
 
 const defaultForm: ProductFormState = {
@@ -90,6 +100,7 @@ const defaultForm: ProductFormState = {
   shipping_type: 'free', shipping_cost: '', is_product_quantity_multiply: false, estimated_shipping_days: '',
   is_refundable: true, is_featured: false, is_todays_deal: false, flash_deal_title: '',
   hsn_code: '', gst_rate: '', frequently_bought_ids: [], note: '',
+  variant_rows: [],
 };
 
 type MediaTarget = 'gallery' | 'thumbnail' | 'videos' | 'video_thumbnails' | 'pdf' | 'meta_image';
