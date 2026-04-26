@@ -178,8 +178,11 @@ const defaults: WebsiteSetup = {
   footerGooglePlayUrl: '#',
   footerColumns: [],
   footerSocialLinks: [],
-  primaryColor: '#6366f1',
-  accentColor: '#f59e0b',
+  // Match the navy + orange palette defined in src/index.css so that the
+  // first paint (before DB-fetched setup arrives) uses the same brand colors
+  // instead of flashing indigo/purple on reload.
+  primaryColor: '#1d3557',
+  accentColor: '#ff4d00',
   borderRadius: '8',
   darkModeDefault: false,
   customCss: '',
