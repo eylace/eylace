@@ -200,8 +200,29 @@ const defaults: WebsiteSetup = {
 let cachedSetup: WebsiteSetup | null = null;
 let listeners: Array<(s: WebsiteSetup) => void> = [];
 
+const LS_KEY = 'website_setup_v1_cache';
+
+// Hydrate from localStorage synchronously so reload uses last-known theme
+// immediately instead of flashing the indigo defaults.
+try {
+  if (typeof window !== 'undefined') {
+    const raw = window.localStorage.getItem(LS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        cachedSetup = { ...defaults, ...parsed };
+      }
+    }
+  }
+} catch {}
+
 const notifyListeners = (s: WebsiteSetup) => {
   cachedSetup = s;
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY, JSON.stringify(s));
+    }
+  } catch {}
   listeners.forEach(fn => fn(s));
 };
 
