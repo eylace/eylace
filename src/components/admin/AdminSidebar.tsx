@@ -59,6 +59,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.addProduct', url: '/admin/products/add', icon: Package },
     { titleKey: 'admin.allProducts', url: '/admin/products', icon: Box },
     { titleKey: 'admin.inHouseProducts', url: '/admin/products/in-house', icon: Home },
+    { titleKey: 'admin.customers', url: '/admin/customers', icon: Users },
     { titleKey: 'admin.addDigitalProduct', url: '/admin/products/digital/add', icon: Upload },
     { titleKey: 'admin.sellerProducts', url: '/admin/products/seller', icon: Store },
     { titleKey: 'admin.bulkImport', url: '/admin/products/bulk-import', icon: Upload },
