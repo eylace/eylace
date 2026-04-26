@@ -338,7 +338,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-y-auto">
+      <SidebarContent className="overflow-y-auto gap-0 py-1">
         {canAccess('main') && renderGroup('admin.group.main', mainItems)}
         {renderCollapsible('orders', 'Sales', ShoppingCart, orderItems, '/admin/orders')}
         {renderCollapsible('ai', 'admin.ai.section', Brain, aiItems)}
