@@ -115,7 +115,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
   ];
 
   const customerItems: NavItem[] = [
-    { titleKey: 'admin.customers' as TranslationKey as string, url: '/admin/customers', icon: Users },
+    { titleKey: 'admin.customers', url: '/admin/customers', icon: Users },
   ];
 
   const operationsItems = [
