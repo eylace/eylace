@@ -358,6 +358,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+        {renderCollapsible('customers', 'Customers', Users, customerItems)}
         {renderCollapsible('sellers', 'admin.sellers.section', Store, sellerItems, '/admin/sellers')}
         {renderCollapsible('stockManagement', 'Stock Management', Boxes, stockItems)}
         {renderCollapsible('preorder', 'admin.preorder', CalendarClock, preorderItems, '/admin/preorder')}
