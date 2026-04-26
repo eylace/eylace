@@ -59,13 +59,13 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.addProduct', url: '/admin/products/add', icon: Package },
     { titleKey: 'admin.allProducts', url: '/admin/products', icon: Box },
     { titleKey: 'admin.inHouseProducts', url: '/admin/products/in-house', icon: Home },
-    { titleKey: 'admin.customers', url: '/admin/customers', icon: Users },
     { titleKey: 'admin.addDigitalProduct', url: '/admin/products/digital/add', icon: Upload },
     { titleKey: 'admin.sellerProducts', url: '/admin/products/seller', icon: Store },
     { titleKey: 'admin.bulkImport', url: '/admin/products/bulk-import', icon: Upload },
     { titleKey: 'admin.bulkExport', url: '/admin/products/bulk-export', icon: Download },
     { titleKey: 'admin.categories', url: '/admin/categories', icon: Layers },
     { titleKey: 'admin.categoryDiscount', url: '/admin/products/category-discount', icon: Percent },
+    { titleKey: 'admin.coupons', url: '/admin/coupons', icon: Tag },
     { titleKey: 'admin.brands', url: '/admin/products/brands', icon: Sparkles },
     { titleKey: 'admin.customLabels', url: '/admin/products/labels', icon: Type },
     { titleKey: 'admin.attributes', url: '/admin/products/attributes', icon: Tag },
@@ -114,9 +114,8 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'All Stock Products', url: '/admin/stock', icon: Boxes },
   ];
 
-  const managementItems = [
-    { titleKey: 'admin.customers' as TranslationKey, url: '/admin/customers', icon: Users },
-    { titleKey: 'admin.coupons' as TranslationKey, url: '/admin/coupons', icon: Tag },
+  const customerItems: NavItem[] = [
+    { titleKey: 'admin.customers', url: '/admin/customers', icon: Users },
   ];
 
   const operationsItems = [
@@ -359,9 +358,9 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+        {renderCollapsible('customers', 'Customers', Users, customerItems)}
         {renderCollapsible('sellers', 'admin.sellers.section', Store, sellerItems, '/admin/sellers')}
         {renderCollapsible('stockManagement', 'Stock Management', Boxes, stockItems)}
-        {canAccess('management') && renderGroup('admin.group.management', managementItems)}
         {renderCollapsible('preorder', 'admin.preorder', CalendarClock, preorderItems, '/admin/preorder')}
         {renderCollapsible('otp', 'admin.otp.section', Smartphone, otpItems)}
         {canAccess('operations') && renderGroup('admin.group.operations', operationsItems)}
