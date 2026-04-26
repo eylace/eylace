@@ -261,17 +261,17 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
   const isProductSectionActive = productItems.some(i => isActive(i.url));
 
   const renderGroup = (labelKey: TranslationKey, items: typeof mainItems) => (
-    <SidebarGroup>
-      <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold">
+    <SidebarGroup className="py-1">
+      <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold h-6 px-2 mb-0.5">
         {t(labelKey)}
       </SidebarGroupLabel>
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className="gap-0.5">
           {items.map((item) => {
             const title = t(item.titleKey as TranslationKey);
             return (
               <SidebarMenuItem key={item.titleKey}>
-                <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5">
                   <NavLink to={item.url} end={item.url === '/admin'} className="hover:bg-sidebar-accent/50" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
                     <item.icon className="h-4 w-4 shrink-0" />
                     <span>{title}</span>
@@ -289,10 +289,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     if (!canAccess(sectionKey)) return null;
     const Icon = icon;
     return (
-      <SidebarGroup>
+      <SidebarGroup className="py-1">
         <Collapsible open={openSections.has(sectionKey)} onOpenChange={() => toggleSection(sectionKey)}>
           <CollapsibleTrigger className="w-full">
-            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70">
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70 h-6 px-2 mb-0.5">
               <span className="flex items-center gap-1.5">
                 <Icon className="h-3.5 w-3.5" />
                 {t(labelKey as TranslationKey)}
@@ -302,12 +302,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {items.map((item) => {
                   const title = t(item.titleKey as TranslationKey);
                   return (
                     <SidebarMenuItem key={item.titleKey}>
-                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5">
                         <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="hover:bg-sidebar-accent/50 text-xs pl-2" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
                           <item.icon className="h-3.5 w-3.5 shrink-0" />
                           <span>{title}</span>
@@ -344,11 +344,11 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('ai', 'admin.ai.section', Brain, aiItems)}
         {renderCollapsible('products', 'admin.products', Package, productItems, '/admin/products')}
         {canAccess('products') && (
-          <SidebarGroup>
+          <SidebarGroup className="py-1">
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media">
+                  <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media" className="h-8 py-1.5">
                     <NavLink to={uploadMediaItem.url} className="hover:bg-sidebar-accent/50" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
                       <uploadMediaItem.icon className="h-4 w-4 shrink-0" />
                       <span>Upload Media</span>
