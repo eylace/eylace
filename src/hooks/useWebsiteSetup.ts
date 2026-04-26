@@ -178,8 +178,11 @@ const defaults: WebsiteSetup = {
   footerGooglePlayUrl: '#',
   footerColumns: [],
   footerSocialLinks: [],
-  primaryColor: '#6366f1',
-  accentColor: '#f59e0b',
+  // Match the navy + orange palette defined in src/index.css so that the
+  // first paint (before DB-fetched setup arrives) uses the same brand colors
+  // instead of flashing indigo/purple on reload.
+  primaryColor: '#1d3557',
+  accentColor: '#ff4d00',
   borderRadius: '8',
   darkModeDefault: false,
   customCss: '',
@@ -200,8 +203,29 @@ const defaults: WebsiteSetup = {
 let cachedSetup: WebsiteSetup | null = null;
 let listeners: Array<(s: WebsiteSetup) => void> = [];
 
+const LS_KEY = 'website_setup_v1_cache';
+
+// Hydrate from localStorage synchronously so reload uses last-known theme
+// immediately instead of flashing the indigo defaults.
+try {
+  if (typeof window !== 'undefined') {
+    const raw = window.localStorage.getItem(LS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        cachedSetup = { ...defaults, ...parsed };
+      }
+    }
+  }
+} catch {}
+
 const notifyListeners = (s: WebsiteSetup) => {
   cachedSetup = s;
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY, JSON.stringify(s));
+    }
+  } catch {}
   listeners.forEach(fn => fn(s));
 };
 
