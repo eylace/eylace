@@ -360,7 +360,6 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         )}
         {renderCollapsible('sellers', 'admin.sellers.section', Store, sellerItems, '/admin/sellers')}
         {renderCollapsible('stockManagement', 'Stock Management', Boxes, stockItems)}
-        {renderCollapsible('customers', 'Customers', Users, customerItems)}
         {renderCollapsible('preorder', 'admin.preorder', CalendarClock, preorderItems, '/admin/preorder')}
         {renderCollapsible('otp', 'admin.otp.section', Smartphone, otpItems)}
         {canAccess('operations') && renderGroup('admin.group.operations', operationsItems)}
