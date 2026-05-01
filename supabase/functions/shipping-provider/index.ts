@@ -780,9 +780,14 @@ Deno.serve(async (req) => {
     if (userError || !user) return respond(false, { error: 'Unauthorized' }, 'verify_user');
 
     stage = 'check_role';
-    const { data: roleData } = await supabaseAdmin
+    const allowedRoles = [
+      'admin', 'super_admin', 'order_manager', 'support_manager', 'moderator',
+      'vendor_admin', 'vendor_order_manager', 'vendor_staff', 'warehouse_manager'
+    ];
+    const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles').select('role').eq('user_id', user.id)
-      .in('role', ['admin', 'super_admin', 'seller', 'order_manager', 'support_manager', 'moderator']).limit(1);
+      .in('role', allowedRoles).limit(1);
+    if (roleError) return respond(false, { error: `Role check failed: ${roleError.message}` }, 'check_role');
     if (!roleData || roleData.length === 0) return respond(false, { error: 'Forbidden: admin or seller role required' }, 'check_role');
 
     stage = 'parse_body';
