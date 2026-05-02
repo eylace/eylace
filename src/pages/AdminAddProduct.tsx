@@ -723,7 +723,11 @@ const AdminAddProduct = () => {
 
               <div>
                 <Label>Description</Label>
-                <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Product description..." rows={5} />
+                <RichTextEditor
+                  value={form.description}
+                  onChange={v => setForm(f => ({ ...f, description: v }))}
+                  placeholder="Product description..."
+                />
               </div>
 
               {/* Variations */}
