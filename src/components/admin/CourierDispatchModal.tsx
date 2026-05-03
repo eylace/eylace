@@ -278,6 +278,38 @@ export const CourierDispatchModal = ({
             </Button>
             <Button variant="outline" onClick={onClose} disabled={sending}>Cancel</Button>
           </div>
+
+          {/* Dispatch History */}
+          <div className="pt-3 border-t">
+            <div className="flex items-center gap-2 mb-2">
+              <History className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Dispatch History</span>
+              {logsLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </div>
+            {logs.length === 0 && !logsLoading ? (
+              <p className="text-xs text-muted-foreground">No previous dispatch attempts.</p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {logs.map((l) => (
+                  <div key={l.id} className="text-xs p-2 rounded border bg-muted/20 flex items-start gap-2">
+                    {l.success
+                      ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                      : <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium uppercase">{l.provider}</span>
+                        <span className="text-muted-foreground">{new Date(l.created_at).toLocaleString()}</span>
+                        {l.retry_count > 0 && <Badge variant="outline" className="h-4 text-[10px]">retry x{l.retry_count}</Badge>}
+                        {l.duration_ms != null && <span className="text-muted-foreground">{l.duration_ms}ms</span>}
+                      </div>
+                      {l.tracking_number && <div className="font-mono text-[11px] mt-0.5">📦 {l.tracking_number}</div>}
+                      {l.error_message && <div className="text-destructive mt-0.5 break-words">{l.error_message}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
