@@ -869,6 +869,63 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_dispatch_log: {
+        Row: {
+          action: string
+          created_at: string
+          created_by: string | null
+          duration_ms: number | null
+          error_message: string | null
+          http_status: number | null
+          id: string
+          idempotency_key: string
+          order_id: string
+          order_number: string | null
+          provider: string
+          request_payload: Json | null
+          response_payload: Json | null
+          retry_count: number
+          success: boolean
+          tracking_number: string | null
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          idempotency_key: string
+          order_id: string
+          order_number?: string | null
+          provider: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_count?: number
+          success?: boolean
+          tracking_number?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          idempotency_key?: string
+          order_id?: string
+          order_number?: string | null
+          provider?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_count?: number
+          success?: boolean
+          tracking_number?: string | null
+        }
+        Relationships: []
+      }
       courier_expense_settings: {
         Row: {
           area_zone: string
@@ -994,6 +1051,39 @@ export type Database = {
           id?: string
           reason?: string | null
           source?: string | null
+        }
+        Relationships: []
+      }
+      courier_status_mapping: {
+        Row: {
+          courier_status: string
+          created_at: string
+          id: string
+          internal_status: string
+          is_terminal: boolean
+          provider: string
+          timeline_description: string | null
+          updated_at: string
+        }
+        Insert: {
+          courier_status: string
+          created_at?: string
+          id?: string
+          internal_status: string
+          is_terminal?: boolean
+          provider: string
+          timeline_description?: string | null
+          updated_at?: string
+        }
+        Update: {
+          courier_status?: string
+          created_at?: string
+          id?: string
+          internal_status?: string
+          is_terminal?: boolean
+          provider?: string
+          timeline_description?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3851,6 +3941,15 @@ export type Database = {
           status: string
           updated_at: string
         }[]
+      }
+      mark_courier_dispatch_succeeded: {
+        Args: {
+          _description?: string
+          _order_id: string
+          _provider: string
+          _tracking_number: string
+        }
+        Returns: undefined
       }
       record_coupon_usage: {
         Args: {

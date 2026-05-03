@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Loader2, Send, Truck, Package } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Loader2, Send, Truck, Package, History, CheckCircle2, XCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,6 +75,22 @@ export const CourierDispatchModal = ({
   const [declaredValue, setDeclaredValue] = useState('0');
   const [instruction, setInstruction] = useState('');
   const [sending, setSending] = useState(false);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [lastResponse, setLastResponse] = useState<any>(null);
+
+  const loadLogs = useCallback(async () => {
+    if (!order?.id) return;
+    setLogsLoading(true);
+    const { data } = await supabase
+      .from('courier_dispatch_log')
+      .select('id, provider, success, tracking_number, error_message, retry_count, duration_ms, created_at, response_payload')
+      .eq('order_id', order.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    setLogs(data || []);
+    setLogsLoading(false);
+  }, [order?.id]);
 
   // Reset / prefill when modal opens
   useEffect(() => {
@@ -89,7 +105,9 @@ export const CourierDispatchModal = ({
     setWeight('0.5');
     setDeclaredValue(String(prefill.total));
     setInstruction(`Order #${order?.order_number}`);
-  }, [open, prefill, order?.order_number]);
+    setLastResponse(null);
+    void loadLogs();
+  }, [open, prefill, order?.order_number, loadLogs]);
 
   const handleSend = async () => {
     if (!order) return;
@@ -104,6 +122,7 @@ export const CourierDispatchModal = ({
           action: 'create_order',
           provider: providerCode,
           payload: {
+            order_uuid: order.id,
             order_id: order.order_number,
             order_number: order.order_number,
             recipient_name: name,
@@ -130,6 +149,7 @@ export const CourierDispatchModal = ({
         },
       });
       if (error) throw new Error(error.message || 'Edge function call failed');
+      setLastResponse(data);
       if (data && data.ok === false) {
         throw new Error(`${data.error || 'Unknown error'}${data.stage ? ` (stage: ${data.stage})` : ''}`);
       }
@@ -144,14 +164,18 @@ export const CourierDispatchModal = ({
       await onDispatched?.(order.id, providerCode, tracking);
 
       const sandboxNote = data?.sandbox ? data?.note : '';
+      const dupNote = data?.duplicate ? ' (duplicate — already dispatched)' : '';
       toast.success(
-        `Sent to ${providerName}${tracking ? ` — Tracking: ${tracking}` : ''}`,
+        `Sent to ${providerName}${dupNote}${tracking ? ` — Tracking: ${tracking}` : ''}`,
         { duration: sandboxNote ? 12000 : 4000, description: sandboxNote || undefined }
       );
-      onClose();
+      await loadLogs();
+      // keep modal open briefly to show log; auto-close after 1.5s if user doesn't interact
+      setTimeout(() => onClose(), 1500);
     } catch (e: any) {
       console.error('[CourierDispatch]', e);
       toast.error(`Failed to send to ${providerName}: ${e?.message || 'Unknown error'}`, { duration: 10000 });
+      await loadLogs();
     } finally {
       setSending(false);
     }
@@ -253,6 +277,38 @@ export const CourierDispatchModal = ({
               {sending ? 'Sending...' : `Send to ${providerName}`}
             </Button>
             <Button variant="outline" onClick={onClose} disabled={sending}>Cancel</Button>
+          </div>
+
+          {/* Dispatch History */}
+          <div className="pt-3 border-t">
+            <div className="flex items-center gap-2 mb-2">
+              <History className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Dispatch History</span>
+              {logsLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </div>
+            {logs.length === 0 && !logsLoading ? (
+              <p className="text-xs text-muted-foreground">No previous dispatch attempts.</p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {logs.map((l) => (
+                  <div key={l.id} className="text-xs p-2 rounded border bg-muted/20 flex items-start gap-2">
+                    {l.success
+                      ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                      : <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium uppercase">{l.provider}</span>
+                        <span className="text-muted-foreground">{new Date(l.created_at).toLocaleString()}</span>
+                        {l.retry_count > 0 && <Badge variant="outline" className="h-4 text-[10px]">retry x{l.retry_count}</Badge>}
+                        {l.duration_ms != null && <span className="text-muted-foreground">{l.duration_ms}ms</span>}
+                      </div>
+                      {l.tracking_number && <div className="font-mono text-[11px] mt-0.5">📦 {l.tracking_number}</div>}
+                      {l.error_message && <div className="text-destructive mt-0.5 break-words">{l.error_message}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

@@ -61,6 +61,34 @@ function respond(ok: boolean, payload: Record<string, any>, stage?: string) {
 
 const trimSlash = (u: string) => (u || '').replace(/\/+$/, '');
 
+// ─── Retry helper with exponential backoff ──────────────────────────
+const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+async function withRetry<T>(label: string, fn: (attempt: number) => Promise<T>, maxAttempts = 3): Promise<{ result: T; attempts: number }> {
+  let lastErr: any;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await fn(attempt);
+      return { result, attempts: attempt };
+    } catch (err: any) {
+      lastErr = err;
+      const msg = String(err?.message || err);
+      const statusMatch = msg.match(/\((\d{3})\)/);
+      const status = statusMatch ? Number(statusMatch[1]) : 0;
+      const retryable = status === 0 || RETRYABLE_STATUS.has(status) || /network|timeout|fetch failed|ECONNRESET/i.test(msg);
+      if (!retryable || attempt === maxAttempts) throw err;
+      const backoff = Math.min(2000 * 2 ** (attempt - 1), 8000);
+      console.warn(`[${label}] attempt ${attempt} failed (${msg}); retrying in ${backoff}ms`);
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+  }
+  throw lastErr;
+}
+
+function buildIdempotencyKey(orderId: string, providerCode: string, explicit?: string): string {
+  if (explicit && typeof explicit === 'string' && explicit.trim()) return explicit.trim().slice(0, 128);
+  return `${providerCode}:${orderId}`;
+}
+
 // ─── Shiprocket ─────────────────────────────────────────────
 async function shiprocketAuth(email: string, password: string): Promise<string> {
   const res = await fetch('https://apiv2.shiprocket.in/v1/external/auth/login', {
@@ -808,17 +836,59 @@ Deno.serve(async (req) => {
     stage = `dispatch_${providerCode}_${action}`;
     let result: any;
 
+    // ─── Duplicate-guard + logging for create_order ─────────────
+    const isCreateOrder = action === 'create_order';
+    const orderUuid: string | undefined = payload?.order_uuid || payload?.order_id_uuid;
+    const idempotencyKey = isCreateOrder
+      ? buildIdempotencyKey(orderUuid || payload?.order_id || payload?.order_number || crypto.randomUUID(), providerCode, payload?.idempotency_key)
+      : '';
+
+    if (isCreateOrder && orderUuid) {
+      const { data: existing } = await supabaseAdmin
+        .from('courier_dispatch_log')
+        .select('id, tracking_number, response_payload, created_at')
+        .eq('order_id', orderUuid)
+        .eq('provider', providerCode)
+        .eq('idempotency_key', idempotencyKey)
+        .eq('success', true)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (existing && existing.length > 0) {
+        const prev = existing[0];
+        return respond(true, {
+          duplicate: true,
+          message: 'Order already dispatched to this courier — returning existing tracking',
+          tracking_code: prev.tracking_number,
+          consignment_id: prev.tracking_number,
+          data: prev.response_payload,
+          original_dispatch_at: prev.created_at,
+        });
+      }
+    }
+
+    const dispatchStartedAt = Date.now();
+    let dispatchAttempts = 0;
+    let dispatchError: any = null;
+
+    const runWithRetry = async <T>(fn: (attempt: number) => Promise<T>): Promise<T> => {
+      const r = await withRetry(`${providerCode}:${action}`, fn);
+      dispatchAttempts = r.attempts;
+      return r.result;
+    };
+
+    try {
+
     switch (providerCode) {
       case 'shiprocket': {
         const token = await shiprocketAuth(config.apiKey, config.apiSecret);
-        if (action === 'create_order') result = await shiprocketCreateOrder(token, payload, config);
+        if (action === 'create_order') result = await runWithRetry(() => shiprocketCreateOrder(token, payload, config));
         else if (action === 'track') result = { events: await shiprocketTrack(token, payload.tracking_number) };
         else if (action === 'check_rate') result = { rates: await shiprocketCheckRate(token, payload) };
         else throw new Error(`Unknown action: ${action}`);
         break;
       }
       case 'steadfast': {
-        if (action === 'create_order') result = await steadfastCreateOrder(config, payload);
+        if (action === 'create_order') result = await runWithRetry(() => steadfastCreateOrder(config, payload));
         else if (action === 'track') result = { events: await steadfastTrack(config, payload.tracking_number) };
         else if (action === 'fetch_actual_cost') {
           const cost = await fetchActualDeliveredCost('steadfast', config, payload?.tracking_number, supabaseAdmin);
@@ -864,7 +934,7 @@ Deno.serve(async (req) => {
           };
         } else {
           const token = await pathaoGetToken(supabaseAdmin, config);
-          if (action === 'create_order') result = await pathaoCreateOrder(token, payload, config);
+          if (action === 'create_order') result = await runWithRetry(() => pathaoCreateOrder(token, payload, config));
           else if (action === 'track') result = { events: await pathaoTrack(token, payload.tracking_number, config) };
           else if (action === 'fetch_actual_cost') {
             const cost = await fetchActualDeliveredCost('pathao', config, payload?.tracking_number, supabaseAdmin);
@@ -887,7 +957,7 @@ Deno.serve(async (req) => {
         break;
       }
       case 'redx': {
-        if (action === 'create_order') result = await redxCreateOrder(config, payload);
+        if (action === 'create_order') result = await runWithRetry(() => redxCreateOrder(config, payload));
         else if (action === 'track') result = { events: await redxTrack(config, payload.tracking_number) };
         else if (action === 'fetch_actual_cost') {
           const cost = await fetchActualDeliveredCost('redx', config, payload?.tracking_number, supabaseAdmin);
@@ -909,7 +979,7 @@ Deno.serve(async (req) => {
         break;
       }
       case 'carrybee': {
-        if (action === 'create_order') result = await carrybeeCreateOrder(config, payload);
+        if (action === 'create_order') result = await runWithRetry(() => carrybeeCreateOrder(config, payload));
         else if (action === 'track') result = { events: await carrybeeTrack(config, payload.tracking_number) };
         else if (action === 'fetch_actual_cost') {
           const cost = await fetchActualDeliveredCost('carrybee', config, payload?.tracking_number, supabaseAdmin);
@@ -933,6 +1003,45 @@ Deno.serve(async (req) => {
       default:
         return respond(false, { error: `Unknown provider: ${providerCode}` }, 'dispatch');
     }
+
+    } catch (e) {
+      dispatchError = e;
+    }
+
+    // ─── Persist dispatch log row for create_order ──────────────
+    if (isCreateOrder && orderUuid) {
+      const trackingNumber = result?.consignment_id || result?.tracking_code || result?.data?.tracking_code || null;
+      try {
+        await supabaseAdmin.from('courier_dispatch_log').insert({
+          order_id: orderUuid,
+          order_number: payload?.order_number || null,
+          provider: providerCode,
+          action,
+          idempotency_key: idempotencyKey,
+          request_payload: payload,
+          response_payload: dispatchError ? { error: String(dispatchError?.message || dispatchError) } : result,
+          http_status: dispatchError ? 0 : 200,
+          success: !dispatchError,
+          tracking_number: trackingNumber,
+          error_message: dispatchError ? String(dispatchError?.message || dispatchError) : null,
+          retry_count: Math.max(0, dispatchAttempts - 1),
+          duration_ms: Date.now() - dispatchStartedAt,
+          created_by: user.id,
+        });
+        if (!dispatchError && trackingNumber) {
+          await supabaseAdmin.rpc('mark_courier_dispatch_succeeded', {
+            _order_id: orderUuid,
+            _provider: providerCode,
+            _tracking_number: trackingNumber,
+            _description: `Order dispatched to ${providerCode}${trackingNumber ? ` (tracking: ${trackingNumber})` : ''}`,
+          });
+        }
+      } catch (logErr) {
+        console.error('[dispatch-log] failed to persist:', logErr);
+      }
+    }
+
+    if (dispatchError) throw dispatchError;
 
     // Add a friendly note for Pathao sandbox so users know orders appear in the sandbox panel
     const isPathaoSandbox = providerCode === 'pathao' && pathaoEnvKey(config) === 'sandbox';
