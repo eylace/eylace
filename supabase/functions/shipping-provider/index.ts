@@ -61,6 +61,34 @@ function respond(ok: boolean, payload: Record<string, any>, stage?: string) {
 
 const trimSlash = (u: string) => (u || '').replace(/\/+$/, '');
 
+// ─── Retry helper with exponential backoff ──────────────────────────
+const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+async function withRetry<T>(label: string, fn: (attempt: number) => Promise<T>, maxAttempts = 3): Promise<{ result: T; attempts: number }> {
+  let lastErr: any;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await fn(attempt);
+      return { result, attempts: attempt };
+    } catch (err: any) {
+      lastErr = err;
+      const msg = String(err?.message || err);
+      const statusMatch = msg.match(/\((\d{3})\)/);
+      const status = statusMatch ? Number(statusMatch[1]) : 0;
+      const retryable = status === 0 || RETRYABLE_STATUS.has(status) || /network|timeout|fetch failed|ECONNRESET/i.test(msg);
+      if (!retryable || attempt === maxAttempts) throw err;
+      const backoff = Math.min(2000 * 2 ** (attempt - 1), 8000);
+      console.warn(`[${label}] attempt ${attempt} failed (${msg}); retrying in ${backoff}ms`);
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+  }
+  throw lastErr;
+}
+
+function buildIdempotencyKey(orderId: string, providerCode: string, explicit?: string): string {
+  if (explicit && typeof explicit === 'string' && explicit.trim()) return explicit.trim().slice(0, 128);
+  return `${providerCode}:${orderId}`;
+}
+
 // ─── Shiprocket ─────────────────────────────────────────────
 async function shiprocketAuth(email: string, password: string): Promise<string> {
   const res = await fetch('https://apiv2.shiprocket.in/v1/external/auth/login', {
