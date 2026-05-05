@@ -869,6 +869,30 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_dispatch_inflight: {
+        Row: {
+          acquired_at: string
+          acquired_by: string | null
+          idempotency_key: string
+          order_id: string
+          provider: string
+        }
+        Insert: {
+          acquired_at?: string
+          acquired_by?: string | null
+          idempotency_key: string
+          order_id: string
+          provider: string
+        }
+        Update: {
+          acquired_at?: string
+          acquired_by?: string | null
+          idempotency_key?: string
+          order_id?: string
+          provider?: string
+        }
+        Relationships: []
+      }
       courier_dispatch_log: {
         Row: {
           action: string
@@ -1084,6 +1108,39 @@ export type Database = {
           provider?: string
           timeline_description?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      courier_status_mapping_audit: {
+        Row: {
+          action: string
+          after_data: Json | null
+          before_data: Json | null
+          changed_by: string | null
+          changed_by_email: string | null
+          created_at: string
+          id: string
+          mapping_id: string | null
+        }
+        Insert: {
+          action: string
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          id?: string
+          mapping_id?: string | null
+        }
+        Update: {
+          action?: string
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          id?: string
+          mapping_id?: string | null
         }
         Relationships: []
       }
@@ -3819,6 +3876,17 @@ export type Database = {
           week_expense: number
         }[]
       }
+      courier_webhook_apply_event: {
+        Args: {
+          _courier_status: string
+          _description?: string
+          _location?: string
+          _provider: string
+          _raw?: Json
+          _tracking_number: string
+        }
+        Returns: string
+      }
       find_seo_duplicates: {
         Args: {
           _canonical_url: string
@@ -3959,9 +4027,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      release_dispatch_slot: {
+        Args: { _key: string; _order_id: string; _provider: string }
+        Returns: undefined
+      }
       seller_safe_update: {
         Args: { _logo?: string; _name?: string; _slug?: string }
         Returns: undefined
+      }
+      try_acquire_dispatch_slot: {
+        Args: { _key: string; _order_id: string; _provider: string }
+        Returns: boolean
       }
       user_cancel_order: { Args: { _order_id: string }; Returns: boolean }
       user_update_review: {

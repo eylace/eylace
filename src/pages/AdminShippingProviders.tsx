@@ -43,6 +43,12 @@ interface ShippingProvider {
   fraudUser?: string;
   fraudPassword?: string;
   fraudPhone?: string;
+  retry_config?: {
+    max_attempts?: number;
+    base_backoff_ms?: number;
+    max_backoff_ms?: number;
+    timeout_ms?: number;
+  };
 }
 
 const PATHAO_BASE_URLS = {
@@ -587,6 +593,61 @@ const AdminShippingProviders = () => {
           <Label>Auto-assign Orders</Label>
         </div>
       </div>
+
+      {/* Retry Policy */}
+      <div className="border-t pt-4">
+        <h4 className="text-sm font-semibold mb-3 text-foreground">Retry Policy</h4>
+        <p className="text-xs text-muted-foreground mb-3">Tune how aggressively this provider's API calls are retried on transient errors (5xx, 429, network).</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label>Max Attempts</Label>
+            <Input type="number" min={1} max={10}
+              value={provider.retry_config?.max_attempts ?? 3}
+              onChange={(e) => updateProvider(provider.id, 'retry_config', { ...(provider.retry_config || {}), max_attempts: Number(e.target.value) })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Base Backoff (ms)</Label>
+            <Input type="number" min={100} max={30000}
+              value={provider.retry_config?.base_backoff_ms ?? 1000}
+              onChange={(e) => updateProvider(provider.id, 'retry_config', { ...(provider.retry_config || {}), base_backoff_ms: Number(e.target.value) })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Max Backoff (ms)</Label>
+            <Input type="number" min={500} max={60000}
+              value={provider.retry_config?.max_backoff_ms ?? 8000}
+              onChange={(e) => updateProvider(provider.id, 'retry_config', { ...(provider.retry_config || {}), max_backoff_ms: Number(e.target.value) })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Timeout (ms)</Label>
+            <Input type="number" min={1000} max={120000}
+              value={provider.retry_config?.timeout_ms ?? 30000}
+              onChange={(e) => updateProvider(provider.id, 'retry_config', { ...(provider.retry_config || {}), timeout_ms: Number(e.target.value) })} />
+          </div>
+        </div>
+      </div>
+
+      {/* Webhook URL */}
+      {['pathao', 'steadfast', 'shiprocket'].includes(provider.id) && (
+        <div className="border-t pt-4">
+          <h4 className="text-sm font-semibold mb-2 text-foreground">Webhook URL</h4>
+          <p className="text-xs text-muted-foreground mb-2">
+            Configure this URL in your {provider.name} merchant panel so status updates flow back automatically.
+          </p>
+          <Input
+            readOnly
+            value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/courier-webhook/${provider.id}`}
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+            className="font-mono text-xs"
+          />
+          <p className="text-[11px] text-muted-foreground mt-2">
+            {provider.id === 'pathao'
+              ? 'Pathao requires HMAC-SHA256 signature in X-PATHAO-SIGNATURE. Set the secret in backend env: PATHAO_WEBHOOK_SECRET.'
+              : provider.id === 'shiprocket'
+              ? 'Shiprocket: pass token via X-Shiprocket-Signature header or ?token= query. Set SHIPROCKET_WEBHOOK_TOKEN in backend env.'
+              : 'Steadfast has no signature — protected by ?token= shared secret. Set STEADFAST_WEBHOOK_TOKEN in backend env.'}
+          </p>
+        </div>
+      )}
     </div>
   );
 

@@ -63,9 +63,15 @@ const trimSlash = (u: string) => (u || '').replace(/\/+$/, '');
 
 // ─── Retry helper with exponential backoff ──────────────────────────
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
-async function withRetry<T>(label: string, fn: (attempt: number) => Promise<T>, maxAttempts = 3): Promise<{ result: T; attempts: number }> {
+interface RetryPolicy { maxAttempts: number; baseBackoffMs: number; maxBackoffMs: number; timeoutMs: number }
+const DEFAULT_RETRY: RetryPolicy = { maxAttempts: 3, baseBackoffMs: 1000, maxBackoffMs: 8000, timeoutMs: 30000 };
+async function withRetry<T>(
+  label: string,
+  fn: (attempt: number) => Promise<T>,
+  policy: RetryPolicy = DEFAULT_RETRY,
+): Promise<{ result: T; attempts: number }> {
   let lastErr: any;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
     try {
       const result = await fn(attempt);
       return { result, attempts: attempt };
@@ -75,8 +81,8 @@ async function withRetry<T>(label: string, fn: (attempt: number) => Promise<T>, 
       const statusMatch = msg.match(/\((\d{3})\)/);
       const status = statusMatch ? Number(statusMatch[1]) : 0;
       const retryable = status === 0 || RETRYABLE_STATUS.has(status) || /network|timeout|fetch failed|ECONNRESET/i.test(msg);
-      if (!retryable || attempt === maxAttempts) throw err;
-      const backoff = Math.min(2000 * 2 ** (attempt - 1), 8000);
+      if (!retryable || attempt === policy.maxAttempts) throw err;
+      const backoff = Math.min(policy.baseBackoffMs * 2 ** (attempt - 1), policy.maxBackoffMs);
       console.warn(`[${label}] attempt ${attempt} failed (${msg}); retrying in ${backoff}ms`);
       await new Promise((r) => setTimeout(r, backoff));
     }
@@ -177,6 +183,23 @@ async function shiprocketCheckRate(token: string, payload: any) {
 // ─── Steadfast ──────────────────────────────────────────────
 async function steadfastCreateOrder(config: ProviderConfig, order: any) {
   const base = trimSlash(config.apiUrl) || 'https://portal.packzy.com/api/v1';
+  if (!config.apiKey || !config.apiSecret) {
+    throw new Error('Steadfast credentials missing — please save Api-Key and Secret-Key in Courier Management.');
+  }
+  const recipientName = order.customer_name || order.recipient_name || '';
+  const recipientPhone = String(order.phone || order.recipient_phone || '').replace(/\D/g, '');
+  const recipientAddress = order.address || order.recipient_address || '';
+  if (!recipientName || recipientPhone.length < 11 || !recipientAddress) {
+    throw new Error(`Steadfast: invalid recipient (name="${recipientName}", phone="${recipientPhone}", address present=${!!recipientAddress}). Phone must be 11 digits.`);
+  }
+  const payload = {
+    invoice: order.order_number,
+    recipient_name: recipientName,
+    recipient_phone: recipientPhone,
+    recipient_address: recipientAddress,
+    cod_amount: Number(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)) || 0,
+    note: order.note || '',
+  };
   const res = await fetch(`${base}/create_order`, {
     method: 'POST',
     headers: {
@@ -184,23 +207,37 @@ async function steadfastCreateOrder(config: ProviderConfig, order: any) {
       'Api-Key': config.apiKey,
       'Secret-Key': config.apiSecret,
     },
-    body: JSON.stringify({
-      invoice: order.order_number,
-      recipient_name: order.customer_name || order.recipient_name,
-      recipient_phone: order.phone || order.recipient_phone,
-      recipient_address: order.address || order.recipient_address,
-      cod_amount: Number(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)) || 0,
-      note: order.note || '',
-    }),
+    body: JSON.stringify(payload),
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`Steadfast: ${data?.message || JSON.stringify(data)}`);
+  const rawText = await res.text();
+  let data: any = {};
+  try { data = rawText ? JSON.parse(rawText) : {}; } catch { data = { raw: rawText }; }
+  if (!res.ok || (data && data.status && Number(data.status) >= 400)) {
+    const detail =
+      data?.message ||
+      (data?.errors && (typeof data.errors === 'string' ? data.errors : JSON.stringify(data.errors))) ||
+      (rawText && rawText.trim()) ||
+      `HTTP ${res.status}`;
+    throw new Error(`Steadfast (${res.status}): ${detail}`);
+  }
   const consignment = data?.consignment || data;
   return {
     ...data,
     tracking_code: consignment?.tracking_code || consignment?.consignment_id,
     consignment_id: consignment?.consignment_id || consignment?.tracking_code,
   };
+}
+
+// Quick credential validity check via /get_balance
+async function steadfastCheckBalance(config: ProviderConfig) {
+  const base = trimSlash(config.apiUrl) || 'https://portal.packzy.com/api/v1';
+  const res = await fetch(`${base}/get_balance`, {
+    headers: { 'Api-Key': config.apiKey, 'Secret-Key': config.apiSecret },
+  });
+  const text = await res.text();
+  let data: any = {}; try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+  if (!res.ok) throw new Error(`Steadfast balance (${res.status}): ${data?.message || text || res.statusText}`);
+  return data;
 }
 
 async function steadfastTrack(config: ProviderConfig, trackingNumber: string) {
@@ -833,6 +870,15 @@ Deno.serve(async (req) => {
     if (!config) return respond(false, { error: `Provider "${providerCode}" not configured. Save it in Courier Management first.` }, 'load_config');
     if (!config.enabled) return respond(false, { error: `Provider "${providerCode}" is disabled. Enable it in Courier Management.` }, 'load_config');
 
+    // Per-provider retry policy (admin-tunable via shipping_providers_config[].retry_config)
+    const cfgRetry = (config as any).retry_config || {};
+    const retryPolicy: RetryPolicy = {
+      maxAttempts: Math.min(Math.max(Number(cfgRetry.max_attempts ?? DEFAULT_RETRY.maxAttempts), 1), 10),
+      baseBackoffMs: Math.min(Math.max(Number(cfgRetry.base_backoff_ms ?? DEFAULT_RETRY.baseBackoffMs), 100), 30000),
+      maxBackoffMs: Math.min(Math.max(Number(cfgRetry.max_backoff_ms ?? DEFAULT_RETRY.maxBackoffMs), 500), 60000),
+      timeoutMs: Math.min(Math.max(Number(cfgRetry.timeout_ms ?? DEFAULT_RETRY.timeoutMs), 1000), 120000),
+    };
+
     stage = `dispatch_${providerCode}_${action}`;
     let result: any;
 
@@ -843,6 +889,17 @@ Deno.serve(async (req) => {
       ? buildIdempotencyKey(orderUuid || payload?.order_id || payload?.order_number || crypto.randomUUID(), providerCode, payload?.idempotency_key)
       : '';
 
+    // Add steadfast test_connection
+    if (action === 'test_connection' && providerCode === 'steadfast') {
+      try {
+        const bal = await steadfastCheckBalance(config);
+        return respond(true, { authenticated: true, balance: bal });
+      } catch (e: any) {
+        return respond(false, { error: e?.message || 'Steadfast credential check failed' }, 'test_connection');
+      }
+    }
+
+    let inflightAcquired = false;
     if (isCreateOrder && orderUuid) {
       const { data: existing } = await supabaseAdmin
         .from('courier_dispatch_log')
@@ -864,6 +921,17 @@ Deno.serve(async (req) => {
           original_dispatch_at: prev.created_at,
         });
       }
+      // Concurrent-call guard: try to reserve an in-flight slot
+      const { data: acquired } = await supabaseAdmin.rpc('try_acquire_dispatch_slot', {
+        _order_id: orderUuid, _provider: providerCode, _key: idempotencyKey,
+      });
+      if (acquired === false) {
+        return respond(false, {
+          error: 'Another dispatch is already in progress for this order — please wait a moment.',
+          inflight: true,
+        }, 'inflight_guard');
+      }
+      inflightAcquired = true;
     }
 
     const dispatchStartedAt = Date.now();
@@ -871,7 +939,7 @@ Deno.serve(async (req) => {
     let dispatchError: any = null;
 
     const runWithRetry = async <T>(fn: (attempt: number) => Promise<T>): Promise<T> => {
-      const r = await withRetry(`${providerCode}:${action}`, fn);
+      const r = await withRetry(`${providerCode}:${action}`, fn, retryPolicy);
       dispatchAttempts = r.attempts;
       return r.result;
     };
@@ -1039,6 +1107,14 @@ Deno.serve(async (req) => {
       } catch (logErr) {
         console.error('[dispatch-log] failed to persist:', logErr);
       }
+    }
+
+    if (inflightAcquired && orderUuid) {
+      try {
+        await supabaseAdmin.rpc('release_dispatch_slot', {
+          _order_id: orderUuid, _provider: providerCode, _key: idempotencyKey,
+        });
+      } catch { /* swallow */ }
     }
 
     if (dispatchError) throw dispatchError;
