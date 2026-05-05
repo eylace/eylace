@@ -63,9 +63,15 @@ const trimSlash = (u: string) => (u || '').replace(/\/+$/, '');
 
 // ─── Retry helper with exponential backoff ──────────────────────────
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
-async function withRetry<T>(label: string, fn: (attempt: number) => Promise<T>, maxAttempts = 3): Promise<{ result: T; attempts: number }> {
+interface RetryPolicy { maxAttempts: number; baseBackoffMs: number; maxBackoffMs: number; timeoutMs: number }
+const DEFAULT_RETRY: RetryPolicy = { maxAttempts: 3, baseBackoffMs: 1000, maxBackoffMs: 8000, timeoutMs: 30000 };
+async function withRetry<T>(
+  label: string,
+  fn: (attempt: number) => Promise<T>,
+  policy: RetryPolicy = DEFAULT_RETRY,
+): Promise<{ result: T; attempts: number }> {
   let lastErr: any;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 1; attempt <= policy.maxAttempts; attempt++) {
     try {
       const result = await fn(attempt);
       return { result, attempts: attempt };
@@ -75,8 +81,8 @@ async function withRetry<T>(label: string, fn: (attempt: number) => Promise<T>, 
       const statusMatch = msg.match(/\((\d{3})\)/);
       const status = statusMatch ? Number(statusMatch[1]) : 0;
       const retryable = status === 0 || RETRYABLE_STATUS.has(status) || /network|timeout|fetch failed|ECONNRESET/i.test(msg);
-      if (!retryable || attempt === maxAttempts) throw err;
-      const backoff = Math.min(2000 * 2 ** (attempt - 1), 8000);
+      if (!retryable || attempt === policy.maxAttempts) throw err;
+      const backoff = Math.min(policy.baseBackoffMs * 2 ** (attempt - 1), policy.maxBackoffMs);
       console.warn(`[${label}] attempt ${attempt} failed (${msg}); retrying in ${backoff}ms`);
       await new Promise((r) => setTimeout(r, backoff));
     }
