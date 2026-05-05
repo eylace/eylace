@@ -870,6 +870,15 @@ Deno.serve(async (req) => {
     if (!config) return respond(false, { error: `Provider "${providerCode}" not configured. Save it in Courier Management first.` }, 'load_config');
     if (!config.enabled) return respond(false, { error: `Provider "${providerCode}" is disabled. Enable it in Courier Management.` }, 'load_config');
 
+    // Per-provider retry policy (admin-tunable via shipping_providers_config[].retry_config)
+    const cfgRetry = (config as any).retry_config || {};
+    const retryPolicy: RetryPolicy = {
+      maxAttempts: Math.min(Math.max(Number(cfgRetry.max_attempts ?? DEFAULT_RETRY.maxAttempts), 1), 10),
+      baseBackoffMs: Math.min(Math.max(Number(cfgRetry.base_backoff_ms ?? DEFAULT_RETRY.baseBackoffMs), 100), 30000),
+      maxBackoffMs: Math.min(Math.max(Number(cfgRetry.max_backoff_ms ?? DEFAULT_RETRY.maxBackoffMs), 500), 60000),
+      timeoutMs: Math.min(Math.max(Number(cfgRetry.timeout_ms ?? DEFAULT_RETRY.timeoutMs), 1000), 120000),
+    };
+
     stage = `dispatch_${providerCode}_${action}`;
     let result: any;
 
@@ -880,6 +889,17 @@ Deno.serve(async (req) => {
       ? buildIdempotencyKey(orderUuid || payload?.order_id || payload?.order_number || crypto.randomUUID(), providerCode, payload?.idempotency_key)
       : '';
 
+    // Add steadfast test_connection
+    if (action === 'test_connection' && providerCode === 'steadfast') {
+      try {
+        const bal = await steadfastCheckBalance(config);
+        return respond(true, { authenticated: true, balance: bal });
+      } catch (e: any) {
+        return respond(false, { error: e?.message || 'Steadfast credential check failed' }, 'test_connection');
+      }
+    }
+
+    let inflightAcquired = false;
     if (isCreateOrder && orderUuid) {
       const { data: existing } = await supabaseAdmin
         .from('courier_dispatch_log')
@@ -901,6 +921,17 @@ Deno.serve(async (req) => {
           original_dispatch_at: prev.created_at,
         });
       }
+      // Concurrent-call guard: try to reserve an in-flight slot
+      const { data: acquired } = await supabaseAdmin.rpc('try_acquire_dispatch_slot', {
+        _order_id: orderUuid, _provider: providerCode, _key: idempotencyKey,
+      });
+      if (acquired === false) {
+        return respond(false, {
+          error: 'Another dispatch is already in progress for this order — please wait a moment.',
+          inflight: true,
+        }, 'inflight_guard');
+      }
+      inflightAcquired = true;
     }
 
     const dispatchStartedAt = Date.now();
@@ -908,7 +939,7 @@ Deno.serve(async (req) => {
     let dispatchError: any = null;
 
     const runWithRetry = async <T>(fn: (attempt: number) => Promise<T>): Promise<T> => {
-      const r = await withRetry(`${providerCode}:${action}`, fn);
+      const r = await withRetry(`${providerCode}:${action}`, fn, retryPolicy);
       dispatchAttempts = r.attempts;
       return r.result;
     };
