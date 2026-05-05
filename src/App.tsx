@@ -156,6 +156,7 @@ const AdminSystemUpdate = lazyWithRetry(() => import("./pages/AdminSystemUpdate"
 const AdminSystemServerStatus = lazyWithRetry(() => import("./pages/AdminSystemServerStatus"));
 const AdminSystemSitemap = lazyWithRetry(() => import("./pages/AdminSystemSitemap"));
 const AdminShippingProviders = lazyWithRetry(() => import("./pages/AdminShippingProviders"));
+const AdminCourierStatusMapping = lazyWithRetry(() => import("./pages/AdminCourierStatusMapping"));
 const AdminPaymentGateways = lazyWithRetry(() => import("./pages/AdminPaymentGateways"));
 const AdminAIAnalyzer = lazyWithRetry(() => import("./pages/AdminAIAnalyzer"));
 const AdminAISettings = lazyWithRetry(() => import("./pages/AdminAISettings"));
@@ -331,6 +332,7 @@ const App = () => (
                 <Route path="/admin/system/server-status" element={<AdminSystemServerStatus />} />
                 <Route path="/admin/system/sitemap" element={<AdminSystemSitemap />} />
                 <Route path="/admin/shipping-providers" element={<AdminShippingProviders />} />
+                <Route path="/admin/courier-status-mapping" element={<AdminCourierStatusMapping />} />
                 <Route path="/admin/payment-gateways" element={<AdminPaymentGateways />} />
                 <Route path="/admin/ai-analyzer" element={<AdminAIAnalyzer />} />
                 <Route path="/admin/ai-settings" element={<AdminAISettings />} />
