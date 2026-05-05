@@ -1109,6 +1109,14 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (inflightAcquired && orderUuid) {
+      try {
+        await supabaseAdmin.rpc('release_dispatch_slot', {
+          _order_id: orderUuid, _provider: providerCode, _key: idempotencyKey,
+        });
+      } catch { /* swallow */ }
+    }
+
     if (dispatchError) throw dispatchError;
 
     // Add a friendly note for Pathao sandbox so users know orders appear in the sandbox panel
