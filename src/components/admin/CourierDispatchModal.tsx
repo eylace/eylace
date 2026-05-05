@@ -109,6 +109,26 @@ export const CourierDispatchModal = ({
     void loadLogs();
   }, [open, prefill, order?.order_number, loadLogs]);
 
+  // Realtime: live dispatch-log + tracking-event updates for this order
+  useEffect(() => {
+    if (!open || !order?.id) return;
+    const ch = supabase
+      .channel(`courier-dispatch-${order.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'courier_dispatch_log',
+        filter: `order_id=eq.${order.id}`,
+      }, () => { void loadLogs(); })
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'order_tracking_events',
+        filter: `order_id=eq.${order.id}`,
+      }, (payload) => {
+        const ev: any = payload.new;
+        toast.info(`Timeline: ${ev?.status}`, { description: ev?.description || undefined });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [open, order?.id, loadLogs]);
+
   const handleSend = async () => {
     if (!order) return;
     if (!name.trim() || !phone.trim() || !address.trim()) {
