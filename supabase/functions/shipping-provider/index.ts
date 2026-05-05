@@ -183,6 +183,23 @@ async function shiprocketCheckRate(token: string, payload: any) {
 // ─── Steadfast ──────────────────────────────────────────────
 async function steadfastCreateOrder(config: ProviderConfig, order: any) {
   const base = trimSlash(config.apiUrl) || 'https://portal.packzy.com/api/v1';
+  if (!config.apiKey || !config.apiSecret) {
+    throw new Error('Steadfast credentials missing — please save Api-Key and Secret-Key in Courier Management.');
+  }
+  const recipientName = order.customer_name || order.recipient_name || '';
+  const recipientPhone = String(order.phone || order.recipient_phone || '').replace(/\D/g, '');
+  const recipientAddress = order.address || order.recipient_address || '';
+  if (!recipientName || recipientPhone.length < 11 || !recipientAddress) {
+    throw new Error(`Steadfast: invalid recipient (name="${recipientName}", phone="${recipientPhone}", address present=${!!recipientAddress}). Phone must be 11 digits.`);
+  }
+  const payload = {
+    invoice: order.order_number,
+    recipient_name: recipientName,
+    recipient_phone: recipientPhone,
+    recipient_address: recipientAddress,
+    cod_amount: Number(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)) || 0,
+    note: order.note || '',
+  };
   const res = await fetch(`${base}/create_order`, {
     method: 'POST',
     headers: {
@@ -190,23 +207,37 @@ async function steadfastCreateOrder(config: ProviderConfig, order: any) {
       'Api-Key': config.apiKey,
       'Secret-Key': config.apiSecret,
     },
-    body: JSON.stringify({
-      invoice: order.order_number,
-      recipient_name: order.customer_name || order.recipient_name,
-      recipient_phone: order.phone || order.recipient_phone,
-      recipient_address: order.address || order.recipient_address,
-      cod_amount: Number(order.amount_to_collect ?? (order.payment_method === 'cod' ? order.total : 0)) || 0,
-      note: order.note || '',
-    }),
+    body: JSON.stringify(payload),
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`Steadfast: ${data?.message || JSON.stringify(data)}`);
+  const rawText = await res.text();
+  let data: any = {};
+  try { data = rawText ? JSON.parse(rawText) : {}; } catch { data = { raw: rawText }; }
+  if (!res.ok || (data && data.status && Number(data.status) >= 400)) {
+    const detail =
+      data?.message ||
+      (data?.errors && (typeof data.errors === 'string' ? data.errors : JSON.stringify(data.errors))) ||
+      (rawText && rawText.trim()) ||
+      `HTTP ${res.status}`;
+    throw new Error(`Steadfast (${res.status}): ${detail}`);
+  }
   const consignment = data?.consignment || data;
   return {
     ...data,
     tracking_code: consignment?.tracking_code || consignment?.consignment_id,
     consignment_id: consignment?.consignment_id || consignment?.tracking_code,
   };
+}
+
+// Quick credential validity check via /get_balance
+async function steadfastCheckBalance(config: ProviderConfig) {
+  const base = trimSlash(config.apiUrl) || 'https://portal.packzy.com/api/v1';
+  const res = await fetch(`${base}/get_balance`, {
+    headers: { 'Api-Key': config.apiKey, 'Secret-Key': config.apiSecret },
+  });
+  const text = await res.text();
+  let data: any = {}; try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+  if (!res.ok) throw new Error(`Steadfast balance (${res.status}): ${data?.message || text || res.statusText}`);
+  return data;
 }
 
 async function steadfastTrack(config: ProviderConfig, trackingNumber: string) {
