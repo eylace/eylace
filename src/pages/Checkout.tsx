@@ -169,8 +169,8 @@ const Checkout = () => {
       ? expressShippingCharge
       : defaultShipping;
     const tax = variantId === 'express' ? 0 : taxAmount;
-    const codFee = isCashOnDelivery ? 0.5 : 0;
-    const baseTotal = Math.max(0, subtotal + shipping + tax + codFee - couponDiscount);
+    const codFee = 0;
+    const baseTotal = Math.max(0, subtotal + shipping + tax - couponDiscount);
     const onlinePaymentDiscount = !isCashOnDelivery && websiteSetup.prepaymentOfferEnabled
       ? Number(((baseTotal * (Number(websiteSetup.prepaymentOfferPercent) || 0)) / 100).toFixed(2))
       : 0;
