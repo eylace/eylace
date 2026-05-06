@@ -217,7 +217,7 @@ export const CheckoutExpress = ({ form, onSubmit, isProcessing, items, subtotal,
                 </RadioGroup>
               </div>
 
-              <PaymentMethods form={form} />
+              <PaymentMethods form={form} courierAmount={shipping} />
 
               <Button type="submit" size="xl" className="w-full rounded-xl text-base bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isProcessing}>
                 {isProcessing ? (<><Loader2 className="h-5 w-5 mr-2 animate-spin" />অর্ডার প্রসেস হচ্ছে...</>) : (<><ShieldCheck className="h-5 w-5 mr-2" />অর্ডার কনফার্ম করুন</>)}

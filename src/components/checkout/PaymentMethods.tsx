@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { CreditCard, Banknote, Globe, Tag } from 'lucide-react';
+import { CreditCard, Banknote, Globe, Tag, Truck, CheckCircle2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { AdvanceCourierChargeModal, AdvanceGatewayOption } from '@/components/checkout/AdvanceCourierChargeModal';
 
 import bkashLogo from '@/assets/payment/bkash-logo.png';
 import nagadLogo from '@/assets/payment/nagad-logo.png';
@@ -35,6 +38,7 @@ const LOGO_MAP: Record<string, string> = {
 
 interface PaymentMethodsProps {
   form: UseFormReturn<any>;
+  courierAmount?: number;
 }
 
 interface GatewayOption {
@@ -48,13 +52,17 @@ interface GatewayOption {
   isCOD: boolean;
 }
 
-export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
+export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps) => {
   const [selectedMethod, setSelectedMethod] = useState('');
   const [gateways, setGateways] = useState<GatewayOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [advanceModalOpen, setAdvanceModalOpen] = useState(false);
   const { register, formState: { errors }, setValue } = form;
   const { t } = useLanguage();
   const setup = useWebsiteSetup();
+  const { formatPrice } = useCurrency();
+  const advancePaidRef: string | undefined = form.watch('advanceCourierPaymentRef');
+  const advancePaidAmount: number | undefined = form.watch('advanceCourierAmount');
 
   useEffect(() => {
     const fetchGateways = async () => {
@@ -155,7 +163,36 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
         <div className="mt-3 ml-10 p-3 bg-secondary/50 rounded-lg"><p className="text-xs text-muted-foreground">{t('payment.redirectMsg')}</p></div>
       )}
       {selectedMethod === method.id && method.isCOD && (
-        <div className="mt-3 ml-10 p-3 bg-warning/10 border border-warning/30 rounded-lg"><p className="text-xs text-foreground">{t('payment.codNote')}</p></div>
+        <div className="mt-3 ml-10 p-3 bg-accent/5 border border-accent/30 rounded-lg space-y-2">
+          <div className="flex items-center gap-2">
+            <Truck className="h-4 w-4 text-accent shrink-0" />
+            <span className="text-sm font-semibold text-foreground">
+              {t('payment.advanceCourierTitle') || 'Pay Courier Charge in Advance'}
+            </span>
+          </div>
+          {advancePaidRef ? (
+            <div className="flex items-center gap-2 text-xs text-success">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>
+                {(t('payment.courierPrepaid') || 'Courier charge prepaid online')}
+                {' '}({formatPrice(Number(advancePaidAmount) || courierAmount)})
+              </span>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+              onClick={() => setAdvanceModalOpen(true)}
+              disabled={courierAmount <= 0}
+            >
+              {courierAmount > 0
+                ? `${t('payment.payCourierBtn') || 'Pay Courier Charge'} — ${formatPrice(courierAmount)}`
+                : (t('payment.payCourierBtn') || 'Pay Courier Charge')}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );
@@ -197,6 +234,20 @@ export const PaymentMethods = ({ form }: PaymentMethodsProps) => {
           </div>
         )}
       </RadioGroup>
+
+      <AdvanceCourierChargeModal
+        open={advanceModalOpen}
+        onClose={() => setAdvanceModalOpen(false)}
+        amount={courierAmount}
+        gateways={onlineGateways
+          .filter((g) => !g.needsCard)
+          .map<AdvanceGatewayOption>((g) => ({ id: g.id, name: g.name, logo: g.logo }))}
+        onConfirmed={(ref, gatewayId) => {
+          setValue('advanceCourierPaymentRef', ref, { shouldDirty: true });
+          setValue('advanceCourierAmount', courierAmount, { shouldDirty: true });
+          setValue('advanceCourierGateway', gatewayId, { shouldDirty: true });
+        }}
+      />
     </div>
   );
 };

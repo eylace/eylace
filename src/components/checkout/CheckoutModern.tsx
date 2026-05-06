@@ -95,7 +95,7 @@ export const CheckoutModern = ({ form, onSubmit, isProcessing, items, itemCount,
                   <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">2</div>
                   <h2 className="text-lg font-bold text-foreground">Payment Method</h2>
                 </div>
-                <PaymentMethods form={form} />
+                <PaymentMethods form={form} courierAmount={shipping} />
               </div>
             </div>
 

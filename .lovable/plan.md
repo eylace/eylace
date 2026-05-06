@@ -1,54 +1,62 @@
+## Goal
 
-## Plan: Cost Tracking + Comprehensive Profit Dashboard
+Checkout-এ দুটি পরিবর্তন:
 
-### Problem
-1. **AdminAddProduct.tsx** (the actual `/admin/add-product` page used via "Add New") has no "Cost per item" field in the Price & Stock tab.
-2. Dashboard overview is missing profit-related cards: Net Profit, Gross Profit, Sold COGS (cost of goods sold), Purchase Cost (current stock value), and Courier Expense.
+1. **COD ৳0.50 additional fee সম্পূর্ণ remove** করা — Online payment আর COD উভয়ের জন্য total একই formula হবে: `subtotal + shipping + tax − discount` (online হলে শুধু prepayment offer discount বাদ যাবে)।
+2. **COD select করলে** "0.50 fee" notice-এর জায়গায় একটি নতুন **"Pay Courier Charge in Advance"** action দেখাবে — click করলে user শুধু shipping/courier charge টা online এ pay করতে পারবে; বাকি product amount delivery-তে cash এ দিবে।
 
-### Part 1 — Add "Cost per item" to AdminAddProduct (Price & Stock tab)
+---
 
-**File:** `src/pages/AdminAddProduct.tsx`
-- Add `cost_per_item: ''` to `ProductFormState` interface and `defaultForm`.
-- Load `cost_per_item` from product on edit.
-- Include `cost_per_item` in the save payload (`parseFloat` or `null`).
-- Add a 5th input in the Pricing grid (change `md:grid-cols-4` → `md:grid-cols-5`) labeled **"Cost per item"** with helper text *"Your purchase cost — used for profit calculation"*.
+## Changes
 
-### Part 2 — Persist cost_per_item into order_items at checkout
-**File:** `supabase/functions/checkout-create-order/index.ts`
-- When inserting order items, fetch `cost_per_item` from the product row alongside price and copy it into `order_items.cost_per_item` so historical profit calculations are accurate even if the product cost later changes.
+### 1. `src/pages/Checkout.tsx` — fee removal
+- Line 172: `const codFee = isCashOnDelivery ? 0.5 : 0;` → `const codFee = 0;` (অথবা পুরো variable ও related field সরিয়ে clean করব)।
+- `getCheckoutPricing` return থেকে `codFee` রাখব 0 হিসেবে যাতে downstream component break না করে, পরে চাইলে cleanup।
 
-### Part 3 — Enrich admin-get-orders to include cost_per_item
-**File:** `supabase/functions/admin-get-orders/index.ts`
-- Ensure the `items` array returned to the dashboard includes `cost_per_item` (already in DB after the previous migration, just need to select it).
+### 2. `src/components/checkout/PaymentMethods.tsx` — UI
+COD selected হলে বর্তমান `t('payment.codNote')` block-এর পরিবর্তে একটি নতুন panel দেখাব:
 
-### Part 4 — Comprehensive Profit Dashboard
+```text
+┌──────────────────────────────────────────────┐
+│ 🚚  Pay Courier Charge in Advance            │
+│     Courier delivery charge: ৳{shipping}     │
+│     [ Pay ৳{shipping} Online ]  ← button     │
+└──────────────────────────────────────────────┘
+```
 
-**File:** `src/components/admin/AdminDashboardOverview.tsx`
+- Button click করলে একটি নতুন `AdvanceCourierChargeModal` open হবে যেখানে available online gateways (bKash / Nagad / Card ইত্যাদি — `onlineGateways` থেকে filtered) list থাকবে।
+- User gateway select করে "Pay" করলে existing online-payment redirect flow ব্যবহার করে শুধু `shipping` amount-এর জন্য একটি **partial payment intent** create হবে।
 
-Replace the current 6-card grid with a richer KPI section organised in two rows:
+### 3. New: `src/components/checkout/AdvanceCourierChargeModal.tsx`
+- Props: `open`, `onClose`, `amount` (= shipping), `gateways`, `onConfirmed(paymentRef)`.
+- Internal: gateway radio list + Pay button → calls existing payment-initiate edge function with `purpose: 'advance_courier_charge'` + `amount`.
+- Success হলে `paymentRef` (transaction id) parent-এ ফেরত পাঠাবে; checkout form-এ hidden field `advanceCourierPaymentRef` set হবে।
 
-**Row 1 — Last 30 Days performance** (3 large cards, with date range subtitle):
-| Card | Formula |
-|------|---------|
-| **Total Profit (Last 30 Days)** | Σ (item.price − item.cost_per_item) × qty for delivered orders in last 30d |
-| **Total Revenue (Last 30 Days)** | Σ order.total for delivered orders in last 30d |
-| **Total Sales (Last 30 Days)** | Σ order.total for non-cancelled orders in last 30d |
+### 4. `supabase/functions/checkout-create-order/index.ts` — order metadata
+- নতুন optional body field accept: `advance_courier_payment_ref`, `advance_courier_amount`.
+- COD order create করার সময় এই দুটি `orders.metadata` (jsonb) এ store করব যাতে admin দেখতে পায় shipping prepaid।
+- Migration: যদি `metadata` jsonb column না থাকে তাহলে add করব (check করে decide)।
 
-**Row 2 — All-Time financial breakdown** (3 cards):
-| Card | Formula | Source |
-|------|---------|--------|
-| **Purchase Cost (All Time)** | Σ product.cost_per_item × product.stock | `products` table — total base value of current inventory |
-| **Sold COGS (All Time)** | Σ item.cost_per_item × qty for delivered orders | order_items |
-| **Courier Expense (All Time)** | Σ order.shipping for delivered orders | orders.shipping |
+### 5. `src/components/checkout/OrderSummary.tsx`
+- `codFee` row সম্পূর্ণ hide (0 হলে already hidden আছে — ভালো)।
+- যদি `advanceCourierPaid` true থাকে, summary-তে একটি badge: "Courier charge prepaid online ✓"।
 
-**Row 3 — Operational metrics** (existing 4 cards kept): Customers, Products, Orders (total), Pending.
+### 6. Translations (`src/i18n/translations.ts`)
+- নতুন keys (en + bn): `payment.advanceCourierTitle`, `payment.advanceCourierDesc`, `payment.payCourierBtn`, `payment.courierPrepaid`।
 
-Add a new query to fetch products with `cost_per_item` and `stock` to compute Purchase Cost. Keep all existing charts (Revenue Overview, Order Status, Daily Report, etc.) below unchanged.
+---
 
-### Files Modified
-1. `src/pages/AdminAddProduct.tsx` — add cost_per_item form field
-2. `supabase/functions/checkout-create-order/index.ts` — copy cost into order_items
-3. `supabase/functions/admin-get-orders/index.ts` — include cost_per_item in items
-4. `src/components/admin/AdminDashboardOverview.tsx` — new profit/expense KPI cards
+## Out of scope (এই turn এ নয়)
+- Actual gateway integration code change — existing bKash/Nagad/SSLCommerz initiate flow reuse করা হবে; নতুন gateway adapter লেখা হবে না।
+- Refund logic যদি COD order cancel হয় তখন advance courier charge ফেরত — পরে আলাদা feature।
 
-No new database migrations required (cost_per_item columns already exist on products and order_items).
+---
+
+## Files touched
+- `src/pages/Checkout.tsx` (codFee = 0)
+- `src/components/checkout/PaymentMethods.tsx` (new advance panel)
+- `src/components/checkout/AdvanceCourierChargeModal.tsx` (new)
+- `src/components/checkout/OrderSummary.tsx` (prepaid badge)
+- `supabase/functions/checkout-create-order/index.ts` (accept new fields)
+- `src/i18n/translations.ts` (new keys)
+- Possibly 1 migration to ensure `orders.metadata` jsonb exists।

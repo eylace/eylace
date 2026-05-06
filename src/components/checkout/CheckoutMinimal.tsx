@@ -94,7 +94,7 @@ export const CheckoutMinimal = ({ form, onSubmit, isProcessing, items, itemCount
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="bg-card border border-t-0 border-border rounded-b-xl p-6 -mt-2">
-                <PaymentMethods form={form} />
+                <PaymentMethods form={form} courierAmount={shipping} />
               </div>
             </CollapsibleContent>
           </Collapsible>

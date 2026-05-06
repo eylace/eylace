@@ -75,6 +75,8 @@ Deno.serve(async (req) => {
       guest_email,
       guest_phone,
       items,
+      advance_courier_payment_ref,
+      advance_courier_amount,
     } = body;
 
     // Validate required fields
@@ -145,6 +147,12 @@ Deno.serve(async (req) => {
       customer_ip: customerIp,
       user_id: userId,
     };
+
+    // Optional: advance courier-charge prepaid online (COD orders)
+    if (advance_courier_payment_ref) {
+      orderPayload.advance_courier_payment_ref = String(advance_courier_payment_ref);
+      orderPayload.advance_courier_amount = Math.max(0, Number(advance_courier_amount) || 0);
+    }
 
     // For guest orders, set contact fields
     if (!userId) {
