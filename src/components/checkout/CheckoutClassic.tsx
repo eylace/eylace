@@ -59,7 +59,7 @@ export const CheckoutClassic = ({ form, onSubmit, isProcessing, items, itemCount
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-card border border-border rounded-lg p-6" style={{ borderRadius: c.cardBorderRadius ? `${c.cardBorderRadius}px` : undefined }}><ShippingForm form={form} /></div>
-            <div className="bg-card border border-border rounded-lg p-6" style={{ borderRadius: c.cardBorderRadius ? `${c.cardBorderRadius}px` : undefined }}><PaymentMethods form={form} /></div>
+            <div className="bg-card border border-border rounded-lg p-6" style={{ borderRadius: c.cardBorderRadius ? `${c.cardBorderRadius}px` : undefined }}><PaymentMethods form={form} courierAmount={shipping} /></div>
             <div className="lg:hidden">
               <Button type="submit" variant="buy-now" size="xl" className="w-full" disabled={isProcessing} style={btnStyle}>
                 {isProcessing ? (
