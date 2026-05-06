@@ -434,6 +434,8 @@ const Checkout = () => {
           guest_email: normalizedGuestEmail,
           guest_phone: normalizedGuestPhone,
           items: orderItems,
+          advance_courier_payment_ref: (data as any).advanceCourierPaymentRef || null,
+          advance_courier_amount: Number((data as any).advanceCourierAmount) || 0,
         },
       });
 
