@@ -77,7 +77,6 @@ export const OrderSummary = ({
           <div className="flex justify-between text-sm"><span className="text-muted-foreground">{t('orderSummary.tax')}</span><span className="text-foreground">{formatPrice(tax)}</span></div>
           {promoDiscount > 0 && (<div className="flex justify-between text-sm text-success"><span>{t('orderSummary.promoDiscount')}</span><span>-{formatPrice(promoDiscount)}</span></div>)}
           {onlinePaymentDiscount > 0 && (<div className="flex justify-between text-sm text-success"><span>{t('orderSummary.onlinePaymentDiscount')}</span><span>-{formatPrice(onlinePaymentDiscount)}</span></div>)}
-          {codFee > 0 && (<div className="flex justify-between text-sm text-warning"><span>{t('orderSummary.codFee')}</span><span>+{formatPrice(codFee)}</span></div>)}
           <Separator />
           <div className="flex justify-between"><span className="text-lg font-bold text-foreground">{t('orderSummary.total')}</span><span className="text-xl font-bold text-foreground">{formatPrice(total)}</span></div>
         </div>
