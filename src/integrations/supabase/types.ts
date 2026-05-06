@@ -1652,6 +1652,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          advance_courier_amount: number | null
+          advance_courier_payment_ref: string | null
           assigned_at: string | null
           assigned_role: string | null
           assigned_user_id: string | null
@@ -1679,6 +1681,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          advance_courier_amount?: number | null
+          advance_courier_payment_ref?: string | null
           assigned_at?: string | null
           assigned_role?: string | null
           assigned_user_id?: string | null
@@ -1706,6 +1710,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          advance_courier_amount?: number | null
+          advance_courier_payment_ref?: string | null
           assigned_at?: string | null
           assigned_role?: string | null
           assigned_user_id?: string | null
