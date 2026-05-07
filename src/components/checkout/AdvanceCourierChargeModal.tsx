@@ -8,6 +8,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AdvanceGatewayOption {
   id: string;
@@ -26,12 +27,15 @@ interface Props {
 export const AdvanceCourierChargeModal = ({ open, onClose, amount, gateways, onConfirmed }: Props) => {
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
-  const [selected, setSelected] = useState<string>(gateways[0]?.id ?? '');
+  // Only bKash/Nagad supported for real flow; filter to those if present.
+  const supported = gateways.filter((g) => ['bkash', 'nagad'].includes(g.id));
+  const list = supported.length ? supported : gateways;
+  const [selected, setSelected] = useState<string>(list[0]?.id ?? '');
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setSelected(gateways[0]?.id ?? '');
+      setSelected(list[0]?.id ?? '');
       setProcessing(false);
     }
   }, [open, gateways]);
@@ -43,16 +47,44 @@ export const AdvanceCourierChargeModal = ({ open, onClose, amount, gateways, onC
     }
     setProcessing(true);
     try {
-      // Reuse the same redirect-style flow used by online gateways elsewhere.
-      // For now we generate a deterministic client-side reference; the actual
-      // gateway redirect/capture is handled by the existing checkout pipeline.
-      const ref = `ADV-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-      await new Promise((r) => setTimeout(r, 800));
-      onConfirmed(ref, selected);
-      toast.success(t('payment.courierPrepaid') || 'Courier charge paid online ✓');
-      onClose();
+      const { data, error } = await supabase.functions.invoke('courier-advance-initiate', {
+        body: { gateway: selected, shipping: amount },
+      });
+      if (error || !data?.txn_ref) throw new Error(error?.message || 'Failed to initiate');
+
+      // Open gateway (or mock) redirect in a popup
+      const popup = window.open(data.redirect_url, 'advance_pay', 'width=480,height=640');
+
+      // Poll DB for terminal status
+      const start = Date.now();
+      const poll = async (): Promise<'success' | 'failed' | 'cancelled' | 'timeout'> => {
+        while (Date.now() - start < 5 * 60 * 1000) {
+          await new Promise((r) => setTimeout(r, 2000));
+          const { data: row } = await supabase
+            .from('courier_advance_payments')
+            .select('status')
+            .eq('txn_ref', data.txn_ref)
+            .limit(1);
+          const st = row?.[0]?.status;
+          if (st === 'success' || st === 'failed' || st === 'cancelled') return st;
+          if (popup && popup.closed && Date.now() - start > 5000) return 'cancelled';
+        }
+        return 'timeout';
+      };
+      const result = await poll();
+      try { popup?.close(); } catch { /* noop */ }
+
+      if (result === 'success') {
+        onConfirmed(data.txn_ref, selected);
+        toast.success(t('payment.courierPrepaid') || 'Courier charge paid online ✓');
+        onClose();
+      } else if (result === 'timeout') {
+        toast.error('Timed out waiting for payment confirmation.');
+      } else {
+        toast.error(`Payment ${result}.`);
+      }
     } catch (err) {
-      toast.error('Payment failed. Please try again.');
+      toast.error((err as Error).message || 'Payment failed. Please try again.');
     } finally {
       setProcessing(false);
     }
@@ -76,13 +108,13 @@ export const AdvanceCourierChargeModal = ({ open, onClose, amount, gateways, onC
           <span className="text-xl font-bold text-foreground">{formatPrice(amount)}</span>
         </div>
 
-        {gateways.length === 0 ? (
+        {list.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No online payment methods available.
           </p>
         ) : (
           <RadioGroup value={selected} onValueChange={setSelected} className="space-y-2">
-            {gateways.map((g) => (
+            {list.map((g) => (
               <Label
                 key={g.id}
                 htmlFor={`adv-${g.id}`}
@@ -106,7 +138,7 @@ export const AdvanceCourierChargeModal = ({ open, onClose, amount, gateways, onC
           <Button
             className="flex-1"
             onClick={handlePay}
-            disabled={processing || gateways.length === 0}
+            disabled={processing || list.length === 0}
           >
             {processing ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
