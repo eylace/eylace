@@ -833,6 +833,101 @@ export type Database = {
         }
         Relationships: []
       }
+      courier_advance_payments: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          gateway: string
+          gateway_payment_id: string | null
+          id: string
+          initiated_at: string
+          order_id: string | null
+          raw_payload: Json | null
+          status: string
+          txn_ref: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          gateway: string
+          gateway_payment_id?: string | null
+          id?: string
+          initiated_at?: string
+          order_id?: string | null
+          raw_payload?: Json | null
+          status?: string
+          txn_ref: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          gateway?: string
+          gateway_payment_id?: string | null
+          id?: string
+          initiated_at?: string
+          order_id?: string | null
+          raw_payload?: Json | null
+          status?: string
+          txn_ref?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_advance_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courier_advance_payments_audit: {
+        Row: {
+          action: string
+          after_data: Json | null
+          before_data: Json | null
+          changed_by: string | null
+          changed_by_email: string | null
+          created_at: string
+          id: string
+          payment_id: string | null
+          source: string | null
+        }
+        Insert: {
+          action: string
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          source?: string | null
+        }
+        Update: {
+          action?: string
+          after_data?: Json | null
+          before_data?: Json | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          id?: string
+          payment_id?: string | null
+          source?: string | null
+        }
+        Relationships: []
+      }
       courier_auth_tokens: {
         Row: {
           access_token: string
@@ -3871,6 +3966,10 @@ export type Database = {
       }
       can_access_accounting: { Args: { _user_id: string }; Returns: boolean }
       cleanup_expired_otp_codes: { Args: never; Returns: number }
+      compute_courier_advance_amount: {
+        Args: { _shipping: number; _zone: string }
+        Returns: number
+      }
       courier_expense_summary: {
         Args: { _from: string; _to: string }
         Returns: {
@@ -3890,6 +3989,16 @@ export type Database = {
           _provider: string
           _raw?: Json
           _tracking_number: string
+        }
+        Returns: string
+      }
+      create_courier_advance_payment: {
+        Args: {
+          _amount: number
+          _gateway: string
+          _order_id: string
+          _txn_ref: string
+          _user_id: string
         }
         Returns: string
       }
@@ -4032,6 +4141,17 @@ export type Database = {
           _order_id: string
         }
         Returns: undefined
+      }
+      record_courier_advance_event: {
+        Args: {
+          _amount?: number
+          _gateway: string
+          _gateway_payment_id?: string
+          _raw?: Json
+          _status: string
+          _txn_ref: string
+        }
+        Returns: string
       }
       release_dispatch_slot: {
         Args: { _key: string; _order_id: string; _provider: string }
