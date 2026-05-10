@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { MediaInputField } from '@/components/admin/MediaInputField';
 
 import type { HeroBanner, CheckoutVariantConfig } from '@/hooks/useWebsiteSetup';
 
