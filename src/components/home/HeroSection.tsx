@@ -92,11 +92,11 @@ export const HeroSection = () => {
                 </div>
               ))}
             </div>
-            <button onClick={prevSlide} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full hover:bg-card transition-colors"><ChevronLeft className="h-5 w-5" /></button>
-            <button onClick={nextSlide} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full hover:bg-card transition-colors"><ChevronRight className="h-5 w-5" /></button>
+            <button aria-label="Previous slide" onClick={prevSlide} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full hover:bg-card transition-colors"><ChevronLeft className="h-5 w-5" /></button>
+            <button aria-label="Next slide" onClick={nextSlide} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full hover:bg-card transition-colors"><ChevronRight className="h-5 w-5" /></button>
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {heroSlides.map((_, i) => (
-                <button key={i} onClick={() => setCurrentSlide(i)} className={`w-2 h-2 rounded-full transition-all ${i === currentSlide ? 'bg-accent w-6' : 'bg-primary-foreground/50 hover:bg-primary-foreground/70'}`} />
+                <button key={i} aria-label={`Go to slide ${i + 1}`} onClick={() => setCurrentSlide(i)} className={`w-2 h-2 rounded-full transition-all ${i === currentSlide ? 'bg-accent w-6' : 'bg-primary-foreground/50 hover:bg-primary-foreground/70'}`} />
               ))}
             </div>
           </div>
