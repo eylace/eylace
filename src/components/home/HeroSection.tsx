@@ -66,12 +66,23 @@ export const HeroSection = () => {
         <div className="col-span-12 lg:col-span-7">
           <div className="relative rounded-lg overflow-hidden">
             <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-              {heroSlides.map((slide) => (
+              {heroSlides.map((slide, idx) => (
                 <div
                   key={slide.id}
                   className={`min-w-full aspect-[2/1] md:aspect-[2.5/1] text-primary-foreground p-6 md:p-10 flex flex-col justify-center ${!slide.imageUrl ? `bg-gradient-to-r ${slide.gradient}` : ''}`}
                   style={slide.imageUrl ? { backgroundImage: `url(${slide.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
                 >
+                  {slide.imageUrl && (
+                    <img
+                      src={slide.imageUrl}
+                      alt={slide.title}
+                      fetchPriority={idx === 0 ? 'high' : 'low'}
+                      loading={idx === 0 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      className="hidden"
+                      aria-hidden="true"
+                    />
+                  )}
                   <div className="max-w-lg animate-fade-in">
                     <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-sm font-bold rounded mb-3">{slide.subtitle}</span>
                     <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3">{slide.title}</h2>

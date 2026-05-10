@@ -12,7 +12,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { DeliveryLocationProvider } from "@/contexts/DeliveryLocationContext";
 import { CompareBar } from "@/components/compare/CompareBar";
 import { CompareModal } from "@/components/compare/CompareModal";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 // Retry wrapper for lazy imports — handles stale chunk hashes after deploys.
 // If a dynamic import fails (chunk no longer exists), reload the page once.
@@ -196,6 +196,34 @@ const AdminCourierExpenses = lazyWithRetry(() => import("./pages/AdminCourierExp
 const AIChatWidget = lazyWithRetry(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
 const TrackingScriptInjector = lazyWithRetry(() => import("./components/tracking/TrackingScriptInjector").then(m => ({ default: m.TrackingScriptInjector })));
 const SourceCodeProtection = lazyWithRetry(() => import("./components/security/SourceCodeProtection").then(m => ({ default: m.SourceCodeProtection })));
+
+// Defer rendering of non-critical widgets until the browser is idle / user
+// interacts. This keeps them out of the initial render path so LCP/TBT
+// stay low without removing functionality.
+const DeferredMount = ({ children, delay = 2500 }: { children: React.ReactNode; delay?: number }) => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const trigger = () => { if (!cancelled) setShow(true); };
+    const w = window as any;
+    const idleId = w.requestIdleCallback
+      ? w.requestIdleCallback(trigger, { timeout: delay })
+      : window.setTimeout(trigger, delay);
+    const onInteract = () => trigger();
+    window.addEventListener('scroll', onInteract, { once: true, passive: true });
+    window.addEventListener('pointerdown', onInteract, { once: true });
+    window.addEventListener('keydown', onInteract, { once: true });
+    return () => {
+      cancelled = true;
+      if (w.cancelIdleCallback && typeof idleId === 'number') w.cancelIdleCallback(idleId);
+      else clearTimeout(idleId as any);
+      window.removeEventListener('scroll', onInteract);
+      window.removeEventListener('pointerdown', onInteract);
+      window.removeEventListener('keydown', onInteract);
+    };
+  }, [delay]);
+  return show ? <>{children}</> : null;
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -405,11 +433,13 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>
-              <Suspense fallback={null}>
-                <AIChatWidget />
-                <TrackingScriptInjector />
-                <SourceCodeProtection />
-              </Suspense>
+              <DeferredMount>
+                <Suspense fallback={null}>
+                  <AIChatWidget />
+                  <TrackingScriptInjector />
+                  <SourceCodeProtection />
+                </Suspense>
+              </DeferredMount>
             </BrowserRouter>
           </TooltipProvider>
           </CompareProvider>
