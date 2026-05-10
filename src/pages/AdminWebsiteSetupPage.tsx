@@ -835,11 +835,21 @@ const AdminWebsiteSetupPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Logo URL</Label>
-                    <Input value={setup.logoUrl} onChange={e => update('logoUrl', e.target.value)} placeholder="https://..." />
+                    <MediaInputField
+                      value={setup.logoUrl}
+                      onChange={(url) => update('logoUrl', url)}
+                      uploadFolder="branding"
+                      placeholder="https://... or pick from library"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Favicon URL</Label>
-                    <Input value={setup.faviconUrl} onChange={e => update('faviconUrl', e.target.value)} placeholder="https://..." />
+                    <MediaInputField
+                      value={setup.faviconUrl}
+                      onChange={(url) => update('faviconUrl', url)}
+                      uploadFolder="branding"
+                      placeholder="https://... or pick from library"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
