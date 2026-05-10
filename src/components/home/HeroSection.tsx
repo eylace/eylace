@@ -66,12 +66,23 @@ export const HeroSection = () => {
         <div className="col-span-12 lg:col-span-7">
           <div className="relative rounded-lg overflow-hidden">
             <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-              {heroSlides.map((slide) => (
+              {heroSlides.map((slide, idx) => (
                 <div
                   key={slide.id}
                   className={`min-w-full aspect-[2/1] md:aspect-[2.5/1] text-primary-foreground p-6 md:p-10 flex flex-col justify-center ${!slide.imageUrl ? `bg-gradient-to-r ${slide.gradient}` : ''}`}
                   style={slide.imageUrl ? { backgroundImage: `url(${slide.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
                 >
+                  {slide.imageUrl && (
+                    <img
+                      src={slide.imageUrl}
+                      alt={slide.title}
+                      fetchPriority={idx === 0 ? 'high' : 'low'}
+                      loading={idx === 0 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      className="hidden"
+                      aria-hidden="true"
+                    />
+                  )}
                   <div className="max-w-lg animate-fade-in">
                     <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-sm font-bold rounded mb-3">{slide.subtitle}</span>
                     <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3">{slide.title}</h2>
@@ -81,11 +92,11 @@ export const HeroSection = () => {
                 </div>
               ))}
             </div>
-            <button onClick={prevSlide} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full hover:bg-card transition-colors"><ChevronLeft className="h-5 w-5" /></button>
-            <button onClick={nextSlide} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full hover:bg-card transition-colors"><ChevronRight className="h-5 w-5" /></button>
+            <button aria-label="Previous slide" onClick={prevSlide} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full hover:bg-card transition-colors"><ChevronLeft className="h-5 w-5" /></button>
+            <button aria-label="Next slide" onClick={nextSlide} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full hover:bg-card transition-colors"><ChevronRight className="h-5 w-5" /></button>
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {heroSlides.map((_, i) => (
-                <button key={i} onClick={() => setCurrentSlide(i)} className={`w-2 h-2 rounded-full transition-all ${i === currentSlide ? 'bg-accent w-6' : 'bg-primary-foreground/50 hover:bg-primary-foreground/70'}`} />
+                <button key={i} aria-label={`Go to slide ${i + 1}`} onClick={() => setCurrentSlide(i)} className={`w-2 h-2 rounded-full transition-all ${i === currentSlide ? 'bg-accent w-6' : 'bg-primary-foreground/50 hover:bg-primary-foreground/70'}`} />
               ))}
             </div>
           </div>
