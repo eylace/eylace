@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Save, Store } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { MediaInputField } from '@/components/admin/MediaInputField';
 import type { SellerProfile } from '@/hooks/useSellerData';
 
 interface SellerStoreSettingsProps {
@@ -51,10 +52,13 @@ export const SellerStoreSettings = ({ seller, onUpdate }: SellerStoreSettingsPro
 
           <div className="space-y-2">
             <Label htmlFor="storeLogo">Logo URL</Label>
-            <Input id="storeLogo" value={logo} onChange={e => setLogo(e.target.value)} placeholder="https://..." />
-            {logo && (
-              <img src={logo} alt="Logo preview" className="w-16 h-16 rounded-lg object-cover border border-border" />
-            )}
+            <MediaInputField
+              inputId="storeLogo"
+              value={logo}
+              onChange={setLogo}
+              uploadFolder={`sellers/${seller.slug}`}
+              previewClassName="w-16 h-16 rounded-lg object-cover border border-border"
+            />
           </div>
 
           <div className="space-y-2">

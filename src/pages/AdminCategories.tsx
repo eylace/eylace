@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { MediaInputField } from '@/components/admin/MediaInputField';
 import {
   Layers,
   Plus,
@@ -385,7 +386,12 @@ const AdminCategories = () => {
               </div>
               <div>
                 <Label>Image URL</Label>
-                <Input value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} placeholder="https://..." />
+                <MediaInputField
+                  value={form.image}
+                  onChange={(url) => setForm(f => ({ ...f, image: url }))}
+                  uploadFolder="categories"
+                  placeholder="https://... or pick from library"
+                />
               </div>
             </div>
           </div>

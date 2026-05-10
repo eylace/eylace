@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { MediaInputField } from '@/components/admin/MediaInputField';
 
 import type { HeroBanner, CheckoutVariantConfig } from '@/hooks/useWebsiteSetup';
 
@@ -835,11 +836,21 @@ const AdminWebsiteSetupPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Logo URL</Label>
-                    <Input value={setup.logoUrl} onChange={e => update('logoUrl', e.target.value)} placeholder="https://..." />
+                    <MediaInputField
+                      value={setup.logoUrl}
+                      onChange={(url) => update('logoUrl', url)}
+                      uploadFolder="branding"
+                      placeholder="https://... or pick from library"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Favicon URL</Label>
-                    <Input value={setup.faviconUrl} onChange={e => update('faviconUrl', e.target.value)} placeholder="https://..." />
+                    <MediaInputField
+                      value={setup.faviconUrl}
+                      onChange={(url) => update('faviconUrl', url)}
+                      uploadFolder="branding"
+                      placeholder="https://... or pick from library"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">

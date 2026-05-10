@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { MediaInputField } from './MediaInputField';
 
 export function AdminProfileMenu() {
   const { user, profile, updateProfile, signOut } = useAuth();
@@ -90,11 +91,12 @@ export function AdminProfileMenu() {
 
           <div className="grid gap-1.5">
             <Label htmlFor="admin-avatar-url">Logo / Avatar URL</Label>
-            <Input
-              id="admin-avatar-url"
+            <MediaInputField
+              inputId="admin-avatar-url"
               value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://..."
+              onChange={setAvatarUrl}
+              uploadFolder="profiles"
+              previewClassName="h-14 w-14 rounded-full object-cover border border-border"
             />
           </div>
         </div>
