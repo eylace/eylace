@@ -86,7 +86,7 @@ export const HeroSection = () => {
                   <div className="max-w-lg animate-fade-in">
                     <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-sm font-bold rounded mb-3">{slide.subtitle}</span>
                     <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3">{slide.title}</h2>
-                    <p className="text-primary-foreground/80 mb-6 text-sm md:text-base">{slide.description}</p>
+                    <p className="text-primary-foreground/90 mb-6 text-sm md:text-base">{slide.description}</p>
                     <Button variant="hero" size="lg" asChild><Link to={slide.ctaLink}>{slide.ctaText}</Link></Button>
                   </div>
                 </div>
@@ -106,12 +106,12 @@ export const HeroSection = () => {
           <Link to="/flash-sale" className="flex-1 bg-gradient-to-br from-destructive to-accent rounded-lg p-5 text-primary-foreground hover:opacity-95 transition-opacity">
             <span className="text-sm font-bold">{t('hero.flashSale')}</span>
             <h3 className="text-xl font-bold mt-1">{t('hero.upTo50')}</h3>
-            <p className="text-sm text-primary-foreground/80 mt-1">{t('hero.limitedTime')}</p>
+            <p className="text-sm text-primary-foreground/90 mt-1">{t('hero.limitedTime')}</p>
           </Link>
           <Link to="/new-arrivals" className="flex-1 bg-gradient-to-br from-success to-prime rounded-lg p-5 text-primary-foreground hover:opacity-95 transition-opacity">
             <span className="text-sm font-bold">{t('hero.newArrivalsTitle')}</span>
             <h3 className="text-xl font-bold mt-1">{t('hero.freshProducts')}</h3>
-            <p className="text-sm text-primary-foreground/80 mt-1">{t('hero.justLanded')}</p>
+            <p className="text-sm text-primary-foreground/90 mt-1">{t('hero.justLanded')}</p>
           </Link>
         </div>
       </div>

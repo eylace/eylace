@@ -68,7 +68,7 @@ export const FlashSaleSection = () => {
           <div className="flex items-center gap-4 px-0">
             {earliestEnd && (
               <div className="flex items-center gap-2">
-                <span className="text-primary-foreground/80 text-sm hidden sm:inline">{t('flashSale.endsIn')}</span>
+                <span className="text-primary-foreground/90 text-sm hidden sm:inline">{t('flashSale.endsIn')}</span>
                 <div className="flex gap-1">
                   {[
                     { val: timeLeft.hours, label: t('flashSale.hours') },

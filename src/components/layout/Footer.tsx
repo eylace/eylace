@@ -75,7 +75,7 @@ export const Footer = () => {
                   <div className="p-3 bg-primary-foreground/10 rounded-lg"><Icon className="h-6 w-6 text-accent" /></div>
                   <div>
                     <p className="font-semibold text-sm">{title}</p>
-                    <p className="text-xs text-primary-foreground/70">{desc}</p>
+                    <p className="text-xs text-primary-foreground/90">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -91,7 +91,7 @@ export const Footer = () => {
             <Link to="/" className="inline-block mb-4">
               <div className="text-2xl font-bold"><span className="text-accent">Ey</span><span>lace</span></div>
             </Link>
-            <p className="text-sm text-primary-foreground/70 mb-4">{setup.footerAboutText || t('footer.aboutText')}</p>
+            <p className="text-sm text-primary-foreground/90 mb-4">{setup.footerAboutText || t('footer.aboutText')}</p>
             {setup.footerShowSocialLinks !== false && (
               <div className="flex gap-3">
                 {socialLinks.map((sl, i) => {
@@ -110,7 +110,7 @@ export const Footer = () => {
           {columns.map((col, ci) => (
             <div key={ci}>
               <h3 className="font-semibold mb-4">{col.title}</h3>
-              <ul className="space-y-2 text-sm text-primary-foreground/70">
+              <ul className="space-y-2 text-sm text-primary-foreground/90">
                 {col.links.map((link, li) => (
                   <li key={li}>
                     {link.url.startsWith('http') ? (
@@ -131,13 +131,13 @@ export const Footer = () => {
             <div className="flex flex-wrap items-center justify-between gap-6">
               {setup.footerShowPaymentIcons !== false && (
                 <div className="flex-1">
-                  <p className="text-sm text-primary-foreground/70 mb-3">{t('footer.weAccept')}</p>
+                  <p className="text-sm text-primary-foreground/90 mb-3">{t('footer.weAccept')}</p>
                   <img src={paymentMethodsImg} alt="Accepted payment methods" className="h-8 w-auto object-contain" />
                 </div>
               )}
               {setup.footerShowDownloadApp !== false && (
                 <div className="text-right">
-                  <p className="text-sm text-primary-foreground/70">{t('footer.downloadApp')}</p>
+                  <p className="text-sm text-primary-foreground/90">{t('footer.downloadApp')}</p>
                   <div className="flex gap-2 mt-2">
                     <a href={setup.footerAppStoreUrl || '#'} className="block hover:opacity-80 transition-opacity">
                       <img src={appStoreBadge} alt="Download on App Store" className="h-12 w-[135px] object-contain" />
@@ -155,7 +155,7 @@ export const Footer = () => {
 
       <div className="bg-primary/50 border-t border-primary-foreground/10">
         <div className="container-main py-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-primary-foreground/70">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-primary-foreground/90">
             <p>{setup.footerCopyright || t('footer.copyright')}</p>
             <div className="flex gap-4">
               <Link to="/privacy" className="hover:text-accent transition-colors">{t('footer.privacy')}</Link>

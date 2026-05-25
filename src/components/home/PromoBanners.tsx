@@ -11,9 +11,9 @@ export const PromoBanners = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-[hsl(199,89%,35%)] to-[hsl(199,89%,48%)]" />
           <div className="relative h-full p-6 flex flex-col justify-between text-primary-foreground">
             <div>
-              <span className="text-sm font-medium text-primary-foreground/80">Up to 40% Off</span>
+              <span className="text-sm font-medium text-primary-foreground/90">Up to 40% Off</span>
               <h3 className="text-2xl font-bold mt-1">Electronics</h3>
-              <p className="text-sm text-primary-foreground/70 mt-1">Latest gadgets & devices</p>
+              <p className="text-sm text-primary-foreground/90 mt-1">Latest gadgets & devices</p>
             </div>
             <span className="text-sm font-semibold group-hover:underline">
               Shop Now →
@@ -28,9 +28,9 @@ export const PromoBanners = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-[hsl(330,60%,40%)] to-[hsl(330,60%,55%)]" />
           <div className="relative h-full p-6 flex flex-col justify-between text-primary-foreground">
             <div>
-              <span className="text-sm font-medium text-primary-foreground/80">New Collection</span>
+              <span className="text-sm font-medium text-primary-foreground/90">New Collection</span>
               <h3 className="text-2xl font-bold mt-1">Fashion</h3>
-              <p className="text-sm text-primary-foreground/70 mt-1">Trending styles & looks</p>
+              <p className="text-sm text-primary-foreground/90 mt-1">Trending styles & looks</p>
             </div>
             <span className="text-sm font-semibold group-hover:underline">
               Shop Now →
@@ -45,9 +45,9 @@ export const PromoBanners = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-[hsl(350,70%,50%)] to-[hsl(20,90%,55%)]" />
           <div className="relative h-full p-6 flex flex-col justify-between text-primary-foreground">
             <div>
-              <span className="text-sm font-medium text-primary-foreground/80">Beauty Sale</span>
+              <span className="text-sm font-medium text-primary-foreground/90">Beauty Sale</span>
               <h3 className="text-2xl font-bold mt-1">Personal Care</h3>
-              <p className="text-sm text-primary-foreground/70 mt-1">Skincare & cosmetics</p>
+              <p className="text-sm text-primary-foreground/90 mt-1">Skincare & cosmetics</p>
             </div>
             <span className="text-sm font-semibold group-hover:underline">
               Shop Now →
