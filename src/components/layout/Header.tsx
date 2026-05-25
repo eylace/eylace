@@ -60,7 +60,7 @@ export const Header = () => {
             >
               <MapPin className="h-4 w-4" />
               <div>
-                <p className="text-xs text-primary-foreground/70">{t('header.deliverTo')}</p>
+                <p className="text-xs text-primary-foreground/90">{t('header.deliverTo')}</p>
                 <p className="font-medium">
                   {deliveryLocation
                     ? (language === 'bn'
@@ -129,7 +129,7 @@ export const Header = () => {
               ) : user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="hidden md:flex flex-col items-start hover:text-accent transition-colors outline-none">
-                    <span className="text-xs text-primary-foreground/70">{t('header.hello')}, {displayName}</span>
+                    <span className="text-xs text-primary-foreground/90">{t('header.hello')}, {displayName}</span>
                     <span className="text-sm font-medium flex items-center gap-1">
                       {t('header.account')} <ChevronDown className="h-3 w-3" />
                     </span>
@@ -170,7 +170,7 @@ export const Header = () => {
                 </DropdownMenu>
               ) : (
                 <Link to="/auth" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
-                  <span className="text-xs text-primary-foreground/70">{t('header.signIn')}</span>
+                  <span className="text-xs text-primary-foreground/90">{t('header.signIn')}</span>
                   <span className="text-sm font-medium flex items-center gap-1">
                     {t('header.account')} <ChevronDown className="h-3 w-3" />
                   </span>
@@ -178,7 +178,7 @@ export const Header = () => {
               )}
 
               <Link to="/account?tab=orders" className="hidden md:flex flex-col items-start hover:text-accent transition-colors">
-                <span className="text-xs text-primary-foreground/70">{t('header.returns')}</span>
+                <span className="text-xs text-primary-foreground/90">{t('header.returns')}</span>
                 <span className="text-sm font-medium">{t('header.orders')}</span>
               </Link>
 
