@@ -31,6 +31,11 @@ const ContactUs = () => {
 
   return (
     <Layout>
+      <SeoHead
+        title="Contact Eylace — Support, Sales & Office Address"
+        description="Reach Eylace customer support by email, phone or in person at our Dhaka office. We reply within 24 hours."
+        path="/contact"
+      />
       <section className="bg-primary text-primary-foreground py-16">
         <div className="container-main text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Contact Us</h1>

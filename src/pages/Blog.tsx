@@ -23,6 +23,11 @@ const Blog = () => {
 
   return (
     <Layout>
+      <SeoHead
+        title="Eylace Blog — Shopping Tips, Tech & Fashion News"
+        description="Reviews, buying guides, fashion trends and the latest e-commerce news from the Eylace editorial team."
+        path="/blog"
+      />
       <section className="bg-primary text-primary-foreground py-16">
         <div className="container-main text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Eylace Blog</h1>
