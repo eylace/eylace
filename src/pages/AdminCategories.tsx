@@ -394,6 +394,7 @@ const AdminCategories = () => {
                   maxSizeBytes={2 * 1024 * 1024}
                   maxWidth={1600}
                   maxHeight={1600}
+                  processImage={{ maxWidth: 1200, maxHeight: 1200, quality: 0.85, mimeType: 'image/webp' }}
                 />
               </div>
             </div>
