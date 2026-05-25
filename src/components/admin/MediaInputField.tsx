@@ -106,7 +106,7 @@ export function MediaInputField({
     setValidating(true);
     const result = await validateAsset(url, { maxSizeBytes, maxWidth, maxHeight, minWidth, minHeight });
     setValidating(false);
-    if (!result.ok) {
+    if (result.ok === false) {
       toast.error(result.reason);
       onChange('');
     }
