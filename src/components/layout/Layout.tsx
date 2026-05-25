@@ -105,6 +105,40 @@ export const Layout = ({ children }: LayoutProps) => {
     };
   }, [setup.fontFamily, setup.headingFont, setup.fontSize, setup.customCss, setup.primaryColor, setup.accentColor, setup.borderRadius]);
 
+  // Apply favicon dynamically with cache-busting so changes appear instantly
+  // without users needing a hard reload. We hash the URL itself so the
+  // version token only changes when the underlying icon does.
+  useEffect(() => {
+    const raw = (setup.faviconUrl || '').trim();
+    if (!raw) return;
+
+    // djb2 hash → short stable fingerprint per URL
+    let hash = 5381;
+    for (let i = 0; i < raw.length; i++) hash = ((hash << 5) + hash + raw.charCodeAt(i)) | 0;
+    const version = (hash >>> 0).toString(36);
+    const busted = raw + (raw.includes('?') ? '&' : '?') + 'v=' + version;
+
+    const isSvg = /\.svg(\?|#|$)/i.test(raw);
+    const type = isSvg ? 'image/svg+xml' : raw.match(/\.(png|jpe?g|webp|ico|gif)/i)
+      ? `image/${raw.match(/\.(png|jpe?g|webp|ico|gif)/i)![1].toLowerCase().replace('jpg', 'jpeg')}`
+      : 'image/png';
+
+    // Remove ALL existing icon links to avoid stacking duplicates from index.html
+    Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'))
+      .forEach((el) => el.parentNode?.removeChild(el));
+
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = type;
+    link.href = busted;
+    document.head.appendChild(link);
+
+    const apple = document.createElement('link');
+    apple.rel = 'apple-touch-icon';
+    apple.href = busted;
+    document.head.appendChild(apple);
+  }, [setup.faviconUrl]);
+
   return (
     <div className="flex flex-col min-h-screen" style={{ fontFamily: `var(--font-body, 'Inter'), sans-serif` }}>
       <TopBar />
