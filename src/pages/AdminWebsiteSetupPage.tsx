@@ -841,6 +841,9 @@ const AdminWebsiteSetupPage = () => {
                       onChange={(url) => update('logoUrl', url)}
                       uploadFolder="branding"
                       placeholder="https://... or pick from library"
+                      maxSizeBytes={2 * 1024 * 1024}
+                      maxWidth={1024}
+                      maxHeight={1024}
                     />
                   </div>
                   <div className="space-y-2">
@@ -850,6 +853,9 @@ const AdminWebsiteSetupPage = () => {
                       onChange={(url) => update('faviconUrl', url)}
                       uploadFolder="branding"
                       placeholder="https://... or pick from library"
+                      maxSizeBytes={256 * 1024}
+                      maxWidth={256}
+                      maxHeight={256}
                     />
                   </div>
                 </div>
