@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://eylace.lovable.app/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://eylace.lovable.app/categories</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://eylace.lovable.app/search</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://eylace.lovable.app/deals</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://eylace.lovable.app/flash-sale</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://eylace.lovable.app/best-sellers</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://eylace.lovable.app/new-arrivals</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://eylace.lovable.app/trending</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://eylace.lovable.app/blog</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://eylace.lovable.app/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/faq</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://eylace.lovable.app/help</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/shipping</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/returns</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/track-order</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/privacy-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://eylace.lovable.app/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://eylace.lovable.app/cookie-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://eylace.lovable.app/seller-center</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/seller-registration</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/seller-policies</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://eylace.lovable.app/seller-support</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://eylace.lovable.app/delivery-partner</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://eylace.lovable.app/affiliate-program</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://eylace.lovable.app/advertise-with-us</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://eylace.lovable.app/careers</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+</urlset>

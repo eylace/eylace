@@ -1,6 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Users, Target, Eye, Award, ShoppingBag, Globe, Headphones, TrendingUp } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const stats = [
   { icon: ShoppingBag, value: '50,000+', label: 'Products' },
@@ -25,6 +26,11 @@ const team = [
 
 const AboutUs = () => (
   <Layout>
+    <SeoHead
+      title="About Eylace — Bangladesh's Trusted Online Marketplace"
+      description="Eylace connects millions of buyers with thousands of sellers across 64 districts. Learn about our mission, vision and team."
+      path="/about"
+    />
     {/* Hero */}
     <section className="bg-primary text-primary-foreground py-16">
       <div className="container-main text-center">

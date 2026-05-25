@@ -7,6 +7,7 @@ import { HelpCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { SeoHead } from "@/components/seo/SeoHead";
 
 type FAQItem = { q: string; a: string; cat: string };
 
@@ -55,6 +56,20 @@ const FAQ = () => {
 
   return (
     <Layout>
+      <SeoHead
+        title="FAQ — Orders, Payment, Shipping & Returns | Eylace"
+        description="Answers to common questions about ordering, payment methods, delivery, returns and your Eylace account in Bangladesh."
+        path="/faq"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: allFaqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }}
+      />
       <div className="min-h-screen bg-background">
         {/* Hero */}
         <div className="bg-primary text-primary-foreground py-16">
