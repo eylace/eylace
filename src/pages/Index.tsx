@@ -9,6 +9,7 @@ import { SmartBar } from '@/components/home/SmartBar';
 import { BannerAdsSection } from '@/components/home/BannerAdsSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const Index = () => {
   const { t } = useLanguage();
@@ -16,6 +17,11 @@ const Index = () => {
 
   return (
     <Layout>
+      <SeoHead
+        title="Eylace — Online Shopping in Bangladesh, Best Prices & Fast Delivery"
+        description="Shop electronics, fashion, home essentials and more on Eylace. Nationwide delivery, secure payment with bKash, Nagad & cards."
+        path="/"
+      />
       <SmartBar />
       {setup.homepageBannerEnabled && <HeroSection />}
       {setup.homepageFeaturedCategories && <CategoriesSection />}
