@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Mail, Phone, MapPin, Clock, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const contactInfo = [
   { icon: Mail, title: 'Email Us', value: 'support@eylace.com', sub: 'We reply within 24 hours' },

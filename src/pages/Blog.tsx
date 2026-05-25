@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, ArrowRight } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const categories = ['All', 'Shopping Tips', 'Tech', 'Fashion', 'Home', 'News'];
 

@@ -1,6 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Users, Target, Eye, Award, ShoppingBag, Globe, Headphones, TrendingUp } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const stats = [
   { icon: ShoppingBag, value: '50,000+', label: 'Products' },
