@@ -1,0 +1,29 @@
+# Eylace
+
+> Eylace is a multi-vendor e-commerce marketplace in Bangladesh offering electronics, fashion, home and lifestyle products with nationwide delivery and local payment methods (bKash, Nagad, Rocket, COD).
+
+## Pages
+
+- [Home](/): Featured products, deals and category browse.
+- [Categories](/categories): Full product category directory.
+- [Deals](/deals): Current discounts and offers.
+- [Flash Sale](/flash-sale): Time-limited promotional sales.
+- [Best Sellers](/best-sellers): Top-selling products.
+- [New Arrivals](/new-arrivals): Recently launched products.
+- [Trending](/trending): Popular products right now.
+- [Blog](/blog): Shopping tips, tech and fashion editorial.
+- [About](/about): Company mission, vision and team.
+- [Contact](/contact): Support email, phone and office address.
+- [FAQ](/faq): Common questions on orders, payment, shipping, returns and accounts.
+- [Help Center](/help): Self-service help articles.
+- [Shipping Info](/shipping): Delivery times, costs and coverage.
+- [Returns & Refunds](/returns): Return policy and process.
+- [Track Order](/track-order): Look up an order by number.
+- [Seller Center](/seller-center): Information for prospective sellers.
+- [Affiliate Program](/affiliate-program): Earn commission referring sales.
+
+## Optional
+
+- [Privacy Policy](/privacy-policy)
+- [Terms & Conditions](/terms)
+- [Cookie Policy](/cookie-policy)
