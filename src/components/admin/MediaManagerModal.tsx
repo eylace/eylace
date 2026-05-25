@@ -11,6 +11,7 @@ import { deleteMediaFiles } from '@/lib/mediaManager';
 import { MediaLibraryGrid } from './media-manager/MediaLibraryGrid';
 import { MediaUploadPanel } from './media-manager/MediaUploadPanel';
 import { classifyMediaKind, getUploadLimit, matchesAcceptedKinds } from './media-manager/media-utils';
+import { maybeProcessRasterImage } from './media-manager/image-processing';
 import {
   clearMediaFilesPendingDeletion,
   createMediaFileFromUpload,
