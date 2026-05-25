@@ -391,6 +391,9 @@ const AdminCategories = () => {
                   onChange={(url) => setForm(f => ({ ...f, image: url }))}
                   uploadFolder="categories"
                   placeholder="https://... or pick from library"
+                  maxSizeBytes={2 * 1024 * 1024}
+                  maxWidth={1600}
+                  maxHeight={1600}
                 />
               </div>
             </div>

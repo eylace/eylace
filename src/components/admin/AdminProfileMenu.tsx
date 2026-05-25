@@ -97,6 +97,9 @@ export function AdminProfileMenu() {
               onChange={setAvatarUrl}
               uploadFolder="profiles"
               previewClassName="h-14 w-14 rounded-full object-cover border border-border"
+              maxSizeBytes={1 * 1024 * 1024}
+              maxWidth={1024}
+              maxHeight={1024}
             />
           </div>
         </div>

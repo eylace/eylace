@@ -58,6 +58,9 @@ export const SellerStoreSettings = ({ seller, onUpdate }: SellerStoreSettingsPro
               onChange={setLogo}
               uploadFolder={`sellers/${seller.slug}`}
               previewClassName="w-16 h-16 rounded-lg object-cover border border-border"
+              maxSizeBytes={2 * 1024 * 1024}
+              maxWidth={1024}
+              maxHeight={1024}
             />
           </div>
 
