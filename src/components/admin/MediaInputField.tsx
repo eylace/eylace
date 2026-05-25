@@ -26,6 +26,12 @@ interface MediaInputFieldProps {
   minWidth?: number;
   /** Min image height in pixels. */
   minHeight?: number;
+  /**
+   * If set, raster images uploaded through the Media Manager are auto-resized
+   * and re-encoded client-side before being saved to storage. SVG files pass
+   * through untouched.
+   */
+  processImage?: { maxWidth?: number; maxHeight?: number; quality?: number; mimeType?: 'image/webp' | 'image/jpeg' | 'image/png' };
 }
 
 const formatBytes = (b: number) => {
@@ -33,6 +39,8 @@ const formatBytes = (b: number) => {
   if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
   return `${(b / (1024 * 1024)).toFixed(1)} MB`;
 };
+
+const isSvgUrl = (url: string) => /\.svg(\?|#|$)/i.test(url);
 
 async function validateAsset(
   url: string,
@@ -56,6 +64,8 @@ async function validateAsset(
 
   // Dimension check via Image load
   if (opts.maxWidth || opts.maxHeight || opts.minWidth || opts.minHeight) {
+    // SVGs are vector — pixel dimension checks don't apply.
+    if (isSvgUrl(url)) return { ok: true };
     const dims = await new Promise<{ w: number; h: number } | null>((resolve) => {
       const img = new Image();
       img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
@@ -91,6 +101,7 @@ export function MediaInputField({
   maxHeight,
   minWidth,
   minHeight,
+  processImage,
 }: MediaInputFieldProps) {
   const [open, setOpen] = useState(false);
   const [validating, setValidating] = useState(false);
@@ -168,6 +179,7 @@ export function MediaInputField({
         multiple={false}
         acceptedKinds={acceptedKinds}
         uploadFolder={uploadFolder}
+        processImage={processImage}
         onSelect={(urls) => {
           if (urls[0]) void applyWithValidation(urls[0]);
         }}

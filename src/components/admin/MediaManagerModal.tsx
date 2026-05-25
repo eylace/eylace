@@ -11,6 +11,7 @@ import { deleteMediaFiles } from '@/lib/mediaManager';
 import { MediaLibraryGrid } from './media-manager/MediaLibraryGrid';
 import { MediaUploadPanel } from './media-manager/MediaUploadPanel';
 import { classifyMediaKind, getUploadLimit, matchesAcceptedKinds } from './media-manager/media-utils';
+import { maybeProcessRasterImage } from './media-manager/image-processing';
 import {
   clearMediaFilesPendingDeletion,
   createMediaFileFromUpload,
@@ -30,6 +31,16 @@ interface MediaManagerModalProps {
   multiple?: boolean;
   acceptedKinds?: MediaKind[];
   uploadFolder?: string;
+  /**
+   * Optional client-side resize/compress applied to raster images before
+   * upload. SVGs and non-image files are passed through untouched.
+   */
+  processImage?: {
+    maxWidth?: number;
+    maxHeight?: number;
+    quality?: number;
+    mimeType?: 'image/webp' | 'image/jpeg' | 'image/png';
+  };
 }
 
 export function MediaManagerModal({
@@ -39,6 +50,7 @@ export function MediaManagerModal({
   multiple = false,
   acceptedKinds = ['image'],
   uploadFolder = 'uploads',
+  processImage,
 }: MediaManagerModalProps) {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('library');
@@ -127,11 +139,17 @@ export function MediaManagerModal({
 
       if (!validFiles.length) return;
 
+      const processedFiles = processImage
+        ? await Promise.all(validFiles.map((f) => maybeProcessRasterImage(f, processImage)))
+        : validFiles;
+
       const uploadedFiles = await Promise.allSettled(
-        validFiles.map(async (file) => {
+        processedFiles.map(async (file) => {
           const extension = file.name.split('.').pop();
           const path = `${uploadFolder}/${Date.now()}_${Math.random().toString(36).slice(2)}${extension ? `.${extension}` : ''}`;
-          const { error } = await supabase.storage.from('product-images').upload(path, file);
+          const { error } = await supabase.storage
+            .from('product-images')
+            .upload(path, file, { contentType: file.type || undefined });
           if (error) throw error;
 
           return createMediaFileFromUpload(file, path);
@@ -162,7 +180,7 @@ export function MediaManagerModal({
     } finally {
       setUploading(false);
     }
-  }, [acceptedKinds, multiple, queryClient, uploadFolder]);
+  }, [acceptedKinds, multiple, queryClient, uploadFolder, processImage]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();

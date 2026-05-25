@@ -100,6 +100,7 @@ export function AdminProfileMenu() {
               maxSizeBytes={1 * 1024 * 1024}
               maxWidth={1024}
               maxHeight={1024}
+              processImage={{ maxWidth: 512, maxHeight: 512, quality: 0.85, mimeType: 'image/webp' }}
             />
           </div>
         </div>
