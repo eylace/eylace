@@ -126,12 +126,14 @@ export default function AdminTrackingAnalytics() {
   const connectedCount = [
     settings.gtm.enabled && settings.gtm.containerId,
     settings.facebookCapi.enabled && settings.facebookCapi.pixelId && settings.facebookCapi.accessToken,
+    settings.metaPixel?.enabled && settings.metaPixel?.pixelId,
     settings.ga4Client.enabled && settings.ga4Client.measurementId,
     settings.ga4Server.enabled && settings.ga4Server.measurementId,
     settings.tiktok.enabled && settings.tiktok.pixelId,
     settings.clarity.enabled && settings.clarity.projectId,
     settings.lookerStudio.enabled && settings.lookerStudio.reportUrl,
     settings.searchConsole.enabled && (settings.searchConsole.verificationCode || settings.searchConsole.metaTag),
+    settings.customScript?.enabled && (settings.customScript?.headHtml || settings.customScript?.bodyHtml),
   ].filter(Boolean).length;
 
   return (
@@ -143,7 +145,7 @@ export default function AdminTrackingAnalytics() {
             <Switch checked={settings.globalEnabled} onCheckedChange={v => update('globalEnabled', v)} />
             <div>
               <p className="text-sm font-semibold text-foreground">Global Tracking</p>
-              <p className="text-xs text-muted-foreground">{settings.globalEnabled ? 'Active' : 'Disabled'} · {connectedCount}/8 connected</p>
+              <p className="text-xs text-muted-foreground">{settings.globalEnabled ? 'Active' : 'Disabled'} · {connectedCount}/10 connected</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -157,17 +159,70 @@ export default function AdminTrackingAnalytics() {
         </Button>
       </div>
 
-      <Tabs defaultValue="gtm" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <TabsTrigger value="home" className="text-xs gap-1.5"><Home className="h-3.5 w-3.5" />Home</TabsTrigger>
+          <TabsTrigger value="ga4-client" className="text-xs gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Google Analytics (GA4)</TabsTrigger>
           <TabsTrigger value="gtm" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />GTM</TabsTrigger>
-          <TabsTrigger value="facebook" className="text-xs gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />Facebook CAPI</TabsTrigger>
-          <TabsTrigger value="ga4-client" className="text-xs gap-1.5"><BarChart3 className="h-3.5 w-3.5" />GA4 Client</TabsTrigger>
+          <TabsTrigger value="meta-pixel" className="text-xs gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />Meta Pixel</TabsTrigger>
+          <TabsTrigger value="facebook" className="text-xs gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />Meta Conversion API</TabsTrigger>
           <TabsTrigger value="ga4-server" className="text-xs gap-1.5"><RefreshCw className="h-3.5 w-3.5" />GA4 Server</TabsTrigger>
           <TabsTrigger value="tiktok" className="text-xs gap-1.5"><Play className="h-3.5 w-3.5" />TikTok</TabsTrigger>
           <TabsTrigger value="clarity" className="text-xs gap-1.5"><Eye className="h-3.5 w-3.5" />Clarity</TabsTrigger>
+          <TabsTrigger value="custom" className="text-xs gap-1.5"><Code2 className="h-3.5 w-3.5" />Custom Script</TabsTrigger>
           <TabsTrigger value="looker" className="text-xs gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Looker Studio</TabsTrigger>
           <TabsTrigger value="search-console" className="text-xs gap-1.5"><Search className="h-3.5 w-3.5" />Search Console</TabsTrigger>
+          <TabsTrigger value="sitemap" className="text-xs gap-1.5"><Map className="h-3.5 w-3.5" />Sitemap Generator</TabsTrigger>
+          <TabsTrigger value="seo" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />Global SEO</TabsTrigger>
         </TabsList>
+
+        {/* Home overview */}
+        <TabsContent value="home">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5 text-accent" />Marketing Analytics Home</CardTitle>
+              <CardDescription>Overview of all tracking & analytics integrations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { label: 'Google Analytics (GA4)', tab: 'ga4-client', status: getStatus(settings.ga4Client.enabled, settings.ga4Client.measurementId) },
+                  { label: 'Google Tag Manager', tab: 'gtm', status: getStatus(settings.gtm.enabled, settings.gtm.containerId) },
+                  { label: 'Meta Pixel', tab: 'meta-pixel', status: getStatus(settings.metaPixel?.enabled || false, settings.metaPixel?.pixelId || '') },
+                  { label: 'Meta Conversion API', tab: 'facebook', status: getStatus(settings.facebookCapi.enabled, settings.facebookCapi.pixelId, settings.facebookCapi.accessToken) },
+                  { label: 'GA4 Server-Side', tab: 'ga4-server', status: getStatus(settings.ga4Server.enabled, settings.ga4Server.measurementId) },
+                  { label: 'TikTok Pixel', tab: 'tiktok', status: getStatus(settings.tiktok.enabled, settings.tiktok.pixelId) },
+                  { label: 'Microsoft Clarity', tab: 'clarity', status: getStatus(settings.clarity.enabled, settings.clarity.projectId) },
+                  { label: 'Custom Script', tab: 'custom', status: getStatus(settings.customScript?.enabled || false, (settings.customScript?.headHtml || '') + (settings.customScript?.bodyHtml || '')) },
+                  { label: 'Looker Studio', tab: 'looker', status: getStatus(settings.lookerStudio.enabled, settings.lookerStudio.reportUrl) },
+                  { label: 'Search Console', tab: 'search-console', status: getStatus(settings.searchConsole.enabled, settings.searchConsole.verificationCode || settings.searchConsole.metaTag) },
+                ].map(item => (
+                  <button key={item.tab} onClick={() => setActiveTab(item.tab)} className="text-left p-4 rounded-lg border border-border hover:border-accent/50 hover:bg-accent/5 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold">{item.label}</span>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Click to configure</span>
+                  </button>
+                ))}
+                <Link to="/admin/system/sitemap" className="text-left p-4 rounded-lg border border-border hover:border-accent/50 hover:bg-accent/5 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold">Sitemap Generator</span>
+                    <Badge variant="outline" className="gap-1"><ExternalLink className="h-3 w-3" />Open</Badge>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Generate & submit XML sitemap</span>
+                </Link>
+                <Link to="/admin/seo" className="text-left p-4 rounded-lg border border-border hover:border-accent/50 hover:bg-accent/5 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold">Global SEO</span>
+                    <Badge variant="outline" className="gap-1"><ExternalLink className="h-3 w-3" />Open</Badge>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Site-wide SEO & meta defaults</span>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* GTM */}
         <TabsContent value="gtm">
