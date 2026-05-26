@@ -349,7 +349,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
               {openSections.has(sectionKey) ? <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-70" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />}
             </SidebarGroupLabel>
           </CollapsibleTrigger>
-          <CollapsibleContent className="pl-4 ml-2 border-l border-sidebar-border/60 mt-1">
+          <CollapsibleContent className="pl-2 border-l border-sidebar-border/60 mt-1">
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {items.map((item) => {
