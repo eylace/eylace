@@ -498,6 +498,79 @@ export default function AdminTrackingAnalytics() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Custom Script */}
+        <TabsContent value="custom">
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2"><Code2 className="h-5 w-5 text-foreground" />Custom Script</CardTitle>
+                <CardDescription>Inject custom HTML/JavaScript into the page head or body (e.g. Hotjar, Crisp, custom pixels)</CardDescription>
+              </div>
+              <StatusBadge status={getStatus(settings.customScript?.enabled || false, (settings.customScript?.headHtml || '') + (settings.customScript?.bodyHtml || ''))} />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Switch checked={!!settings.customScript?.enabled} onCheckedChange={v => updateNested('customScript', 'enabled', v)} />
+                <Label>Enable Custom Scripts</Label>
+              </div>
+              <div className="space-y-2">
+                <Label>Head HTML <span className="text-xs text-muted-foreground">(injected before &lt;/head&gt;)</span></Label>
+                <Textarea
+                  rows={6}
+                  placeholder={'<!-- Paste <script> or <meta> tags here -->'}
+                  className="font-mono text-xs"
+                  value={settings.customScript?.headHtml || ''}
+                  onChange={e => updateNested('customScript', 'headHtml', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Body HTML <span className="text-xs text-muted-foreground">(injected before &lt;/body&gt;)</span></Label>
+                <Textarea
+                  rows={6}
+                  placeholder={'<!-- Paste chat widgets, noscript pixels, etc. -->'}
+                  className="font-mono text-xs"
+                  value={settings.customScript?.bodyHtml || ''}
+                  onChange={e => updateNested('customScript', 'bodyHtml', e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                Only paste scripts from trusted sources. Custom HTML is injected into your live site for every visitor.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Sitemap Generator (link out) */}
+        <TabsContent value="sitemap">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2"><Map className="h-5 w-5 text-emerald-500" />Sitemap Generator</CardTitle>
+              <CardDescription>Generate and submit your XML sitemap for SEO</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="accent" className="gap-2">
+                <Link to="/admin/system/sitemap"><ExternalLink className="h-4 w-4" />Open Sitemap Generator</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Global SEO (link out) */}
+        <TabsContent value="seo">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2"><Globe className="h-5 w-5 text-blue-500" />Global SEO</CardTitle>
+              <CardDescription>Site-wide meta tags, Open Graph, structured data</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="accent" className="gap-2">
+                <Link to="/admin/seo"><ExternalLink className="h-4 w-4" />Open Global SEO Settings</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </AdminLayout>
   );
