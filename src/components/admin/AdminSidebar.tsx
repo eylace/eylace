@@ -316,7 +316,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             const title = t(item.titleKey as TranslationKey);
             return (
               <SidebarMenuItem key={item.titleKey}>
-                <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/15 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent data-[active=true]:hover:!bg-accent/15 data-[active=true]:hover:!text-white [&[data-active=true]:hover_span]:!text-white">
+                <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/15 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent data-[active=true]:hover:!bg-accent/15 data-[active=true]:hover:!text-black [&[data-active=true]:hover_span]:!text-black">
                   <NavLink to={item.url} end={item.url === '/admin'} className="">
                     <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                       <item.icon className="h-3 w-3 text-accent-foreground" />
@@ -356,7 +356,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
                   const title = t(item.titleKey as TranslationKey);
                   return (
                     <SidebarMenuItem key={item.titleKey}>
-                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/15 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent data-[active=true]:hover:!bg-accent/15 data-[active=true]:hover:!text-white [&[data-active=true]:hover_span]:!text-white">
+                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/15 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent data-[active=true]:hover:!bg-accent/15 data-[active=true]:hover:!text-black [&[data-active=true]:hover_span]:!text-black">
                         <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="text-xs pl-2 gap-2">
                           <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                             <item.icon className="h-3 w-3 text-accent-foreground" />
@@ -399,7 +399,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media" className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/10 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent data-[active=true]:hover:!bg-accent/10 data-[active=true]:hover:!text-white [&[data-active=true]:hover_span]:!text-white">
+                  <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media" className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/10 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent data-[active=true]:hover:!bg-accent/10 data-[active=true]:hover:!text-black [&[data-active=true]:hover_span]:!text-black">
                     <NavLink to={uploadMediaItem.url} className="">
                       <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                         <uploadMediaItem.icon className="h-3 w-3 text-accent-foreground" />
