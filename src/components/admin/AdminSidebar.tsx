@@ -349,7 +349,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
               {openSections.has(sectionKey) ? <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-70" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />}
             </SidebarGroupLabel>
           </CollapsibleTrigger>
-          <CollapsibleContent>
+          <CollapsibleContent className="pl-4 ml-2 border-l border-sidebar-border/60 mt-1">
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {items.map((item) => {
@@ -357,7 +357,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
                   return (
                     <SidebarMenuItem key={item.titleKey}>
                       <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 data-[active=true]:bg-accent/15 data-[active=true]:border-r-2 data-[active=true]:border-accent">
-                        <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="hover:bg-sidebar-accent/50 text-xs pl-2" activeClassName="bg-accent/15 text-accent font-semibold border-r-2 border-accent">
+                        <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="hover:bg-sidebar-accent/50 text-xs pl-2 gap-2" activeClassName="bg-accent/15 text-accent font-semibold border-r-2 border-accent">
                           <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                             <item.icon className="h-3 w-3 text-accent-foreground" />
                           </span>
