@@ -1,4 +1,8 @@
-/* Font loaded via index.html preload for non-blocking rendering */
+/* Self-hosted Inter (weights 400/500/600/700) — no render-blocking external CSS */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
 @tailwind base;
 @tailwind components;
