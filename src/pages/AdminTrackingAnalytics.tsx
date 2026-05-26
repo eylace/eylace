@@ -160,7 +160,7 @@ export default function AdminTrackingAnalytics() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
+        <TabsList className="sr-only">
           <TabsTrigger value="home" className="text-xs gap-1.5"><Home className="h-3.5 w-3.5" />Home</TabsTrigger>
           <TabsTrigger value="ga4-client" className="text-xs gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Google Analytics (GA4)</TabsTrigger>
           <TabsTrigger value="gtm" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />GTM</TabsTrigger>
