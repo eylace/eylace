@@ -192,17 +192,30 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
   const contentItems = [
     { titleKey: 'admin.reports' as TranslationKey, url: '/admin/reports', icon: BarChart3 },
-    { titleKey: 'admin.trackingAnalytics' as TranslationKey, url: '/admin/tracking', icon: Activity },
     { titleKey: 'admin.notifications' as TranslationKey, url: '/admin/notifications', icon: Bell },
   ];
 
   const systemItems = [
     { titleKey: 'admin.userRoles' as TranslationKey, url: '/admin/user-roles', icon: Shield },
     { titleKey: 'admin.pages' as TranslationKey, url: '/admin/pages', icon: FileText },
-    { titleKey: 'admin.seoAnalytics' as TranslationKey, url: '/admin/seo', icon: Globe },
     { titleKey: 'admin.system.update' as TranslationKey, url: '/admin/system/update', icon: RefreshCw },
     { titleKey: 'admin.system.serverStatus' as TranslationKey, url: '/admin/system/server-status', icon: Server },
-    { titleKey: 'admin.system.sitemap' as TranslationKey, url: '/admin/system/sitemap', icon: Map },
+  ];
+
+  const trackingItems: NavItem[] = [
+    { titleKey: 'Marketing Analytics Home', url: '/admin/tracking?tab=home', icon: Activity },
+    { titleKey: 'Google Analytics (GA4)', url: '/admin/tracking?tab=ga4-client', icon: BarChart3 },
+    { titleKey: 'Google Tag Manager', url: '/admin/tracking?tab=gtm', icon: Globe },
+    { titleKey: 'Meta Pixel', url: '/admin/tracking?tab=meta-pixel', icon: MousePointerClick },
+    { titleKey: 'Meta Conversion API', url: '/admin/tracking?tab=facebook', icon: MousePointerClick },
+    { titleKey: 'GA4 Server-Side', url: '/admin/tracking?tab=ga4-server', icon: RefreshCw },
+    { titleKey: 'TikTok Pixel', url: '/admin/tracking?tab=tiktok', icon: Activity },
+    { titleKey: 'Microsoft Clarity', url: '/admin/tracking?tab=clarity', icon: Eye },
+    { titleKey: 'Custom Script', url: '/admin/tracking?tab=custom', icon: FileText },
+    { titleKey: 'Looker Studio', url: '/admin/tracking?tab=looker', icon: BarChart3 },
+    { titleKey: 'Search Console', url: '/admin/tracking?tab=search-console', icon: Globe },
+    { titleKey: 'Sitemap Generator', url: '/admin/system/sitemap', icon: Map },
+    { titleKey: 'Global SEO', url: '/admin/seo', icon: Globe },
   ];
 
   const websiteSetupItems: NavItem[] = [
