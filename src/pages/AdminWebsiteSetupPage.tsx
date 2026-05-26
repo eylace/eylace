@@ -185,7 +185,7 @@ const AdminWebsiteSetupPage = () => {
   const [addPageOpen, setAddPageOpen] = useState(false);
   const [newPage, setNewPage] = useState({ title: '', slug: '', content: '' });
   const [editCheckoutVariant, setEditCheckoutVariant] = useState<string | null>(null);
-  const activeTab = searchParams.get('tab') || 'homepage';
+  const activeTab = searchParams.get('tab') || 'branding';
   const setActiveTab = (tab: string) => setSearchParams({ tab });
 
   const defaultVariantCfg: CheckoutVariantConfig = {
