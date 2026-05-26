@@ -385,6 +385,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
         {renderCollapsible('accounting', 'Accounting Management', Calculator, accountingItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
+        {renderCollapsible('trackingAnalytics', 'Tracking & Analytics', Activity, trackingItems)}
         {canAccess('system') && renderGroup('admin.group.system', systemItems)}
         {renderCollapsible('websiteSetup', 'admin.websiteSetup', Monitor, websiteSetupItems)}
         {renderCollapsible('settings', 'admin.settings', Settings, settingsItems)}
