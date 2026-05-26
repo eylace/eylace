@@ -268,6 +268,43 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
   const isProductSectionActive = productItems.some(i => isActive(i.url));
 
+  // Auto-open the collapsible group that contains the currently active route,
+  // so the section stays expanded when navigating to a sub-item.
+  const sectionMap: Record<string, NavItem[]> = {
+    orders: orderItems,
+    ai: aiItems,
+    products: productItems,
+    customers: customerItems,
+    sellers: sellerItems,
+    stockManagement: stockItems,
+    preorder: preorderItems,
+    otp: otpItems,
+    marketing: marketingItems,
+    support: supportItems,
+    affiliateSystem: affiliateItems,
+    clubPoint: clubPointItems,
+    blogSystem: blogItems,
+    refunds: refundItems,
+    accounting: accountingItems,
+    system: systemItems,
+    trackingAnalytics: trackingItems,
+    websiteSetup: websiteSetupItems,
+  };
+  useEffect(() => {
+    const activeKey = Object.entries(sectionMap).find(([, items]) =>
+      items.some(i => isActive(i.url))
+    )?.[0];
+    if (activeKey) {
+      setOpenSections(prev => {
+        if (prev.has(activeKey)) return prev;
+        const next = new Set(prev);
+        next.add(activeKey);
+        return next;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPath, location.search]);
+
   const renderGroup = (labelKey: TranslationKey, items: typeof mainItems) => (
     <SidebarGroup className="py-1">
       <SidebarGroupLabel className="text-[11px] tracking-tight text-foreground font-bold h-6 px-2 mb-0.5 whitespace-nowrap overflow-hidden">
