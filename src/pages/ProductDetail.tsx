@@ -14,6 +14,7 @@ import { VariationSelector } from '@/components/products/VariationSelector';
 import { QuantitySelector } from '@/components/products/QuantitySelector';
 import { ReviewsSection } from '@/components/products/ReviewsSection';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductGrid } from '@/components/products/ProductGrid';
 import { useProduct, useProducts } from '@/hooks/useProducts';
 import { adaptDBProduct, adaptDBProducts } from '@/lib/productAdapter';
 import { supabase } from '@/integrations/supabase/client';
@@ -660,11 +661,11 @@ const ProductDetail = () => {
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
             {t('product.relatedProducts')}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <ProductGrid>
             {relatedProducts.slice(0, 5).map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
-          </div>
+          </ProductGrid>
         </section>
 
         {/* Recently Viewed */}
@@ -672,11 +673,11 @@ const ProductDetail = () => {
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-6">
             {t('product.recentlyViewed')}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <ProductGrid>
             {relatedProducts.slice(0, 5).map((p) => (
               <ProductCard key={p.id} product={p} />
             ))}
-          </div>
+          </ProductGrid>
         </section>
       </div>
     </Layout>

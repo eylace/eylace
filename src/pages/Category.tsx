@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Filter, Grid, List, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductGrid } from '@/components/products/ProductGrid';
 import { SearchFiltersPanel } from '@/components/search/SearchFilters';
 import { Button } from '@/components/ui/button';
 import {
@@ -243,21 +244,19 @@ const Category = () => {
                 </Button>
               </div> :
 
-            <div
-              className={cn(
-                viewMode === 'grid' ?
-                'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4' :
-                'space-y-4'
-              )}>
-              
-                {categoryProducts.map((product) =>
-              <ProductCard
-                key={product.id}
-                product={product}
-                variant={viewMode === 'list' ? 'horizontal' : 'default'} />
-
-              )}
+            viewMode === 'grid' ? (
+              <ProductGrid maxCols={4}>
+                {categoryProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </ProductGrid>
+            ) : (
+              <div className="space-y-4">
+                {categoryProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} variant="horizontal" />
+                ))}
               </div>
+            )
             }
           </div>
         </div>

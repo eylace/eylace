@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductGrid } from '@/components/products/ProductGrid';
 import { useProducts } from '@/hooks/useProducts';
 import { adaptDBProducts } from '@/lib/productAdapter';
 import { Loader2, Zap, Timer } from 'lucide-react';
@@ -123,10 +124,10 @@ export default function FlashSale() {
               <h2 className="text-xl font-bold text-foreground">{flashProducts.length} Flash Deals</h2>
               <Badge className="badge-flash">Limited Time</Badge>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+            <ProductGrid>
               {flashProducts.map((product) => (
-                <div key={product.id} className="space-y-2">
-                  <ProductCard product={product} />
+                <div key={product.id} className="flex flex-col gap-2 h-full">
+                  <div className="flex-1 flex"><ProductCard product={product} /></div>
                   {product.flashSaleEnds && (
                     <div className="flex justify-center">
                       <CountdownTimer endTime={product.flashSaleEnds} />
@@ -134,7 +135,7 @@ export default function FlashSale() {
                   )}
                 </div>
               ))}
-            </div>
+            </ProductGrid>
           </div>
         ) : (
           <div className="text-center py-20">

@@ -3,6 +3,7 @@ import { Heart, ShoppingBag, Trash2, Loader2 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductGrid } from '@/components/products/ProductGrid';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -66,11 +67,11 @@ const Wishlist = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <ProductGrid>
             {items.map((product) => (
               <ProductCard key={product.id} product={product} showWishlistButton />
             ))}
-          </div>
+          </ProductGrid>
         )}
       </div>
     </Layout>

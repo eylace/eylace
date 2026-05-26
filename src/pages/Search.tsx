@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Filter, Grid, List, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductGrid } from '@/components/products/ProductGrid';
 import { SearchFiltersPanel } from '@/components/search/SearchFilters';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -102,9 +103,13 @@ const Search = () => {
                 <p className="text-muted-foreground mb-4">{t('search.tryAdjusting')}</p>
                 <Button variant="accent" onClick={resetFilters}>{t('search.clearFilters')}</Button>
               </div>
+            ) : viewMode === 'grid' ? (
+              <ProductGrid maxCols={4}>
+                {finalResults.map((product) => (<ProductCard key={product.id} product={product} />))}
+              </ProductGrid>
             ) : (
-              <div className={cn(viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4' : 'space-y-4')}>
-                {finalResults.map((product) => (<ProductCard key={product.id} product={product} variant={viewMode === 'list' ? 'horizontal' : 'default'} />))}
+              <div className="space-y-4">
+                {finalResults.map((product) => (<ProductCard key={product.id} product={product} variant="horizontal" />))}
               </div>
             )}
           </div>
