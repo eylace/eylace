@@ -317,7 +317,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             return (
               <SidebarMenuItem key={item.titleKey}>
                 <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 data-[active=true]:bg-accent/15 data-[active=true]:border-r-2 data-[active=true]:border-accent">
-                  <NavLink to={item.url} end={item.url === '/admin'} className="hover:bg-sidebar-accent/50" activeClassName="bg-accent/15 text-accent font-semibold border-r-2 border-accent">
+                  <NavLink to={item.url} end={item.url === '/admin'} className="hover:bg-[#324A67] hover:text-white transition-colors" activeClassName="bg-accent/15 text-accent font-semibold border-r-2 border-accent">
                     <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                       <item.icon className="h-3 w-3 text-accent-foreground" />
                     </span>
@@ -339,7 +339,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
       <SidebarGroup className="py-1">
         <Collapsible open={openSections.has(sectionKey)} onOpenChange={() => toggleSection(sectionKey)}>
           <CollapsibleTrigger className="w-full">
-            <SidebarGroupLabel className="text-[11px] tracking-tight text-foreground font-bold flex items-center justify-between w-full cursor-pointer hover:opacity-80 h-7 px-1.5 mb-0.5 gap-1">
+            <SidebarGroupLabel className="text-[11px] tracking-tight text-foreground font-bold flex items-center justify-between w-full cursor-pointer hover:bg-[#324A67] hover:text-white h-7 px-1.5 mb-0.5 gap-1 transition-colors rounded-sm">
               <span className="flex items-center gap-1.5 min-w-0 flex-1">
                 <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                   <Icon className="h-3 w-3 text-accent-foreground" />
@@ -357,7 +357,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
                   return (
                     <SidebarMenuItem key={item.titleKey}>
                       <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 data-[active=true]:bg-accent/15 data-[active=true]:border-r-2 data-[active=true]:border-accent">
-                        <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="hover:bg-sidebar-accent/50 text-xs pl-2 gap-2" activeClassName="bg-accent/15 text-accent font-semibold border-r-2 border-accent">
+                        <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="hover:bg-[#324A67] hover:text-white text-xs pl-2 gap-2 transition-colors" activeClassName="bg-accent/15 text-accent font-semibold border-r-2 border-accent">
                           <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                             <item.icon className="h-3 w-3 text-accent-foreground" />
                           </span>
@@ -400,7 +400,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
               <SidebarMenu className="gap-0.5">
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media" className="h-8 py-1.5">
-                    <NavLink to={uploadMediaItem.url} className="hover:bg-sidebar-accent/50" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
+                    <NavLink to={uploadMediaItem.url} className="hover:bg-[#324A67] hover:text-white transition-colors" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
                       <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                         <uploadMediaItem.icon className="h-3 w-3 text-accent-foreground" />
                       </span>
