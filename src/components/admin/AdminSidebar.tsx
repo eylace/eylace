@@ -385,10 +385,13 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
         {renderCollapsible('accounting', 'Accounting Management', Calculator, accountingItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
-        {renderCollapsible('trackingAnalytics', 'Tracking & Analytics', Activity, trackingItems)}
         {canAccess('system') && renderGroup('admin.group.system', systemItems)}
         {renderCollapsible('websiteSetup', 'admin.websiteSetup', Monitor, websiteSetupItems)}
         {renderCollapsible('settings', 'admin.settings', Settings, settingsItems)}
+
+        {/* Tracking & Analytics — standalone top-level section */}
+        <div className="my-2 mx-2 border-t border-sidebar-border" />
+        {renderCollapsible('trackingAnalytics', 'Tracking & Analytics', Activity, trackingItems)}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 md:p-3 space-y-1">
