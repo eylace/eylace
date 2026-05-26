@@ -45,13 +45,30 @@ export const Header = () => {
 
   return (
     <header className={setup.headerStickyEnabled ? "sticky top-0 z-50" : "relative z-50"}>
+      {setup.headerAnnouncementText?.trim() && (
+        <div className="bg-accent text-accent-foreground text-xs text-center py-1.5 px-4">
+          {setup.headerAnnouncementText}
+        </div>
+      )}
       <div className="bg-primary text-primary-foreground">
         <div className="container-main">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
-              <div className="text-2xl font-bold tracking-tight">
-                <span className="text-accent">Ey</span><span>lace</span>
-              </div>
+              {setup.logoUrl ? (
+                <img
+                  src={setup.logoUrl}
+                  alt={setup.siteName || 'Eylace'}
+                  className="h-9 w-auto max-w-[180px] object-contain"
+                />
+              ) : (
+                <div className="text-2xl font-bold tracking-tight">
+                  {setup.siteName ? (
+                    <span>{setup.siteName}</span>
+                  ) : (
+                    <><span className="text-accent">Ey</span><span>lace</span></>
+                  )}
+                </div>
+              )}
             </Link>
 
             <div
