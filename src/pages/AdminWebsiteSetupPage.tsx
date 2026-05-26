@@ -158,6 +158,7 @@ const defaultSetup: WebsiteSetupState = {
   customCss: '',
   logoUrl: '',
   faviconUrl: '',
+  siteName: 'Eylace',
   heroBanners: [],
   selectedCheckout: 'classic',
   checkoutCustomization: {},
