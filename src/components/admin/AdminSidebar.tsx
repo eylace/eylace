@@ -285,8 +285,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
               <SidebarMenuItem key={item.titleKey}>
                 <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5">
                   <NavLink to={item.url} end={item.url === '/admin'} className="hover:bg-sidebar-accent/50" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    <span>{title}</span>
+                    <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
+                      <item.icon className="h-3 w-3 text-accent-foreground" />
+                    </span>
+                    <span className="font-semibold text-foreground truncate whitespace-nowrap">{title}</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -323,8 +325,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
                     <SidebarMenuItem key={item.titleKey}>
                       <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5">
                         <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="hover:bg-sidebar-accent/50 text-xs pl-2" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
-                          <item.icon className="h-3.5 w-3.5 shrink-0" />
-                          <span>{title}</span>
+                          <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
+                            <item.icon className="h-3 w-3 text-accent-foreground" />
+                          </span>
+                          <span className="font-semibold text-foreground truncate whitespace-nowrap">{title}</span>
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -364,8 +368,10 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media" className="h-8 py-1.5">
                     <NavLink to={uploadMediaItem.url} className="hover:bg-sidebar-accent/50" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
-                      <uploadMediaItem.icon className="h-4 w-4 shrink-0" />
-                      <span>Upload Media</span>
+                      <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
+                        <uploadMediaItem.icon className="h-3 w-3 text-accent-foreground" />
+                      </span>
+                      <span className="font-semibold text-foreground truncate whitespace-nowrap">Upload Media</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
