@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -12,31 +14,35 @@ import { toast } from 'sonner';
 import {
   Activity, CheckCircle2, XCircle, AlertTriangle, Save, RefreshCw, Loader2,
   Globe, BarChart3, Eye, Search, MousePointerClick, Video, FileDown, ShoppingCart,
-  CreditCard, UserPlus, LogIn, Mail, Play, ExternalLink,
+  CreditCard, UserPlus, LogIn, Mail, Play, ExternalLink, Code2, Map, Home,
 } from 'lucide-react';
 
 interface TrackingSettings {
   globalEnabled: boolean;
   gtm: { enabled: boolean; containerId: string; testMode: boolean };
   facebookCapi: { enabled: boolean; pixelId: string; accessToken: string; testEventCode: string };
+  metaPixel: { enabled: boolean; pixelId: string };
   ga4Client: { enabled: boolean; measurementId: string };
   ga4Server: { enabled: boolean; measurementId: string; apiSecret: string };
   tiktok: { enabled: boolean; pixelId: string };
   clarity: { enabled: boolean; projectId: string };
   lookerStudio: { enabled: boolean; reportUrl: string };
   searchConsole: { enabled: boolean; verificationCode: string; metaTag: string };
+  customScript: { enabled: boolean; headHtml: string; bodyHtml: string };
 }
 
 const defaultSettings: TrackingSettings = {
   globalEnabled: false,
   gtm: { enabled: false, containerId: '', testMode: false },
   facebookCapi: { enabled: false, pixelId: '', accessToken: '', testEventCode: '' },
+  metaPixel: { enabled: false, pixelId: '' },
   ga4Client: { enabled: false, measurementId: '' },
   ga4Server: { enabled: false, measurementId: '', apiSecret: '' },
   tiktok: { enabled: false, pixelId: '' },
   clarity: { enabled: false, projectId: '' },
   lookerStudio: { enabled: false, reportUrl: '' },
   searchConsole: { enabled: false, verificationCode: '', metaTag: '' },
+  customScript: { enabled: false, headHtml: '', bodyHtml: '' },
 };
 
 type StatusType = 'connected' | 'not_connected' | 'error';
@@ -67,6 +73,13 @@ export default function AdminTrackingAnalytics() {
   const [settings, setSettings] = useState<TrackingSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'home';
+  const setActiveTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', v);
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     (async () => {
@@ -113,12 +126,14 @@ export default function AdminTrackingAnalytics() {
   const connectedCount = [
     settings.gtm.enabled && settings.gtm.containerId,
     settings.facebookCapi.enabled && settings.facebookCapi.pixelId && settings.facebookCapi.accessToken,
+    settings.metaPixel?.enabled && settings.metaPixel?.pixelId,
     settings.ga4Client.enabled && settings.ga4Client.measurementId,
     settings.ga4Server.enabled && settings.ga4Server.measurementId,
     settings.tiktok.enabled && settings.tiktok.pixelId,
     settings.clarity.enabled && settings.clarity.projectId,
     settings.lookerStudio.enabled && settings.lookerStudio.reportUrl,
     settings.searchConsole.enabled && (settings.searchConsole.verificationCode || settings.searchConsole.metaTag),
+    settings.customScript?.enabled && (settings.customScript?.headHtml || settings.customScript?.bodyHtml),
   ].filter(Boolean).length;
 
   return (
@@ -130,7 +145,7 @@ export default function AdminTrackingAnalytics() {
             <Switch checked={settings.globalEnabled} onCheckedChange={v => update('globalEnabled', v)} />
             <div>
               <p className="text-sm font-semibold text-foreground">Global Tracking</p>
-              <p className="text-xs text-muted-foreground">{settings.globalEnabled ? 'Active' : 'Disabled'} · {connectedCount}/8 connected</p>
+              <p className="text-xs text-muted-foreground">{settings.globalEnabled ? 'Active' : 'Disabled'} · {connectedCount}/10 connected</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -144,17 +159,70 @@ export default function AdminTrackingAnalytics() {
         </Button>
       </div>
 
-      <Tabs defaultValue="gtm" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
+          <TabsTrigger value="home" className="text-xs gap-1.5"><Home className="h-3.5 w-3.5" />Home</TabsTrigger>
+          <TabsTrigger value="ga4-client" className="text-xs gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Google Analytics (GA4)</TabsTrigger>
           <TabsTrigger value="gtm" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />GTM</TabsTrigger>
-          <TabsTrigger value="facebook" className="text-xs gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />Facebook CAPI</TabsTrigger>
-          <TabsTrigger value="ga4-client" className="text-xs gap-1.5"><BarChart3 className="h-3.5 w-3.5" />GA4 Client</TabsTrigger>
+          <TabsTrigger value="meta-pixel" className="text-xs gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />Meta Pixel</TabsTrigger>
+          <TabsTrigger value="facebook" className="text-xs gap-1.5"><MousePointerClick className="h-3.5 w-3.5" />Meta Conversion API</TabsTrigger>
           <TabsTrigger value="ga4-server" className="text-xs gap-1.5"><RefreshCw className="h-3.5 w-3.5" />GA4 Server</TabsTrigger>
           <TabsTrigger value="tiktok" className="text-xs gap-1.5"><Play className="h-3.5 w-3.5" />TikTok</TabsTrigger>
           <TabsTrigger value="clarity" className="text-xs gap-1.5"><Eye className="h-3.5 w-3.5" />Clarity</TabsTrigger>
+          <TabsTrigger value="custom" className="text-xs gap-1.5"><Code2 className="h-3.5 w-3.5" />Custom Script</TabsTrigger>
           <TabsTrigger value="looker" className="text-xs gap-1.5"><BarChart3 className="h-3.5 w-3.5" />Looker Studio</TabsTrigger>
           <TabsTrigger value="search-console" className="text-xs gap-1.5"><Search className="h-3.5 w-3.5" />Search Console</TabsTrigger>
+          <TabsTrigger value="sitemap" className="text-xs gap-1.5"><Map className="h-3.5 w-3.5" />Sitemap Generator</TabsTrigger>
+          <TabsTrigger value="seo" className="text-xs gap-1.5"><Globe className="h-3.5 w-3.5" />Global SEO</TabsTrigger>
         </TabsList>
+
+        {/* Home overview */}
+        <TabsContent value="home">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2"><Activity className="h-5 w-5 text-accent" />Marketing Analytics Home</CardTitle>
+              <CardDescription>Overview of all tracking & analytics integrations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { label: 'Google Analytics (GA4)', tab: 'ga4-client', status: getStatus(settings.ga4Client.enabled, settings.ga4Client.measurementId) },
+                  { label: 'Google Tag Manager', tab: 'gtm', status: getStatus(settings.gtm.enabled, settings.gtm.containerId) },
+                  { label: 'Meta Pixel', tab: 'meta-pixel', status: getStatus(settings.metaPixel?.enabled || false, settings.metaPixel?.pixelId || '') },
+                  { label: 'Meta Conversion API', tab: 'facebook', status: getStatus(settings.facebookCapi.enabled, settings.facebookCapi.pixelId, settings.facebookCapi.accessToken) },
+                  { label: 'GA4 Server-Side', tab: 'ga4-server', status: getStatus(settings.ga4Server.enabled, settings.ga4Server.measurementId) },
+                  { label: 'TikTok Pixel', tab: 'tiktok', status: getStatus(settings.tiktok.enabled, settings.tiktok.pixelId) },
+                  { label: 'Microsoft Clarity', tab: 'clarity', status: getStatus(settings.clarity.enabled, settings.clarity.projectId) },
+                  { label: 'Custom Script', tab: 'custom', status: getStatus(settings.customScript?.enabled || false, (settings.customScript?.headHtml || '') + (settings.customScript?.bodyHtml || '')) },
+                  { label: 'Looker Studio', tab: 'looker', status: getStatus(settings.lookerStudio.enabled, settings.lookerStudio.reportUrl) },
+                  { label: 'Search Console', tab: 'search-console', status: getStatus(settings.searchConsole.enabled, settings.searchConsole.verificationCode || settings.searchConsole.metaTag) },
+                ].map(item => (
+                  <button key={item.tab} onClick={() => setActiveTab(item.tab)} className="text-left p-4 rounded-lg border border-border hover:border-accent/50 hover:bg-accent/5 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold">{item.label}</span>
+                      <StatusBadge status={item.status} />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Click to configure</span>
+                  </button>
+                ))}
+                <Link to="/admin/system/sitemap" className="text-left p-4 rounded-lg border border-border hover:border-accent/50 hover:bg-accent/5 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold">Sitemap Generator</span>
+                    <Badge variant="outline" className="gap-1"><ExternalLink className="h-3 w-3" />Open</Badge>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Generate & submit XML sitemap</span>
+                </Link>
+                <Link to="/admin/seo" className="text-left p-4 rounded-lg border border-border hover:border-accent/50 hover:bg-accent/5 transition-colors">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold">Global SEO</span>
+                    <Badge variant="outline" className="gap-1"><ExternalLink className="h-3 w-3" />Open</Badge>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Site-wide SEO & meta defaults</span>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* GTM */}
         <TabsContent value="gtm">
@@ -219,6 +287,33 @@ export default function AdminTrackingAnalytics() {
                 'PageView', 'ViewContent', 'Search', 'AddToCart', 'AddToWishlist',
                 'InitiateCheckout', 'AddPaymentInfo', 'Purchase', 'Lead',
                 'CompleteRegistration', 'Contact', 'Subscribe',
+              ]} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Meta Pixel (client-side) */}
+        <TabsContent value="meta-pixel">
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2"><MousePointerClick className="h-5 w-5 text-blue-500" />Meta Pixel</CardTitle>
+                <CardDescription>Browser-side Facebook/Instagram pixel for ad measurement & retargeting</CardDescription>
+              </div>
+              <StatusBadge status={getStatus(settings.metaPixel?.enabled || false, settings.metaPixel?.pixelId || '')} />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Switch checked={!!settings.metaPixel?.enabled} onCheckedChange={v => updateNested('metaPixel', 'enabled', v)} />
+                <Label>Enable Meta Pixel</Label>
+              </div>
+              <div className="space-y-2">
+                <Label>Meta Pixel ID</Label>
+                <Input placeholder="1234567890" value={settings.metaPixel?.pixelId || ''} onChange={e => updateNested('metaPixel', 'pixelId', e.target.value)} />
+              </div>
+              <EventList events={[
+                'PageView', 'ViewContent', 'Search', 'AddToCart', 'AddToWishlist',
+                'InitiateCheckout', 'AddPaymentInfo', 'Purchase', 'Lead', 'CompleteRegistration',
               ]} />
             </CardContent>
           </Card>
@@ -400,6 +495,79 @@ export default function AdminTrackingAnalytics() {
                 <Label>Meta Tag Verification (alternative)</Label>
                 <Input placeholder='<meta name="google-site-verification" content="..." />' value={settings.searchConsole.metaTag} onChange={e => updateNested('searchConsole', 'metaTag', e.target.value)} />
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Custom Script */}
+        <TabsContent value="custom">
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2"><Code2 className="h-5 w-5 text-foreground" />Custom Script</CardTitle>
+                <CardDescription>Inject custom HTML/JavaScript into the page head or body (e.g. Hotjar, Crisp, custom pixels)</CardDescription>
+              </div>
+              <StatusBadge status={getStatus(settings.customScript?.enabled || false, (settings.customScript?.headHtml || '') + (settings.customScript?.bodyHtml || ''))} />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Switch checked={!!settings.customScript?.enabled} onCheckedChange={v => updateNested('customScript', 'enabled', v)} />
+                <Label>Enable Custom Scripts</Label>
+              </div>
+              <div className="space-y-2">
+                <Label>Head HTML <span className="text-xs text-muted-foreground">(injected before &lt;/head&gt;)</span></Label>
+                <Textarea
+                  rows={6}
+                  placeholder={'<!-- Paste <script> or <meta> tags here -->'}
+                  className="font-mono text-xs"
+                  value={settings.customScript?.headHtml || ''}
+                  onChange={e => updateNested('customScript', 'headHtml', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Body HTML <span className="text-xs text-muted-foreground">(injected before &lt;/body&gt;)</span></Label>
+                <Textarea
+                  rows={6}
+                  placeholder={'<!-- Paste chat widgets, noscript pixels, etc. -->'}
+                  className="font-mono text-xs"
+                  value={settings.customScript?.bodyHtml || ''}
+                  onChange={e => updateNested('customScript', 'bodyHtml', e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                Only paste scripts from trusted sources. Custom HTML is injected into your live site for every visitor.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Sitemap Generator (link out) */}
+        <TabsContent value="sitemap">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2"><Map className="h-5 w-5 text-emerald-500" />Sitemap Generator</CardTitle>
+              <CardDescription>Generate and submit your XML sitemap for SEO</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="accent" className="gap-2">
+                <Link to="/admin/system/sitemap"><ExternalLink className="h-4 w-4" />Open Sitemap Generator</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Global SEO (link out) */}
+        <TabsContent value="seo">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2"><Globe className="h-5 w-5 text-blue-500" />Global SEO</CardTitle>
+              <CardDescription>Site-wide meta tags, Open Graph, structured data</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="accent" className="gap-2">
+                <Link to="/admin/seo"><ExternalLink className="h-4 w-4" />Open Global SEO Settings</Link>
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
