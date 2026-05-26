@@ -118,7 +118,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
       <button
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); inCompare ? removeFromCompare(product.id) : addToCompare(product); }}
         className={cn(
-          "absolute top-12 right-3 z-10 p-2 bg-card/80 backdrop-blur-sm rounded-full transition-all hover:bg-card",
+          "absolute top-14 right-3 z-10 p-2 bg-card/80 backdrop-blur-sm rounded-full transition-all hover:bg-card",
           inCompare
             ? "text-accent opacity-100"
             : "opacity-0 group-hover:opacity-100 hover:text-accent"
@@ -170,7 +170,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
       </Link>
 
       {/* Content */}
-      <div className="space-y-1 sm:space-y-2 flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col gap-1 sm:gap-2">
         {/* Category */}
         <p className="text-xs text-muted-foreground uppercase tracking-wide">
           {product.category.name}
