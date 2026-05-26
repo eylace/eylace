@@ -45,7 +45,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
   const canAccess = (section: string) => !hasAccess || hasAccess(section);
 
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['products']));
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
   const toggleSection = (key: string) => {
     setOpenSections(prev => {
@@ -203,7 +203,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
   ];
 
   const trackingItems: NavItem[] = [
-    { titleKey: 'Marketing Analytics Home', url: '/admin/tracking?tab=home', icon: Activity },
+    { titleKey: 'Analytics Home', url: '/admin/tracking?tab=home', icon: Activity },
     { titleKey: 'Google Analytics (GA4)', url: '/admin/tracking?tab=ga4-client', icon: BarChart3 },
     { titleKey: 'Google Tag Manager', url: '/admin/tracking?tab=gtm', icon: Globe },
     { titleKey: 'Meta Pixel', url: '/admin/tracking?tab=meta-pixel', icon: MousePointerClick },
