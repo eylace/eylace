@@ -101,31 +101,39 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
       "card-product group relative flex flex-col h-full",
       variant === 'compact' ? 'p-2 sm:p-3' : 'p-2 sm:p-4'
     )}>
-      {/* Wishlist Button */}
-      <button 
-        onClick={handleWishlistToggle}
-        className={cn(
-          "absolute top-3 right-3 z-10 p-2 bg-card/80 backdrop-blur-sm rounded-full transition-all hover:bg-card",
-          isWishlisted 
-            ? "text-destructive opacity-100" 
-            : "opacity-0 group-hover:opacity-100 hover:text-destructive"
-        )}
-      >
-        <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
-      </button>
-
-      {/* Compare Button */}
-      <button
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); inCompare ? removeFromCompare(product.id) : addToCompare(product); }}
-        className={cn(
-          "absolute top-14 right-3 z-10 p-2 bg-card/80 backdrop-blur-sm rounded-full transition-all hover:bg-card",
-          inCompare
-            ? "text-accent opacity-100"
-            : "opacity-0 group-hover:opacity-100 hover:text-accent"
-        )}
-      >
-        <GitCompareArrows className={cn("h-4 w-4")} />
-      </button>
+      {/* Floating action icons (Wishlist + Compare) — uniform sizing/spacing across all sections */}
+      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 flex flex-col gap-1.5 sm:gap-2">
+        <button
+          type="button"
+          onClick={handleWishlistToggle}
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-pressed={isWishlisted}
+          className={cn(
+            "h-8 w-8 inline-flex items-center justify-center bg-card/80 backdrop-blur-sm rounded-full transition-all hover:bg-card",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:opacity-100",
+            isWishlisted
+              ? "text-destructive opacity-100"
+              : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-destructive"
+          )}
+        >
+          <Heart className={cn("h-4 w-4", isWishlisted && "fill-current")} />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); inCompare ? removeFromCompare(product.id) : addToCompare(product); }}
+          aria-label={inCompare ? 'Remove from compare' : 'Add to compare'}
+          aria-pressed={inCompare}
+          className={cn(
+            "h-8 w-8 inline-flex items-center justify-center bg-card/80 backdrop-blur-sm rounded-full transition-all hover:bg-card",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:opacity-100",
+            inCompare
+              ? "text-accent opacity-100"
+              : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-accent"
+          )}
+        >
+          <GitCompareArrows className="h-4 w-4" />
+        </button>
+      </div>
 
       {/* Image */}
       <Link to={`/product/${product.slug}`}>
