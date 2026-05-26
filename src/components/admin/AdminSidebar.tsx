@@ -316,12 +316,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             const title = t(item.titleKey as TranslationKey);
             return (
               <SidebarMenuItem key={item.titleKey}>
-                <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 data-[active=true]:bg-accent/15 data-[active=true]:border-r-2 data-[active=true]:border-accent">
-                  <NavLink to={item.url} end={item.url === '/admin'} className="group hover:bg-[#324A67] hover:text-white transition-colors" activeClassName="bg-accent/15 text-accent font-semibold border-r-2 border-accent">
+                <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/15 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent">
+                  <NavLink to={item.url} end={item.url === '/admin'} className="">
                     <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                       <item.icon className="h-3 w-3 text-accent-foreground" />
                     </span>
-                    <span className={`font-semibold truncate whitespace-nowrap group-hover:text-white ${isActive(item.url) ? 'text-accent' : 'text-foreground'}`}>{title}</span>
+                    <span className={`font-semibold truncate whitespace-nowrap ${isActive(item.url) ? 'text-accent' : 'text-foreground'}`}>{title}</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -338,9 +338,9 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     return (
       <SidebarGroup className="py-1">
         <Collapsible open={openSections.has(sectionKey)} onOpenChange={() => toggleSection(sectionKey)}>
-          <CollapsibleTrigger className="w-full">
-            <SidebarGroupLabel className="text-[11px] tracking-tight text-foreground font-bold flex items-center justify-between w-full cursor-pointer hover:bg-[#324A67] hover:text-white h-7 px-1.5 mb-0.5 gap-1 transition-colors rounded-sm">
-              <span className="flex items-center gap-1.5 min-w-0 flex-1">
+          <CollapsibleTrigger className="w-full group/trigger">
+            <SidebarGroupLabel className="text-[11px] tracking-tight text-foreground font-bold flex items-center justify-between w-full cursor-pointer hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white h-7 px-1.5 mb-0.5 gap-1 transition-colors rounded-sm">
+              <span className="flex items-center gap-1.5 min-w-0 flex-1 text-foreground">
                 <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                   <Icon className="h-3 w-3 text-accent-foreground" />
                 </span>
@@ -356,12 +356,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
                   const title = t(item.titleKey as TranslationKey);
                   return (
                     <SidebarMenuItem key={item.titleKey}>
-                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 data-[active=true]:bg-accent/15 data-[active=true]:border-r-2 data-[active=true]:border-accent">
-                        <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="group hover:bg-[#324A67] hover:text-white text-xs pl-2 gap-2 transition-colors" activeClassName="bg-accent/15 text-accent font-semibold border-r-2 border-accent">
+                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={title} className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/15 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent">
+                        <NavLink to={item.url} end={endPath ? item.url === endPath : false} className="text-xs pl-2 gap-2">
                           <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                             <item.icon className="h-3 w-3 text-accent-foreground" />
                           </span>
-                          <span className={`font-semibold truncate whitespace-nowrap group-hover:text-white ${isActive(item.url) ? 'text-accent' : 'text-foreground'}`}>{title}</span>
+                          <span className={`font-semibold truncate whitespace-nowrap ${isActive(item.url) ? 'text-accent' : 'text-foreground'}`}>{title}</span>
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -399,12 +399,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media" className="h-8 py-1.5">
-                    <NavLink to={uploadMediaItem.url} className="group hover:bg-[#324A67] hover:text-white transition-colors" activeClassName="bg-accent/10 text-accent font-medium border-r-2 border-accent">
+                  <SidebarMenuButton asChild isActive={isActive(uploadMediaItem.url)} tooltip="Upload Media" className="h-8 py-1.5 transition-colors hover:!bg-[#324A67] hover:!text-white [&:hover_span]:!text-white data-[active=true]:!bg-accent/10 data-[active=true]:!text-accent data-[active=true]:border-r-2 data-[active=true]:border-accent">
+                    <NavLink to={uploadMediaItem.url} className="">
                       <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
                         <uploadMediaItem.icon className="h-3 w-3 text-accent-foreground" />
                       </span>
-                      <span className="font-semibold text-foreground group-hover:text-white truncate whitespace-nowrap">Upload Media</span>
+                      <span className={`font-semibold truncate whitespace-nowrap ${isActive(uploadMediaItem.url) ? 'text-accent' : 'text-foreground'}`}>Upload Media</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
