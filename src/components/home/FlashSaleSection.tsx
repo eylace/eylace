@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, ChevronRight, Loader2 } from 'lucide-react';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductGrid } from '@/components/products/ProductGrid';
 import { useProducts } from '@/hooks/useProducts';
 import { adaptDBProducts } from '@/lib/productAdapter';
 import { useLanguage } from '@/contexts/LanguageContext';
