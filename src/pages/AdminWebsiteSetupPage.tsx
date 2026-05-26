@@ -276,6 +276,7 @@ const AdminWebsiteSetupPage = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="branding" className="text-xs">Branding</TabsTrigger>
             <TabsTrigger value="homepage" className="text-xs">Select Homepage</TabsTrigger>
             <TabsTrigger value="homepage-settings" className="text-xs">Homepage Settings</TabsTrigger>
             <TabsTrigger value="font" className="text-xs">Font Family</TabsTrigger>
