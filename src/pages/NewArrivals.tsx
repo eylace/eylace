@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { ProductCard } from '@/components/products/ProductCard';
+import { ProductGrid } from '@/components/products/ProductGrid';
 import { useProducts } from '@/hooks/useProducts';
 import { adaptDBProducts } from '@/lib/productAdapter';
 import { Loader2, Sparkles, Filter, ChevronDown } from 'lucide-react';
@@ -96,11 +97,11 @@ export default function NewArrivals() {
             <Loader2 className="h-8 w-8 animate-spin text-accent" />
           </div>
         ) : sorted.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+          <ProductGrid>
             {sorted.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
-          </div>
+          </ProductGrid>
         ) : (
           <div className="text-center py-20">
             <Sparkles className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
