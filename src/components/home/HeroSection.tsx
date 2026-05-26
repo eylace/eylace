@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useCategories } from '@/hooks/useProducts';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
+import { buildHeroImageSources, preloadHeroImage } from '@/lib/heroImage';
 
 export const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -33,6 +34,15 @@ export const HeroSection = () => {
   const heroSlides = setup.heroBanners && setup.heroBanners.length > 0
     ? setup.heroBanners.sort((a, b) => a.sortOrder - b.sortOrder)
     : defaultSlides;
+
+  // Preload the first hero image (LCP candidate) as soon as the
+  // component mounts. Re-runs if the admin swaps banners.
+  const firstImageUrl = heroSlides[0]?.imageUrl;
+  useEffect(() => {
+    const sources = buildHeroImageSources(firstImageUrl);
+    if (!sources) return;
+    return preloadHeroImage(sources);
+  }, [firstImageUrl]);
 
   useEffect(() => {
     const timer = setInterval(() => { setCurrentSlide((prev) => (prev + 1) % heroSlides.length); }, 5000);
@@ -71,16 +81,31 @@ export const HeroSection = () => {
                   key={slide.id}
                   className={`relative min-w-full aspect-[2/1] md:aspect-[2.5/1] text-primary-foreground p-6 md:p-10 flex flex-col justify-center overflow-hidden ${!slide.imageUrl ? `bg-gradient-to-r ${slide.gradient}` : ''}`}
                 >
-                  {slide.imageUrl && (
-                    <img
-                      src={slide.imageUrl}
-                      alt={slide.title}
-                      fetchPriority={idx === 0 ? 'high' : 'low'}
-                      loading={idx === 0 ? 'eager' : 'lazy'}
-                      decoding="async"
-                      className="absolute inset-0 w-full h-full object-cover -z-10"
-                    />
-                  )}
+                  {slide.imageUrl && (() => {
+                    const s = buildHeroImageSources(slide.imageUrl)!;
+                    return (
+                      <picture>
+                        {s.avifSrcSet && (
+                          <source type="image/avif" srcSet={s.avifSrcSet} sizes={s.sizes} />
+                        )}
+                        {s.webpSrcSet && (
+                          <source type="image/webp" srcSet={s.webpSrcSet} sizes={s.sizes} />
+                        )}
+                        <img
+                          src={s.src}
+                          srcSet={s.srcSet}
+                          sizes={s.sizes}
+                          alt={slide.title}
+                          width={1440}
+                          height={576}
+                          fetchPriority={idx === 0 ? 'high' : 'low'}
+                          loading={idx === 0 ? 'eager' : 'lazy'}
+                          decoding="async"
+                          className="absolute inset-0 w-full h-full object-cover -z-10"
+                        />
+                      </picture>
+                    );
+                  })()}
                   <div className="relative max-w-lg animate-fade-in">
                     <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-sm font-bold rounded mb-3">{slide.subtitle}</span>
                     <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3">{slide.title}</h2>
