@@ -103,16 +103,14 @@ const Search = () => {
                 <p className="text-muted-foreground mb-4">{t('search.tryAdjusting')}</p>
                 <Button variant="accent" onClick={resetFilters}>{t('search.clearFilters')}</Button>
               </div>
+            ) : viewMode === 'grid' ? (
+              <ProductGrid maxCols={4}>
+                {finalResults.map((product) => (<ProductCard key={product.id} product={product} />))}
+              </ProductGrid>
             ) : (
-              {viewMode === 'grid' ? (
-                <ProductGrid maxCols={4}>
-                  {finalResults.map((product) => (<ProductCard key={product.id} product={product} />))}
-                </ProductGrid>
-              ) : (
-                <div className="space-y-4">
-                  {finalResults.map((product) => (<ProductCard key={product.id} product={product} variant="horizontal" />))}
-                </div>
-              )}
+              <div className="space-y-4">
+                {finalResults.map((product) => (<ProductCard key={product.id} product={product} variant="horizontal" />))}
+              </div>
             )}
           </div>
         </div>
