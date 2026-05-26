@@ -5,11 +5,13 @@ interface TrackingSettings {
   globalEnabled: boolean;
   gtm: { enabled: boolean; containerId: string; testMode: boolean };
   facebookCapi: { enabled: boolean; pixelId: string; accessToken: string; testEventCode: string };
+  metaPixel: { enabled: boolean; pixelId: string };
   ga4Client: { enabled: boolean; measurementId: string };
   ga4Server: { enabled: boolean; measurementId: string; apiSecret: string };
   tiktok: { enabled: boolean; pixelId: string };
   clarity: { enabled: boolean; projectId: string };
   searchConsole: { enabled: boolean; verificationCode: string; metaTag: string };
+  customScript: { enabled: boolean; headHtml: string; bodyHtml: string };
 }
 
 const injectScript = (id: string, content: string, type: 'inline' | 'src' = 'inline') => {
@@ -54,7 +56,7 @@ export function TrackingScriptInjector() {
   useEffect(() => {
     if (!settings || !settings.globalEnabled) {
       // Clean up all scripts if disabled
-      ['tracking-gtm', 'tracking-gtm-noscript', 'tracking-gtm-dl', 'tracking-ga4', 'tracking-ga4-config', 'tracking-fb', 'tracking-fb-noscript', 'tracking-tiktok', 'tracking-clarity', 'tracking-sc-meta'].forEach(removeElement);
+      ['tracking-gtm', 'tracking-gtm-noscript', 'tracking-gtm-dl', 'tracking-ga4', 'tracking-ga4-config', 'tracking-fb', 'tracking-fb-noscript', 'tracking-meta-pixel', 'tracking-tiktok', 'tracking-clarity', 'tracking-sc-meta', 'tracking-custom-head', 'tracking-custom-body'].forEach(removeElement);
       return;
     }
 
@@ -75,6 +77,11 @@ export function TrackingScriptInjector() {
       injectScript('tracking-fb', `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${settings.facebookCapi.pixelId}');fbq('track','PageView');`);
     }
 
+    // Meta Pixel (client-side, independent of CAPI)
+    if (settings.metaPixel?.enabled && settings.metaPixel.pixelId) {
+      injectScript('tracking-meta-pixel', `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${settings.metaPixel.pixelId}');fbq('track','PageView');`);
+    }
+
     // TikTok Pixel
     if (settings.tiktok.enabled && settings.tiktok.pixelId) {
       injectScript('tracking-tiktok', `!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e};ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=i;ttq._t=ttq._t||{};ttq._t[e]=+new Date;ttq._o=ttq._o||{};ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript";o.async=!0;o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};ttq.load('${settings.tiktok.pixelId}');ttq.page();}(window,document,'ttq');`);
@@ -92,6 +99,39 @@ export function TrackingScriptInjector() {
       if (content) injectMeta('tracking-sc-meta', 'google-site-verification', content);
     } else if (settings.searchConsole.enabled && settings.searchConsole.verificationCode) {
       injectMeta('tracking-sc-meta', 'google-site-verification', settings.searchConsole.verificationCode);
+    }
+
+    // Custom Script (raw HTML in head/body)
+    removeElement('tracking-custom-head');
+    removeElement('tracking-custom-body');
+    if (settings.customScript?.enabled) {
+      if (settings.customScript.headHtml?.trim()) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'tracking-custom-head';
+        wrapper.style.display = 'none';
+        wrapper.innerHTML = settings.customScript.headHtml;
+        // Re-create script nodes so they execute
+        wrapper.querySelectorAll('script').forEach((old) => {
+          const s = document.createElement('script');
+          for (const a of Array.from(old.attributes)) s.setAttribute(a.name, a.value);
+          s.text = old.textContent || '';
+          old.replaceWith(s);
+        });
+        document.head.appendChild(wrapper);
+      }
+      if (settings.customScript.bodyHtml?.trim()) {
+        const wrapper = document.createElement('div');
+        wrapper.id = 'tracking-custom-body';
+        wrapper.style.display = 'none';
+        wrapper.innerHTML = settings.customScript.bodyHtml;
+        wrapper.querySelectorAll('script').forEach((old) => {
+          const s = document.createElement('script');
+          for (const a of Array.from(old.attributes)) s.setAttribute(a.name, a.value);
+          s.text = old.textContent || '';
+          old.replaceWith(s);
+        });
+        document.body.appendChild(wrapper);
+      }
     }
   }, [settings]);
 
