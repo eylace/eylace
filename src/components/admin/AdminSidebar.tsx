@@ -274,7 +274,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
   const renderGroup = (labelKey: TranslationKey, items: typeof mainItems) => (
     <SidebarGroup className="py-1">
-      <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold h-6 px-2 mb-0.5">
+      <SidebarGroupLabel className="text-[11px] tracking-tight text-foreground font-bold h-6 px-2 mb-0.5 whitespace-nowrap overflow-hidden">
         {t(labelKey)}
       </SidebarGroupLabel>
       <SidebarGroupContent>
@@ -304,12 +304,14 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
       <SidebarGroup className="py-1">
         <Collapsible open={openSections.has(sectionKey)} onOpenChange={() => toggleSection(sectionKey)}>
           <CollapsibleTrigger className="w-full">
-            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/50 font-semibold flex items-center justify-between w-full cursor-pointer hover:text-sidebar-foreground/70 h-6 px-2 mb-0.5">
-              <span className="flex items-center gap-1.5">
-                <Icon className="h-3.5 w-3.5" />
-                {t(labelKey as TranslationKey)}
+            <SidebarGroupLabel className="text-[11px] tracking-tight text-foreground font-bold flex items-center justify-between w-full cursor-pointer hover:opacity-80 h-7 px-1.5 mb-0.5 gap-1">
+              <span className="flex items-center gap-1.5 min-w-0 flex-1">
+                <span className="h-5 w-5 rounded-md bg-accent flex items-center justify-center shrink-0">
+                  <Icon className="h-3 w-3 text-accent-foreground" />
+                </span>
+                <span className="truncate whitespace-nowrap">{t(labelKey as TranslationKey)}</span>
               </span>
-              {openSections.has(sectionKey) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {openSections.has(sectionKey) ? <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-70" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />}
             </SidebarGroupLabel>
           </CollapsibleTrigger>
           <CollapsibleContent>
