@@ -1,58 +1,57 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface TopBarConfig {
-  enabled: boolean;
-  headlines: string[];
-  bg_color: string;
-  text_color: string;
-  speed: number; // seconds for one full scroll
-}
+import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 
 export const TopBar = () => {
-  const [config, setConfig] = useState<TopBarConfig | null>(null);
+  const setup = useWebsiteSetup();
   const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    supabase
-      .from('system_settings')
-      .select('value')
-      .eq('key', 'top_bar_headlines')
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.value) {
-          const val = data.value as unknown as TopBarConfig;
-          if (val.enabled && val.headlines?.length > 0) setConfig(val);
-        }
-      });
-  }, []);
-
-  if (!config || dismissed) return null;
+  if (!setup.topBarEnabled || dismissed) return null;
+  const text = (setup.topBarText || '').trim();
+  const links = setup.topBarLinks || [];
+  if (!text && links.length === 0) return null;
 
   const separator = '  ★  ';
-  const fullText = config.headlines.join(separator) + separator;
-  const duration = config.speed || 30;
+  const marqueeText = text ? text + separator : '';
 
   return (
     <div
       className="relative overflow-hidden"
       style={{
-        backgroundColor: config.bg_color || '#1a1a2e',
-        color: config.text_color || '#ffffff',
+        backgroundColor: setup.topBarBgColor || '#1a1a2e',
+        color: setup.topBarTextColor || '#ffffff',
         height: '40px',
       }}
     >
-      <div className="absolute inset-0 flex items-center">
-        <div
-          className="topbar-marquee whitespace-nowrap text-sm font-medium"
-          style={{
-            animationDuration: `${duration}s`,
-          }}
-        >
-          <span>{fullText}</span>
-          <span>{fullText}</span>
-        </div>
+      <div className="absolute inset-0 flex items-center justify-between px-4 gap-4">
+        {marqueeText ? (
+          <div className="flex-1 overflow-hidden">
+            <div
+              className="topbar-marquee whitespace-nowrap text-sm font-medium"
+              style={{ animationDuration: '30s' }}
+            >
+              <span>{marqueeText.repeat(2)}</span>
+              <span>{marqueeText.repeat(2)}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+
+        {links.length > 0 && (
+          <div className="hidden md:flex items-center gap-4 text-xs shrink-0">
+            {links.map((l, i) => (
+              <Link
+                key={i}
+                to={l.url || '#'}
+                className="hover:underline opacity-90 hover:opacity-100"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       <button
