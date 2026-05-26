@@ -73,6 +73,13 @@ export default function AdminTrackingAnalytics() {
   const [settings, setSettings] = useState<TrackingSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'home';
+  const setActiveTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', v);
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     (async () => {
