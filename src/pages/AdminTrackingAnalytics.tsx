@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -12,31 +14,35 @@ import { toast } from 'sonner';
 import {
   Activity, CheckCircle2, XCircle, AlertTriangle, Save, RefreshCw, Loader2,
   Globe, BarChart3, Eye, Search, MousePointerClick, Video, FileDown, ShoppingCart,
-  CreditCard, UserPlus, LogIn, Mail, Play, ExternalLink,
+  CreditCard, UserPlus, LogIn, Mail, Play, ExternalLink, Code2, Map, Home,
 } from 'lucide-react';
 
 interface TrackingSettings {
   globalEnabled: boolean;
   gtm: { enabled: boolean; containerId: string; testMode: boolean };
   facebookCapi: { enabled: boolean; pixelId: string; accessToken: string; testEventCode: string };
+  metaPixel: { enabled: boolean; pixelId: string };
   ga4Client: { enabled: boolean; measurementId: string };
   ga4Server: { enabled: boolean; measurementId: string; apiSecret: string };
   tiktok: { enabled: boolean; pixelId: string };
   clarity: { enabled: boolean; projectId: string };
   lookerStudio: { enabled: boolean; reportUrl: string };
   searchConsole: { enabled: boolean; verificationCode: string; metaTag: string };
+  customScript: { enabled: boolean; headHtml: string; bodyHtml: string };
 }
 
 const defaultSettings: TrackingSettings = {
   globalEnabled: false,
   gtm: { enabled: false, containerId: '', testMode: false },
   facebookCapi: { enabled: false, pixelId: '', accessToken: '', testEventCode: '' },
+  metaPixel: { enabled: false, pixelId: '' },
   ga4Client: { enabled: false, measurementId: '' },
   ga4Server: { enabled: false, measurementId: '', apiSecret: '' },
   tiktok: { enabled: false, pixelId: '' },
   clarity: { enabled: false, projectId: '' },
   lookerStudio: { enabled: false, reportUrl: '' },
   searchConsole: { enabled: false, verificationCode: '', metaTag: '' },
+  customScript: { enabled: false, headHtml: '', bodyHtml: '' },
 };
 
 type StatusType = 'connected' | 'not_connected' | 'error';
