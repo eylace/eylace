@@ -95,9 +95,9 @@ export const FlashSaleSection = () => {
           {isLoading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
+            <ProductGrid maxCols={4}>
               {flashSaleProducts.map((product) => <ProductCard key={product.id} product={product} />)}
-            </div>
+            </ProductGrid>
           )}
         </div>
       </div>
