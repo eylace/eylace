@@ -65,6 +65,7 @@ export interface WebsiteSetup {
   customCss: string;
   logoUrl: string;
   faviconUrl: string;
+  siteName: string;
   heroBanners: HeroBanner[];
   selectedCheckout: string;
   checkoutCustomization: CheckoutCustomization;
