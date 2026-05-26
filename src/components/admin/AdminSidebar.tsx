@@ -124,7 +124,6 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.fraudDetection' as TranslationKey, url: '/admin/fraud', icon: ShieldAlert },
     { titleKey: 'admin.transactions' as TranslationKey, url: '/admin/transactions', icon: CreditCard },
     { titleKey: 'admin.paymentGateways' as TranslationKey, url: '/admin/payment-gateways', icon: Wallet },
-    { titleKey: 'IP Block' as TranslationKey, url: '/admin/ip-block', icon: Ban },
   ];
 
   const marketingItems: NavItem[] = [
@@ -195,11 +194,23 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.notifications' as TranslationKey, url: '/admin/notifications', icon: Bell },
   ];
 
-  const systemItems = [
+  const systemItems: NavItem[] = [
     { titleKey: 'admin.userRoles' as TranslationKey, url: '/admin/user-roles', icon: Shield },
-    { titleKey: 'admin.pages' as TranslationKey, url: '/admin/pages', icon: FileText },
-    { titleKey: 'admin.system.update' as TranslationKey, url: '/admin/system/update', icon: RefreshCw },
+    { titleKey: 'admin.settings.business' as TranslationKey, url: '/admin/settings?tab=business', icon: Home },
+    { titleKey: 'admin.settings.features' as TranslationKey, url: '/admin/settings?tab=features', icon: Sparkles },
+    { titleKey: 'admin.settings.languages' as TranslationKey, url: '/admin/settings?tab=languages', icon: Globe },
+    { titleKey: 'admin.settings.currency' as TranslationKey, url: '/admin/settings?tab=currency', icon: CreditCard },
+    { titleKey: 'admin.settings.vat' as TranslationKey, url: '/admin/settings?tab=vat', icon: Percent },
+    { titleKey: 'admin.settings.pickup' as TranslationKey, url: '/admin/settings?tab=pickup', icon: Store },
+    { titleKey: 'admin.settings.smtp' as TranslationKey, url: '/admin/settings?tab=smtp', icon: Mail },
+    { titleKey: 'admin.settings.order' as TranslationKey, url: '/admin/settings?tab=order', icon: ShoppingCart },
+    { titleKey: 'admin.settings.filesystem' as TranslationKey, url: '/admin/settings?tab=filesystem', icon: FolderOpen },
+    { titleKey: 'admin.settings.social' as TranslationKey, url: '/admin/settings?tab=social', icon: Users },
+    { titleKey: 'admin.settings.shipping' as TranslationKey, url: '/admin/settings?tab=shipping', icon: Truck },
+    { titleKey: 'IP Block' as TranslationKey, url: '/admin/ip-block', icon: Ban },
+    { titleKey: 'Sitemap Generator' as TranslationKey, url: '/admin/system/sitemap', icon: Map },
     { titleKey: 'admin.system.serverStatus' as TranslationKey, url: '/admin/system/server-status', icon: Server },
+    { titleKey: 'admin.system.update' as TranslationKey, url: '/admin/system/update', icon: RefreshCw },
   ];
 
   const trackingItems: NavItem[] = [
@@ -214,7 +225,6 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'Custom Script', url: '/admin/tracking?tab=custom', icon: FileText },
     { titleKey: 'Looker Studio', url: '/admin/tracking?tab=looker', icon: BarChart3 },
     { titleKey: 'Search Console', url: '/admin/tracking?tab=search-console', icon: Globe },
-    { titleKey: 'Sitemap Generator', url: '/admin/system/sitemap', icon: Map },
     { titleKey: 'Global SEO', url: '/admin/seo', icon: Globe },
   ];
 
@@ -244,20 +254,6 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.preorder.reviews', url: '/admin/preorder/reviews', icon: MessageSquare },
     { titleKey: 'admin.preorder.faqs', url: '/admin/preorder/faqs', icon: HelpCircle },
     { titleKey: 'admin.preorder.notifications', url: '/admin/preorder/notifications', icon: BellRing },
-  ];
-
-  const settingsItems: NavItem[] = [
-    { titleKey: 'admin.settings.business' as TranslationKey, url: '/admin/settings?tab=business', icon: Home },
-    { titleKey: 'admin.settings.features' as TranslationKey, url: '/admin/settings?tab=features', icon: Sparkles },
-    { titleKey: 'admin.settings.languages' as TranslationKey, url: '/admin/settings?tab=languages', icon: Globe },
-    { titleKey: 'admin.settings.currency' as TranslationKey, url: '/admin/settings?tab=currency', icon: CreditCard },
-    { titleKey: 'admin.settings.vat' as TranslationKey, url: '/admin/settings?tab=vat', icon: Percent },
-    { titleKey: 'admin.settings.pickup' as TranslationKey, url: '/admin/settings?tab=pickup', icon: Store },
-    { titleKey: 'admin.settings.smtp' as TranslationKey, url: '/admin/settings?tab=smtp', icon: FileText },
-    { titleKey: 'admin.settings.order' as TranslationKey, url: '/admin/settings?tab=order', icon: ShoppingCart },
-    { titleKey: 'admin.settings.filesystem' as TranslationKey, url: '/admin/settings?tab=filesystem', icon: Layers },
-    { titleKey: 'admin.settings.social' as TranslationKey, url: '/admin/settings?tab=social', icon: Users },
-    { titleKey: 'admin.settings.shipping' as TranslationKey, url: '/admin/settings?tab=shipping', icon: Truck },
   ];
 
   const isActive = (path: string) => {
@@ -393,13 +389,12 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
         {renderCollapsible('accounting', 'Accounting Management', Calculator, accountingItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
-        {canAccess('system') && renderGroup('admin.group.system', systemItems)}
+        {renderCollapsible('system', 'admin.group.system', Settings, systemItems)}
 
         {/* Tracking & Analytics — standalone top-level section, placed above Website Setup */}
         <div className="my-2 mx-2 border-t border-sidebar-border" />
         {renderCollapsible('trackingAnalytics', 'Tracking & Analytics', Activity, trackingItems)}
         {renderCollapsible('websiteSetup', 'admin.websiteSetup', Monitor, websiteSetupItems)}
-        {renderCollapsible('settings', 'admin.settings', Settings, settingsItems)}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 md:p-3 space-y-1">
