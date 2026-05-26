@@ -46,8 +46,10 @@ export const Layout = ({ children }: LayoutProps) => {
   useEffect(() => {
     const root = document.documentElement;
 
-    // Load Google Fonts dynamically (non-blocking, outside rAF)
-    const fonts = [setup.fontFamily, setup.headingFont].filter(Boolean);
+    // Load Google Fonts dynamically only for non-Inter fonts (Inter is self-hosted via @fontsource).
+    const fonts = [setup.fontFamily, setup.headingFont]
+      .filter(Boolean)
+      .filter((f) => f && f.toLowerCase() !== 'inter');
     const uniqueFonts = [...new Set(fonts)];
     const existingLink = document.getElementById('dynamic-google-fonts');
     if (existingLink) existingLink.remove();
