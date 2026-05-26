@@ -292,6 +292,33 @@ export default function AdminTrackingAnalytics() {
           </Card>
         </TabsContent>
 
+        {/* Meta Pixel (client-side) */}
+        <TabsContent value="meta-pixel">
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2"><MousePointerClick className="h-5 w-5 text-blue-500" />Meta Pixel</CardTitle>
+                <CardDescription>Browser-side Facebook/Instagram pixel for ad measurement & retargeting</CardDescription>
+              </div>
+              <StatusBadge status={getStatus(settings.metaPixel?.enabled || false, settings.metaPixel?.pixelId || '')} />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Switch checked={!!settings.metaPixel?.enabled} onCheckedChange={v => updateNested('metaPixel', 'enabled', v)} />
+                <Label>Enable Meta Pixel</Label>
+              </div>
+              <div className="space-y-2">
+                <Label>Meta Pixel ID</Label>
+                <Input placeholder="1234567890" value={settings.metaPixel?.pixelId || ''} onChange={e => updateNested('metaPixel', 'pixelId', e.target.value)} />
+              </div>
+              <EventList events={[
+                'PageView', 'ViewContent', 'Search', 'AddToCart', 'AddToWishlist',
+                'InitiateCheckout', 'AddPaymentInfo', 'Purchase', 'Lead', 'CompleteRegistration',
+              ]} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* GA4 Client */}
         <TabsContent value="ga4-client">
           <Card>
