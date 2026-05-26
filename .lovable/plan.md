@@ -1,62 +1,62 @@
 ## Goal
 
-Checkout-এ দুটি পরিবর্তন:
+In Admin → Website Setup, the admin already sees tabs for Homepage, Hero Banners, Header, Top Bar, Footer, Appearance (Logo/Favicon), etc. — but several of those fields are **not actually wired to the live site**. The admin edits them, saves, and nothing changes on the frontend. This plan fixes the disconnects and reorganizes the page so every "front-end visual" control lives in one place.
 
-1. **COD ৳0.50 additional fee সম্পূর্ণ remove** করা — Online payment আর COD উভয়ের জন্য total একই formula হবে: `subtotal + shipping + tax − discount` (online হলে শুধু prepayment offer discount বাদ যাবে)।
-2. **COD select করলে** "0.50 fee" notice-এর জায়গায় একটি নতুন **"Pay Courier Charge in Advance"** action দেখাবে — click করলে user শুধু shipping/courier charge টা online এ pay করতে পারবে; বাকি product amount delivery-তে cash এ দিবে।
+## What's already working (keep as-is)
 
----
+- Hero Banners CRUD → rendered by `HeroSection.tsx` ✓
+- Footer (about, copyright, columns, social, payment icons, app store URLs, features bar) → rendered by `Footer.tsx` ✓
+- Favicon URL → applied by `Layout.tsx` ✓
+- Fonts, colors, border radius, custom CSS → applied by `Layout.tsx` ✓
+- Header toggles (sticky, search, cart, wishlist, language, currency) → respected by `Header.tsx` ✓
+- Checkout variant selection + customization ✓
+- CTA Call/WhatsApp + Prepayment Offer ✓
 
-## Changes
+## Gaps to fix (the real work)
 
-### 1. `src/pages/Checkout.tsx` — fee removal
-- Line 172: `const codFee = isCashOnDelivery ? 0.5 : 0;` → `const codFee = 0;` (অথবা পুরো variable ও related field সরিয়ে clean করব)।
-- `getCheckoutPricing` return থেকে `codFee` রাখব 0 হিসেবে যাতে downstream component break না করে, পরে চাইলে cleanup।
+### 1. Logo not used by the header
+`Header.tsx` hardcodes the "Eylace" wordmark and ignores `setup.logoUrl`. Update the brand block to render `<img src={setup.logoUrl} />` when set, fall back to the wordmark otherwise. Same fix in the mobile/compact header markup if present.
 
-### 2. `src/components/checkout/PaymentMethods.tsx` — UI
-COD selected হলে বর্তমান `t('payment.codNote')` block-এর পরিবর্তে একটি নতুন panel দেখাব:
+### 2. Top Bar reads from the wrong place
+`TopBar.tsx` currently loads `system_settings.top_bar_headlines` (a separate legacy key) and ignores `website_setup_v1.topBarEnabled / topBarText / topBarBgColor / topBarTextColor / topBarLinks`. Rewrite `TopBar.tsx` to:
+- Read from `useWebsiteSetup()` instead of its own Supabase query.
+- Respect `topBarEnabled` (hide when false).
+- Show `topBarText` as the marquee/headline content.
+- Apply `topBarBgColor` / `topBarTextColor`.
+- Render `topBarLinks` on the right side (desktop) as small inline links.
+- Keep the dismiss button.
 
-```text
-┌──────────────────────────────────────────────┐
-│ 🚚  Pay Courier Charge in Advance            │
-│     Courier delivery charge: ৳{shipping}     │
-│     [ Pay ৳{shipping} Online ]  ← button     │
-└──────────────────────────────────────────────┘
-```
+### 3. Header announcement bar unused
+`setup.headerAnnouncementText` is editable but never rendered. Add a slim bar above the main header row in `Header.tsx` that shows the text when non-empty.
 
-- Button click করলে একটি নতুন `AdvanceCourierChargeModal` open হবে যেখানে available online gateways (bKash / Nagad / Card ইত্যাদি — `onlineGateways` থেকে filtered) list থাকবে।
-- User gateway select করে "Pay" করলে existing online-payment redirect flow ব্যবহার করে শুধু `shipping` amount-এর জন্য একটি **partial payment intent** create হবে।
+### 4. Reorganize the Website Setup tabs
+Promote the most-used controls and group them logically so the admin can find everything quickly. New tab order:
 
-### 3. New: `src/components/checkout/AdvanceCourierChargeModal.tsx`
-- Props: `open`, `onClose`, `amount` (= shipping), `gateways`, `onConfirmed(paymentRef)`.
-- Internal: gateway radio list + Pay button → calls existing payment-initiate edge function with `purpose: 'advance_courier_charge'` + `amount`.
-- Success হলে `paymentRef` (transaction id) parent-এ ফেরত পাঠাবে; checkout form-এ hidden field `advanceCourierPaymentRef` set হবে।
+1. **Branding** (new tab, pulled out of Appearance) — Logo, Favicon, Site Name, Primary color, Accent color, Border radius, Dark-mode default
+2. **Top Bar** — existing
+3. **Header** — merge "Select Header" + "Header Settings" + Announcement Text into one tab
+4. **Homepage** — merge "Select Homepage" + "Homepage Settings" + Hero Banners CRUD into one tab (Hero Banners get a clear "Hero Slides / Images" subsection title)
+5. **Footer** — existing
+6. **Pages** — existing
+7. **Auth Layout** — existing
+8. **Typography** — existing Font tab
+9. **Checkout** — existing
+10. **Advanced** — Custom CSS (moved from Appearance)
 
-### 4. `supabase/functions/checkout-create-order/index.ts` — order metadata
-- নতুন optional body field accept: `advance_courier_payment_ref`, `advance_courier_amount`.
-- COD order create করার সময় এই দুটি `orders.metadata` (jsonb) এ store করব যাতে admin দেখতে পায় shipping prepaid।
-- Migration: যদি `metadata` jsonb column না থাকে তাহলে add করব (check করে decide)।
+The underlying `WebsiteSetupState` shape stays the same; only the tab grouping changes, so saved data remains compatible.
 
-### 5. `src/components/checkout/OrderSummary.tsx`
-- `codFee` row সম্পূর্ণ hide (0 হলে already hidden আছে — ভালো)।
-- যদি `advanceCourierPaid` true থাকে, summary-তে একটি badge: "Courier charge prepaid online ✓"।
+### 5. Site Name field (small addition)
+Add a `siteName` text field in the new Branding tab (defaults to "Eylace"). Use it in `Header.tsx` as the fallback wordmark text when no logo is uploaded, and as the document title prefix (optional, low priority).
 
-### 6. Translations (`src/i18n/translations.ts`)
-- নতুন keys (en + bn): `payment.advanceCourierTitle`, `payment.advanceCourierDesc`, `payment.payCourierBtn`, `payment.courierPrepaid`।
+## Files to change
 
----
+- `src/pages/AdminWebsiteSetupPage.tsx` — re-group tabs, add Branding tab, add `siteName` field
+- `src/hooks/useWebsiteSetup.ts` — add `siteName` to interface + defaults
+- `src/components/layout/Header.tsx` — render `setup.logoUrl` + `setup.siteName` + `setup.headerAnnouncementText`
+- `src/components/layout/TopBar.tsx` — switch source to `useWebsiteSetup()`, respect all top-bar fields, render links
 
-## Out of scope (এই turn এ নয়)
-- Actual gateway integration code change — existing bKash/Nagad/SSLCommerz initiate flow reuse করা হবে; নতুন gateway adapter লেখা হবে না।
-- Refund logic যদি COD order cancel হয় তখন advance courier charge ফেরত — পরে আলাদা feature।
+## Out of scope
 
----
-
-## Files touched
-- `src/pages/Checkout.tsx` (codFee = 0)
-- `src/components/checkout/PaymentMethods.tsx` (new advance panel)
-- `src/components/checkout/AdvanceCourierChargeModal.tsx` (new)
-- `src/components/checkout/OrderSummary.tsx` (prepaid badge)
-- `supabase/functions/checkout-create-order/index.ts` (accept new fields)
-- `src/i18n/translations.ts` (new keys)
-- Possibly 1 migration to ensure `orders.metadata` jsonb exists।
+- No backend/schema changes (all data already lives in `system_settings.website_setup_v1`)
+- No new admin pages, no auth/role changes
+- The "Select Homepage" / "Select Header" preset cards (default/minimal/modern) stay as visual selectors; wiring those presets to actually swap layouts is a separate, larger task

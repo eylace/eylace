@@ -65,6 +65,7 @@ export interface WebsiteSetup {
   customCss: string;
   logoUrl: string;
   faviconUrl: string;
+  siteName: string;
   heroBanners: HeroBanner[];
   selectedCheckout: string;
   checkoutCustomization: CheckoutCustomization;
@@ -188,6 +189,7 @@ const defaults: WebsiteSetup = {
   customCss: '',
   logoUrl: '',
   faviconUrl: '',
+  siteName: 'Eylace',
   heroBanners: [],
   selectedCheckout: 'classic',
   checkoutCustomization: defaultCheckoutCustomization,

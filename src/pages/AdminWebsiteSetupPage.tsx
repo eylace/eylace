@@ -76,6 +76,7 @@ interface WebsiteSetupState {
   customCss: string;
   logoUrl: string;
   faviconUrl: string;
+  siteName: string;
   heroBanners: HeroBanner[];
   selectedCheckout: string;
   checkoutCustomization: Record<string, any>;
@@ -157,6 +158,7 @@ const defaultSetup: WebsiteSetupState = {
   customCss: '',
   logoUrl: '',
   faviconUrl: '',
+  siteName: 'Eylace',
   heroBanners: [],
   selectedCheckout: 'classic',
   checkoutCustomization: {},
@@ -183,7 +185,7 @@ const AdminWebsiteSetupPage = () => {
   const [addPageOpen, setAddPageOpen] = useState(false);
   const [newPage, setNewPage] = useState({ title: '', slug: '', content: '' });
   const [editCheckoutVariant, setEditCheckoutVariant] = useState<string | null>(null);
-  const activeTab = searchParams.get('tab') || 'homepage';
+  const activeTab = searchParams.get('tab') || 'branding';
   const setActiveTab = (tab: string) => setSearchParams({ tab });
 
   const defaultVariantCfg: CheckoutVariantConfig = {
@@ -274,6 +276,7 @@ const AdminWebsiteSetupPage = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap h-auto gap-1">
+            <TabsTrigger value="branding" className="text-xs">Branding</TabsTrigger>
             <TabsTrigger value="homepage" className="text-xs">Select Homepage</TabsTrigger>
             <TabsTrigger value="homepage-settings" className="text-xs">Homepage Settings</TabsTrigger>
             <TabsTrigger value="font" className="text-xs">Font Family</TabsTrigger>
@@ -286,6 +289,80 @@ const AdminWebsiteSetupPage = () => {
             <TabsTrigger value="appearance" className="text-xs">Appearance</TabsTrigger>
             <TabsTrigger value="checkout" className="text-xs">Checkout Page</TabsTrigger>
           </TabsList>
+
+          {/* Branding — Logo, Favicon, Site Name */}
+          <TabsContent value="branding">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Branding & Identity</CardTitle></CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Site Name</Label>
+                  <Input
+                    value={setup.siteName}
+                    onChange={e => update('siteName', e.target.value)}
+                    placeholder="Eylace"
+                  />
+                  <p className="text-xs text-muted-foreground">Shown in the header when no logo is uploaded.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Logo</Label>
+                    <MediaInputField
+                      value={setup.logoUrl}
+                      onChange={(url) => update('logoUrl', url)}
+                      uploadFolder="branding"
+                      placeholder="https://... or pick from library"
+                      maxSizeBytes={2 * 1024 * 1024}
+                      maxWidth={1024}
+                      maxHeight={1024}
+                    />
+                    {setup.logoUrl && (
+                      <div className="mt-2 p-3 bg-primary rounded-md inline-block">
+                        <img src={setup.logoUrl} alt="Logo preview" className="h-10 w-auto object-contain" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Favicon</Label>
+                    <MediaInputField
+                      value={setup.faviconUrl}
+                      onChange={(url) => update('faviconUrl', url)}
+                      uploadFolder="branding"
+                      placeholder="https://... or pick from library"
+                      maxSizeBytes={256 * 1024}
+                      maxWidth={256}
+                      maxHeight={256}
+                    />
+                    {setup.faviconUrl && (
+                      <div className="mt-2 p-2 bg-muted rounded-md inline-block">
+                        <img src={setup.faviconUrl} alt="Favicon preview" className="h-8 w-8 object-contain" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Separator />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Primary Color</Label>
+                    <div className="flex gap-2">
+                      <input type="color" value={setup.primaryColor} onChange={e => update('primaryColor', e.target.value)} className="h-10 w-10 rounded border cursor-pointer" />
+                      <Input value={setup.primaryColor} onChange={e => update('primaryColor', e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Accent Color</Label>
+                    <div className="flex gap-2">
+                      <input type="color" value={setup.accentColor} onChange={e => update('accentColor', e.target.value)} className="h-10 w-10 rounded border cursor-pointer" />
+                      <Input value={setup.accentColor} onChange={e => update('accentColor', e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tip: Additional theme controls (border radius, dark mode, custom CSS) live in the <strong>Appearance</strong> tab.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Select Homepage */}
           <TabsContent value="homepage">
