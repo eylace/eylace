@@ -69,8 +69,7 @@ export const HeroSection = () => {
               {heroSlides.map((slide, idx) => (
                 <div
                   key={slide.id}
-                  className={`min-w-full aspect-[2/1] md:aspect-[2.5/1] text-primary-foreground p-6 md:p-10 flex flex-col justify-center ${!slide.imageUrl ? `bg-gradient-to-r ${slide.gradient}` : ''}`}
-                  style={slide.imageUrl ? { backgroundImage: `url(${slide.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                  className={`relative min-w-full aspect-[2/1] md:aspect-[2.5/1] text-primary-foreground p-6 md:p-10 flex flex-col justify-center overflow-hidden ${!slide.imageUrl ? `bg-gradient-to-r ${slide.gradient}` : ''}`}
                 >
                   {slide.imageUrl && (
                     <img
@@ -79,11 +78,10 @@ export const HeroSection = () => {
                       fetchPriority={idx === 0 ? 'high' : 'low'}
                       loading={idx === 0 ? 'eager' : 'lazy'}
                       decoding="async"
-                      className="hidden"
-                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover -z-10"
                     />
                   )}
-                  <div className="max-w-lg animate-fade-in">
+                  <div className="relative max-w-lg animate-fade-in">
                     <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-sm font-bold rounded mb-3">{slide.subtitle}</span>
                     <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3">{slide.title}</h2>
                     <p className="text-primary-foreground/90 mb-6 text-sm md:text-base">{slide.description}</p>
