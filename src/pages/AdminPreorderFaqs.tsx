@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,25 +12,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2, Edit } from 'lucide-react';
+import { useAdminQuery } from '@/hooks/useAdminQuery';
 
 export default function AdminPreorderFaqs() {
   const { toast } = useToast();
-  const [faqs, setFaqs] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ question: '', answer: '', sort_order: 0, is_active: true });
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const { data } = await supabase.from('preorder_faqs').select('*').order('sort_order');
-    setFaqs(data || []);
-    setIsLoading(false);
-  }, []);
+  const { data: faqs = [], isLoading, refetch: fetchData } = useAdminQuery(
+    ['admin-preorder-faqs'],
+    async () => {
+      const { data } = await supabase.from('preorder_faqs').select('*').order('sort_order');
+      return data ?? [];
+    }
+  );
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const openNew = () => { setEditId(null); setForm({ question: '', answer: '', sort_order: faqs.length, is_active: true }); setShowModal(true); };
+  const openNew = () => { setEditId(null); setForm({ question: '', answer: '', sort_order: (faqs as any[]).length, is_active: true }); setShowModal(true); };
   const openEdit = (f: any) => { setEditId(f.id); setForm({ question: f.question, answer: f.answer, sort_order: f.sort_order, is_active: f.is_active }); setShowModal(true); };
 
   const handleSave = async () => {
@@ -61,7 +59,7 @@ export default function AdminPreorderFaqs() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Preorder FAQs</h1>
-            <p className="text-muted-foreground">{faqs.length} FAQs</p>
+            <p className="text-muted-foreground">{(faqs as any[]).length} FAQs</p>
           </div>
           <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" /> Add FAQ</Button>
         </div>
@@ -70,7 +68,7 @@ export default function AdminPreorderFaqs() {
           <CardContent className="pt-6">
             {isLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-            ) : faqs.length === 0 ? (
+            ) : (faqs as any[]).length === 0 ? (
               <p className="text-center py-12 text-muted-foreground">No FAQs yet. Create one to get started.</p>
             ) : (
               <Table>
@@ -84,7 +82,7 @@ export default function AdminPreorderFaqs() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {faqs.map(f => (
+                  {(faqs as any[]).map(f => (
                     <TableRow key={f.id}>
                       <TableCell>{f.sort_order}</TableCell>
                       <TableCell className="font-medium max-w-xs truncate">{f.question}</TableCell>

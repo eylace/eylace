@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Pencil, Trash2, MessageSquare } from 'lucide-react';
+import { useAdminQuery } from '@/hooks/useAdminQuery';
 
 interface SmsTemplate {
   id: string;
@@ -25,19 +26,17 @@ interface SmsTemplate {
 
 export default function AdminOtpSmsTemplates() {
   const { toast } = useToast();
-  const [templates, setTemplates] = useState<SmsTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SmsTemplate | null>(null);
   const [form, setForm] = useState({ name: '', template_key: '', message: '', variables: '{{otp}}' });
 
-  useEffect(() => { fetchTemplates(); }, []);
-
-  const fetchTemplates = async () => {
-    const { data } = await supabase.from('otp_sms_templates').select('*').order('created_at');
-    setTemplates((data as SmsTemplate[]) || []);
-    setLoading(false);
-  };
+  const { data: templates = [], isLoading: loading, refetch: fetchTemplates } = useAdminQuery(
+    ['admin-otp-sms-templates'],
+    async () => {
+      const { data } = await supabase.from('otp_sms_templates').select('*').order('created_at');
+      return (data as SmsTemplate[]) ?? [];
+    }
+  );
 
   const openCreate = () => {
     setEditing(null);
@@ -107,23 +106,10 @@ export default function AdminOtpSmsTemplates() {
                 <DialogTitle>{editing ? 'Edit Template' : 'Add SMS Template'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <div>
-                  <Label>Template Name</Label>
-                  <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Login OTP" className="mt-1" />
-                </div>
-                <div>
-                  <Label>Template Key</Label>
-                  <Input value={form.template_key} onChange={(e) => setForm(f => ({ ...f, template_key: e.target.value }))} placeholder="e.g. login_otp" className="mt-1" />
-                  <p className="text-xs text-muted-foreground mt-1">Unique identifier used in code</p>
-                </div>
-                <div>
-                  <Label>Message</Label>
-                  <Textarea value={form.message} onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))} rows={3} placeholder="Your OTP is {{otp}}. Valid for 5 minutes." className="mt-1" />
-                </div>
-                <div>
-                  <Label>Variables (comma-separated)</Label>
-                  <Input value={form.variables} onChange={(e) => setForm(f => ({ ...f, variables: e.target.value }))} placeholder="{{otp}}, {{name}}" className="mt-1" />
-                </div>
+                <div><Label>Template Name</Label><Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Login OTP" className="mt-1" /></div>
+                <div><Label>Template Key</Label><Input value={form.template_key} onChange={(e) => setForm(f => ({ ...f, template_key: e.target.value }))} placeholder="e.g. login_otp" className="mt-1" /><p className="text-xs text-muted-foreground mt-1">Unique identifier used in code</p></div>
+                <div><Label>Message</Label><Textarea value={form.message} onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))} rows={3} placeholder="Your OTP is {{otp}}. Valid for 5 minutes." className="mt-1" /></div>
+                <div><Label>Variables (comma-separated)</Label><Input value={form.variables} onChange={(e) => setForm(f => ({ ...f, variables: e.target.value }))} placeholder="{{otp}}, {{name}}" className="mt-1" /></div>
                 <Button onClick={handleSave} className="w-full">{editing ? 'Update' : 'Create'} Template</Button>
               </div>
             </DialogContent>
@@ -147,19 +133,13 @@ export default function AdminOtpSmsTemplates() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {templates.map((t) => (
+                {(templates as SmsTemplate[]).map((t) => (
                   <TableRow key={t.id}>
                     <TableCell className="font-medium">{t.name}</TableCell>
                     <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{t.template_key}</code></TableCell>
                     <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">{t.message}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        {t.variables.map((v) => <Badge key={v} variant="secondary" className="text-xs">{v}</Badge>)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Switch checked={t.is_active} onCheckedChange={(v) => toggleActive(t.id, v)} />
-                    </TableCell>
+                    <TableCell><div className="flex gap-1 flex-wrap">{t.variables.map((v) => <Badge key={v} variant="secondary" className="text-xs">{v}</Badge>)}</div></TableCell>
+                    <TableCell><Switch checked={t.is_active} onCheckedChange={(v) => toggleActive(t.id, v)} /></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => openEdit(t)}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -168,7 +148,7 @@ export default function AdminOtpSmsTemplates() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {templates.length === 0 && (
+                {(templates as SmsTemplate[]).length === 0 && (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No SMS templates found</TableCell></TableRow>
                 )}
               </TableBody>

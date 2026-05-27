@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,26 +11,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Search, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAdminQuery } from '@/hooks/useAdminQuery';
 
 export default function AdminPreorderQueries() {
   const { toast } = useToast();
-  const [queries, setQueries] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [answerModal, setAnswerModal] = useState<any>(null);
   const [answer, setAnswer] = useState('');
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const { data } = await supabase
-      .from('preorder_queries')
-      .select('*, preorder_products(products(name))')
-      .order('created_at', { ascending: false });
-    setQueries(data || []);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const { data: queries = [], isLoading, refetch: fetchData } = useAdminQuery(
+    ['admin-preorder-queries'],
+    async () => {
+      const { data } = await supabase
+        .from('preorder_queries')
+        .select('*, preorder_products(products(name))')
+        .order('created_at', { ascending: false });
+      return data ?? [];
+    }
+  );
 
   const submitAnswer = async () => {
     if (!answer.trim() || !answerModal) return;
@@ -46,7 +44,7 @@ export default function AdminPreorderQueries() {
     }
   };
 
-  const filtered = queries.filter(q =>
+  const filtered = (queries as any[]).filter(q =>
     q.question?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -55,7 +53,7 @@ export default function AdminPreorderQueries() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Preorder Product Queries</h1>
-          <p className="text-muted-foreground">{queries.filter(q => q.status === 'pending').length} pending queries</p>
+          <p className="text-muted-foreground">{(queries as any[]).filter(q => q.status === 'pending').length} pending queries</p>
         </div>
 
         <Card>
@@ -85,7 +83,7 @@ export default function AdminPreorderQueries() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(q => (
+                  {filtered.map((q: any) => (
                     <TableRow key={q.id}>
                       <TableCell>{q.preorder_products?.products?.name || '-'}</TableCell>
                       <TableCell className="max-w-xs truncate">{q.question}</TableCell>

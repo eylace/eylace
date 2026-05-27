@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,25 +12,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Edit, Trash2, Bell, Mail, Smartphone } from 'lucide-react';
+import { useAdminQuery } from '@/hooks/useAdminQuery';
 
 export default function AdminPreorderNotificationTypes() {
   const { toast } = useToast();
-  const [types, setTypes] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '', slug: '', description: '', email_enabled: true, sms_enabled: false, push_enabled: false, template: '', is_active: true
   });
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const { data } = await supabase.from('preorder_notification_types').select('*').order('created_at');
-    setTypes(data || []);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const { data: types = [], isLoading, refetch: fetchData } = useAdminQuery(
+    ['admin-preorder-notification-types'],
+    async () => {
+      const { data } = await supabase.from('preorder_notification_types').select('*').order('created_at');
+      return data ?? [];
+    }
+  );
 
   const openNew = () => {
     setEditId(null);
@@ -80,7 +78,7 @@ export default function AdminPreorderNotificationTypes() {
           <CardContent className="pt-6">
             {isLoading ? (
               <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-            ) : types.length === 0 ? (
+            ) : (types as any[]).length === 0 ? (
               <div className="text-center py-12">
                 <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                 <p className="text-muted-foreground">No notification types yet</p>
@@ -97,7 +95,7 @@ export default function AdminPreorderNotificationTypes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {types.map(t => (
+                  {(types as any[]).map(t => (
                     <TableRow key={t.id}>
                       <TableCell className="font-medium">{t.name}</TableCell>
                       <TableCell className="font-mono text-xs">{t.slug}</TableCell>
