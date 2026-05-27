@@ -50,8 +50,8 @@ describe('useAdminCheck — tab switch / TOKEN_REFRESHED behavior', () => {
   it('resolves admin check once and does not re-spinner on TOKEN_REFRESHED', async () => {
     const { result } = renderHook(() => useAdminCheck(), { wrapper });
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.isAdmin).toBe(true);
+    await waitFor(() => expect(result.current.isAdmin).toBe(true));
+    expect(result.current.isLoading).toBe(false);
     expect(roleQuery).toHaveBeenCalledTimes(1);
 
     // Simulate Supabase emitting TOKEN_REFRESHED (e.g. tab focus). Same uid.
@@ -69,7 +69,7 @@ describe('useAdminCheck — tab switch / TOKEN_REFRESHED behavior', () => {
 
   it('re-runs admin check when the user identity actually changes', async () => {
     const { result } = renderHook(() => useAdminCheck(), { wrapper });
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.isAdmin).toBe(true));
     expect(roleQuery).toHaveBeenCalledTimes(1);
 
     await act(async () => {
