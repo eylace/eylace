@@ -232,7 +232,7 @@ export function MediaManagerModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-[92vh] max-h-[92vh] max-w-[1180px] flex-col overflow-hidden p-8 sm:p-10">
+      <DialogContent className="flex h-[95vh] max-h-[95vh] w-[97vw] max-w-[1600px] flex-col overflow-hidden p-6 sm:p-8">
         <DialogHeader className="pb-2">
           <DialogTitle>Media Manager</DialogTitle>
         </DialogHeader>
