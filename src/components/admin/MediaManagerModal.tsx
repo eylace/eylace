@@ -243,6 +243,7 @@ export function MediaManagerModal({
             <TabsTrigger value="upload">Upload Media</TabsTrigger>
           </TabsList>
 
+          {tab === 'library' && (
           <TabsContent value="library" className="mt-4 flex flex-1 flex-col min-h-0 space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
