@@ -59,10 +59,21 @@ export function MediaUploadPanel({
       </div>
 
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Upload files"
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        onDragEnter={onDragOver}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
-        className={`flex flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
+        className={`flex flex-1 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
           dragOver ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'
         }`}
       >
@@ -73,7 +84,10 @@ export function MediaUploadPanel({
         <p className="mt-1 text-sm text-muted-foreground">Drag and drop or click to browse</p>
         <Button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={(event) => {
+            event.stopPropagation();
+            inputRef.current?.click();
+          }}
           disabled={uploading}
           className="mt-5 gap-2"
         >
