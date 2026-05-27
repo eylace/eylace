@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react';
-import { Search, Plus, Minus, Trash2, ShoppingCart, Printer, X, ScanLine, UserPlus, Package } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import {
+  Search, Plus, Minus, Trash2, ShoppingCart, Printer, X, ScanLine,
+  UserPlus, Package, ShieldAlert, Loader2,
+} from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,13 +15,17 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAdminQuery } from '@/hooks/useAdminQuery';
+import { useAdminCheck } from '@/hooks/useAdminData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { printSingleInvoice } from '@/lib/invoiceGenerator';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface POSProduct {
   id: string;
   name: string;
+  slug: string;
   price: number;
   image: string | null;
   stock: number;
@@ -39,6 +46,10 @@ const PAYMENT_METHODS = [
 ];
 
 export default function AdminPOS() {
+  const { isAdmin, isLoading: roleLoading, hasAccess } = useAdminCheck();
+  const allowed = isAdmin && hasAccess('orders');
+  const queryClient = useQueryClient();
+
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string>('all');
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -48,13 +59,16 @@ export default function AdminPOS() {
   const [discountPct, setDiscountPct] = useState<number>(0);
   const [taxPct, setTaxPct] = useState<number>(0);
   const [amountPaid, setAmountPaid] = useState<number>(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [lastOrder, setLastOrder] = useState<any | null>(null);
+  const scanBufferRef = useRef<{ buf: string; ts: number }>({ buf: '', ts: 0 });
 
   const { data: products = [], isLoading } = useAdminQuery<POSProduct[]>(
     ['admin-pos-products'],
     async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, price, original_price, images, stock, category_id, categories(name)')
+        .select('id, name, slug, price, original_price, images, stock, category_id, categories(name)')
         .eq('is_active', true)
         .order('name', { ascending: true })
         .limit(500);
@@ -62,12 +76,14 @@ export default function AdminPOS() {
       return (data ?? []).map((p: any) => ({
         id: p.id,
         name: p.name,
+        slug: p.slug ?? '',
         price: Number(p.price ?? 0),
         image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
         stock: Number(p.stock ?? 0),
         category: p.categories?.name ?? null,
       }));
     },
+    { enabled: allowed },
   );
 
   const categories = useMemo(() => {
@@ -81,7 +97,7 @@ export default function AdminPOS() {
     return products.filter((p) => {
       if (category !== 'all' && p.category !== category) return false;
       if (!q) return true;
-      return p.name.toLowerCase().includes(q);
+      return p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q);
     });
   }, [products, search, category]);
 
@@ -129,6 +145,53 @@ export default function AdminPOS() {
     setAmountPaid(0);
   };
 
+  // --- Barcode / quick-scan handler -------------------------------------
+  // Matches a code by id, slug (case-insensitive), or exact name.
+  const findByCode = (code: string): POSProduct | null => {
+    const c = code.trim().toLowerCase();
+    if (!c) return null;
+    return (
+      products.find((p) => p.id.toLowerCase() === c) ||
+      products.find((p) => p.slug.toLowerCase() === c) ||
+      products.find((p) => p.name.toLowerCase() === c) ||
+      null
+    );
+  };
+
+  const scanAndAdd = (code: string) => {
+    const match = findByCode(code);
+    if (!match) {
+      toast.error(`No product for code: ${code}`);
+      return;
+    }
+    if (match.stock <= 0) {
+      toast.error(`${match.name} is out of stock`);
+      return;
+    }
+    addToCart(match);
+    setSearch('');
+    toast.success(`Scanned: ${match.name}`);
+  };
+
+  // Detect a barcode-scanner style burst: many chars typed within ~80ms
+  // ending with Enter. Falls back to "enter on the search box" UX.
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const now = Date.now();
+    if (e.key === 'Enter') {
+      const value = search.trim();
+      if (value) scanAndAdd(value);
+      scanBufferRef.current = { buf: '', ts: 0 };
+      e.preventDefault();
+      return;
+    }
+    // Reset burst buffer if there's a > 100ms gap (human typing)
+    if (now - scanBufferRef.current.ts > 100) {
+      scanBufferRef.current.buf = '';
+    }
+    if (e.key.length === 1) scanBufferRef.current.buf += e.key;
+    scanBufferRef.current.ts = now;
+  };
+
   const subtotal = useMemo(
     () => cart.reduce((s, l) => s + l.product.price * l.qty, 0),
     [cart],
@@ -140,7 +203,14 @@ export default function AdminPOS() {
   const change = Math.max(0, (amountPaid || 0) - total);
   const due = Math.max(0, total - (amountPaid || 0));
 
-  const handleCheckout = () => {
+  const buildOrderNumber = () => {
+    const d = new Date();
+    const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    const rnd = Math.random().toString(36).slice(2, 6).toUpperCase();
+    return `POS-${ymd}-${rnd}`;
+  };
+
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       toast.error('Cart is empty');
       return;
@@ -149,11 +219,123 @@ export default function AdminPOS() {
       toast.error('Amount paid is less than total');
       return;
     }
-    toast.success(`Sale completed — ৳${total.toFixed(2)}`, {
-      description: `${cart.length} item(s) · ${paymentMethod.toUpperCase()}`,
-    });
-    clearCart();
+    setSubmitting(true);
+    try {
+      const order_number = buildOrderNumber();
+      const payload = {
+        order_number,
+        shipping: 0,
+        tax: taxAmt,
+        discount: discountAmt,
+        total,
+        payment_method: paymentMethod,
+        shipping_address: {
+          first_name: customerName || 'Walk-in',
+          last_name: '',
+          phone: customerPhone || '',
+          email: '',
+          address: 'In-store POS',
+          city: '',
+          state: '',
+          zip_code: '',
+          country: 'BD',
+          channel: 'pos',
+        },
+        guest_email: '',
+        guest_phone: customerPhone || '',
+        items: cart.map((l) => ({
+          product_id: l.product.id,
+          quantity: l.qty,
+          variations: null,
+        })),
+      };
+
+      const { data, error } = await supabase.functions.invoke(
+        'checkout-create-order',
+        { body: payload },
+      );
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const order = data?.order ?? { ...payload, items: cart };
+      // Mark POS sales as delivered immediately (in-store hand-off).
+      // This also fires the auto-accounting + stock-decrement triggers.
+      try {
+        await supabase.functions.invoke('admin-update-order', {
+          body: { orderId: order.id, status: 'delivered' },
+        });
+      } catch (e) {
+        console.warn('POS: could not auto-mark delivered', e);
+      }
+
+      setLastOrder({
+        ...order,
+        items: cart.map((l) => ({
+          id: l.product.id,
+          product_name: l.product.name,
+          product_image: l.product.image,
+          quantity: l.qty,
+          price: l.product.price,
+          variations: null,
+        })),
+        subtotal,
+        discount: discountAmt,
+        tax: taxAmt,
+        shipping: 0,
+        total,
+        payment_method: paymentMethod,
+        guest_phone: customerPhone || null,
+        shipping_address: payload.shipping_address,
+      });
+
+      toast.success(`Sale completed — ৳${total.toFixed(2)}`, {
+        description: `${cart.length} item(s) · ${paymentMethod.toUpperCase()} · ${order.order_number}`,
+      });
+      clearCart();
+      queryClient.invalidateQueries({ queryKey: ['admin-pos-products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+    } catch (err: any) {
+      console.error('POS checkout failed', err);
+      toast.error(err?.message || 'Failed to create sale');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const printLastReceipt = () => {
+    if (!lastOrder) {
+      toast.info('No recent sale to print');
+      return;
+    }
+    printSingleInvoice(lastOrder);
+  };
+
+  if (roleLoading) {
+    return (
+      <AdminLayout title="POS — Point of Sale" description="Loading…">
+        <div className="flex items-center justify-center py-24 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin mr-2" /> Verifying access…
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!allowed) {
+    return (
+      <AdminLayout title="POS — Point of Sale" description="Access denied">
+        <Card className="max-w-md mx-auto mt-12">
+          <CardContent className="p-8 text-center space-y-3">
+            <ShieldAlert className="h-10 w-10 mx-auto text-destructive" />
+            <h2 className="text-lg font-bold">Access Denied</h2>
+            <p className="text-sm text-muted-foreground">
+              You don't have permission to use the Point of Sale. Required role:
+              admin, super admin, or order manager.
+            </p>
+          </CardContent>
+        </Card>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="POS — Point of Sale" description="Quick in-store sales and checkout">
@@ -167,6 +349,7 @@ export default function AdminPOS() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
                   placeholder="Search products / scan barcode…"
                   className="pl-9 h-10"
                   autoFocus
@@ -449,18 +632,22 @@ export default function AdminPOS() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={cart.length === 0}
-                  onClick={() => toast.info('Receipt printed (demo)')}
+                  disabled={!lastOrder}
+                  onClick={printLastReceipt}
                 >
                   <Printer className="h-3.5 w-3.5 mr-1" /> Print
                 </Button>
                 <Button
                   variant="accent"
                   size="sm"
-                  disabled={cart.length === 0}
+                  disabled={cart.length === 0 || submitting}
                   onClick={handleCheckout}
                 >
-                  Checkout
+                  {submitting ? (
+                    <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Saving…</>
+                  ) : (
+                    'Checkout'
+                  )}
                 </Button>
               </div>
             </CardContent>
