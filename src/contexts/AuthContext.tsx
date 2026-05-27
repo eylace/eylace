@@ -61,6 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Ignore TOKEN_REFRESHED on tab focus which would otherwise trigger
         // downstream effects (e.g. admin check spinner).
         if (newUid !== currentUidRef.current) {
+          if (import.meta.env.DEV) {
+            console.debug(
+              '[auth] identity change',
+              { event, from: currentUidRef.current, to: newUid },
+            );
+          }
           currentUidRef.current = newUid;
           setUser(session?.user ?? null);
 
@@ -71,6 +77,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } else {
             setProfile(null);
           }
+        } else if (import.meta.env.DEV) {
+          console.debug('[auth] ignored (no uid change)', { event, uid: newUid });
         }
       }
     );

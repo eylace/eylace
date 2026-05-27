@@ -7,6 +7,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { AdminLanguageSwitcher } from './AdminLanguageSwitcher';
 import { AdminProfileMenu } from './AdminProfileMenu';
 import { RefetchBadge } from './RefetchBadge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminCheck } from '@/hooks/useAdminData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -81,8 +82,37 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
 
   if (authLoading || adminLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      <div className="min-h-screen flex w-full bg-background" aria-busy="true" aria-label="Loading admin panel">
+        {/* Sidebar skeleton */}
+        <div className="hidden md:flex flex-col gap-3 w-60 border-r bg-card p-3">
+          <Skeleton className="h-8 w-32" />
+          <div className="space-y-2 mt-3">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={i} className="h-7 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header skeleton */}
+          <div className="sticky top-0 z-30 bg-card border-b-2 border-accent h-12 flex items-center gap-2 px-3">
+            <Skeleton className="h-7 w-7 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-md" />
+            <div className="flex-1" />
+            <Skeleton className="h-7 w-20 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-full" />
+          </div>
+          {/* Content skeleton */}
+          <main className="flex-1 p-2 md:p-4 space-y-3">
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
+            <Skeleton className="h-64 w-full mt-4" />
+          </main>
+        </div>
       </div>
     );
   }

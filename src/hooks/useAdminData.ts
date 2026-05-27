@@ -126,6 +126,14 @@ export const useAdminCheck = () => {
       // admin status for this user (e.g. on tab refocus / token refresh).
       if (lastCheckedUidRef.current !== user.id) {
         setIsLoading(true);
+        if (import.meta.env.DEV) {
+          console.debug('[admin-check] running for uid change', {
+            from: lastCheckedUidRef.current,
+            to: user.id,
+          });
+        }
+      } else if (import.meta.env.DEV) {
+        console.debug('[admin-check] skipped spinner (same uid)', { uid: user.id });
       }
       const { data, error } = await supabase
         .from('user_roles')
