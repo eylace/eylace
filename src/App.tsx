@@ -12,6 +12,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { DeliveryLocationProvider } from "@/contexts/DeliveryLocationContext";
 import { CompareBar } from "@/components/compare/CompareBar";
 import { CompareModal } from "@/components/compare/CompareModal";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { lazy, Suspense, useEffect, useState } from "react";
 
 // Retry wrapper for lazy imports — handles stale chunk hashes after deploys.
@@ -276,6 +277,7 @@ const App = () => (
             <CompareModal />
             <BrowserRouter>
               <ReferralCapture />
+              <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
