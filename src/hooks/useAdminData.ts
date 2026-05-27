@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Database } from '@/integrations/supabase/types';
@@ -110,6 +110,7 @@ export const useAdminCheck = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const lastCheckedUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -117,10 +118,15 @@ export const useAdminCheck = () => {
         setIsAdmin(false);
         setUserRole(null);
         setIsLoading(false);
+        lastCheckedUidRef.current = null;
         return;
       }
 
-      setIsLoading(true);
+      // Avoid flipping back to a full-page spinner if we've already resolved
+      // admin status for this user (e.g. on tab refocus / token refresh).
+      if (lastCheckedUidRef.current !== user.id) {
+        setIsLoading(true);
+      }
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -132,10 +138,11 @@ export const useAdminCheck = () => {
       setIsAdmin(!!firstRole && !error);
       setUserRole(firstRole?.role as AppRole || null);
       setIsLoading(false);
+      lastCheckedUidRef.current = user.id;
     };
 
     checkAdmin();
-  }, [user]);
+  }, [user?.id]);
 
   // Check if the user's role has access to a specific section
   const hasAccess = useCallback((section: string): boolean => {
