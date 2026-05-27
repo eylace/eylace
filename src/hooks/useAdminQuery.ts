@@ -5,6 +5,10 @@ import {
   type UseQueryOptions,
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import {
+  adminInvalidationMap,
+  type AdminDomain,
+} from './adminQueryKeys';
 
 /**
  * useAdminQuery — drop-in cache wrapper for admin pages.
@@ -57,4 +61,29 @@ export function useInvalidateAdmin() {
     (key: QueryKey) => qc.invalidateQueries({ queryKey: key }),
     [qc],
   );
+}
+
+/**
+ * Domain-aware invalidation. Prefer this over useInvalidateAdmin in save/delete
+ * handlers so cross-page caches (e.g. product → categories) refresh together.
+ *
+ *   const { invalidate } = useAdminMutation();
+ *   await supabase.from('products').delete().eq('id', id);
+ *   invalidate('product');
+ */
+export function useAdminMutation() {
+  const qc = useQueryClient();
+  const invalidate = useCallback(
+    (domain: AdminDomain) => {
+      adminInvalidationMap[domain].forEach((key) =>
+        qc.invalidateQueries({ queryKey: key }),
+      );
+    },
+    [qc],
+  );
+  const invalidateKey = useCallback(
+    (key: QueryKey) => qc.invalidateQueries({ queryKey: key }),
+    [qc],
+  );
+  return { invalidate, invalidateKey };
 }

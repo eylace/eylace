@@ -6,6 +6,7 @@ import { AdminNotificationBell } from './AdminNotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 import { AdminLanguageSwitcher } from './AdminLanguageSwitcher';
 import { AdminProfileMenu } from './AdminProfileMenu';
+import { RefetchBadge } from './RefetchBadge';
 import { useAdminCheck } from '@/hooks/useAdminData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -122,6 +123,7 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
                 <span className="font-bold text-sm text-foreground">Eylace</span>
               </Link>
               <div className="flex-1" />
+              <RefetchBadge />
               <Link to="/admin/products/add" className="shrink-0">
                 <Button size="sm" variant="accent" className="h-7 text-[11px] gap-1 px-2 rounded-md">
                   <Plus className="h-3 w-3" />
@@ -226,6 +228,7 @@ export const AdminLayout = ({ children, titleKey, descriptionKey, title, descrip
 
               {/* Spacer */}
               <div className="flex-1" />
+              <RefetchBadge />
 
               {/* Add New button */}
               <Link to="/admin/products/add" className="shrink-0">
