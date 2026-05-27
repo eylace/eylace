@@ -323,9 +323,9 @@ export function MediaManagerModal({
             <p className="text-sm text-muted-foreground">Upload completes in real time and appears in your library instantly.</p>
           )}
 
-          <div className="mt-3 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
-            <Button onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
+          <div className="mt-8 flex justify-end gap-3 pb-2">
+            <Button variant="outline" size="lg" className="min-w-[120px]" onClick={() => handleOpenChange(false)}>Cancel</Button>
+            <Button size="lg" className="min-w-[140px]" onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
           </div>
         </div>
       </DialogContent>
