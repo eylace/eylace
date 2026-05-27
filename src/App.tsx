@@ -165,6 +165,7 @@ const AdminAISettings = lazyWithRetry(() => import("./pages/AdminAISettings"));
 const AdminTrackingAnalytics = lazyWithRetry(() => import("./pages/AdminTrackingAnalytics"));
 const AdminMenuManager = lazyWithRetry(() => import("./pages/AdminMenuManager"));
 const AdminIncompleteOrders = lazyWithRetry(() => import("./pages/AdminIncompleteOrders"));
+const AdminPOS = lazyWithRetry(() => import("./pages/AdminPOS"));
 const AdminMarketingAds = lazyWithRetry(() => import("./pages/AdminMarketingAds"));
 const AdminReturnsRefunds = lazyWithRetry(() => import("./pages/AdminReturnsRefunds"));
 const AdminAffiliateProgram = lazyWithRetry(() => import("./pages/AdminAffiliateProgram"));
