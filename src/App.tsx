@@ -435,6 +435,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>
+              </ErrorBoundary>
               <DeferredMount>
                 <Suspense fallback={null}>
                   <AIChatWidget />
