@@ -20,7 +20,7 @@ interface MediaLibraryGridProps {
 
 const renderPreview = (file: MediaFile) => {
   if (file.kind === 'image') {
-    return <img src={file.url} alt={file.name} className="h-full w-full object-cover" loading="lazy" />;
+    return <img src={file.url} alt={file.name} className="h-full w-full object-contain" loading="lazy" />;
   }
 
   if (file.kind === 'video') {
@@ -60,7 +60,7 @@ export function MediaLibraryGrid({
   }
 
   return (
-    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-8">
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
       {files.map((file) => {
         const isSelected = selectedPaths.includes(file.path);
 
