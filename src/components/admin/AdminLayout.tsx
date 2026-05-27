@@ -1,5 +1,5 @@
 import { Navigate, Link, useLocation } from 'react-router-dom';
-import { Loader2, ShieldAlert, Globe, ClipboardList, SlidersHorizontal, Plus, LayoutDashboard } from 'lucide-react';
+import { ShieldAlert, Globe, ClipboardList, SlidersHorizontal, Plus, LayoutDashboard } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminNotificationBell } from './AdminNotificationBell';
