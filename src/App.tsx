@@ -372,6 +372,7 @@ const App = () => (
                 <Route path="/admin/tracking" element={<AdminTrackingAnalytics />} />
                 <Route path="/admin/menu-manager" element={<AdminMenuManager />} />
                 <Route path="/admin/incomplete-orders" element={<AdminIncompleteOrders />} />
+                <Route path="/admin/pos" element={<AdminPOS />} />
                 <Route path="/admin/maps-order-data" element={<AdminMapsOrderData />} />
                 <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
                 <Route path="/admin/returns" element={<AdminReturnsRefunds />} />
