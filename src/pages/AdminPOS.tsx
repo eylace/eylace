@@ -19,7 +19,6 @@ import { cn } from '@/lib/utils';
 interface POSProduct {
   id: string;
   name: string;
-  sku: string | null;
   price: number;
   image: string | null;
   stock: number;
@@ -55,7 +54,7 @@ export default function AdminPOS() {
     async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, sku, price, sale_price, image, stock_quantity, category')
+        .select('id, name, price, original_price, images, stock, category_id, categories(name)')
         .eq('is_active', true)
         .order('name', { ascending: true })
         .limit(500);
@@ -63,11 +62,10 @@ export default function AdminPOS() {
       return (data ?? []).map((p: any) => ({
         id: p.id,
         name: p.name,
-        sku: p.sku,
-        price: Number(p.sale_price ?? p.price ?? 0),
-        image: p.image,
-        stock: Number(p.stock_quantity ?? 0),
-        category: p.category ?? null,
+        price: Number(p.price ?? 0),
+        image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
+        stock: Number(p.stock ?? 0),
+        category: p.categories?.name ?? null,
       }));
     },
   );
@@ -83,10 +81,7 @@ export default function AdminPOS() {
     return products.filter((p) => {
       if (category !== 'all' && p.category !== category) return false;
       if (!q) return true;
-      return (
-        p.name.toLowerCase().includes(q) ||
-        (p.sku ?? '').toLowerCase().includes(q)
-      );
+      return p.name.toLowerCase().includes(q);
     });
   }, [products, search, category]);
 
@@ -172,7 +167,7 @@ export default function AdminPOS() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by name or SKU / scan barcode…"
+                  placeholder="Search products / scan barcode…"
                   className="pl-9 h-10"
                   autoFocus
                 />
