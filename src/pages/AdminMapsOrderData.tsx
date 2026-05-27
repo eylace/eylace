@@ -14,7 +14,7 @@ import { Loader2, MapPin, Search, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BD_GEOJSON_SOURCES = [
-  'https://raw.githubusercontent.com/ifahimreza/bangladesh-geojson/master/bangladesh.geojson',
+  'https://raw.githubusercontent.com/nuhil/bangladesh-geocode/master/geojson/districts.geojson',
 ];
 
 const isFeatureCollection = (value: unknown): value is GeoJsonFeatureCollection => {
