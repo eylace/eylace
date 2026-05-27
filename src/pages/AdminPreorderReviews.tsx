@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,31 +9,29 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Search, Star, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAdminQuery } from '@/hooks/useAdminQuery';
 
 export default function AdminPreorderReviews() {
   const { toast } = useToast();
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const { data } = await supabase
-      .from('preorder_reviews')
-      .select('*, preorder_products(products(name))')
-      .order('created_at', { ascending: false });
-    setReviews(data || []);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const { data: reviews = [], isLoading, refetch: fetchData } = useAdminQuery(
+    ['admin-preorder-reviews'],
+    async () => {
+      const { data } = await supabase
+        .from('preorder_reviews')
+        .select('*, preorder_products(products(name))')
+        .order('created_at', { ascending: false });
+      return data ?? [];
+    }
+  );
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('preorder_reviews').delete().eq('id', id);
     if (!error) { toast({ title: 'Review deleted' }); fetchData(); }
   };
 
-  const filtered = reviews.filter(r =>
+  const filtered = (reviews as any[]).filter(r =>
     r.title?.toLowerCase().includes(search.toLowerCase()) ||
     r.content?.toLowerCase().includes(search.toLowerCase())
   );
@@ -43,7 +41,7 @@ export default function AdminPreorderReviews() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Preorder Product Reviews</h1>
-          <p className="text-muted-foreground">{reviews.length} reviews</p>
+          <p className="text-muted-foreground">{(reviews as any[]).length} reviews</p>
         </div>
 
         <Card>
@@ -71,7 +69,7 @@ export default function AdminPreorderReviews() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map(r => (
+                  {filtered.map((r: any) => (
                     <TableRow key={r.id}>
                       <TableCell>{r.preorder_products?.products?.name || '-'}</TableCell>
                       <TableCell>
