@@ -273,7 +273,9 @@ export function MediaManagerModal({
               )}
             </div>
           </TabsContent>
+          )}
 
+          {tab === 'upload' && (
           <TabsContent value="upload" className="mt-4 flex-1 min-h-0">
             <MediaUploadPanel
               acceptedKinds={acceptedKinds}
@@ -289,6 +291,7 @@ export function MediaManagerModal({
               onFilesChosen={uploadFiles}
             />
           </TabsContent>
+          )}
         </Tabs>
 
         <div className="mt-4 border-t border-border pt-4">
