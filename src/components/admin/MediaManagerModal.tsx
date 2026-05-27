@@ -232,7 +232,7 @@ export function MediaManagerModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-[95vh] max-h-[95vh] w-[97vw] max-w-[1600px] flex-col overflow-hidden p-6 sm:p-8">
+      <DialogContent className="flex h-[95vh] max-h-[95vh] w-[97vw] max-w-[1600px] flex-col overflow-hidden p-5 sm:p-6">
         <DialogHeader className="pb-2">
           <DialogTitle>Media Manager</DialogTitle>
         </DialogHeader>
@@ -304,9 +304,9 @@ export function MediaManagerModal({
           )}
         </Tabs>
 
-        <div className="mt-4 border-t border-border pt-4">
+        <div className="mt-3 border-t border-border pt-3">
           {tab === 'library' ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-muted-foreground">
                 Page {page} of {totalPages} • {filtered.length} item{filtered.length === 1 ? '' : 's'}
               </span>
@@ -323,9 +323,9 @@ export function MediaManagerModal({
             <p className="text-sm text-muted-foreground">Upload completes in real time and appears in your library instantly.</p>
           )}
 
-          <div className="mt-8 flex justify-end gap-3 pb-2">
-            <Button variant="outline" size="lg" className="min-w-[120px]" onClick={() => handleOpenChange(false)}>Cancel</Button>
-            <Button size="lg" className="min-w-[140px]" onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
+          <div className="mt-4 flex justify-center gap-3">
+            <Button variant="outline" className="min-w-[110px]" onClick={() => handleOpenChange(false)}>Cancel</Button>
+            <Button className="min-w-[130px]" onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
           </div>
         </div>
       </DialogContent>
