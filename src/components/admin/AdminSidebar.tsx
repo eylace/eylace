@@ -10,7 +10,7 @@ import {
   Brain, Activity, LayoutList, Megaphone as MegaphoneIcon, RotateCcw, Link2,
   UploadCloud, LifeBuoy, Ticket, MessageCircle, Contact, Award, PenSquare, FolderOpen, BookOpen,
   Receipt, Undo2, FileCheck, FolderCog,
-  Calculator,
+  Calculator, ScanLine,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { NavLink } from '@/components/NavLink';
@@ -87,6 +87,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
 
   const orderItems: NavItem[] = [
     { titleKey: 'admin.orders' as TranslationKey, url: '/admin/orders', icon: ShoppingCart },
+    { titleKey: 'POS' as TranslationKey, url: '/admin/pos', icon: ScanLine },
     { titleKey: 'admin.incomplete.title' as TranslationKey, url: '/admin/incomplete-orders', icon: AlertTriangle },
     { titleKey: 'admin.mapsOrderData' as TranslationKey, url: '/admin/maps-order-data', icon: Map },
   ];
