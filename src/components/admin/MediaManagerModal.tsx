@@ -232,24 +232,24 @@ export function MediaManagerModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-[90vh] max-h-[90vh] max-w-[1180px] flex-col overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="flex h-[92vh] max-h-[92vh] max-w-[1180px] flex-col overflow-hidden p-8 sm:p-10">
+        <DialogHeader className="pb-2">
           <DialogTitle>Media Manager</DialogTitle>
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="w-fit gap-2 rounded-lg bg-transparent p-0">
+          <TabsList className="h-auto w-fit gap-2 rounded-lg bg-transparent p-0">
             <TabsTrigger
               value="library"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-primary/80 data-[state=inactive]:text-primary-foreground"
+              className="rounded-md border border-transparent px-4 py-2 text-sm font-medium transition-colors data-[state=active]:border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:border-border data-[state=inactive]:bg-background data-[state=inactive]:text-foreground hover:data-[state=inactive]:bg-muted"
             >
               Library
             </TabsTrigger>
             <TabsTrigger
               value="upload"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-primary/80 data-[state=inactive]:text-primary-foreground"
+              className="rounded-md border border-transparent px-4 py-2 text-sm font-medium transition-colors data-[state=active]:border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:border-border data-[state=inactive]:bg-background data-[state=inactive]:text-foreground hover:data-[state=inactive]:bg-muted"
             >
-              Upload Media
+              Upload New
             </TabsTrigger>
           </TabsList>
 
