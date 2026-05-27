@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Smartphone, Shield, Clock, Save } from 'lucide-react';
+import { useAdminQuery } from '@/hooks/useAdminQuery';
 
 const defaultConfig = {
   otp_login_enabled: true,
@@ -28,24 +29,23 @@ const defaultConfig = {
 export default function AdminOtpLoginConfig() {
   const { toast } = useToast();
   const [config, setConfig] = useState(defaultConfig);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchConfig();
-  }, []);
-
-  const fetchConfig = async () => {
-    const { data } = await supabase
-      .from('system_settings')
-      .select('*')
-      .eq('key', 'otp_login_config')
-      .maybeSingle();
-    if (data?.value) {
-      setConfig({ ...defaultConfig, ...(data.value as Record<string, unknown>) });
+  const { data: savedConfig, isLoading: loading } = useAdminQuery(
+    ['admin-otp-login-config'],
+    async () => {
+      const { data } = await supabase
+        .from('system_settings')
+        .select('*')
+        .eq('key', 'otp_login_config')
+        .maybeSingle();
+      return (data?.value as Record<string, unknown>) ?? null;
     }
-    setLoading(false);
-  };
+  );
+
+  useEffect(() => {
+    if (savedConfig) setConfig({ ...defaultConfig, ...savedConfig });
+  }, [savedConfig]);
 
   const saveConfig = async () => {
     setSaving(true);
