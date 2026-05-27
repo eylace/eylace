@@ -320,8 +320,8 @@ export function MediaManagerModal({
                   </Button>
                 </div>
                 <div className="flex items-center justify-end gap-2">
-                  <Button variant="outline" className="min-w-[96px] px-4" onClick={() => handleOpenChange(false)}>Cancel</Button>
-                  <Button className="min-w-[112px] px-4" onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
+                  <Button variant="outline" className="min-w-[96px] px-4 py-2" onClick={() => handleOpenChange(false)}>Cancel</Button>
+                  <Button className="min-w-[112px] px-4 py-2" onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
                 </div>
               </div>
             </div>
