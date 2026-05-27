@@ -1,72 +1,132 @@
-## সমস্যা
+# Admin Cache Refresh & UX Polish Plan
 
-Admin panel-এর ~51টা page-এ data fetch করা হয় component-এর local `useState` + `useEffect` দিয়ে। Page থেকে navigate away করলে component unmount হয়, state হারায়, ফিরে এলে আবার fetch + loading spinner দেখায়। User চায় — revisit-এ data instantly থাকবে, শুধু save করলে refresh হবে।
+চারটি কাজ একসাথে করা হবে। ছোট, focused পরিবর্তন—existing `useAdminQuery` infra-র উপর গড়ে তোলা।
 
-## সমাধান
+## 1. Centralized queryKey map + invalidation helper
 
-React Query (already configured, `staleTime: 5min`, `gcTime: 10min`) দিয়ে cache করা — তাহলে data QueryClient-এ persist করবে, revisit-এ instant render, save-এ `invalidateQueries` দিয়ে refresh।
+নতুন ফাইল: `src/hooks/adminQueryKeys.ts`
 
-## পরিকল্পনা
+```ts
+export const adminQueryKeys = {
+  products: ['admin-products'],
+  categories: ['admin-categories'],
+  brands: ['admin-brands'],
+  orders: ['admin-orders'],
+  customers: ['admin-customers'],
+  sellers: ['admin-sellers'],
+  coupons: ['admin-coupons'],
+  reviews: ['admin-reviews'],
+  preorderReviews: ['admin-preorder-reviews'],
+  // ... সব admin domain key এক জায়গায়
+} as const;
 
-### Step 1: Helper hook তৈরি — `src/hooks/useAdminQuery.ts`
-
-একটি ছোট wrapper: `useAdminQuery(key, fetcher)` যা admin pages-এ standardized cache behavior দেবে:
-- `staleTime: Infinity` (manual invalidation only)
-- `gcTime: 30min`
-- `refetchOnMount: false`, `refetchOnWindowFocus: false`
-- `refetchOnReconnect: false`
-
-আর একটি `useInvalidateAdmin(key)` helper যা save/delete-এর পর call করা হবে।
-
-### Step 2: 51টা admin page systematically migrate
-
-প্রতিটা page-এ এই pattern transform:
-
-```text
-আগে:                              পরে:
-const [items, setItems] = ...     const { data: items = [], refetch } = useAdminQuery(
-const [loading, setLoading] = ...   ['admin-warranties'],
-useEffect(() => { fetch() }, [])    async () => { const {data} = await supabase...; return data; }
-                                  );
+// কোন mutation কোন key invalidate করবে — domain → keys[] map
+export const adminInvalidationMap: Record<string, readonly QueryKey[]> = {
+  product: [adminQueryKeys.products, adminQueryKeys.categories],
+  order:   [adminQueryKeys.orders, adminQueryKeys.customers],
+  seller:  [adminQueryKeys.sellers],
+  // ...
+};
 ```
 
-Save/delete handlers-এ `fetch()` call → `refetch()` দিয়ে replace।
+`src/hooks/useAdminQuery.ts`-এ যোগ:
 
-### Step 3: Batch execution
+```ts
+export function useAdminMutation() {
+  const qc = useQueryClient();
+  return {
+    invalidate: (domain: keyof typeof adminInvalidationMap) =>
+      adminInvalidationMap[domain].forEach(k => qc.invalidateQueries({ queryKey: k })),
+    invalidateKey: (key: QueryKey) => qc.invalidateQueries({ queryKey: key }),
+  };
+}
+```
 
-পেজগুলো 6টা logical group-এ ভাগ করে batch-এ migrate (parallel subagents দিয়ে):
-1. **Products & Catalog** (10 files): AdminProducts, AdminInHouseProducts, AdminSellerProducts, AdminAddProduct, AdminAddDigitalProduct, AdminBrands, AdminColors, AdminAttributes, AdminLabels, AdminWarranties, AdminSizeGuides, AdminCategories, AdminCategoryDiscount, AdminStockManagement
-2. **Orders & Sales** (8): AdminOrders, AdminIncompleteOrders, AdminReturnsRefunds, AdminRefundRequests, AdminCustomers, AdminTransactionsPage, AdminReportsPage, AdminMapsOrderData
-3. **Sellers & Affiliates** (12): AdminAllSellers, AdminAppliedSellers, AdminSellerVerification, AdminSellerRatings, AdminSellerPayouts, AdminSellerPayoutRequests, AdminSellerCommission, AdminSellerBasedCommission, AdminCategoryBasedCommission, AdminSellerPackages, AdminAffiliate* group
-4. **Marketing & Coupons** (10): AdminCoupons, AdminMarketing* group, AdminSmartBar
-5. **Settings, SEO, Pages, System** (8): AdminSettingsPage, AdminWebsiteSetupPage, AdminSEOPage, AdminPagesPage, AdminMenuManager, AdminSystem*, AdminTrackingAnalytics, AdminAISettings
-6. **Preorder, Support, OTP, Misc** (10): AdminPreorder* group, AdminSupport* group, AdminOtp* group, AdminCourier*, AdminShippingProviders, AdminPaymentGateways, AdminIpBlock, AdminFraudPage, AdminUserRoles, AdminClubPoint*, AdminBlog*, AdminUploadFiles, AdminRefund*, AdminAccounting
+ব্যবহার (save/delete handler-এ):
+```ts
+const { invalidate } = useAdminMutation();
+await supabase.from('products').update(...);
+invalidate('product');   // refetch-ই হবে, কিন্তু…
+```
 
-### Step 4: Verify
+## 2. Subtle "Updating…" state instead of spinner
 
-- Build pass check
-- Manual spot-check 3-4 pages: navigate away → return → no loading spinner
-- Save action → list refreshes properly
+`useAdminQuery` থেকে `isFetching` expose হয় already। প্রতিটি admin page-এ spinner block-এর শর্ত:
 
-## টেকনিক্যাল ডিটেইল
+- প্রথম লোড (`isLoading && !data`) → spinner দেখাবে (এটা এমনিতেও কেবল প্রথমবারই হয়)।
+- Refetch/background fetch (`isFetching && data?.length > 0`) → spinner নয়, বরং একটা subtle inline badge (top-right corner) "Updating…" দেখাবে।
 
-- `useEffect`-এর fetch logic remove হবে, কিন্তু other useEffects (subscriptions, page-title, etc.) untouched থাকবে।
-- যেসব page-এ state derive হয় fetched data থেকে (filters, search, dialog open) — সেগুলো local `useState` থাকবে; শুধু **server data** cache হবে।
-- যেসব page-এ multiple parallel queries আছে — প্রতিটার জন্য আলাদা cache key।
-- Mutations (insert/update/delete) এর পর `queryClient.invalidateQueries({ queryKey: [...] })` call।
+নতুন small component: `src/components/admin/RefetchBadge.tsx`
 
-## ঝুঁকি ও mitigation
+```tsx
+export function RefetchBadge({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground animate-pulse">
+      <Loader2 className="h-3 w-3 animate-spin" /> Updating…
+    </span>
+  );
+}
+```
 
-- **ঝুঁকি**: কিছু page-এ fetch logic complex (multiple dependent queries) — pattern এ ঠিক না হলে আলাদা treatment।
-- **Mitigation**: Migration-এর সময় file-by-file pattern verify, এবং প্রতি batch-এর পর build check।
-- **ঝুঁকি**: যদি data stale থাকে (অন্য user বদলালে দেখাবে না)। 
-- **Mitigation**: Mutations সব invalidate করবে; বড় cases-এ "Refresh" button যোগ করা যাবে।
+`AdminLayout`-এ একটা global slot তৈরি — যেকোনো page থেকে context/setter দিয়ে toggle করা যাবে; অথবা সহজ পথ: প্রতিটি page header-এর পাশে `<RefetchBadge active={isFetching && !isLoading} />` বসানো (একটা small helper hook দিয়ে centralize)।
 
-## ডেলিভারি
+আমরা centralize করব: `AdminLayout` একটা `QueryClient` listener বসাবে — যেকোনো admin query background-refetch হলে header-এ badge দেখাবে। এতে প্রতিটা page edit করা লাগবে না।
 
-এই plan approve হলে:
-1. প্রথমে `useAdminQuery` hook তৈরি
-2. তারপর batch করে সব page migrate
-3. সবশেষে build verify
+```tsx
+// AdminLayout.tsx
+const isFetching = useIsFetching({ predicate: q =>
+  Array.isArray(q.queryKey) && String(q.queryKey[0]).startsWith('admin-')
+});
+const isMutating = useIsMutating();
+// header-এ: <RefetchBadge active={(isFetching > 0 || isMutating > 0)} />
+```
 
-Migration time-consuming, কিন্তু এক পর্বেই সম্পূর্ণ admin panel স্থিতিশীল cache পাবে।
+এটাই cleanest — single source, প্রতিটা page touch করতে হবে না।
+
+## 3. Save/Delete-এর পর cache invalidate
+
+মাইগ্রেশনের সময় বেশিরভাগ page ইতিমধ্যে `refetch()` কল করে — সেটা already cache update করে। তবে cross-page consistency-র জন্য (যেমন product update হলে category page-ও refresh দরকার) প্রতিটা domain-এর mutation এ `useAdminMutation().invalidate('domain')` ব্যবহার করতে হবে।
+
+পরিবর্তন: high-traffic ৮টি page (Products, Categories, Brands, Orders, Customers, Sellers, Coupons, Reviews)-এ `refetch()` কে `invalidate('domain')` দিয়ে replace করা — অথবা পাশাপাশি call। বাকি pages already locally `refetch()` করছে; ওগুলো অপরিবর্তিত থাকবে (works fine, just not cross-page)।
+
+## 4. টেস্ট — revisit করলে spinner আসে না
+
+নতুন ফাইল: `src/hooks/__tests__/useAdminQuery.test.tsx`
+
+Vitest + React Testing Library দিয়ে:
+
+1. একটা mock `useAdminQuery`-based component render করুন।
+2. একটা fetcher mock — প্রথম call delay দেবে।
+3. প্রথম mount: spinner দেখা যাবে → resolve → data দেখা যাবে।
+4. Unmount → remount same `QueryClient`-এ → spinner দেখা **যাবে না**, data সরাসরি দেখা যাবে, fetcher দ্বিতীয়বার call হবে না।
+
+```tsx
+it('does not show spinner on revisit (cache persists)', async () => {
+  const qc = new QueryClient();
+  const fetcher = vi.fn().mockResolvedValue(['a','b']);
+  const Comp = () => {
+    const { data = [], isLoading } = useAdminQuery(['admin-test'], fetcher);
+    return <div>{isLoading ? 'LOADING' : data.join(',')}</div>;
+  };
+  const { unmount, rerender } = render(<QueryClientProvider client={qc}><Comp/></QueryClientProvider>);
+  await screen.findByText('a,b');
+  unmount();
+  rerender(<QueryClientProvider client={qc}><Comp/></QueryClientProvider>);
+  expect(screen.queryByText('LOADING')).toBeNull();
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+```
+
+দ্বিতীয় test: `isFetching` true হলেও `isLoading` false—badge দেখাবে, spinner নয়।
+
+## Technical Details
+
+- **Files created:** `src/hooks/adminQueryKeys.ts`, `src/components/admin/RefetchBadge.tsx`, `src/hooks/__tests__/useAdminQuery.test.tsx`
+- **Files edited:** `src/hooks/useAdminQuery.ts` (add `useAdminMutation`), `src/components/admin/AdminLayout.tsx` (global badge), 8 high-priority pages (swap to `invalidate('domain')`)
+- **No breaking changes:** existing `refetch()` calls keep working; `useInvalidateAdmin` stays as low-level escape hatch.
+- **Test runner:** existing `vitest` setup, no new deps।
+
+## Scope Note
+
+৬৩টা page আগের loop-এই migrate হয়েছে—এই plan সেটার উপর polish layer। প্রতিটা page-এ গিয়ে individual mutation edit না করে centralized infra + global badge দিয়ে কাজ সারা হবে, যাতে maintenance সহজ থাকে।
