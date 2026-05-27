@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useAdminQuery } from '@/hooks/useAdminQuery';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,8 +94,6 @@ export default function AdminSupportTickets() {
   const [tab, setTab] = useState<'all' | 'open' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed'>('all');
   const [priority, setPriority] = useState<'all' | 'low' | 'medium' | 'high' | 'urgent'>('all');
   const [search, setSearch] = useState('');
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [reply, setReply] = useState('');
@@ -107,22 +106,19 @@ export default function AdminSupportTickets() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
 
-  // Load tickets
-  const loadTickets = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('support_tickets')
-      .select('*')
-      .order('last_message_at', { ascending: false });
-    if (error) {
-      toast.error('Failed to load tickets');
-    } else {
-      setTickets((data ?? []) as Ticket[]);
+  // Load tickets (cached)
+  const { data: tickets = [], isLoading: loading, refetch } = useAdminQuery<Ticket[]>(
+    ['admin', 'support-tickets'],
+    async () => {
+      const { data, error } = await supabase
+        .from('support_tickets')
+        .select('*')
+        .order('last_message_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Ticket[];
     }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { loadTickets(); }, [loadTickets]);
+  );
+  const loadTickets = useCallback(async () => { await refetch(); }, [refetch]);
 
   // Realtime tickets
   useEffect(() => {
