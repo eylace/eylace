@@ -238,9 +238,19 @@ export function MediaManagerModal({
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="w-fit rounded-lg border border-border bg-background p-1">
-            <TabsTrigger value="library">Library</TabsTrigger>
-            <TabsTrigger value="upload">Upload Media</TabsTrigger>
+          <TabsList className="w-fit gap-2 rounded-lg bg-transparent p-0">
+            <TabsTrigger
+              value="library"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-primary/80 data-[state=inactive]:text-primary-foreground"
+            >
+              Library
+            </TabsTrigger>
+            <TabsTrigger
+              value="upload"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:bg-primary/80 data-[state=inactive]:text-primary-foreground"
+            >
+              Upload Media
+            </TabsTrigger>
           </TabsList>
 
           {tab === 'library' && (
