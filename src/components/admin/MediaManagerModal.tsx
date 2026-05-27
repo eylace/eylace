@@ -232,7 +232,7 @@ export function MediaManagerModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-[95vh] max-h-[95vh] w-[97vw] max-w-[1600px] flex-col overflow-hidden p-5 sm:p-6">
+      <DialogContent className="flex h-[95vh] max-h-[95vh] w-[94vw] max-w-[1500px] flex-col overflow-hidden p-5 sm:px-8 sm:py-6">
         <DialogHeader className="pb-2">
           <DialogTitle>Media Manager</DialogTitle>
         </DialogHeader>
@@ -306,27 +306,35 @@ export function MediaManagerModal({
 
         <div className="mt-3 border-t border-border pt-3">
           {tab === 'library' ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-muted-foreground">
                 Page {page} of {totalPages} • {filtered.length} item{filtered.length === 1 ? '' : 's'}
               </span>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((currentPage) => currentPage - 1)}>
-                  <ChevronLeft className="mr-1 h-4 w-4" /> Prev
-                </Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((currentPage) => currentPage + 1)}>
-                  Next <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
+              <div className="flex items-center justify-end gap-2">
+                <Button variant="outline" className="min-w-[110px]" onClick={() => handleOpenChange(false)}>Cancel</Button>
+                <Button className="min-w-[130px]" onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Upload completes in real time and appears in your library instantly.</p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">Upload completes in real time and appears in your library instantly.</p>
+              <div className="flex items-center justify-end gap-2">
+                <Button variant="outline" className="min-w-[110px]" onClick={() => handleOpenChange(false)}>Cancel</Button>
+                <Button className="min-w-[130px]" onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
+              </div>
+            </div>
           )}
 
-          <div className="mt-4 flex justify-center gap-3">
-            <Button variant="outline" className="min-w-[110px]" onClick={() => handleOpenChange(false)}>Cancel</Button>
-            <Button className="min-w-[130px]" onClick={handleSelect} disabled={!selectedPaths.length}>{selectedLabel}</Button>
-          </div>
+          {tab === 'library' && (
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((currentPage) => currentPage - 1)}>
+                <ChevronLeft className="mr-1 h-4 w-4" /> Prev
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((currentPage) => currentPage + 1)}>
+                Next <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
