@@ -319,7 +319,7 @@ export const getShippingAddressDistrictMatch = (shippingAddress: unknown): Shipp
 
 export const getFeatureDistrictKey = (feature: any) => {
   const props = feature?.properties || {};
-  const featureName = props.NAME_3 || props.DIST_NAME || props.District || props.district || props.name || props.NAME || props.NAME_2 || props.NAME_1 || '';
+  const featureName = props.ADM2_EN || props.NAME_3 || props.DIST_NAME || props.District || props.district || props.name || props.NAME || props.NAME_2 || props.NAME_1 || '';
   return extractDistrictFromText(featureName).district ?? normalizeLegacyDistrict(featureName);
 };
 
