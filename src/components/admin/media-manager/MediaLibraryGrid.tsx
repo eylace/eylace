@@ -77,13 +77,6 @@ export function MediaLibraryGrid({
           >
             {renderPreview(file)}
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/95 via-background/75 to-transparent px-2 py-2">
-              <p className="truncate text-xs font-medium text-foreground">{file.name}</p>
-              <p className="text-[11px] text-muted-foreground">
-                {file.extension || file.kind} • {formatSize(file.size)}
-              </p>
-            </div>
-
             {isSelected && (
               <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
                 <Check className="h-3.5 w-3.5" />
