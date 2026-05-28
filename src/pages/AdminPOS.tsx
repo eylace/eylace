@@ -684,13 +684,18 @@ export default function AdminPOS() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {PAYMENT_METHODS.map((m) => (
+                    {availableMethods.map((m) => (
                       <SelectItem key={m.value} value={m.value}>
                         {m.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {availableMethods.length < ALL_PAYMENT_METHODS.length && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Some methods are disabled by admin payment-gateway settings.
+                  </p>
+                )}
               </div>
               <div>
                 <Label className="text-[10px]">Amount Paid</Label>
@@ -726,7 +731,7 @@ export default function AdminPOS() {
                   variant="outline"
                   size="sm"
                   disabled={!lastOrder}
-                  onClick={printLastReceipt}
+                  onClick={openLastReceipt}
                 >
                   <Printer className="h-3.5 w-3.5 mr-1" /> Print
                 </Button>
