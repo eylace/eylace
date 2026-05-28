@@ -216,3 +216,44 @@ export function downloadBulkInvoices(orders: InvoiceOrder[]) {
     <script>window.onload=function(){window.print();}<\/script></body></html>`);
   win.document.close();
 }
+
+/**
+ * Mobile-friendly print using a hidden iframe instead of window.open
+ * (popups are commonly blocked on iOS/Android browsers).
+ * Falls back to printSingleInvoice if iframe creation fails.
+ */
+export function printInvoiceInline(order: InvoiceOrder) {
+  try {
+    const existing = document.getElementById('lovable-print-frame');
+    if (existing) existing.remove();
+    const frame = document.createElement('iframe');
+    frame.id = 'lovable-print-frame';
+    frame.style.position = 'fixed';
+    frame.style.right = '0';
+    frame.style.bottom = '0';
+    frame.style.width = '0';
+    frame.style.height = '0';
+    frame.style.border = '0';
+    document.body.appendChild(frame);
+    const doc = frame.contentDocument || frame.contentWindow?.document;
+    if (!doc) {
+      printSingleInvoice(order);
+      return;
+    }
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><title>Invoice #${esc(order.order_number)}</title>
+      <style>@media print{body{margin:0}@page{size:A4;margin:15mm}}body{font-family:'Segoe UI',Arial,sans-serif}</style></head>
+      <body>${generateInvoiceHTML(order)}</body></html>`);
+    doc.close();
+    setTimeout(() => {
+      try {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+      } catch {
+        printSingleInvoice(order);
+      }
+    }, 350);
+  } catch {
+    printSingleInvoice(order);
+  }
+}

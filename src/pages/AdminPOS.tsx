@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Printer, X, ScanLine,
-  UserPlus, Package, ShieldAlert, Loader2,
+  UserPlus, Package, ShieldAlert, Loader2, History, Receipt, Eye,
 } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,12 +14,16 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from '@/components/ui/table';
 import { useAdminQuery } from '@/hooks/useAdminQuery';
 import { useAdminCheck } from '@/hooks/useAdminData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { printSingleInvoice } from '@/lib/invoiceGenerator';
+import { POSReceiptModal } from '@/components/admin/POSReceiptModal';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface POSProduct {
@@ -37,13 +41,31 @@ interface CartLine {
   qty: number;
 }
 
-const PAYMENT_METHODS = [
+const ALL_PAYMENT_METHODS = [
   { value: 'cash', label: 'Cash' },
   { value: 'card', label: 'Card' },
   { value: 'bkash', label: 'bKash' },
   { value: 'nagad', label: 'Nagad' },
   { value: 'bank', label: 'Bank Transfer' },
+  { value: 'cod', label: 'Cash on Delivery' },
 ];
+
+// Map admin "gateway_key" → POS payment value(s) we expose.
+const GATEWAY_TO_METHOD: Record<string, string> = {
+  bkash: 'bkash',
+  nagad: 'nagad',
+  rocket: 'bank',
+  upay: 'bank',
+  bank: 'bank',
+  bank_transfer: 'bank',
+  stripe: 'card',
+  sslcommerz: 'card',
+  razorpay: 'card',
+  paystack: 'card',
+  paypal: 'card',
+  cod: 'cod',
+  cash_on_delivery: 'cod',
+};
 
 export default function AdminPOS() {
   const { isAdmin, isLoading: roleLoading, hasAccess } = useAdminCheck();
@@ -61,7 +83,48 @@ export default function AdminPOS() {
   const [amountPaid, setAmountPaid] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
   const [lastOrder, setLastOrder] = useState<any | null>(null);
+  const [receiptOrder, setReceiptOrder] = useState<any | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const scanBufferRef = useRef<{ buf: string; ts: number }>({ buf: '', ts: 0 });
+  // Idempotency: a submission lock that updates synchronously (independent of React batching)
+  // and a reusable order_number so a network-retry uses the same key, allowing the DB
+  // UNIQUE(order_number) constraint to block duplicates server-side.
+  const submittingRef = useRef(false);
+  const pendingOrderNumberRef = useRef<string | null>(null);
+
+  // ---- Payment gateway availability (admin-controlled) ----
+  const { data: enabledGateways = [] } = useAdminQuery<string[]>(
+    ['admin-pos-enabled-gateways'],
+    async () => {
+      const { data, error } = await supabase
+        .from('payment_gateways_public')
+        .select('gateway_key, is_enabled');
+      if (error) throw error;
+      return (data ?? [])
+        .filter((g: any) => g.is_enabled)
+        .map((g: any) => String(g.gateway_key).toLowerCase());
+    },
+    { enabled: allowed },
+  );
+
+  const availableMethods = useMemo(() => {
+    // Cash + Card are always available at an in-store POS terminal.
+    const allowedSet = new Set<string>(['cash', 'card']);
+    enabledGateways.forEach((g) => {
+      const m = GATEWAY_TO_METHOD[g];
+      if (m) allowedSet.add(m);
+    });
+    return ALL_PAYMENT_METHODS.filter((m) => allowedSet.has(m.value));
+  }, [enabledGateways]);
+
+  // If the currently-selected method becomes disabled, fall back to cash.
+  if (
+    availableMethods.length > 0 &&
+    !availableMethods.some((m) => m.value === paymentMethod)
+  ) {
+    // setState during render is allowed in this guarded form (React docs).
+    setPaymentMethod('cash');
+  }
 
   const { data: products = [], isLoading } = useAdminQuery<POSProduct[]>(
     ['admin-pos-products'],
@@ -211,17 +274,30 @@ export default function AdminPOS() {
   };
 
   const handleCheckout = async () => {
+    // Synchronous duplicate-submit lock — blocks even sub-frame double clicks.
+    if (submittingRef.current) return;
     if (cart.length === 0) {
       toast.error('Cart is empty');
+      return;
+    }
+    if (!availableMethods.some((m) => m.value === paymentMethod)) {
+      toast.error(`${paymentMethod.toUpperCase()} is not enabled. Please choose another payment method.`);
       return;
     }
     if (paymentMethod === 'cash' && amountPaid < total) {
       toast.error('Amount paid is less than total');
       return;
     }
+    submittingRef.current = true;
     setSubmitting(true);
     try {
-      const order_number = buildOrderNumber();
+      // Reuse the same order_number across retries — the orders table has a
+      // UNIQUE(order_number) constraint, so even if the request hits the server
+      // twice, only the first insert succeeds; the second returns a conflict.
+      if (!pendingOrderNumberRef.current) {
+        pendingOrderNumberRef.current = buildOrderNumber();
+      }
+      const order_number = pendingOrderNumberRef.current;
       const payload = {
         order_number,
         shipping: 0,
@@ -268,7 +344,7 @@ export default function AdminPOS() {
         console.warn('POS: could not auto-mark delivered', e);
       }
 
-      setLastOrder({
+      const completed = {
         ...order,
         items: cart.map((l) => ({
           id: l.product.id,
@@ -286,28 +362,45 @@ export default function AdminPOS() {
         payment_method: paymentMethod,
         guest_phone: customerPhone || null,
         shipping_address: payload.shipping_address,
-      });
+      };
+      setLastOrder(completed);
+      setReceiptOrder(completed);
+      setReceiptOpen(true);
 
       toast.success(`Sale completed — ৳${total.toFixed(2)}`, {
         description: `${cart.length} item(s) · ${paymentMethod.toUpperCase()} · ${order.order_number}`,
       });
+      // Sale committed — release the reserved order_number so the next sale gets a fresh one.
+      pendingOrderNumberRef.current = null;
       clearCart();
       queryClient.invalidateQueries({ queryKey: ['admin-pos-products'] });
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-pos-history'] });
     } catch (err: any) {
       console.error('POS checkout failed', err);
-      toast.error(err?.message || 'Failed to create sale');
+      // If the failure is the UNIQUE conflict on order_number, treat as success-on-retry.
+      const msg = String(err?.message || '');
+      if (/order_number/i.test(msg) && /unique|duplicate|23505/i.test(msg)) {
+        toast.info('Sale already recorded — refreshing history.');
+        pendingOrderNumberRef.current = null;
+        clearCart();
+        queryClient.invalidateQueries({ queryKey: ['admin-pos-history'] });
+      } else {
+        toast.error(err?.message || 'Failed to create sale');
+      }
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
 
-  const printLastReceipt = () => {
+  const openLastReceipt = () => {
     if (!lastOrder) {
       toast.info('No recent sale to print');
       return;
     }
-    printSingleInvoice(lastOrder);
+    setReceiptOrder(lastOrder);
+    setReceiptOpen(true);
   };
 
   if (roleLoading) {
@@ -339,6 +432,17 @@ export default function AdminPOS() {
 
   return (
     <AdminLayout title="POS — Point of Sale" description="Quick in-store sales and checkout">
+      <Tabs defaultValue="sale" className="space-y-3">
+        <TabsList>
+          <TabsTrigger value="sale" className="gap-1.5">
+            <ShoppingCart className="h-3.5 w-3.5" /> New Sale
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5">
+            <History className="h-3.5 w-3.5" /> Sales History
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="sale" className="mt-0">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Product picker */}
         <div className="lg:col-span-2 space-y-3">
@@ -591,13 +695,18 @@ export default function AdminPOS() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {PAYMENT_METHODS.map((m) => (
+                    {availableMethods.map((m) => (
                       <SelectItem key={m.value} value={m.value}>
                         {m.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {availableMethods.length < ALL_PAYMENT_METHODS.length && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Some methods are disabled by admin payment-gateway settings.
+                  </p>
+                )}
               </div>
               <div>
                 <Label className="text-[10px]">Amount Paid</Label>
@@ -633,7 +742,7 @@ export default function AdminPOS() {
                   variant="outline"
                   size="sm"
                   disabled={!lastOrder}
-                  onClick={printLastReceipt}
+                  onClick={openLastReceipt}
                 >
                   <Printer className="h-3.5 w-3.5 mr-1" /> Print
                 </Button>
@@ -654,6 +763,20 @@ export default function AdminPOS() {
           </Card>
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-0">
+          <POSHistoryPanel
+            onView={(o) => { setReceiptOrder(o); setReceiptOpen(true); }}
+          />
+        </TabsContent>
+      </Tabs>
+
+      <POSReceiptModal
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
+        order={receiptOrder}
+      />
     </AdminLayout>
   );
 }
@@ -674,5 +797,214 @@ function Row({
         {negative && value !== 0 ? '-' : ''}৳{Math.abs(value).toFixed(2)}
       </span>
     </div>
+  );
+}
+
+// =========================================================================
+// Sales History panel — paginated POS-only order list with filters.
+// =========================================================================
+interface POSHistoryRow {
+  id: string;
+  order_number: string;
+  created_at: string;
+  total: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  shipping: number;
+  payment_method: string;
+  status: string;
+  guest_phone: string | null;
+  guest_email: string | null;
+  shipping_address: any;
+}
+
+function POSHistoryPanel({ onView }: { onView: (order: any) => void }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const [from, setFrom] = useState(weekAgo);
+  const [to, setTo] = useState(today);
+  const [method, setMethod] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const [openingId, setOpeningId] = useState<string | null>(null);
+
+  const { data: rows = [], isLoading, refetch } = useAdminQuery<POSHistoryRow[]>(
+    ['admin-pos-history', from, to, method],
+    async () => {
+      let q = supabase
+        .from('orders')
+        .select(
+          'id, order_number, created_at, total, subtotal, tax, discount, shipping, payment_method, status, guest_phone, guest_email, shipping_address',
+        )
+        .ilike('order_number', 'POS-%')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (from) q = q.gte('created_at', `${from}T00:00:00.000Z`);
+      if (to) q = q.lte('created_at', `${to}T23:59:59.999Z`);
+      if (method !== 'all') q = q.eq('payment_method', method);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as POSHistoryRow[];
+    },
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => {
+      const sa = r.shipping_address || {};
+      const haystack = [
+        r.order_number,
+        r.guest_phone,
+        r.guest_email,
+        sa.first_name,
+        sa.last_name,
+        sa.phone,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [rows, search]);
+
+  const handleOpen = async (row: POSHistoryRow) => {
+    setOpeningId(row.id);
+    try {
+      const { data: items, error } = await supabase
+        .from('order_items')
+        .select('id, product_name, product_image, quantity, price, variations')
+        .eq('order_id', row.id);
+      if (error) throw error;
+      onView({ ...row, items: items ?? [] });
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not load receipt');
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  const totalRevenue = filtered.reduce((s, r) => s + Number(r.total || 0), 0);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Receipt className="h-4 w-4" /> POS Sales History
+          <Badge variant="secondary" className="ml-auto text-[10px]">
+            {filtered.length} sales · ৳{totalRevenue.toFixed(0)}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3 pt-0 space-y-3">
+        {/* Filters */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <div>
+            <Label className="text-[10px]">From</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px]">To</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px]">Payment</Label>
+            <Select value={method} onValueChange={setMethod}>
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All methods</SelectItem>
+                {ALL_PAYMENT_METHODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2 sm:col-span-2">
+            <Label className="text-[10px]">Search</Label>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Order #, phone, name…"
+              className="h-9 text-xs"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" onClick={() => refetch()} className="h-8 text-xs">
+            Refresh
+          </Button>
+        </div>
+
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 text-[11px]">Order #</TableHead>
+                <TableHead className="h-8 text-[11px]">Date</TableHead>
+                <TableHead className="h-8 text-[11px]">Customer</TableHead>
+                <TableHead className="h-8 text-[11px]">Payment</TableHead>
+                <TableHead className="h-8 text-[11px] text-right">Total</TableHead>
+                <TableHead className="h-8 text-[11px] w-20"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading…
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
+                    No POS sales match these filters.
+                  </TableCell>
+                </TableRow>
+              ) : filtered.map((r) => {
+                const sa = r.shipping_address || {};
+                const name = [sa.first_name, sa.last_name].filter(Boolean).join(' ') || 'Walk-in';
+                const phone = sa.phone || r.guest_phone || '';
+                return (
+                  <TableRow key={r.id}>
+                    <TableCell className="py-2 text-xs font-medium">{r.order_number}</TableCell>
+                    <TableCell className="py-2 text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString('en-GB', {
+                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </TableCell>
+                    <TableCell className="py-2 text-xs">
+                      <div className="font-medium">{name}</div>
+                      {phone && <div className="text-muted-foreground text-[10px]">{phone}</div>}
+                    </TableCell>
+                    <TableCell className="py-2 text-xs uppercase">{r.payment_method}</TableCell>
+                    <TableCell className="py-2 text-xs text-right font-semibold">
+                      ৳{Number(r.total).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="py-2 text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        disabled={openingId === r.id}
+                        onClick={() => handleOpen(r)}
+                      >
+                        {openingId === r.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <><Eye className="h-3 w-3 mr-1" /> View</>
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
