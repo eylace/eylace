@@ -432,6 +432,17 @@ export default function AdminPOS() {
 
   return (
     <AdminLayout title="POS — Point of Sale" description="Quick in-store sales and checkout">
+      <Tabs defaultValue="sale" className="space-y-3">
+        <TabsList>
+          <TabsTrigger value="sale" className="gap-1.5">
+            <ShoppingCart className="h-3.5 w-3.5" /> New Sale
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-1.5">
+            <History className="h-3.5 w-3.5" /> Sales History
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="sale" className="mt-0">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Product picker */}
         <div className="lg:col-span-2 space-y-3">
