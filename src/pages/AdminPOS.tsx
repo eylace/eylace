@@ -799,3 +799,212 @@ function Row({
     </div>
   );
 }
+
+// =========================================================================
+// Sales History panel — paginated POS-only order list with filters.
+// =========================================================================
+interface POSHistoryRow {
+  id: string;
+  order_number: string;
+  created_at: string;
+  total: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  shipping: number;
+  payment_method: string;
+  status: string;
+  guest_phone: string | null;
+  guest_email: string | null;
+  shipping_address: any;
+}
+
+function POSHistoryPanel({ onView }: { onView: (order: any) => void }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const [from, setFrom] = useState(weekAgo);
+  const [to, setTo] = useState(today);
+  const [method, setMethod] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const [openingId, setOpeningId] = useState<string | null>(null);
+
+  const { data: rows = [], isLoading, refetch } = useAdminQuery<POSHistoryRow[]>(
+    ['admin-pos-history', from, to, method],
+    async () => {
+      let q = supabase
+        .from('orders')
+        .select(
+          'id, order_number, created_at, total, subtotal, tax, discount, shipping, payment_method, status, guest_phone, guest_email, shipping_address',
+        )
+        .ilike('order_number', 'POS-%')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (from) q = q.gte('created_at', `${from}T00:00:00.000Z`);
+      if (to) q = q.lte('created_at', `${to}T23:59:59.999Z`);
+      if (method !== 'all') q = q.eq('payment_method', method);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as POSHistoryRow[];
+    },
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => {
+      const sa = r.shipping_address || {};
+      const haystack = [
+        r.order_number,
+        r.guest_phone,
+        r.guest_email,
+        sa.first_name,
+        sa.last_name,
+        sa.phone,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [rows, search]);
+
+  const handleOpen = async (row: POSHistoryRow) => {
+    setOpeningId(row.id);
+    try {
+      const { data: items, error } = await supabase
+        .from('order_items')
+        .select('id, product_name, product_image, quantity, price, variations')
+        .eq('order_id', row.id);
+      if (error) throw error;
+      onView({ ...row, items: items ?? [] });
+    } catch (e: any) {
+      toast.error(e?.message || 'Could not load receipt');
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
+  const totalRevenue = filtered.reduce((s, r) => s + Number(r.total || 0), 0);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Receipt className="h-4 w-4" /> POS Sales History
+          <Badge variant="secondary" className="ml-auto text-[10px]">
+            {filtered.length} sales · ৳{totalRevenue.toFixed(0)}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3 pt-0 space-y-3">
+        {/* Filters */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <div>
+            <Label className="text-[10px]">From</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px]">To</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px]">Payment</Label>
+            <Select value={method} onValueChange={setMethod}>
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All methods</SelectItem>
+                {ALL_PAYMENT_METHODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2 sm:col-span-2">
+            <Label className="text-[10px]">Search</Label>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Order #, phone, name…"
+              className="h-9 text-xs"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" onClick={() => refetch()} className="h-8 text-xs">
+            Refresh
+          </Button>
+        </div>
+
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="h-8 text-[11px]">Order #</TableHead>
+                <TableHead className="h-8 text-[11px]">Date</TableHead>
+                <TableHead className="h-8 text-[11px]">Customer</TableHead>
+                <TableHead className="h-8 text-[11px]">Payment</TableHead>
+                <TableHead className="h-8 text-[11px] text-right">Total</TableHead>
+                <TableHead className="h-8 text-[11px] w-20"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading…
+                  </TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
+                    No POS sales match these filters.
+                  </TableCell>
+                </TableRow>
+              ) : filtered.map((r) => {
+                const sa = r.shipping_address || {};
+                const name = [sa.first_name, sa.last_name].filter(Boolean).join(' ') || 'Walk-in';
+                const phone = sa.phone || r.guest_phone || '';
+                return (
+                  <TableRow key={r.id}>
+                    <TableCell className="py-2 text-xs font-medium">{r.order_number}</TableCell>
+                    <TableCell className="py-2 text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString('en-GB', {
+                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </TableCell>
+                    <TableCell className="py-2 text-xs">
+                      <div className="font-medium">{name}</div>
+                      {phone && <div className="text-muted-foreground text-[10px]">{phone}</div>}
+                    </TableCell>
+                    <TableCell className="py-2 text-xs uppercase">{r.payment_method}</TableCell>
+                    <TableCell className="py-2 text-xs text-right font-semibold">
+                      ৳{Number(r.total).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="py-2 text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        disabled={openingId === r.id}
+                        onClick={() => handleOpen(r)}
+                      >
+                        {openingId === r.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <><Eye className="h-3 w-3 mr-1" /> View</>
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
