@@ -763,6 +763,20 @@ export default function AdminPOS() {
           </Card>
         </div>
       </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-0">
+          <POSHistoryPanel
+            onView={(o) => { setReceiptOrder(o); setReceiptOpen(true); }}
+          />
+        </TabsContent>
+      </Tabs>
+
+      <POSReceiptModal
+        open={receiptOpen}
+        onOpenChange={setReceiptOpen}
+        order={receiptOrder}
+      />
     </AdminLayout>
   );
 }
