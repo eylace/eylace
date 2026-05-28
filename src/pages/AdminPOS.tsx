@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Printer, X, ScanLine,
-  UserPlus, Package, ShieldAlert, Loader2,
+  UserPlus, Package, ShieldAlert, Loader2, History, Receipt, Eye,
 } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,12 +14,16 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from '@/components/ui/table';
 import { useAdminQuery } from '@/hooks/useAdminQuery';
 import { useAdminCheck } from '@/hooks/useAdminData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { printSingleInvoice } from '@/lib/invoiceGenerator';
+import { POSReceiptModal } from '@/components/admin/POSReceiptModal';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface POSProduct {
@@ -37,13 +41,31 @@ interface CartLine {
   qty: number;
 }
 
-const PAYMENT_METHODS = [
+const ALL_PAYMENT_METHODS = [
   { value: 'cash', label: 'Cash' },
   { value: 'card', label: 'Card' },
   { value: 'bkash', label: 'bKash' },
   { value: 'nagad', label: 'Nagad' },
   { value: 'bank', label: 'Bank Transfer' },
+  { value: 'cod', label: 'Cash on Delivery' },
 ];
+
+// Map admin "gateway_key" → POS payment value(s) we expose.
+const GATEWAY_TO_METHOD: Record<string, string> = {
+  bkash: 'bkash',
+  nagad: 'nagad',
+  rocket: 'bank',
+  upay: 'bank',
+  bank: 'bank',
+  bank_transfer: 'bank',
+  stripe: 'card',
+  sslcommerz: 'card',
+  razorpay: 'card',
+  paystack: 'card',
+  paypal: 'card',
+  cod: 'cod',
+  cash_on_delivery: 'cod',
+};
 
 export default function AdminPOS() {
   const { isAdmin, isLoading: roleLoading, hasAccess } = useAdminCheck();
@@ -61,7 +83,48 @@ export default function AdminPOS() {
   const [amountPaid, setAmountPaid] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
   const [lastOrder, setLastOrder] = useState<any | null>(null);
+  const [receiptOrder, setReceiptOrder] = useState<any | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const scanBufferRef = useRef<{ buf: string; ts: number }>({ buf: '', ts: 0 });
+  // Idempotency: a submission lock that updates synchronously (independent of React batching)
+  // and a reusable order_number so a network-retry uses the same key, allowing the DB
+  // UNIQUE(order_number) constraint to block duplicates server-side.
+  const submittingRef = useRef(false);
+  const pendingOrderNumberRef = useRef<string | null>(null);
+
+  // ---- Payment gateway availability (admin-controlled) ----
+  const { data: enabledGateways = [] } = useAdminQuery<string[]>(
+    ['admin-pos-enabled-gateways'],
+    async () => {
+      const { data, error } = await supabase
+        .from('payment_gateways_public')
+        .select('gateway_key, is_enabled');
+      if (error) throw error;
+      return (data ?? [])
+        .filter((g: any) => g.is_enabled)
+        .map((g: any) => String(g.gateway_key).toLowerCase());
+    },
+    { enabled: allowed },
+  );
+
+  const availableMethods = useMemo(() => {
+    // Cash + Card are always available at an in-store POS terminal.
+    const allowedSet = new Set<string>(['cash', 'card']);
+    enabledGateways.forEach((g) => {
+      const m = GATEWAY_TO_METHOD[g];
+      if (m) allowedSet.add(m);
+    });
+    return ALL_PAYMENT_METHODS.filter((m) => allowedSet.has(m.value));
+  }, [enabledGateways]);
+
+  // If the currently-selected method becomes disabled, fall back to cash.
+  if (
+    availableMethods.length > 0 &&
+    !availableMethods.some((m) => m.value === paymentMethod)
+  ) {
+    // setState during render is allowed in this guarded form (React docs).
+    setPaymentMethod('cash');
+  }
 
   const { data: products = [], isLoading } = useAdminQuery<POSProduct[]>(
     ['admin-pos-products'],
@@ -211,17 +274,30 @@ export default function AdminPOS() {
   };
 
   const handleCheckout = async () => {
+    // Synchronous duplicate-submit lock — blocks even sub-frame double clicks.
+    if (submittingRef.current) return;
     if (cart.length === 0) {
       toast.error('Cart is empty');
+      return;
+    }
+    if (!availableMethods.some((m) => m.value === paymentMethod)) {
+      toast.error(`${paymentMethod.toUpperCase()} is not enabled. Please choose another payment method.`);
       return;
     }
     if (paymentMethod === 'cash' && amountPaid < total) {
       toast.error('Amount paid is less than total');
       return;
     }
+    submittingRef.current = true;
     setSubmitting(true);
     try {
-      const order_number = buildOrderNumber();
+      // Reuse the same order_number across retries — the orders table has a
+      // UNIQUE(order_number) constraint, so even if the request hits the server
+      // twice, only the first insert succeeds; the second returns a conflict.
+      if (!pendingOrderNumberRef.current) {
+        pendingOrderNumberRef.current = buildOrderNumber();
+      }
+      const order_number = pendingOrderNumberRef.current;
       const payload = {
         order_number,
         shipping: 0,
@@ -268,7 +344,7 @@ export default function AdminPOS() {
         console.warn('POS: could not auto-mark delivered', e);
       }
 
-      setLastOrder({
+      const completed = {
         ...order,
         items: cart.map((l) => ({
           id: l.product.id,
@@ -286,28 +362,45 @@ export default function AdminPOS() {
         payment_method: paymentMethod,
         guest_phone: customerPhone || null,
         shipping_address: payload.shipping_address,
-      });
+      };
+      setLastOrder(completed);
+      setReceiptOrder(completed);
+      setReceiptOpen(true);
 
       toast.success(`Sale completed — ৳${total.toFixed(2)}`, {
         description: `${cart.length} item(s) · ${paymentMethod.toUpperCase()} · ${order.order_number}`,
       });
+      // Sale committed — release the reserved order_number so the next sale gets a fresh one.
+      pendingOrderNumberRef.current = null;
       clearCart();
       queryClient.invalidateQueries({ queryKey: ['admin-pos-products'] });
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-pos-history'] });
     } catch (err: any) {
       console.error('POS checkout failed', err);
-      toast.error(err?.message || 'Failed to create sale');
+      // If the failure is the UNIQUE conflict on order_number, treat as success-on-retry.
+      const msg = String(err?.message || '');
+      if (/order_number/i.test(msg) && /unique|duplicate|23505/i.test(msg)) {
+        toast.info('Sale already recorded — refreshing history.');
+        pendingOrderNumberRef.current = null;
+        clearCart();
+        queryClient.invalidateQueries({ queryKey: ['admin-pos-history'] });
+      } else {
+        toast.error(err?.message || 'Failed to create sale');
+      }
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   };
 
-  const printLastReceipt = () => {
+  const openLastReceipt = () => {
     if (!lastOrder) {
       toast.info('No recent sale to print');
       return;
     }
-    printSingleInvoice(lastOrder);
+    setReceiptOrder(lastOrder);
+    setReceiptOpen(true);
   };
 
   if (roleLoading) {
