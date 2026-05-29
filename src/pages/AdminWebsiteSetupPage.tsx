@@ -283,7 +283,6 @@ const AdminWebsiteSetupPage = () => {
             <TabsTrigger value="auth" className="text-xs">Auth Layout</TabsTrigger>
             <TabsTrigger value="header" className="text-xs">Select Header</TabsTrigger>
             <TabsTrigger value="header-settings" className="text-xs">Header Settings</TabsTrigger>
-            <TabsTrigger value="topbar" className="text-xs">Top Bar</TabsTrigger>
             <TabsTrigger value="footer" className="text-xs">Footer Settings</TabsTrigger>
             <TabsTrigger value="pages" className="text-xs">Pages</TabsTrigger>
             <TabsTrigger value="appearance" className="text-xs">Appearance</TabsTrigger>
