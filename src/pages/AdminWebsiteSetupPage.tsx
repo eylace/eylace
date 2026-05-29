@@ -283,7 +283,6 @@ const AdminWebsiteSetupPage = () => {
             <TabsTrigger value="auth" className="text-xs">Auth Layout</TabsTrigger>
             <TabsTrigger value="header" className="text-xs">Select Header</TabsTrigger>
             <TabsTrigger value="header-settings" className="text-xs">Header Settings</TabsTrigger>
-            <TabsTrigger value="topbar" className="text-xs">Top Bar</TabsTrigger>
             <TabsTrigger value="footer" className="text-xs">Footer Settings</TabsTrigger>
             <TabsTrigger value="pages" className="text-xs">Pages</TabsTrigger>
             <TabsTrigger value="appearance" className="text-xs">Appearance</TabsTrigger>
@@ -622,74 +621,6 @@ const AdminWebsiteSetupPage = () => {
                   <Label>Announcement Bar Text</Label>
                   <Input value={setup.headerAnnouncementText} onChange={e => update('headerAnnouncementText', e.target.value)} placeholder="e.g. Free delivery on orders above ৳5000!" />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Top Bar */}
-          <TabsContent value="topbar">
-            <Card>
-              <CardHeader><CardTitle className="text-base">Top Bar Settings</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="font-normal">Enable Top Bar</Label>
-                  <Switch checked={setup.topBarEnabled} onCheckedChange={v => update('topBarEnabled', v)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Top Bar Text</Label>
-                  <Input value={setup.topBarText} onChange={e => update('topBarText', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Background Color</Label>
-                    <div className="flex gap-2">
-                      <input type="color" value={setup.topBarBgColor} onChange={e => update('topBarBgColor', e.target.value)} className="h-10 w-10 rounded border cursor-pointer" />
-                      <Input value={setup.topBarBgColor} onChange={e => update('topBarBgColor', e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Text Color</Label>
-                    <div className="flex gap-2">
-                      <input type="color" value={setup.topBarTextColor} onChange={e => update('topBarTextColor', e.target.value)} className="h-10 w-10 rounded border cursor-pointer" />
-                      <Input value={setup.topBarTextColor} onChange={e => update('topBarTextColor', e.target.value)} />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Top Bar Links</Label>
-                    <Button size="sm" variant="outline" onClick={() => update('topBarLinks', [...setup.topBarLinks, { label: '', url: '' }])}>
-                      <Plus className="h-3 w-3 mr-1" /> Add Link
-                    </Button>
-                  </div>
-                  {setup.topBarLinks.map((link, i) => (
-                    <div key={i} className="flex gap-2 items-center">
-                      <Input value={link.label} placeholder="Label" onChange={e => {
-                        const links = [...setup.topBarLinks];
-                        links[i] = { ...links[i], label: e.target.value };
-                        update('topBarLinks', links);
-                      }} />
-                      <Input value={link.url} placeholder="/url" onChange={e => {
-                        const links = [...setup.topBarLinks];
-                        links[i] = { ...links[i], url: e.target.value };
-                        update('topBarLinks', links);
-                      }} />
-                      <Button size="icon" variant="ghost" className="shrink-0 text-destructive" onClick={() => update('topBarLinks', setup.topBarLinks.filter((_, idx) => idx !== i))}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                {setup.topBarEnabled && (
-                  <Card className="bg-muted/50">
-                    <CardContent className="p-3">
-                      <p className="text-xs text-muted-foreground mb-1">Preview:</p>
-                      <div style={{ backgroundColor: setup.topBarBgColor, color: setup.topBarTextColor }} className="rounded px-4 py-2 text-sm text-center">
-                        {setup.topBarText}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
