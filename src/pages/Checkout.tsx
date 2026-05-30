@@ -265,6 +265,10 @@ const Checkout = () => {
 
   // Debounced form watcher — saves incomplete order 3s after last change
   useEffect(() => {
+    // Only signed-in users may persist incomplete-checkout records.
+    // Anonymous insert was removed because it relied on a client-supplied
+    // session ID header which could be spoofed.
+    if (!user) return;
     const subscription = form.watch((data) => {
       if (data.firstName || data.phone || data.email) {
         if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -277,10 +281,11 @@ const Checkout = () => {
       subscription.unsubscribe();
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [form, saveIncompleteOrder]);
+  }, [form, saveIncompleteOrder, user]);
 
   // Save on page unload (beforeunload)
   useEffect(() => {
+    if (!user) return;
     const handleBeforeUnload = () => {
       const data = form.getValues();
       if (data.firstName || data.phone || data.email) {
