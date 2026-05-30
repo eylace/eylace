@@ -1943,7 +1943,6 @@ export type Database = {
       payment_gateways: {
         Row: {
           created_at: string
-          credentials: Json
           display_name: string
           gateway_key: string
           id: string
@@ -1955,7 +1954,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          credentials?: Json
           display_name: string
           gateway_key: string
           id?: string
@@ -1967,7 +1965,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          credentials?: Json
           display_name?: string
           gateway_key?: string
           id?: string
