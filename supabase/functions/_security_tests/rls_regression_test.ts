@@ -69,14 +69,15 @@ Deno.test("anon cannot select otp_codes", async () => {
   }
 });
 
-Deno.test("anon cannot select payment_gateways base table credentials", async () => {
+Deno.test("payment_gateways no longer has a credentials column (moved to payment_gateway_secrets)", async () => {
   const supabase = anonClient();
+  // Selecting the dropped column should error or return empty rows; never leak data.
   const { data, error } = await supabase
     .from("payment_gateways")
-    .select("credentials")
+    .select("credentials" as never)
     .limit(1);
   if (!error) {
-    assertEquals(data?.length ?? 0, 0, "payment_gateways credentials leaked to anon");
+    assertEquals(data?.length ?? 0, 0, "payment_gateways must not expose credentials");
   }
 });
 
