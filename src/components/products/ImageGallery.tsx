@@ -177,7 +177,7 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
                 index === currentIndex ? "border-accent" : "border-transparent hover:border-border"
               )}
             >
-              <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+              <img src={image} alt={`${productName} thumbnail ${index + 1}`} className="w-full h-full object-cover" />
               {image.includes('video') && (
                 <div className="absolute inset-0 flex items-center justify-center bg-foreground/30">
                   <Play className="h-6 w-6 text-primary-foreground fill-primary-foreground" />

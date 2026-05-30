@@ -18,10 +18,11 @@ const Index = () => {
   return (
     <Layout>
       <SeoHead
-        title="Eylace — Online Shopping in Bangladesh, Best Prices & Fast Delivery"
+        title="Eylace — Online Shopping & Fast Delivery in Bangladesh"
         description="Shop electronics, fashion, home essentials and more on Eylace. Nationwide delivery, secure payment with bKash, Nagad & cards."
         path="/"
       />
+      <h1 className="sr-only">Eylace — Quality Online Shopping in Bangladesh</h1>
       <SmartBar />
       {setup.homepageBannerEnabled && <HeroSection />}
       {setup.homepageFeaturedCategories && <CategoriesSection />}

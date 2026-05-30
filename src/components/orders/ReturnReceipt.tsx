@@ -64,8 +64,8 @@ export const ReturnReceipt = (props: ReturnReceiptProps) => {
   @media print { body { padding: 20px; } }
 </style></head><body>
 <div class="header">
-  <h1>EYLACE</h1>
-  <p>Return Acknowledgement Receipt</p>
+  <h1>Eylace Return Acknowledgement Receipt</h1>
+  <p>Keep this for your records</p>
 </div>
 <div class="tracking">
   <h2>Return Tracking Number</h2>
