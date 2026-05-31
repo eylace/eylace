@@ -31,6 +31,7 @@ import {
   BreadcrumbSeparator } from
 '@/components/ui/breadcrumb';
 import { Link } from 'react-router-dom';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const Category = () => {
   const { slug } = useParams<{slug: string;}>();
@@ -117,6 +118,20 @@ const Category = () => {
 
   return (
     <Layout>
+      <SeoHead
+        title={`${category.name} — Shop ${category.name} on Eylace`.slice(0, 60)}
+        description={`Shop ${category.name} on Eylace. ${categoryProducts.length} products available with fast delivery across Bangladesh and secure checkout.`.slice(0, 160)}
+        path={`/category/${slug}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://eylace.lovable.app/" },
+            { "@type": "ListItem", position: 2, name: "Categories", item: "https://eylace.lovable.app/categories" },
+            { "@type": "ListItem", position: 3, name: category.name, item: `https://eylace.lovable.app/category/${slug}` },
+          ],
+        }}
+      />
       <div className="container-main py-6">
         {/* Breadcrumb */}
         <Breadcrumb className="mb-6">

@@ -57,7 +57,7 @@ export const Header = () => {
               {setup.logoUrl ? (
                 <img
                   src={setup.logoUrl}
-                  alt={setup.siteName || 'Eylace'}
+                  alt={`${setup.siteName || 'Eylace'} Shopping`}
                   className="h-9 w-auto max-w-[180px] object-contain"
                 />
               ) : (
@@ -116,7 +116,7 @@ export const Header = () => {
                   className="flex-1 h-11 px-4 bg-background text-left text-muted-foreground hover:text-foreground transition-colors">
                   {t('header.searchPlaceholder')}
                 </button>
-                <Button variant="accent" className="h-11 px-6 rounded-l-none rounded-r-lg" onClick={() => setIsSearchOpen(true)}>
+                <Button variant="accent" className="h-11 px-6 rounded-l-none rounded-r-lg" onClick={() => setIsSearchOpen(true)} aria-label={t('header.searchProducts')}>
                   <Search className="h-5 w-5" />
                 </Button>
               </div>
@@ -202,7 +202,7 @@ export const Header = () => {
               <div className="hidden md:block"><NotificationBell /></div>
 
               {setup.headerWishlistIconEnabled && (
-              <Link to="/wishlist" className="hidden md:block relative hover:text-accent transition-colors">
+              <Link to="/wishlist" aria-label={t('header.wishlist')} className="hidden md:block relative hover:text-accent transition-colors">
                 <Heart className="h-6 w-6" />
               </Link>
               )}
