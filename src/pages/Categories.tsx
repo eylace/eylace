@@ -3,6 +3,7 @@ import { useCategories } from '@/hooks/useProducts';
 import { Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Layout } from '@/components/layout/Layout';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const Categories = () => {
   const { categories, isLoading } = useCategories();
@@ -10,6 +11,11 @@ const Categories = () => {
 
   return (
     <Layout>
+      <SeoHead
+        title="All Categories — Shop by Category on Eylace"
+        description="Browse every product category on Eylace, Bangladesh's online marketplace. Find electronics, fashion, home, and more with fast nationwide delivery."
+        path="/categories"
+      />
       <div className="container-main py-6">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-accent">Home</Link>
