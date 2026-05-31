@@ -97,7 +97,7 @@ export const Footer = () => {
                 {socialLinks.map((sl, i) => {
                   const Icon = socialIconMap[sl.platform] || Facebook;
                   return (
-                    <a key={i} href={sl.url || '#'} target="_blank" rel="noopener noreferrer" className="p-2 bg-primary-foreground/10 rounded-lg hover:bg-accent transition-colors">
+                    <a key={i} href={sl.url || '#'} aria-label={`Eylace on ${sl.platform}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-primary-foreground/10 rounded-lg hover:bg-accent transition-colors">
                       <Icon className="h-5 w-5" />
                     </a>
                   );
