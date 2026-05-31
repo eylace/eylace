@@ -41,6 +41,23 @@
   <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"WebSite","name":"Eylace","url":"https://eylace.lovable.app/","potentialAction":{"@type":"SearchAction","target":"https://eylace.lovable.app/search?q={search_term_string}","query-input":"required name=search_term_string"}}
   </script>
+
+  <style>
+#lovable-badge {
+  display: none !important;
+}
+a[href*="lovable.dev"],
+iframe[src*="lovable.dev"],
+div[style*="Edit with Lovable"],
+.lovable-badge {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}
+</style>
 </head>
 
   <body>
