@@ -383,7 +383,7 @@ const ProductDetail = () => {
 
             {/* Quantity */}
             <div className="space-y-3">
-              <h3 className="font-medium text-foreground">{t('product.quantity')}</h3>
+              <h2 className="text-base font-medium text-foreground">{t('product.quantity')}</h2>
               <div className="flex items-center gap-4">
                 <QuantitySelector 
                   value={quantity}
