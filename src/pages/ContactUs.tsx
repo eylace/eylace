@@ -35,6 +35,25 @@ const ContactUs = () => {
         title="Contact Eylace — Support, Sales & Office Address"
         description="Reach Eylace customer support by email, phone or in person at our Dhaka office. We reply within 24 hours."
         path="/contact"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          name: "Eylace",
+          url: "https://eylace.lovable.app/contact",
+          email: "support@eylace.com",
+          telephone: "+880-1700-000000",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "Gulshan-2",
+            addressLocality: "Dhaka",
+            postalCode: "1212",
+            addressCountry: "BD",
+          },
+          openingHoursSpecification: [
+            { "@type": "OpeningHoursSpecification", dayOfWeek: ["Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday"], opens: "09:00", closes: "22:00" },
+            { "@type": "OpeningHoursSpecification", dayOfWeek: "Friday", opens: "14:00", closes: "22:00" },
+          ],
+        }}
       />
       <section className="bg-primary text-primary-foreground py-16">
         <div className="container-main text-center">
@@ -66,11 +85,11 @@ const ContactUs = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
-                <div><Label>Full Name</Label><Input required placeholder="Your name" /></div>
-                <div><Label>Email</Label><Input required type="email" placeholder="you@email.com" /></div>
+                <div><Label htmlFor="contact-name">Full Name</Label><Input id="contact-name" name="name" required placeholder="Your name" /></div>
+                <div><Label htmlFor="contact-email">Email</Label><Input id="contact-email" name="email" required type="email" placeholder="you@email.com" /></div>
               </div>
-              <div><Label>Subject</Label><Input required placeholder="How can we help?" /></div>
-              <div><Label>Message</Label><Textarea required rows={5} placeholder="Write your message…" /></div>
+              <div><Label htmlFor="contact-subject">Subject</Label><Input id="contact-subject" name="subject" required placeholder="How can we help?" /></div>
+              <div><Label htmlFor="contact-message">Message</Label><Textarea id="contact-message" name="message" required rows={5} placeholder="Write your message…" /></div>
               <Button type="submit" className="w-full" disabled={sending}>{sending ? 'Sending…' : 'Send Message'}</Button>
             </form>
           </CardContent>
