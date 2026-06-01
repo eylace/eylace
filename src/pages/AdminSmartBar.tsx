@@ -581,27 +581,37 @@ const InlinePreview = ({ config }: { config: SmartBarConfig }) => {
 
   const current = messages[idx % messages.length];
   const isMarquee = config.animation === 'marquee';
+  const links = (config.links || []).filter(l => l && l.label && l.url);
 
   return (
     <div className="relative px-10 py-2.5 flex items-center justify-center overflow-hidden" style={{ background, color: fg }}>
-      {isMarquee ? (
-        <div className="flex w-full overflow-hidden">
-          <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - (config.rotation_seconds ?? 5) * 2)}s` }}>
-            {[0, 1, 2].map(k => (
-              <span key={k} className={`px-8 inline-flex items-center gap-2 ${sizeCls} ${weightCls}`}>
-                {config.icon && <span>{config.icon}</span>}{current}
-              </span>
+      <div className="flex items-center justify-between gap-4 w-full">
+        {isMarquee ? (
+          <div className="flex flex-1 overflow-hidden">
+            <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - (config.rotation_seconds ?? 5) * 2)}s` }}>
+              {[0, 1, 2].map(k => (
+                <span key={k} className={`px-8 inline-flex items-center gap-2 ${sizeCls} ${weightCls}`}>
+                  {config.icon && <span>{config.icon}</span>}{current}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <span
+            key={idx}
+            className={`flex-1 text-center inline-flex items-center justify-center gap-2 ${sizeCls} ${weightCls} ${config.animation === 'pulse' ? 'animate-pulse' : ''} ${config.animation === 'slide' ? 'smartbar-slide-in' : ''}`}
+          >
+            {config.icon && <span>{config.icon}</span>}{current}
+          </span>
+        )}
+        {links.length > 0 && (
+          <div className="hidden md:flex items-center gap-3 text-[11px] shrink-0 opacity-95">
+            {links.map((l, i) => (
+              <span key={i} className="hover:underline underline-offset-2">{l.label}</span>
             ))}
           </div>
-        </div>
-      ) : (
-        <span
-          key={idx}
-          className={`inline-flex items-center gap-2 ${sizeCls} ${weightCls} ${config.animation === 'pulse' ? 'animate-pulse' : ''} ${config.animation === 'slide' ? 'smartbar-slide-in' : ''}`}
-        >
-          {config.icon && <span>{config.icon}</span>}{current}
-        </span>
-      )}
+        )}
+      </div>
     </div>
   );
 };
