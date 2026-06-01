@@ -14,7 +14,7 @@ import {
   Loader2, Save, Megaphone, Plus, Trash2, GripVertical, Eye, RotateCcw,
   Palette, MousePointerClick, Clock, Users, Sparkles, ArrowUp, ArrowDown,
 } from 'lucide-react';
-import { SmartBar as SmartBarPreview, type SmartBarConfig } from '@/components/home/SmartBar';
+import type { SmartBarConfig } from '@/components/home/SmartBar';
 
 type FormState = Required<Omit<SmartBarConfig, 'starts_at' | 'ends_at'>> & {
   starts_at: string;
@@ -466,16 +466,12 @@ const AdminSmartBar = () => {
             <CardContent>
               <div className="rounded-lg border border-border bg-background overflow-hidden">
                 {form.enabled ? (
-                  <SmartBarPreview key={JSON.stringify(previewConfig)} />
+                  <InlinePreview config={previewConfig} />
                 ) : (
                   <div className="p-6 text-center text-sm text-muted-foreground">
                     Smart Bar is disabled. Toggle it on to preview.
                   </div>
                 )}
-                {/* Hidden inline render driven by the in-memory form so admins
-                    see edits before saving. We bypass the DB fetch by passing
-                    the config via a custom render below. */}
-                <InlinePreview config={previewConfig} />
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <Badge variant="secondary" className="text-[10px]">{form.position}</Badge>
