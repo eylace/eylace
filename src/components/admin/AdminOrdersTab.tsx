@@ -416,7 +416,7 @@ const OrderBlockCard = ({ phone, ip }: OrderBlockCardProps) => {
 };
 
 export const AdminOrdersTab = () => {
-  const { orders, isLoading, refetch, updateOrderStatus, deleteOrders } = useAdminOrders();
+  const { orders, isLoading, error: orderLoadError, refetch, updateOrderStatus, deleteOrders } = useAdminOrders();
   const [createOrderOpen, setCreateOrderOpen] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
   const [trackingInfo, setTrackingInfo] = useState<Record<string, { carrier: string; tracking_number: string }>>({});
@@ -1119,6 +1119,17 @@ export const AdminOrdersTab = () => {
                     ))}
                   </TableRow>
                 ))
+              ) : orderLoadError ? (
+                <TableRow>
+                  <TableCell colSpan={14} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                      <span>Orders could not load: {orderLoadError}</span>
+                      <Button variant="outline" size="sm" onClick={refetch} className="gap-2">
+                        <RefreshCw className="h-4 w-4" /> Retry
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ) : paginatedOrders.length === 0 ? (
                 <TableRow>
                    <TableCell colSpan={14} className="text-center py-12 text-muted-foreground">

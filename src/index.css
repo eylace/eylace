@@ -288,7 +288,20 @@
 
 .topbar-marquee {
   display: inline-flex;
+  min-width: max-content;
   animation: topbar-scroll linear infinite;
+  will-change: transform;
+}
+
+@keyframes smartbar-marquee-rtl {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.smartbar-marquee-rtl {
+  display: inline-flex;
+  min-width: max-content;
+  animation: smartbar-marquee-rtl linear infinite;
   will-change: transform;
 }
 

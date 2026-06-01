@@ -44,7 +44,7 @@ const weightClass = (w?: string) =>
  * suppress future edits.
  */
 const hashConfig = (c: SmartBarConfig) => {
-  const src = JSON.stringify([c.text, c.messages, c.bg_color, c.text_color, c.icon, c.position]);
+  const src = JSON.stringify([c.text, c.messages, c.link, c.bg_color, c.text_color, c.icon, c.position, c.animation, c.starts_at, c.ends_at]);
   let h = 5381;
   for (let i = 0; i < src.length; i++) h = ((h << 5) + h + src.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
@@ -175,10 +175,8 @@ export const SmartBar = () => {
       <div className="flex items-center justify-between w-full gap-4">
         {isMarquee ? (
           <div className="flex items-center flex-1 overflow-hidden">
-            <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - rotation * 2)}s` }}>
-              <span className="px-8">{content}</span>
-              <span className="px-8">{content}</span>
-              <span className="px-8">{content}</span>
+            <div className="smartbar-marquee-rtl whitespace-nowrap" style={{ animationDuration: `${Math.max(12, 45 - rotation * 2)}s` }}>
+              <span className="inline-flex items-center px-8">{content}</span>
             </div>
           </div>
         ) : (

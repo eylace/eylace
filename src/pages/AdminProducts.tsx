@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   Package, Plus, Search, Edit, Trash2, Eye, Loader2,
   Image as ImageIcon, Star, MoreVertical, Filter, ArrowUpDown,
-  Copy, Download, ChevronDown, CheckSquare,
+  Copy, Download, ChevronDown, CheckSquare, RefreshCw,
 } from 'lucide-react';
 import { AdminProductFormModal } from '@/components/admin/ProductFormModal';
 import { ProductImportExportModal } from '@/components/admin/ProductImportExportModal';
@@ -43,6 +43,7 @@ const AdminProducts = () => {
   const [sellers, setSellers] = useState<any[]>([]);
   const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
@@ -57,13 +58,25 @@ const AdminProducts = () => {
 
   const fetchAll = async () => {
     setLoading(true);
+    setLoadError(null);
     const [prodRes, catRes, sellerRes, brandRes] = await Promise.all([
-      supabase.from('products').select('*, categories(name), sellers(name, id), brands(name)').order('created_at', { ascending: false }),
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('categories').select('id, name').order('name'),
       supabase.from('sellers').select('id, name').order('name'),
       supabase.from('brands').select('id, name').order('name'),
     ]);
-    if (!prodRes.error && prodRes.data) setProducts(prodRes.data);
+    if (!prodRes.error && prodRes.data) {
+      const categoryMap = new Map((catRes.data || []).map((c: any) => [c.id, c]));
+      const sellerMap = new Map((sellerRes.data || []).map((s: any) => [s.id, s]));
+      const brandMap = new Map((brandRes.data || []).map((b: any) => [b.id, b]));
+      setProducts(prodRes.data.map((p: any) => ({
+        ...p,
+        categories: categoryMap.get(p.category_id) || null,
+        sellers: sellerMap.get(p.seller_id) || null,
+        brands: brandMap.get(p.brand_id) || null,
+      })));
+    }
+    if (prodRes.error) setLoadError(prodRes.error.message);
     if (!catRes.error && catRes.data) setCategories(catRes.data);
     if (!sellerRes.error && sellerRes.data) setSellers(sellerRes.data);
     if (!brandRes.error && brandRes.data) setBrands(brandRes.data);
@@ -295,6 +308,15 @@ const AdminProducts = () => {
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <Package className="h-12 w-12 text-muted-foreground/30" />
+              <p className="font-medium text-foreground">Products could not load</p>
+              <p className="max-w-md text-sm text-muted-foreground">{loadError}</p>
+              <Button variant="outline" size="sm" onClick={fetchAll} className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Retry
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">

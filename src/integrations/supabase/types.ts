@@ -3962,6 +3962,19 @@ export type Database = {
         Returns: string
       }
       can_access_accounting: { Args: { _user_id: string }; Returns: boolean }
+      can_access_admin_orders: { Args: { _user_id: string }; Returns: boolean }
+      can_access_admin_products: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_manage_admin_products: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_manage_website_settings: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       cleanup_expired_otp_codes: { Args: never; Returns: number }
       compute_courier_advance_amount: {
         Args: { _shipping: number; _zone: string }
