@@ -34,7 +34,7 @@ const DEFAULTS: FormState = {
   gradient_end_color: '#ef4444',
   icon: '',
   position: 'top',
-  animation: 'none',
+  animation: 'marquee',
   dismissible: true,
   text_size: 'sm',
   font_weight: 'medium',
@@ -541,7 +541,7 @@ const AdminSmartBar = () => {
               <CardTitle className="text-base">Tips</CardTitle>
             </CardHeader>
             <CardContent className="text-xs text-muted-foreground space-y-2">
-              <p>• Keep messages under ~80 characters so they fit on mobile without truncation.</p>
+              <p>• Use Marquee scroll to move text smoothly from right to left like the original Smart Bar.</p>
               <p>• Use rotating messages to highlight several promos without crowding the bar.</p>
               <p>• If you enable the bottom position, allow dismissal so it doesn't block content forever.</p>
               <p>• Schedule a campaign by setting Starts/Ends in advance — the bar will switch on/off automatically.</p>
@@ -589,7 +589,7 @@ const InlinePreview = ({ config }: { config: SmartBarConfig }) => {
         {isMarquee ? (
           <div className="flex flex-1 overflow-hidden">
             <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - (config.rotation_seconds ?? 5) * 2)}s` }}>
-              {[0, 1, 2].map(k => (
+              {[0, 1].map(k => (
                 <span key={k} className={`px-8 inline-flex items-center gap-2 ${sizeCls} ${weightCls}`}>
                   {config.icon && <span>{config.icon}</span>}{current}
                 </span>
