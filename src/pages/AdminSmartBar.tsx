@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Loader2, Save, Megaphone, Plus, Trash2, GripVertical, Eye, RotateCcw,
-  Palette, MousePointerClick, Clock, Users, Sparkles, ArrowUp, ArrowDown,
+  Palette, MousePointerClick, Clock, Users, Sparkles, ArrowUp, ArrowDown, Link2,
 } from 'lucide-react';
 import type { SmartBarConfig } from '@/components/home/SmartBar';
 
@@ -41,6 +41,7 @@ const DEFAULTS: FormState = {
   audience: 'all',
   starts_at: '',
   ends_at: '',
+  links: [],
 };
 
 const PRESETS: { name: string; patch: Partial<FormState> }[] = [
@@ -70,6 +71,7 @@ const AdminSmartBar = () => {
             ...DEFAULTS,
             ...v,
             messages: Array.isArray(v.messages) ? v.messages : [],
+            links: Array.isArray(v.links) ? v.links : [],
             starts_at: v.starts_at || '',
             ends_at: v.ends_at || '',
           });
@@ -95,6 +97,13 @@ const AdminSmartBar = () => {
       return { ...f, messages: next };
     });
 
+  const addLink = () =>
+    setForm(f => ({ ...f, links: [...f.links, { label: '', url: '' }] }));
+  const updateLink = (i: number, k: 'label' | 'url', v: string) =>
+    setForm(f => ({ ...f, links: f.links.map((l, idx) => (idx === i ? { ...l, [k]: v } : l)) }));
+  const removeLink = (i: number) =>
+    setForm(f => ({ ...f, links: f.links.filter((_, idx) => idx !== i) }));
+
   const save = async () => {
     if (!form.text?.trim() && form.messages.filter(m => m.trim()).length === 0) {
       toast.error('Add at least one message.');
@@ -104,6 +113,9 @@ const AdminSmartBar = () => {
     const payload: SmartBarConfig = {
       ...form,
       messages: form.messages.map(m => m.trim()).filter(Boolean),
+      links: form.links
+        .map(l => ({ label: l.label.trim(), url: l.url.trim() }))
+        .filter(l => l.label && l.url),
       starts_at: form.starts_at || null,
       ends_at: form.ends_at || null,
     };
@@ -275,6 +287,44 @@ const AdminSmartBar = () => {
                 <Label className="font-normal">Open link in new tab</Label>
                 <Switch checked={form.open_in_new_tab} onCheckedChange={v => update('open_in_new_tab', v)} />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Quick Links ── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Link2 className="h-5 w-5 text-accent" /> Quick Links
+              </CardTitle>
+              <CardDescription>
+                Small navigation links shown on the right side of the bar (desktop only). Great for "Track Order", "Help", "Sell on Eylace", etc.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {form.links.length === 0 && (
+                <p className="text-xs text-muted-foreground">No quick links yet.</p>
+              )}
+              {form.links.map((l, i) => (
+                <div key={i} className="grid grid-cols-[1fr_1.5fr_auto] gap-2 items-center">
+                  <Input
+                    value={l.label}
+                    onChange={e => updateLink(i, 'label', e.target.value)}
+                    placeholder="Label (e.g. Track Order)"
+                    maxLength={40}
+                  />
+                  <Input
+                    value={l.url}
+                    onChange={e => updateLink(i, 'url', e.target.value)}
+                    placeholder="/track-order or https://..."
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeLink(i)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addLink} className="gap-1">
+                <Plus className="h-4 w-4" /> Add Link
+              </Button>
             </CardContent>
           </Card>
 
@@ -531,27 +581,37 @@ const InlinePreview = ({ config }: { config: SmartBarConfig }) => {
 
   const current = messages[idx % messages.length];
   const isMarquee = config.animation === 'marquee';
+  const links = (config.links || []).filter(l => l && l.label && l.url);
 
   return (
     <div className="relative px-10 py-2.5 flex items-center justify-center overflow-hidden" style={{ background, color: fg }}>
-      {isMarquee ? (
-        <div className="flex w-full overflow-hidden">
-          <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - (config.rotation_seconds ?? 5) * 2)}s` }}>
-            {[0, 1, 2].map(k => (
-              <span key={k} className={`px-8 inline-flex items-center gap-2 ${sizeCls} ${weightCls}`}>
-                {config.icon && <span>{config.icon}</span>}{current}
-              </span>
+      <div className="flex items-center justify-between gap-4 w-full">
+        {isMarquee ? (
+          <div className="flex flex-1 overflow-hidden">
+            <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - (config.rotation_seconds ?? 5) * 2)}s` }}>
+              {[0, 1, 2].map(k => (
+                <span key={k} className={`px-8 inline-flex items-center gap-2 ${sizeCls} ${weightCls}`}>
+                  {config.icon && <span>{config.icon}</span>}{current}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <span
+            key={idx}
+            className={`flex-1 text-center inline-flex items-center justify-center gap-2 ${sizeCls} ${weightCls} ${config.animation === 'pulse' ? 'animate-pulse' : ''} ${config.animation === 'slide' ? 'smartbar-slide-in' : ''}`}
+          >
+            {config.icon && <span>{config.icon}</span>}{current}
+          </span>
+        )}
+        {links.length > 0 && (
+          <div className="hidden md:flex items-center gap-3 text-[11px] shrink-0 opacity-95">
+            {links.map((l, i) => (
+              <span key={i} className="hover:underline underline-offset-2">{l.label}</span>
             ))}
           </div>
-        </div>
-      ) : (
-        <span
-          key={idx}
-          className={`inline-flex items-center gap-2 ${sizeCls} ${weightCls} ${config.animation === 'pulse' ? 'animate-pulse' : ''} ${config.animation === 'slide' ? 'smartbar-slide-in' : ''}`}
-        >
-          {config.icon && <span>{config.icon}</span>}{current}
-        </span>
-      )}
+        )}
+      </div>
     </div>
   );
 };

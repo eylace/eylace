@@ -24,6 +24,8 @@ export interface SmartBarConfig {
   audience?: 'all' | 'guests' | 'users';
   starts_at?: string | null;
   ends_at?: string | null;
+  /** Quick navigation links shown to the right of the message (desktop only). */
+  links?: { label: string; url: string }[];
 }
 
 const sizeClass = (s?: string) =>
@@ -161,6 +163,8 @@ export const SmartBar = () => {
       ? 'fixed bottom-0 left-0 right-0 z-40 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]'
       : 'relative';
 
+  const quickLinks = (config.links || []).filter((l) => l && l.label && l.url);
+
   return (
     <div
       className={`${positionClass} flex items-center justify-center px-10 py-2.5 overflow-hidden`}
@@ -168,17 +172,42 @@ export const SmartBar = () => {
       role="region"
       aria-label="Promotional bar"
     >
-      {isMarquee ? (
-        <div className="flex items-center w-full overflow-hidden">
-          <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - rotation * 2)}s` }}>
-            <span className="px-8">{content}</span>
-            <span className="px-8">{content}</span>
-            <span className="px-8">{content}</span>
+      <div className="flex items-center justify-between w-full gap-4">
+        {isMarquee ? (
+          <div className="flex items-center flex-1 overflow-hidden">
+            <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - rotation * 2)}s` }}>
+              <span className="px-8">{content}</span>
+              <span className="px-8">{content}</span>
+              <span className="px-8">{content}</span>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="text-center max-w-[90%] truncate">{content}</div>
-      )}
+        ) : (
+          <div className="flex-1 text-center truncate">{content}</div>
+        )}
+
+        {quickLinks.length > 0 && (
+          <div className="hidden md:flex items-center gap-4 text-xs shrink-0 opacity-95">
+            {quickLinks.map((l, i) => {
+              const isExt = /^https?:\/\//i.test(l.url);
+              return isExt ? (
+                <a
+                  key={i}
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline underline-offset-2"
+                >
+                  {l.label}
+                </a>
+              ) : (
+                <Link key={i} to={l.url} className="hover:underline underline-offset-2">
+                  {l.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
       {config.dismissible !== false && (
         <button
           type="button"
