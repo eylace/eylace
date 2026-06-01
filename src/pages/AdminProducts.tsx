@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   Package, Plus, Search, Edit, Trash2, Eye, Loader2,
   Image as ImageIcon, Star, MoreVertical, Filter, ArrowUpDown,
-  Copy, Download, ChevronDown, CheckSquare,
+  Copy, Download, ChevronDown, CheckSquare, RefreshCw,
 } from 'lucide-react';
 import { AdminProductFormModal } from '@/components/admin/ProductFormModal';
 import { ProductImportExportModal } from '@/components/admin/ProductImportExportModal';
@@ -60,12 +60,22 @@ const AdminProducts = () => {
     setLoading(true);
     setLoadError(null);
     const [prodRes, catRes, sellerRes, brandRes] = await Promise.all([
-      supabase.from('products').select('*, categories(name), sellers(name, id), brands(name)').order('created_at', { ascending: false }),
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('categories').select('id, name').order('name'),
       supabase.from('sellers').select('id, name').order('name'),
       supabase.from('brands').select('id, name').order('name'),
     ]);
-    if (!prodRes.error && prodRes.data) setProducts(prodRes.data);
+    if (!prodRes.error && prodRes.data) {
+      const categoryMap = new Map((catRes.data || []).map((c: any) => [c.id, c]));
+      const sellerMap = new Map((sellerRes.data || []).map((s: any) => [s.id, s]));
+      const brandMap = new Map((brandRes.data || []).map((b: any) => [b.id, b]));
+      setProducts(prodRes.data.map((p: any) => ({
+        ...p,
+        categories: categoryMap.get(p.category_id) || null,
+        sellers: sellerMap.get(p.seller_id) || null,
+        brands: brandMap.get(p.brand_id) || null,
+      })));
+    }
     if (prodRes.error) setLoadError(prodRes.error.message);
     if (!catRes.error && catRes.data) setCategories(catRes.data);
     if (!sellerRes.error && sellerRes.data) setSellers(sellerRes.data);
