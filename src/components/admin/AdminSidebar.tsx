@@ -237,7 +237,6 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.websiteSetup.auth' as TranslationKey, url: '/admin/website-setup?tab=auth', icon: Lock },
     { titleKey: 'admin.websiteSetup.header' as TranslationKey, url: '/admin/website-setup?tab=header', icon: PanelTop },
     { titleKey: 'admin.websiteSetup.headerSettings' as TranslationKey, url: '/admin/website-setup?tab=header-settings', icon: Settings },
-    { titleKey: 'admin.websiteSetup.topbar' as TranslationKey, url: '/admin/website-setup?tab=topbar', icon: Monitor },
     { titleKey: 'admin.websiteSetup.footer' as TranslationKey, url: '/admin/website-setup?tab=footer', icon: Layers },
     { titleKey: 'admin.websiteSetup.pages' as TranslationKey, url: '/admin/website-setup?tab=pages', icon: FileText },
     { titleKey: 'admin.websiteSetup.appearance' as TranslationKey, url: '/admin/website-setup?tab=appearance', icon: Paintbrush },
