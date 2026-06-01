@@ -22,7 +22,6 @@ interface SitemapEntry {
 const staticEntries: SitemapEntry[] = [
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/categories", changefreq: "weekly", priority: "0.9" },
-  { path: "/search", changefreq: "weekly", priority: "0.6" },
   { path: "/deals", changefreq: "daily", priority: "0.8" },
   { path: "/flash-sale", changefreq: "daily", priority: "0.8" },
   { path: "/best-sellers", changefreq: "weekly", priority: "0.8" },
@@ -47,13 +46,6 @@ const staticEntries: SitemapEntry[] = [
   { path: "/affiliate", changefreq: "monthly", priority: "0.5" },
   { path: "/advertise", changefreq: "monthly", priority: "0.4" },
   { path: "/careers", changefreq: "monthly", priority: "0.4" },
-  { path: "/auth", changefreq: "monthly", priority: "0.4" },
-  { path: "/account", changefreq: "monthly", priority: "0.4" },
-  { path: "/cart", changefreq: "monthly", priority: "0.4" },
-  { path: "/checkout", changefreq: "monthly", priority: "0.4" },
-  { path: "/orders", changefreq: "weekly", priority: "0.4" },
-  { path: "/settings", changefreq: "monthly", priority: "0.3" },
-  { path: "/wishlist", changefreq: "weekly", priority: "0.4" },
 ];
 
 async function fetchDynamic(): Promise<SitemapEntry[]> {
