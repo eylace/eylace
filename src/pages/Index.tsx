@@ -10,6 +10,7 @@ import { BannerAdsSection } from '@/components/home/BannerAdsSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 import { SeoHead } from '@/components/seo/SeoHead';
+import { LazyVisible } from '@/components/perf/LazyVisible';
 
 const Index = () => {
   const { t } = useLanguage();
@@ -26,43 +27,55 @@ const Index = () => {
       <SmartBar />
       {setup.homepageBannerEnabled && <HeroSection />}
       {setup.homepageFeaturedCategories && <CategoriesSection />}
-      {setup.homepageFlashSale && <FlashSaleSection />}
-      {setup.homepagePromoBanners && <PromoBanners />}
-      <BannerAdsSection />
-      {setup.homepageDeals && <DealsSection />}
+      {setup.homepageFlashSale && (
+        <LazyVisible minHeight={360}><FlashSaleSection /></LazyVisible>
+      )}
+      {setup.homepagePromoBanners && (
+        <LazyVisible minHeight={240}><PromoBanners /></LazyVisible>
+      )}
+      <LazyVisible minHeight={200}><BannerAdsSection /></LazyVisible>
+      {setup.homepageDeals && (
+        <LazyVisible minHeight={360}><DealsSection /></LazyVisible>
+      )}
 
       {setup.homepageBestSellers && (
-        <FeaturedProducts 
-          title="Featured Products"
-          subtitle="Handpicked items just for you"
-          titleKey="featured.title"
-          subtitleKey="featured.subtitle"
-          icon="star"
-          link="/trending"
-          limit={5}
-        />
+        <LazyVisible minHeight={420}>
+          <FeaturedProducts
+            title="Featured Products"
+            subtitle="Handpicked items just for you"
+            titleKey="featured.title"
+            subtitleKey="featured.subtitle"
+            icon="star"
+            link="/trending"
+            limit={5}
+          />
+        </LazyVisible>
       )}
       {setup.homepageBestSellers && (
-        <FeaturedProducts 
-          title="Trending Now"
-          subtitle="What everyone is buying"
-          titleKey="featured.trending"
-          subtitleKey="featured.trendingSub"
-          icon="trending"
-          link="/trending"
-          limit={5}
-        />
+        <LazyVisible minHeight={420}>
+          <FeaturedProducts
+            title="Trending Now"
+            subtitle="What everyone is buying"
+            titleKey="featured.trending"
+            subtitleKey="featured.trendingSub"
+            icon="trending"
+            link="/trending"
+            limit={5}
+          />
+        </LazyVisible>
       )}
       {setup.homepageNewArrivals && (
-        <FeaturedProducts 
-          title="New Arrivals"
-          subtitle="Fresh additions to our collection"
-          titleKey="featured.newArrivals"
-          subtitleKey="featured.newArrivalsSub"
-          icon="sparkles"
-          link="/new-arrivals"
-          limit={5}
-        />
+        <LazyVisible minHeight={420}>
+          <FeaturedProducts
+            title="New Arrivals"
+            subtitle="Fresh additions to our collection"
+            titleKey="featured.newArrivals"
+            subtitleKey="featured.newArrivalsSub"
+            icon="sparkles"
+            link="/new-arrivals"
+            limit={5}
+          />
+        </LazyVisible>
       )}
 
       <section className="container-main py-8 mb-8">
