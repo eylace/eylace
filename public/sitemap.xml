@@ -27,11 +27,5 @@
   <url><loc>https://eylace.lovable.app/affiliate</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
   <url><loc>https://eylace.lovable.app/advertise</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://eylace.lovable.app/careers</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://eylace.lovable.app/auth</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://eylace.lovable.app/account</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://eylace.lovable.app/cart</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://eylace.lovable.app/checkout</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://eylace.lovable.app/orders</loc><changefreq>weekly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://eylace.lovable.app/settings</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://eylace.lovable.app/wishlist</loc><changefreq>weekly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://eylace.lovable.app/sitemap-page</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
 </urlset>
