@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Loader2, Save, Megaphone, Plus, Trash2, GripVertical, Eye, RotateCcw,
-  Palette, MousePointerClick, Clock, Users, Sparkles, ArrowUp, ArrowDown,
+  Palette, MousePointerClick, Clock, Users, Sparkles, ArrowUp, ArrowDown, Link2,
 } from 'lucide-react';
 import type { SmartBarConfig } from '@/components/home/SmartBar';
 
@@ -41,6 +41,7 @@ const DEFAULTS: FormState = {
   audience: 'all',
   starts_at: '',
   ends_at: '',
+  links: [],
 };
 
 const PRESETS: { name: string; patch: Partial<FormState> }[] = [
@@ -70,6 +71,7 @@ const AdminSmartBar = () => {
             ...DEFAULTS,
             ...v,
             messages: Array.isArray(v.messages) ? v.messages : [],
+            links: Array.isArray(v.links) ? v.links : [],
             starts_at: v.starts_at || '',
             ends_at: v.ends_at || '',
           });
@@ -95,6 +97,13 @@ const AdminSmartBar = () => {
       return { ...f, messages: next };
     });
 
+  const addLink = () =>
+    setForm(f => ({ ...f, links: [...f.links, { label: '', url: '' }] }));
+  const updateLink = (i: number, k: 'label' | 'url', v: string) =>
+    setForm(f => ({ ...f, links: f.links.map((l, idx) => (idx === i ? { ...l, [k]: v } : l)) }));
+  const removeLink = (i: number) =>
+    setForm(f => ({ ...f, links: f.links.filter((_, idx) => idx !== i) }));
+
   const save = async () => {
     if (!form.text?.trim() && form.messages.filter(m => m.trim()).length === 0) {
       toast.error('Add at least one message.');
@@ -104,6 +113,9 @@ const AdminSmartBar = () => {
     const payload: SmartBarConfig = {
       ...form,
       messages: form.messages.map(m => m.trim()).filter(Boolean),
+      links: form.links
+        .map(l => ({ label: l.label.trim(), url: l.url.trim() }))
+        .filter(l => l.label && l.url),
       starts_at: form.starts_at || null,
       ends_at: form.ends_at || null,
     };
