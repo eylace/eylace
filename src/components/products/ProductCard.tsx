@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Star, Heart, ShoppingCart, Zap, GitCompareArrows } from 'lucide-react';
 import { Product } from '@/types';
@@ -19,7 +19,7 @@ interface ProductCardProps {
   showWishlistButton?: boolean;
 }
 
-export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ product, variant = 'default', showWishlistButton = false }, ref) => {
+const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ product, variant = 'default', showWishlistButton = false }, ref) => {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
@@ -306,4 +306,17 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(({ produ
   );
 });
 
-ProductCard.displayName = 'ProductCard';
+ProductCardComponent.displayName = 'ProductCardInner';
+
+// Memoize to avoid re-renders when parent context (wishlist/cart/compare)
+// updates but this product is not affected. Compare by id + version-ish fields.
+export const ProductCard = memo(ProductCardComponent, (a, b) =>
+  a.variant === b.variant &&
+  a.showWishlistButton === b.showWishlistButton &&
+  a.product.id === b.product.id &&
+  a.product.price === b.product.price &&
+  a.product.stock === b.product.stock &&
+  a.product.discount === b.product.discount &&
+  a.product.rating === b.product.rating &&
+  a.product.reviewCount === b.product.reviewCount
+) as typeof ProductCardComponent;
