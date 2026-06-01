@@ -44,7 +44,7 @@ const weightClass = (w?: string) =>
  * suppress future edits.
  */
 const hashConfig = (c: SmartBarConfig) => {
-  const src = JSON.stringify([c.text, c.messages, c.bg_color, c.text_color, c.icon, c.position]);
+  const src = JSON.stringify([c.text, c.messages, c.link, c.bg_color, c.text_color, c.icon, c.position, c.animation, c.starts_at, c.ends_at]);
   let h = 5381;
   for (let i = 0; i < src.length; i++) h = ((h << 5) + h + src.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
