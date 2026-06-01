@@ -220,6 +220,12 @@ const defaultSettings: SettingsState = {
   ],
 };
 
+const SECRET_KEYS: (keyof SettingsState)[] = [
+  'smtpHost', 'smtpPort', 'smtpUsername', 'smtpPassword', 'smtpEncryption',
+  'smtpFromEmail', 'smtpFromName',
+  'facebookAppSecret', 'googleClientSecret',
+];
+
 const AdminSettingsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -231,23 +237,40 @@ const AdminSettingsPage = () => {
 
   const handleSave = async () => {
     setLoading(true);
-    const { error } = await supabase.from('system_settings').upsert({
-      key: 'store_settings_v2',
-      value: settings as any,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'key' });
-
-    if (error) toast.error('Failed to save settings');
+    // Split sensitive credentials into an admin-only key; the public-readable
+    // `store_settings_v2` row must never contain SMTP passwords or OAuth secrets.
+    const publicSettings: Record<string, any> = { ...settings };
+    const secretSettings: Record<string, any> = {};
+    for (const k of SECRET_KEYS) {
+      secretSettings[k] = (settings as any)[k];
+      delete publicSettings[k];
+    }
+    const now = new Date().toISOString();
+    const [pub, sec] = await Promise.all([
+      supabase.from('system_settings').upsert(
+        { key: 'store_settings_v2', value: publicSettings as any, updated_at: now },
+        { onConflict: 'key' },
+      ),
+      supabase.from('system_settings').upsert(
+        { key: 'store_secrets_v1', value: secretSettings as any, updated_at: now },
+        { onConflict: 'key' },
+      ),
+    ]);
+    if (pub.error || sec.error) toast.error('Failed to save settings');
     else toast.success('Settings saved successfully!');
     setLoading(false);
   };
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from('system_settings').select('value').eq('key', 'store_settings_v2').single();
-      if (data?.value && typeof data.value === 'object') {
-        setSettings(prev => ({ ...prev, ...(data.value as any) }));
-      }
+      const { data: pub } = await supabase.from('system_settings').select('value').eq('key', 'store_settings_v2').maybeSingle();
+      // Secrets row is only readable by admins (no public allowlist entry)
+      const { data: sec } = await supabase.from('system_settings').select('value').eq('key', 'store_secrets_v1').maybeSingle();
+      setSettings(prev => ({
+        ...prev,
+        ...(pub?.value && typeof pub.value === 'object' ? (pub.value as any) : {}),
+        ...(sec?.value && typeof sec.value === 'object' ? (sec.value as any) : {}),
+      }));
     };
     load();
   }, []);

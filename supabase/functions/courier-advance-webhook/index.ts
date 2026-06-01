@@ -42,6 +42,10 @@ Deno.serve(async (req) => {
 
   // ── Mock-redirect helper for end-to-end testing without real gateway ──
   if (isMockRedirect && req.method === 'GET') {
+    // Disabled unless explicitly enabled — never in production.
+    if (Deno.env.get('MOCK_PAYMENTS_ENABLED') !== 'true') {
+      return new Response('Not Found', { status: 404 });
+    }
     const ref = url.searchParams.get('ref') || '';
     const amount = Number(url.searchParams.get('amount') || 0);
     const result = url.searchParams.get('result');

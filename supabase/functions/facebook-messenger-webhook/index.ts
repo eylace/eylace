@@ -80,7 +80,7 @@ serve(async (req) => {
           const senderId = event.sender?.id;
           if (!senderId || !event.message?.text) continue;
 
-          const userMessage = event.message.text;
+          const userMessage = String(event.message.text).slice(0, 2000);
           console.log(`Message from ${senderId}: ${userMessage}`);
 
           // Send typing indicator

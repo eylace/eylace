@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
       order_number,
       shipping: clientShipping,
       tax: clientTax,
-      discount: clientDiscount,
+      coupon_code,
       total,
       payment_method,
       shipping_address,
@@ -256,7 +256,30 @@ Deno.serve(async (req) => {
     // Recompute totals server-side from authenticated prices
     const safeShipping = Math.max(0, Number(clientShipping) || 0);
     const safeTax = Math.max(0, Number(clientTax) || 0);
-    const safeDiscount = Math.max(0, Number(clientDiscount) || 0);
+
+    // Server-side coupon validation — never trust client-supplied discount
+    let safeDiscount = 0;
+    if (coupon_code && typeof coupon_code === 'string') {
+      const { data: coupon } = await supabaseAdmin
+        .from('coupons')
+        .select('*')
+        .eq('code', coupon_code)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (coupon) {
+        const notExpired = !coupon.expires_at || new Date(coupon.expires_at) > new Date();
+        const underLimit = !coupon.usage_limit || (coupon.used_count || 0) < coupon.usage_limit;
+        const meetsMin = !coupon.min_order_amount || serverSubtotal >= Number(coupon.min_order_amount);
+        if (notExpired && underLimit && meetsMin) {
+          let d = coupon.discount_type === 'percentage'
+            ? serverSubtotal * (Number(coupon.discount_value) / 100)
+            : Number(coupon.discount_value);
+          if (coupon.max_discount && d > Number(coupon.max_discount)) d = Number(coupon.max_discount);
+          safeDiscount = Math.max(0, Math.min(d, serverSubtotal));
+        }
+      }
+    }
+
     const serverTotal = Math.max(0, serverSubtotal + safeShipping + safeTax - safeDiscount);
 
     // Reject if client-submitted total deviates by more than 1 unit (rounding tolerance)

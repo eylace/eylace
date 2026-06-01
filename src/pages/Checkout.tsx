@@ -425,6 +425,13 @@ const Checkout = () => {
         variations: item.selectedVariations || null,
       }));
 
+      // Resolve coupon code for server-side discount validation (never trust client discount)
+      let resolvedCouponCode: string | null = null;
+      if (appliedCouponId) {
+        const { data: c } = await supabase.from('coupons').select('code').eq('id', appliedCouponId).maybeSingle();
+        resolvedCouponCode = c?.code ?? null;
+      }
+
       // Use server-side order creation for reliable IP detection + user attribution
       const { data: result, error: fnError } = await supabase.functions.invoke('checkout-create-order', {
         body: {
@@ -432,7 +439,7 @@ const Checkout = () => {
           subtotal,
           shipping,
           tax,
-          discount: totalDiscount,
+          coupon_code: resolvedCouponCode,
           total,
           payment_method: data.paymentMethod,
           shipping_address: shippingAddress,

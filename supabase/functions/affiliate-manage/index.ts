@@ -87,7 +87,11 @@ Deno.serve(async (req) => {
 
     // ========== TRACK CLICK ==========
     if (action === 'track-click' && req.method === 'POST') {
+      if (!userId) return json({ error: 'Unauthorized' }, 401)
       const { referral_code, landing_page } = body
+      if (typeof referral_code !== 'string' || referral_code.length > 64) {
+        return json({ error: 'Invalid referral_code' }, 400)
+      }
       const { data: affiliate } = await adminClient.from('affiliates').select('id').eq('referral_code', referral_code).eq('status', 'approved').maybeSingle()
       if (!affiliate) return json({ error: 'Invalid referral' }, 404)
 
@@ -108,16 +112,48 @@ Deno.serve(async (req) => {
 
     // ========== RECORD CONVERSION ==========
     if (action === 'record-conversion' && req.method === 'POST') {
-      const { referral_code, order_id, order_total } = body
-      const { data: affiliate } = await adminClient.from('affiliates').select('id, commission_rate, total_conversions, total_earnings').eq('referral_code', referral_code).eq('status', 'approved').maybeSingle()
-      if (!affiliate) return json({ error: 'Invalid affiliate' }, 404)
+      if (!userId) return json({ error: 'Unauthorized' }, 401)
+      const { referral_code, order_id } = body
+      if (typeof referral_code !== 'string' || !order_id) {
+        return json({ error: 'Missing referral_code or order_id' }, 400)
+      }
 
-      const commission = (order_total * affiliate.commission_rate) / 100
+      // Verify order exists, belongs to the caller, and is real
+      const { data: order } = await adminClient
+        .from('orders')
+        .select('id, user_id, total, status')
+        .eq('id', order_id)
+        .maybeSingle()
+      if (!order) return json({ error: 'Order not found' }, 404)
+      if (order.user_id !== userId && !isAdmin) {
+        return json({ error: 'Forbidden' }, 403)
+      }
+
+      // Idempotency: skip if conversion already recorded for this order
+      const { data: existing } = await adminClient
+        .from('affiliate_conversions')
+        .select('id')
+        .eq('order_id', order_id)
+        .limit(1)
+      if (existing && existing.length > 0) {
+        return json({ success: true, duplicate: true })
+      }
+
+      const { data: affiliate } = await adminClient.from('affiliates').select('id, user_id, commission_rate, total_conversions, total_earnings').eq('referral_code', referral_code).eq('status', 'approved').maybeSingle()
+      if (!affiliate) return json({ error: 'Invalid affiliate' }, 404)
+      // Self-referral guard
+      if (affiliate.user_id === order.user_id) {
+        return json({ error: 'Self-referrals are not allowed' }, 400)
+      }
+
+      // Use server-side authoritative order total
+      const orderTotal = Math.max(0, Number(order.total) || 0)
+      const commission = (orderTotal * affiliate.commission_rate) / 100
 
       await adminClient.from('affiliate_conversions').insert({
         affiliate_id: affiliate.id,
         order_id,
-        order_total,
+        order_total: orderTotal,
         commission_amount: commission,
         status: 'pending',
       })
