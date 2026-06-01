@@ -7,6 +7,7 @@ import { adaptDBProducts } from '@/lib/productAdapter';
 import { Loader2, Sparkles, Filter, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SeoHead } from '@/components/seo/SeoHead';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,11 @@ export default function NewArrivals() {
 
   return (
     <Layout>
+      <SeoHead
+        title="New Arrivals — Latest Products on Eylace Bangladesh"
+        description="Shop the newest arrivals on Eylace. Fresh additions to our catalog — electronics, fashion, home essentials and more, just landed."
+        path="/new-arrivals"
+      />
       <div className="container-main py-8">
         {/* Header */}
         <div className="mb-8">

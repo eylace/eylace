@@ -6,6 +6,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { adaptDBProducts } from '@/lib/productAdapter';
 import { Loader2, Zap, Timer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const CountdownTimer = ({ endTime }: { endTime: Date }) => {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
@@ -77,6 +78,11 @@ export default function FlashSale() {
 
   return (
     <Layout>
+      <SeoHead
+        title="Flash Sale — Massive Discounts for Limited Time | Eylace"
+        description="Don't miss Eylace flash sales — deep discounts on trending products for a few hours only. Shop now before time runs out."
+        path="/flash-sale"
+      />
       <div className="container-main py-8">
         {/* Hero Banner */}
         <div className="bg-gradient-to-r from-destructive to-accent rounded-2xl p-6 md:p-10 mb-8 text-primary-foreground">

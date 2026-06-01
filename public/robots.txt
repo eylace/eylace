@@ -12,5 +12,17 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /auth
+Disallow: /checkout
+Disallow: /cart
+Disallow: /account
+Disallow: /orders
+Disallow: /settings
+Disallow: /wishlist
+Disallow: /seller-dashboard
+Disallow: /seller-dashboard/*
+Disallow: /search
 
 Sitemap: https://eylace.lovable.app/sitemap.xml
