@@ -20,7 +20,17 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await anonClient.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authError || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const { messages } = await req.json();
+    const { messages: rawMessages } = await req.json();
+    if (!Array.isArray(rawMessages)) {
+      return new Response(JSON.stringify({ error: "Invalid messages" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Sanitize: only allow user/assistant roles, cap length & count
+    const messages = rawMessages
+      .filter((m: any) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .slice(-20)
+      .map((m: any) => ({ role: m.role, content: m.content.slice(0, 2000) }));
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -66,6 +76,7 @@ Rules:
           { role: "system", content: systemPrompt },
           ...messages,
         ],
+        max_tokens: 1024,
         stream: true,
       }),
     });

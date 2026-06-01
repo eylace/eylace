@@ -20,6 +20,15 @@ interface ReturnReceiptProps {
 }
 
 export const ReturnReceipt = (props: ReturnReceiptProps) => {
+  const escapeHtml = (v: unknown): string => {
+    if (v === null || v === undefined) return '';
+    return String(v)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
   const handlePrint = () => {
     const win = window.open('', '_blank');
     if (!win) {
@@ -40,7 +49,7 @@ export const ReturnReceipt = (props: ReturnReceiptProps) => {
 
   const generateHTML = () => `
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Return Receipt - ${props.trackingNumber}</title>
+<html><head><meta charset="utf-8"><title>Return Receipt - ${escapeHtml(props.trackingNumber)}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1a1a1a; max-width: 700px; margin: 0 auto; }
@@ -69,24 +78,24 @@ export const ReturnReceipt = (props: ReturnReceiptProps) => {
 </div>
 <div class="tracking">
   <h2>Return Tracking Number</h2>
-  <div class="code">${props.trackingNumber}</div>
+  <div class="code">${escapeHtml(props.trackingNumber)}</div>
 </div>
 <table>
   <tbody>
-    ${props.orderNumber ? `<tr><td>Order Number</td><td>#${props.orderNumber}</td></tr>` : ''}
-    <tr><td>Status</td><td style="text-transform:capitalize">${props.status}</td></tr>
+    ${props.orderNumber ? `<tr><td>Order Number</td><td>#${escapeHtml(props.orderNumber)}</td></tr>` : ''}
+    <tr><td>Status</td><td style="text-transform:capitalize">${escapeHtml(props.status)}</td></tr>
     <tr><td>Date Submitted</td><td>${format(new Date(props.createdAt), 'MMMM d, yyyy')}</td></tr>
-    ${props.customerName ? `<tr><td>Customer</td><td>${props.customerName}</td></tr>` : ''}
-    ${props.customerEmail ? `<tr><td>Email</td><td>${props.customerEmail}</td></tr>` : ''}
-    <tr><td>Return Reason</td><td>${props.reason}</td></tr>
-    ${props.description ? `<tr><td>Details</td><td>${props.description}</td></tr>` : ''}
-    <tr><td>Refund Method</td><td style="text-transform:capitalize">${props.refundMethod || 'Original Payment'}</td></tr>
+    ${props.customerName ? `<tr><td>Customer</td><td>${escapeHtml(props.customerName)}</td></tr>` : ''}
+    ${props.customerEmail ? `<tr><td>Email</td><td>${escapeHtml(props.customerEmail)}</td></tr>` : ''}
+    <tr><td>Return Reason</td><td>${escapeHtml(props.reason)}</td></tr>
+    ${props.description ? `<tr><td>Details</td><td>${escapeHtml(props.description)}</td></tr>` : ''}
+    <tr><td>Refund Method</td><td style="text-transform:capitalize">${escapeHtml(props.refundMethod || 'Original Payment')}</td></tr>
     ${props.refundAmount != null ? `<tr><td>Refund Amount</td><td>৳${Number(props.refundAmount).toFixed(2)}</td></tr>` : ''}
   </tbody>
 </table>
 ${props.productName ? `
 <div class="product">
-  <strong>Product:</strong> ${props.productName}<br/>
+  <strong>Product:</strong> ${escapeHtml(props.productName)}<br/>
   ${props.quantity ? `<strong>Quantity:</strong> ${props.quantity}<br/>` : ''}
   ${props.price ? `<strong>Unit Price:</strong> ৳${props.price.toFixed(2)}` : ''}
 </div>
