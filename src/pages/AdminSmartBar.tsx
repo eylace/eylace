@@ -290,6 +290,44 @@ const AdminSmartBar = () => {
             </CardContent>
           </Card>
 
+          {/* ── Quick Links ── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Link2 className="h-5 w-5 text-accent" /> Quick Links
+              </CardTitle>
+              <CardDescription>
+                Small navigation links shown on the right side of the bar (desktop only). Great for "Track Order", "Help", "Sell on Eylace", etc.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {form.links.length === 0 && (
+                <p className="text-xs text-muted-foreground">No quick links yet.</p>
+              )}
+              {form.links.map((l, i) => (
+                <div key={i} className="grid grid-cols-[1fr_1.5fr_auto] gap-2 items-center">
+                  <Input
+                    value={l.label}
+                    onChange={e => updateLink(i, 'label', e.target.value)}
+                    placeholder="Label (e.g. Track Order)"
+                    maxLength={40}
+                  />
+                  <Input
+                    value={l.url}
+                    onChange={e => updateLink(i, 'url', e.target.value)}
+                    placeholder="/track-order or https://..."
+                  />
+                  <Button variant="ghost" size="icon" onClick={() => removeLink(i)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addLink} className="gap-1">
+                <Plus className="h-4 w-4" /> Add Link
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* ── Appearance ── */}
           <Card>
             <CardHeader>
