@@ -168,12 +168,16 @@ export const useAdminCheck = () => {
 export const useAdminOrders = () => {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
-    const { data, error } = await supabase.functions.invoke('admin-get-orders');
-    if (!error && data?.orders) {
+    setError(null);
+    const { data, error: fetchError } = await supabase.functions.invoke('admin-get-orders');
+    if (!fetchError && data?.orders) {
       setOrders(data.orders);
+    } else if (fetchError || data?.error) {
+      setError(fetchError?.message || data?.error || 'Failed to load orders');
     }
     setIsLoading(false);
   }, []);
@@ -216,7 +220,7 @@ export const useAdminOrders = () => {
     return { error, deletedIds: [] as string[] };
   }, []);
 
-  return { orders, isLoading, refetch: fetchOrders, updateOrderStatus, deleteOrders };
+  return { orders, isLoading, error, refetch: fetchOrders, updateOrderStatus, deleteOrders };
 };
 
 export const useAdminReviews = () => {
