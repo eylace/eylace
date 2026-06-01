@@ -175,9 +175,8 @@ export const SmartBar = () => {
       <div className="flex items-center justify-between w-full gap-4">
         {isMarquee ? (
           <div className="flex items-center flex-1 overflow-hidden">
-            <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - rotation * 2)}s` }}>
+            <div className="smartbar-marquee-rtl whitespace-nowrap" style={{ animationDuration: `${Math.max(12, 45 - rotation * 2)}s` }}>
               <span className="inline-flex items-center px-8">{content}</span>
-              <span className="inline-flex items-center px-8" aria-hidden>{content}</span>
             </div>
           </div>
         ) : (
