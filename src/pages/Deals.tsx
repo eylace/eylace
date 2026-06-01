@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 type SortOption = 'discount' | 'price-low' | 'price-high' | 'rating';
 
@@ -58,6 +59,11 @@ export default function Deals() {
 
   return (
     <Layout>
+      <SeoHead
+        title="Daily Deals & Discounts — Eylace Bangladesh"
+        description="Save big on top-rated products with daily deals on Eylace. Discounts up to 70% off — limited time offers across electronics, fashion, home and more."
+        path="/deals"
+      />
       <div className="container-main py-8">
         {/* Header */}
         <div className="mb-8">

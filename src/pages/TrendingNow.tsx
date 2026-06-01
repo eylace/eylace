@@ -7,6 +7,7 @@ import { adaptDBProducts } from '@/lib/productAdapter';
 import { Loader2, TrendingUp, Flame, Star, Filter, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SeoHead } from '@/components/seo/SeoHead';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +58,11 @@ export default function TrendingNow() {
 
   return (
     <Layout>
+      <SeoHead
+        title="Trending Now — Bangladesh's Most Popular Products | Eylace"
+        description="See what's trending on Eylace right now — the most-loved products and bestsellers across categories with fast delivery nationwide."
+        path="/trending"
+      />
       <div className="container-main py-8">
         {/* Header */}
         <div className="mb-6">

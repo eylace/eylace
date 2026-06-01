@@ -13,6 +13,7 @@ import { useProductSearch } from '@/hooks/useProductSearch';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -40,6 +41,12 @@ const Search = () => {
 
   return (
     <Layout>
+      <SeoHead
+        title={query ? `Search: ${query} — Eylace` : 'Search products — Eylace'}
+        description="Search across thousands of products on Eylace — filter by category, price, rating and brand to find exactly what you need."
+        path="/search"
+        noindex
+      />
       <div className="container-main py-6">
         <div className="mb-6">
           <div className="flex items-center gap-3">

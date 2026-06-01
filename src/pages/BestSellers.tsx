@@ -5,6 +5,7 @@ import { Loader2, Award, Star, ShieldCheck, Store, Package, ChevronRight } from 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { SeoHead } from '@/components/seo/SeoHead';
 
 interface SellerWithStats {
   id: string;
@@ -83,6 +84,11 @@ export default function BestSellers() {
 
   return (
     <Layout>
+      <SeoHead
+        title="Best Sellers — Top-Rated Shops on Eylace Bangladesh"
+        description="Discover Bangladesh's top-rated sellers on Eylace. Verified shops with thousands of happy customers and fast nationwide delivery."
+        path="/best-sellers"
+      />
       <div className="container-main py-8">
         {/* Header */}
         <div className="mb-8">
