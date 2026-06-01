@@ -588,12 +588,10 @@ const InlinePreview = ({ config }: { config: SmartBarConfig }) => {
       <div className="flex items-center justify-between gap-4 w-full">
         {isMarquee ? (
           <div className="flex flex-1 overflow-hidden">
-            <div className="topbar-marquee whitespace-nowrap" style={{ animationDuration: `${Math.max(15, 60 - (config.rotation_seconds ?? 5) * 2)}s` }}>
-              {[0, 1].map(k => (
-                <span key={k} className={`px-8 inline-flex items-center gap-2 ${sizeCls} ${weightCls}`}>
-                  {config.icon && <span>{config.icon}</span>}{current}
-                </span>
-              ))}
+            <div className="smartbar-marquee-rtl whitespace-nowrap" style={{ animationDuration: `${Math.max(12, 45 - (config.rotation_seconds ?? 5) * 2)}s` }}>
+              <span className={`px-8 inline-flex items-center gap-2 ${sizeCls} ${weightCls}`}>
+                {config.icon && <span>{config.icon}</span>}{current}
+              </span>
             </div>
           </div>
         ) : (
