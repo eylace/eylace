@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import {
   Package, Search, Loader2, Image as ImageIcon, AlertTriangle, XCircle,
-  CheckCircle2, TrendingDown, Boxes, DollarSign, BarChart3
+  Boxes, DollarSign, BarChart3, RefreshCw
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
@@ -39,7 +39,9 @@ const AdminStockManagement = () => {
   const [products, setProducts] = useState<StockProduct[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [brands, setBrands] = useState<{ id: string; name: string }[]>([]);
+  const [sellers, setSellers] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [brandFilter, setBrandFilter] = useState('all');
@@ -49,14 +51,26 @@ const AdminStockManagement = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [prodRes, catRes, brandRes] = await Promise.all([
-      supabase.from('products').select('*, categories(name), brands(name), sellers(name)').order('updated_at', { ascending: false }),
+    setLoadError(null);
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session?.user) {
+      setProducts([]);
+      setLoadError('Admin session is not ready. Please sign in again.');
+      setLoading(false);
+      return;
+    }
+
+    const [prodRes, catRes, brandRes, sellerRes] = await Promise.all([
+      supabase.from('products').select('*').order('updated_at', { ascending: false }),
       supabase.from('categories').select('id, name').order('name'),
       supabase.from('brands').select('id, name').order('name'),
+      supabase.from('sellers').select('id, name').order('name'),
     ]);
     if (prodRes.data) setProducts(prodRes.data as any);
     if (catRes.data) setCategories(catRes.data);
     if (brandRes.data) setBrands(brandRes.data);
+    if (sellerRes.data) setSellers(sellerRes.data);
+    if (prodRes.error) setLoadError(prodRes.error.message);
     setLoading(false);
   };
 
@@ -251,6 +265,15 @@ const AdminStockManagement = () => {
           {/* Table */}
           {loading ? (
             <div className="flex items-center justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <Package className="h-10 w-10 text-muted-foreground/30" />
+              <p className="font-medium text-foreground">Stock data could not load</p>
+              <p className="max-w-md text-sm text-muted-foreground">{loadError}</p>
+              <Button variant="outline" size="sm" onClick={fetchData} className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Retry
+              </Button>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -272,9 +295,9 @@ const AdminStockManagement = () => {
                     const status = getStockStatus(stock);
                     const costVal = product.price * stock;
                     const sellVal = (product.original_price || product.price) * stock;
-                    const catName = (product as any).categories?.name;
-                    const brandName = (product as any).brands?.name;
-                    const sellerName = (product as any).sellers?.name;
+                    const catName = categories.find((category) => category.id === product.category_id)?.name;
+                    const brandName = brands.find((brand) => brand.id === product.brand_id)?.name;
+                    const sellerName = sellers.find((seller) => seller.id === product.seller_id)?.name;
 
                     return (
                       <TableRow key={product.id} className={stock === 0 ? 'bg-destructive/5' : stock <= LOW_STOCK_THRESHOLD ? 'bg-orange-500/5' : ''}>

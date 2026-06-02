@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Package, Search, Edit, Trash2, Eye, EyeOff, Loader2, Image as ImageIcon, Home } from 'lucide-react';
+import { Package, Search, Edit, Trash2, Eye, EyeOff, Loader2, Image as ImageIcon, Home, RefreshCw } from 'lucide-react';
 import { AdminProductFormModal } from '@/components/admin/ProductFormModal';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,29 +13,48 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const AdminInHouseProducts = () => {
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('products').select('*, categories(name)').is('seller_id', null).order('created_at', { ascending: false });
-    if (!error && data) setProducts(data);
+    setLoadError(null);
+
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session?.user) {
+      setProducts([]);
+      setLoadError('Admin session is not ready. Please sign in again.');
+      setLoading(false);
+      return;
+    }
+
+    const [productRes, categoryRes] = await Promise.all([
+      supabase.from('products').select('*').is('seller_id', null).order('created_at', { ascending: false }),
+      supabase.from('categories').select('id, name').order('name'),
+    ]);
+
+    if (!productRes.error && productRes.data) setProducts(productRes.data);
+    if (!categoryRes.error && categoryRes.data) setCategories(categoryRes.data);
+    if (productRes.error) setLoadError(productRes.error.message);
     setLoading(false);
   };
 
   useEffect(() => { fetchProducts(); }, []);
 
   const toggleActive = async (id: string, current: boolean) => {
-    await supabase.from('products').update({ is_active: !current }).eq('id', id);
-    toast.success(`Product ${!current ? 'activated' : 'deactivated'}`);
-    fetchProducts();
+    const { error } = await supabase.from('products').update({ is_active: !current }).eq('id', id);
+    if (!error) { toast.success(`Product ${!current ? 'activated' : 'deactivated'}`); fetchProducts(); }
+    else toast.error(error.message || 'Failed to update product');
   };
 
   const deleteProduct = async (id: string) => {
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (!error) { toast.success('Product deleted'); fetchProducts(); }
+    else toast.error(error.message || 'Failed to delete product');
   };
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -55,6 +74,15 @@ const AdminInHouseProducts = () => {
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <Package className="h-10 w-10 text-muted-foreground/30" />
+              <p className="font-medium text-foreground">In-house products could not load</p>
+              <p className="max-w-md text-sm text-muted-foreground">{loadError}</p>
+              <Button variant="outline" size="sm" onClick={fetchProducts} className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Retry
+              </Button>
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -78,7 +106,7 @@ const AdminInHouseProducts = () => {
                     </TableCell>
                     <TableCell>৳{product.price}</TableCell>
                     <TableCell><Badge variant={product.stock > 10 ? 'secondary' : 'destructive'}>{product.stock || 0}</Badge></TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{(product as any).categories?.name || 'Uncategorized'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{categories.find((category) => category.id === product.category_id)?.name || 'Uncategorized'}</TableCell>
                     <TableCell><Badge variant={product.is_active ? 'default' : 'secondary'}>{product.is_active ? 'Active' : 'Inactive'}</Badge></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
