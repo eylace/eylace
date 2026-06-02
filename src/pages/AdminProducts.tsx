@@ -59,6 +59,15 @@ const AdminProducts = () => {
   const fetchAll = async () => {
     setLoading(true);
     setLoadError(null);
+
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session?.user) {
+      setProducts([]);
+      setLoadError('Admin session is not ready. Please sign in again.');
+      setLoading(false);
+      return;
+    }
+
     const [prodRes, catRes, sellerRes, brandRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('categories').select('id, name').order('name'),
