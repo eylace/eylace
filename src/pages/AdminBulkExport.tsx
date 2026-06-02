@@ -12,14 +12,25 @@ const AdminBulkExport = () => {
 
   const handleExport = async () => {
     setExporting(true);
-    const { data, error } = await supabase.from('products').select('*, categories(name), sellers(name)').order('created_at', { ascending: false });
-    if (error) { toast.error('Export failed'); setExporting(false); return; }
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session?.user) { toast.error('Admin session is not ready'); setExporting(false); return; }
+
+    const [productRes, categoryRes, sellerRes] = await Promise.all([
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      supabase.from('categories').select('id, name').order('name'),
+      supabase.from('sellers').select('id, name').order('name'),
+    ]);
+    if (productRes.error) { toast.error('Export failed'); setExporting(false); return; }
+
+    const categoryMap = new Map((categoryRes.data || []).map((category: any) => [category.id, category.name]));
+    const sellerMap = new Map((sellerRes.data || []).map((seller: any) => [seller.id, seller.name]));
+    const data = productRes.data || [];
 
     exportToCSV(
       (data || []).map((p: any) => ({
         name: p.name, slug: p.slug, description: p.description || '',
         price: p.price, original_price: p.original_price || '', discount: p.discount || 0,
-        stock: p.stock || 0, category: p.categories?.name || '', seller: p.sellers?.name || '',
+        stock: p.stock || 0, category: categoryMap.get(p.category_id) || '', seller: sellerMap.get(p.seller_id) || '',
         is_active: p.is_active ? 'Yes' : 'No', is_digital: p.is_digital ? 'Yes' : 'No',
         is_flash_sale: p.is_flash_sale ? 'Yes' : 'No', is_free_shipping: p.is_free_shipping ? 'Yes' : 'No',
         images: (p.images || []).join('|'), created_at: p.created_at,
