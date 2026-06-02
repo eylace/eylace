@@ -97,16 +97,19 @@ const AdminProducts = () => {
   const toggleActive = async (id: string, current: boolean) => {
     const { error } = await supabase.from('products').update({ is_active: !current }).eq('id', id);
     if (!error) { toast.success(`Product ${!current ? 'published' : 'unpublished'}`); fetchAll(); }
+    else toast.error(error.message || 'Failed to update product');
   };
 
   const toggleFlashSale = async (id: string, current: boolean) => {
     const { error } = await supabase.from('products').update({ is_flash_sale: !current }).eq('id', id);
     if (!error) { toast.success(`Today's deal ${!current ? 'enabled' : 'disabled'}`); fetchAll(); }
+    else toast.error(error.message || "Failed to update today's deal");
   };
 
   const toggleFeatured = async (id: string, current: boolean) => {
     const { error } = await supabase.from('products').update({ is_prime: !current }).eq('id', id);
     if (!error) { toast.success(`Featured ${!current ? 'enabled' : 'disabled'}`); fetchAll(); }
+    else toast.error(error.message || 'Failed to update featured status');
   };
 
   const deleteProduct = async (id: string) => {
