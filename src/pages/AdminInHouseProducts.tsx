@@ -46,14 +46,15 @@ const AdminInHouseProducts = () => {
   useEffect(() => { fetchProducts(); }, []);
 
   const toggleActive = async (id: string, current: boolean) => {
-    await supabase.from('products').update({ is_active: !current }).eq('id', id);
-    toast.success(`Product ${!current ? 'activated' : 'deactivated'}`);
-    fetchProducts();
+    const { error } = await supabase.from('products').update({ is_active: !current }).eq('id', id);
+    if (!error) { toast.success(`Product ${!current ? 'activated' : 'deactivated'}`); fetchProducts(); }
+    else toast.error(error.message || 'Failed to update product');
   };
 
   const deleteProduct = async (id: string) => {
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (!error) { toast.success('Product deleted'); fetchProducts(); }
+    else toast.error(error.message || 'Failed to delete product');
   };
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
