@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   Package, Plus, Search, Edit, Trash2, Eye, Loader2,
   Image as ImageIcon, Star, MoreVertical, Filter, ArrowUpDown,
-  Copy, Download, ChevronDown, CheckSquare, RefreshCw,
+  Copy, RefreshCw,
 } from 'lucide-react';
 import { AdminProductFormModal } from '@/components/admin/ProductFormModal';
 import { ProductImportExportModal } from '@/components/admin/ProductImportExportModal';
