@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Store, Search, Edit, Trash2, Eye, EyeOff, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Store, Search, Edit, Trash2, Eye, EyeOff, Loader2, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { AdminProductFormModal } from '@/components/admin/ProductFormModal';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,15 +13,33 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const AdminSellerProducts = () => {
   const [products, setProducts] = useState<any[]>([]);
+  const [sellers, setSellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any>(null);
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('products').select('*, categories(name), sellers(name)').not('seller_id', 'is', null).order('created_at', { ascending: false });
-    if (!error && data) setProducts(data);
+    setLoadError(null);
+
+    const { data: authData } = await supabase.auth.getSession();
+    if (!authData.session?.user) {
+      setProducts([]);
+      setLoadError('Admin session is not ready. Please sign in again.');
+      setLoading(false);
+      return;
+    }
+
+    const [productRes, sellerRes] = await Promise.all([
+      supabase.from('products').select('*').not('seller_id', 'is', null).order('created_at', { ascending: false }),
+      supabase.from('sellers').select('id, name').order('name'),
+    ]);
+
+    if (!productRes.error && productRes.data) setProducts(productRes.data);
+    if (!sellerRes.error && sellerRes.data) setSellers(sellerRes.data);
+    if (productRes.error) setLoadError(productRes.error.message);
     setLoading(false);
   };
 
@@ -53,6 +71,15 @@ const AdminSellerProducts = () => {
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <Store className="h-10 w-10 text-muted-foreground/30" />
+              <p className="font-medium text-foreground">Seller products could not load</p>
+              <p className="max-w-md text-sm text-muted-foreground">{loadError}</p>
+              <Button variant="outline" size="sm" onClick={fetchProducts} className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Retry
+              </Button>
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -74,7 +101,7 @@ const AdminSellerProducts = () => {
                         <p className="font-medium text-sm truncate max-w-[200px]">{product.name}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{(product as any).sellers?.name || 'Unknown'}</TableCell>
+                    <TableCell className="text-sm">{sellers.find((seller) => seller.id === product.seller_id)?.name || 'Unknown'}</TableCell>
                     <TableCell>৳{product.price}</TableCell>
                     <TableCell><Badge variant={product.stock > 10 ? 'secondary' : 'destructive'}>{product.stock || 0}</Badge></TableCell>
                     <TableCell><Badge variant={product.is_active ? 'default' : 'secondary'}>{product.is_active ? 'Active' : 'Inactive'}</Badge></TableCell>
