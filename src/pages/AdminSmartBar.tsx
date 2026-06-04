@@ -15,6 +15,197 @@ import {
   Palette, MousePointerClick, Clock, Users, Sparkles, ArrowUp, ArrowDown, Link2,
 } from 'lucide-react';
 import type { SmartBarConfig } from '@/components/home/SmartBar';
+import { invalidateSetupCache } from '@/hooks/useWebsiteSetup';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy Top Bar (original Bangla right-to-left marquee that sat above the
+// header). Stored inside `website_setup_v1` so it stays compatible with the
+// existing <TopBar /> component reading from `useWebsiteSetup()`.
+// ─────────────────────────────────────────────────────────────────────────────
+interface LegacyTopBarState {
+  enabled: boolean;
+  text: string;
+  bgColor: string;
+  textColor: string;
+  links: { label: string; url: string }[];
+}
+const LEGACY_DEFAULTS: LegacyTopBarState = {
+  enabled: false,
+  text: 'ফ্রি ডেলিভারি ৫০০০৳ এর উপরে অর্ডার করলে! ★ এখনই অর্ডার করুন',
+  bgColor: '#1a1a2e',
+  textColor: '#ffffff',
+  links: [],
+};
+
+const LegacyTopBarEditor = () => {
+  const [state, setState] = useState<LegacyTopBarState>(LEGACY_DEFAULTS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'website_setup_v1')
+      .maybeSingle()
+      .then(({ data }) => {
+        const v: any = data?.value || {};
+        setState({
+          enabled: !!v.topBarEnabled,
+          text: v.topBarText ?? LEGACY_DEFAULTS.text,
+          bgColor: v.topBarBgColor || LEGACY_DEFAULTS.bgColor,
+          textColor: v.topBarTextColor || LEGACY_DEFAULTS.textColor,
+          links: Array.isArray(v.topBarLinks) ? v.topBarLinks : [],
+        });
+        setLoading(false);
+      });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    const { data: existing } = await supabase
+      .from('system_settings')
+      .select('id, value')
+      .eq('key', 'website_setup_v1')
+      .maybeSingle();
+    const merged = {
+      ...((existing?.value as any) || {}),
+      topBarEnabled: state.enabled,
+      topBarText: state.text,
+      topBarBgColor: state.bgColor,
+      topBarTextColor: state.textColor,
+      topBarLinks: state.links.filter(l => l.label.trim() && l.url.trim()),
+    };
+    const { error } = existing
+      ? await supabase.from('system_settings').update({ value: merged }).eq('key', 'website_setup_v1')
+      : await supabase.from('system_settings').insert({ key: 'website_setup_v1', value: merged });
+    if (error) toast.error('Failed: ' + error.message);
+    else {
+      invalidateSetupCache();
+      toast.success('Legacy Top Bar saved!');
+    }
+    setSaving(false);
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-10 flex justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-accent/40">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Megaphone className="h-5 w-5 text-accent" /> Legacy Top Bar (Bangla Marquee)
+          <Badge variant="secondary" className="ml-1 text-[10px]">Original</Badge>
+        </CardTitle>
+        <CardDescription>
+          The original right-to-left scrolling text bar that sits above the header on the storefront.
+          Toggle on/off, edit the Bangla text, and customize colors — exactly as before.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3">
+          <div>
+            <Label className="font-medium">Enable Top Bar</Label>
+            <p className="text-xs text-muted-foreground">Shows the marquee strip above the site header.</p>
+          </div>
+          <Switch checked={state.enabled} onCheckedChange={v => setState(s => ({ ...s, enabled: v }))} />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Marquee Text (Bangla / English)</Label>
+          <Input
+            value={state.text}
+            onChange={e => setState(s => ({ ...s, text: e.target.value }))}
+            placeholder="ফ্রি ডেলিভারি ৫০০০৳ এর উপরে অর্ডার করলে!"
+            maxLength={240}
+            dir="auto"
+          />
+          <p className="text-xs text-muted-foreground">Scrolls right → left continuously. {state.text.length}/240</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label>Background Color</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <input type="color" value={state.bgColor} onChange={e => setState(s => ({ ...s, bgColor: e.target.value }))} className="h-10 w-12 rounded border border-border cursor-pointer" />
+              <Input value={state.bgColor} onChange={e => setState(s => ({ ...s, bgColor: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <Label>Text Color</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <input type="color" value={state.textColor} onChange={e => setState(s => ({ ...s, textColor: e.target.value }))} className="h-10 w-12 rounded border border-border cursor-pointer" />
+              <Input value={state.textColor} onChange={e => setState(s => ({ ...s, textColor: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2"><Link2 className="h-4 w-4" /> Right-side Quick Links (desktop)</Label>
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => setState(s => ({ ...s, links: [...s.links, { label: '', url: '' }] }))}>
+              <Plus className="h-4 w-4" /> Add
+            </Button>
+          </div>
+          {state.links.length === 0 && (
+            <p className="text-xs text-muted-foreground">No quick links yet — e.g. "Track Order", "Help".</p>
+          )}
+          {state.links.map((l, i) => (
+            <div key={i} className="grid grid-cols-[1fr_1.5fr_auto] gap-2 items-center">
+              <Input
+                value={l.label}
+                placeholder="Label"
+                onChange={e => setState(s => ({ ...s, links: s.links.map((x, idx) => idx === i ? { ...x, label: e.target.value } : x) }))}
+              />
+              <Input
+                value={l.url}
+                placeholder="/orders or https://..."
+                onChange={e => setState(s => ({ ...s, links: s.links.map((x, idx) => idx === i ? { ...x, url: e.target.value } : x) }))}
+              />
+              <Button variant="ghost" size="icon" onClick={() => setState(s => ({ ...s, links: s.links.filter((_, idx) => idx !== i) }))}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {/* Live preview */}
+        <div>
+          <Label className="mb-2 block">Live Preview</Label>
+          <div
+            className="relative overflow-hidden rounded-lg border border-border"
+            style={{ backgroundColor: state.bgColor, color: state.textColor, height: 40 }}
+          >
+            {state.text.trim() ? (
+              <div className="absolute inset-0 flex items-center">
+                <div className="topbar-marquee whitespace-nowrap text-sm font-medium" style={{ animationDuration: '30s' }}>
+                  <span>{(state.text + '  ★  ').repeat(2)}</span>
+                  <span>{(state.text + '  ★  ').repeat(2)}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-xs opacity-70">No text</div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Button onClick={save} disabled={saving} className="gap-2">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save Legacy Top Bar
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 type FormState = Required<Omit<SmartBarConfig, 'starts_at' | 'ends_at'>> & {
   starts_at: string;
