@@ -358,6 +358,9 @@ const AdminSmartBar = () => {
 
   return (
     <AdminLayout title="Smart Bar" description="A promotional bar shown on your storefront — supports rotating messages, scheduling, audience targeting and more.">
+      <div className="mb-6">
+        <LegacyTopBarEditor />
+      </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         {/* ─────────────────── LEFT: Editor ─────────────────── */}
         <div className="space-y-6">
