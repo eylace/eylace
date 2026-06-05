@@ -46,6 +46,10 @@ export interface WebsiteSetup {
   topBarBgColor: string;
   topBarTextColor: string;
   topBarLinks: { label: string; url: string }[];
+  topBarSpeed: number;
+  topBarAudience: 'all' | 'guests' | 'users';
+  topBarStartsAt: string | null;
+  topBarEndsAt: string | null;
   footerStyle: string;
   footerAboutText: string;
   footerCopyright: string;
@@ -167,6 +171,10 @@ const defaults: WebsiteSetup = {
   topBarBgColor: '#1a1a2e',
   topBarTextColor: '#ffffff',
   topBarLinks: [],
+  topBarSpeed: 35,
+  topBarAudience: 'all',
+  topBarStartsAt: null,
+  topBarEndsAt: null,
   footerStyle: 'default',
   footerAboutText: 'Grand Mall Emporium is your one-stop shop for everything you need.',
   footerCopyright: '© 2025 Grand Mall Emporium. All rights reserved.',
