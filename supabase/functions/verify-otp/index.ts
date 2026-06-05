@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
     // Check if user exists with this phone.
     // Primary path: deterministic email alias used when phone accounts are created below.
     const aliasEmail = `phone_${phone.replace(/[^0-9]/g, "")}@phone.local`;
-    let existingUser: { id: string; email?: string | null } | null = null;
+    let existingUser: any = null;
     {
       // Try alias-email lookup first (cheap, no pagination).
       const { data: byEmail } = await supabase.auth.admin.listUsers({
