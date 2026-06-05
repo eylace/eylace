@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const {
       order_number,
-      shipping: clientShipping,
+      shipping: _clientShippingIgnored,
       tax: clientTax,
       coupon_code,
       total,
@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
       items,
       advance_courier_payment_ref,
       advance_courier_amount,
+      carrier: clientCarrier,
     } = body;
 
     // Validate required fields
@@ -254,7 +255,18 @@ Deno.serve(async (req) => {
     }
 
     // Recompute totals server-side from authenticated prices
-    const safeShipping = Math.max(0, Number(clientShipping) || 0);
+    // Shipping is authoritative server-side via courier_expense_settings
+    let safeShipping = 0;
+    try {
+      const { data: shipAmt } = await supabaseAdmin.rpc('compute_shipping_amount', {
+        _carrier: clientCarrier ?? null,
+        _shipping_address: shipping_address ?? {},
+      });
+      safeShipping = Math.max(0, Number(shipAmt) || 0);
+    } catch (e) {
+      console.error('compute_shipping_amount failed:', e);
+      safeShipping = 0;
+    }
     const safeTax = Math.max(0, Number(clientTax) || 0);
 
     // Server-side coupon validation — never trust client-supplied discount
