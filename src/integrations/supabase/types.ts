@@ -4053,6 +4053,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_only_setting_key: { Args: { _key: string }; Returns: boolean }
       is_owner_of_order: { Args: { order_id: string }; Returns: boolean }
       is_owner_of_order_tracking: {
         Args: { tracking_order_id: string }
