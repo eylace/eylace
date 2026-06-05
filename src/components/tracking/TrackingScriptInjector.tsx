@@ -42,13 +42,10 @@ export function TrackingScriptInjector() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'tracking_analytics_v1')
-        .maybeSingle();
-      if (data?.value && typeof data.value === 'object') {
-        setSettings(data.value as any);
+      // Use sanitized RPC that strips server-side secrets (CAPI access token, GA4 API secret)
+      const { data, error } = await supabase.rpc('get_public_tracking_settings');
+      if (!error && data && typeof data === 'object') {
+        setSettings(data as any);
       }
     })();
   }, []);
