@@ -2,18 +2,31 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const TopBar = () => {
   const setup = useWebsiteSetup();
+  const { user } = useAuth();
   const [dismissed, setDismissed] = useState(false);
 
   if (!setup.topBarEnabled || dismissed) return null;
+
+  // Audience gating
+  if (setup.topBarAudience === 'guests' && user) return null;
+  if (setup.topBarAudience === 'users' && !user) return null;
+
+  // Schedule gating
+  const now = Date.now();
+  if (setup.topBarStartsAt && new Date(setup.topBarStartsAt).getTime() > now) return null;
+  if (setup.topBarEndsAt && new Date(setup.topBarEndsAt).getTime() < now) return null;
+
   const text = (setup.topBarText || '').trim();
   const links = setup.topBarLinks || [];
   if (!text && links.length === 0) return null;
 
   const separator = '  ★  ';
   const marqueeText = text ? text + separator : '';
+  const speed = Math.max(5, Math.min(120, setup.topBarSpeed || 35));
 
   return (
     <div
@@ -29,7 +42,7 @@ export const TopBar = () => {
           <div className="flex-1 overflow-hidden">
             <div
               className="topbar-marquee whitespace-nowrap text-sm font-medium"
-              style={{ animationDuration: '30s' }}
+              style={{ animationDuration: `${speed}s` }}
             >
               <span>{marqueeText.repeat(2)}</span>
               <span>{marqueeText.repeat(2)}</span>
