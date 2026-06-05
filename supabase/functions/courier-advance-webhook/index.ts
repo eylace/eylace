@@ -82,17 +82,21 @@ Deno.serve(async (req) => {
 
   const raw = await req.text();
 
-  // Signature verification (skipped in mock mode where no secret configured)
+  // Signature verification — REQUIRED. Reject when secret is not configured
+  // to prevent forged payment-success events from unauthenticated callers.
   const secret = gateway === 'bkash'
     ? Deno.env.get('BKASH_WEBHOOK_SECRET')
     : Deno.env.get('NAGAD_WEBHOOK_SECRET');
 
-  if (secret) {
-    const sig = req.headers.get(`x-${gateway}-signature`) || '';
-    const expected = await hmacHex(secret, raw);
-    if (sig.toLowerCase() !== expected.toLowerCase()) {
-      return json(401, { error: 'Bad signature' });
-    }
+  if (!secret) {
+    console.error(`[${gateway}] webhook secret env var not configured — rejecting`);
+    return json(401, { error: 'Webhook secret not configured' });
+  }
+
+  const sig = req.headers.get(`x-${gateway}-signature`) || '';
+  const expected = await hmacHex(secret, raw);
+  if (sig.toLowerCase() !== expected.toLowerCase()) {
+    return json(401, { error: 'Bad signature' });
   }
 
   let body: any;

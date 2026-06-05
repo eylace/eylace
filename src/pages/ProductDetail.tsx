@@ -615,8 +615,8 @@ const ProductDetail = () => {
                 <div
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(product.description, {
-                      ADD_TAGS: ['iframe'],
                       ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling', 'target'],
+                      FORBID_TAGS: ['iframe', 'object', 'embed', 'script', 'style'],
                     }),
                   }}
                 />
