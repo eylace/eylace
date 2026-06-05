@@ -125,11 +125,36 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if user exists with this phone
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u) => u.phone === phone || u.user_metadata?.phone === phone
-    );
+    // Check if user exists with this phone.
+    // Primary path: deterministic email alias used when phone accounts are created below.
+    const aliasEmail = `phone_${phone.replace(/[^0-9]/g, "")}@phone.local`;
+    let existingUser: { id: string; email?: string | null } | null = null;
+    {
+      // Try alias-email lookup first (cheap, no pagination).
+      const { data: byEmail } = await supabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 200,
+      });
+      existingUser = byEmail?.users?.find(
+        (u) => u.email === aliasEmail || u.phone === phone || u.user_metadata?.phone === phone,
+      ) ?? null;
+
+      // Paginate further pages if we still haven't found a match.
+      if (!existingUser) {
+        let page = 2;
+        // Hard cap at 50 pages (= 10k users) to avoid runaway loops.
+        while (page <= 50) {
+          const { data: pageData } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
+          if (!pageData?.users?.length) break;
+          existingUser = pageData.users.find(
+            (u) => u.email === aliasEmail || u.phone === phone || u.user_metadata?.phone === phone,
+          ) ?? null;
+          if (existingUser) break;
+          if (pageData.users.length < 200) break;
+          page += 1;
+        }
+      }
+    }
 
     let session = null;
     let userId: string;
@@ -185,7 +210,7 @@ Deno.serve(async (req) => {
       userId = existingUser.id;
     } else {
       // Create new user with phone
-      const dummyEmail = `phone_${phone.replace(/[^0-9]/g, "")}@phone.local`;
+      const dummyEmail = aliasEmail;
       const tempPassword = crypto.randomUUID();
       
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({

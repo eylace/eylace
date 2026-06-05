@@ -135,7 +135,22 @@ export const RichTextEditor = ({ value, onChange, placeholder = 'Write product d
 
   const addVideo = useCallback(() => {
     if (!editor || !videoUrl) return;
-    const iframe = `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;max-width:100%;"><iframe src="${videoUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>`;
+    // Allowlist trusted video embed hosts only — prevents arbitrary iframe injection.
+    const ALLOWED_HOSTS = new Set([
+      'www.youtube.com', 'youtube.com', 'youtu.be', 'www.youtube-nocookie.com',
+      'player.vimeo.com', 'vimeo.com',
+      'fast.wistia.net', 'fast.wistia.com',
+    ]);
+    let parsed: URL;
+    try { parsed = new URL(videoUrl); } catch {
+      alert('Please enter a valid URL'); return;
+    }
+    if (parsed.protocol !== 'https:' || !ALLOWED_HOSTS.has(parsed.host)) {
+      alert('Only YouTube, Vimeo or Wistia embed URLs are allowed.');
+      return;
+    }
+    const safeSrc = parsed.toString().replace(/"/g, '&quot;');
+    const iframe = `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;max-width:100%;"><iframe src="${safeSrc}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>`;
     editor.chain().focus().insertContent(iframe).run();
     setVideoUrl('');
   }, [editor, videoUrl]);
