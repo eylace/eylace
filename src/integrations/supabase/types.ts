@@ -3980,6 +3980,10 @@ export type Database = {
         Args: { _shipping: number; _zone: string }
         Returns: number
       }
+      compute_shipping_amount: {
+        Args: { _carrier: string; _shipping_address: Json }
+        Returns: number
+      }
       courier_expense_summary: {
         Args: { _from: string; _to: string }
         Returns: {
@@ -4033,6 +4037,7 @@ export type Database = {
           product_name: string
         }[]
       }
+      get_public_tracking_settings: { Args: never; Returns: Json }
       get_realtime_topics_for_user: {
         Args: never
         Returns: {
