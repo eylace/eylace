@@ -118,6 +118,7 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
                 is360Mode ? "bg-accent text-accent-foreground" : "bg-card/80 text-foreground hover:bg-card"
               )}
               title="360° View"
+              aria-label="Toggle 360 degree view"
             >
               <RotateCw className="h-5 w-5" />
             </button>
@@ -127,6 +128,7 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
               onClick={(e) => { e.stopPropagation(); setFullscreen(true); }}
               className="p-2 bg-card/80 backdrop-blur-sm rounded-lg hover:bg-card"
               title="Fullscreen Zoom"
+              aria-label="Open fullscreen zoom"
             >
               <ZoomIn className="h-5 w-5 text-foreground" />
             </button>
@@ -139,12 +141,14 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
             <button
               onClick={(e) => { e.stopPropagation(); handlePrevious(); }}
               className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-card"
+              aria-label="Previous image"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); handleNext(); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-card/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-card"
+              aria-label="Next image"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -176,6 +180,7 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
                 "relative shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all",
                 index === currentIndex ? "border-accent" : "border-transparent hover:border-border"
               )}
+              aria-label={`View image ${index + 1}`}
             >
               <img src={image} alt={`${productName} thumbnail ${index + 1}`} className="w-full h-full object-cover" />
               {image.includes('video') && (
@@ -191,15 +196,15 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
       {/* Fullscreen Lightbox */}
       {fullscreen && (
         <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex items-center justify-center" onClick={() => setFullscreen(false)}>
-          <button className="absolute top-4 right-4 p-2 bg-card rounded-full z-10 hover:bg-secondary" onClick={() => setFullscreen(false)}>
+          <button className="absolute top-4 right-4 p-2 bg-card rounded-full z-10 hover:bg-secondary" onClick={() => setFullscreen(false)} aria-label="Close fullscreen">
             <X className="h-6 w-6" />
           </button>
           {images.length > 1 && (
             <>
-              <button onClick={(e) => { e.stopPropagation(); handlePrevious(); }} className="absolute left-4 p-3 bg-card rounded-full hover:bg-secondary">
+              <button onClick={(e) => { e.stopPropagation(); handlePrevious(); }} className="absolute left-4 p-3 bg-card rounded-full hover:bg-secondary" aria-label="Previous image">
                 <ChevronLeft className="h-6 w-6" />
               </button>
-              <button onClick={(e) => { e.stopPropagation(); handleNext(); }} className="absolute right-4 p-3 bg-card rounded-full hover:bg-secondary">
+              <button onClick={(e) => { e.stopPropagation(); handleNext(); }} className="absolute right-4 p-3 bg-card rounded-full hover:bg-secondary" aria-label="Next image">
                 <ChevronRight className="h-6 w-6" />
               </button>
             </>
