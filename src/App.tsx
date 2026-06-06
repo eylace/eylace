@@ -425,6 +425,7 @@ const App = () => (
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/blog" element={<Blog />} />
+                <Route path="/blog/online-shopping-comparison-bangladesh" element={<BlogEylaceVsDaraz />} />
                 <Route path="/track-order" element={<TrackOrder />} />
                 <Route path="/seller-center" element={<SellerCenter />} />
                 <Route path="/seller-policies" element={<SellerPolicies />} />
