@@ -191,6 +191,9 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'Invoices', url: '/admin/accounting?tab=invoices', icon: Receipt },
     { titleKey: 'Bills', url: '/admin/accounting?tab=bills', icon: FileText },
     { titleKey: 'Reports', url: '/admin/accounting?tab=reports', icon: BarChart3 },
+  ];
+
+  const courierExpensesItems: NavItem[] = [
     { titleKey: 'Courier Expenses', url: '/admin/courier-expenses', icon: Truck },
   ];
 
@@ -291,6 +294,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     blogSystem: blogItems,
     refunds: refundItems,
     accounting: accountingItems,
+    courierExpenses: courierExpensesItems,
     system: systemItems,
     trackingAnalytics: trackingItems,
     websiteSetup: websiteSetupItems,
@@ -431,6 +435,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('blogSystem', 'Blog System', BookOpen, blogItems)}
         {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
         {renderCollapsible('accounting', 'Accounting Management', Calculator, accountingItems)}
+        {renderCollapsible('courierExpenses', 'Courier Expenses', Truck, courierExpensesItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
 
         {/* Tracking & Analytics — standalone top-level section */}
