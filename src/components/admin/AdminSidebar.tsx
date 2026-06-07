@@ -138,8 +138,6 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     { titleKey: 'admin.marketing.bulkSMS', url: '/admin/marketing/bulk-sms', icon: MessageSquare },
     { titleKey: 'admin.marketing.subscribers', url: '/admin/marketing/subscribers', icon: UsersRound },
     { titleKey: 'admin.marketing.visitors', url: '/admin/marketing/visitors', icon: Eye },
-    { titleKey: 'admin.marketing.ads', url: '/admin/marketing/ads', icon: LayoutList },
-    { titleKey: 'admin.marketing.affiliate', url: '/admin/affiliate', icon: Link2 },
   ];
 
   const uploadMediaItem = { titleKey: 'Upload Media' as TranslationKey, url: '/admin/upload-files', icon: UploadCloud };
@@ -152,12 +150,18 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
   ];
 
   const affiliateItems: NavItem[] = [
+    { titleKey: 'Affiliate Program', url: '/admin/affiliate', icon: LayoutDashboard },
     { titleKey: 'Registration Form', url: '/admin/affiliate/registration', icon: FileText },
     { titleKey: 'Configurations', url: '/admin/affiliate/config', icon: Settings },
     { titleKey: 'Affiliate Users', url: '/admin/affiliate/users', icon: Users },
     { titleKey: 'Referral Users', url: '/admin/affiliate/referrals', icon: UsersRound },
     { titleKey: 'Withdraw Requests', url: '/admin/affiliate/withdrawals', icon: Wallet },
     { titleKey: 'Affiliate Logs', url: '/admin/affiliate/logs', icon: Activity },
+  ];
+
+  const adsManagerItems: NavItem[] = [
+    { titleKey: 'All Ad Campaigns', url: '/admin/ads-manager', icon: LayoutList },
+    { titleKey: 'Create Campaign', url: '/admin/ads-manager?new=1', icon: Megaphone },
   ];
 
   const clubPointItems: NavItem[] = [
@@ -282,6 +286,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
     marketing: marketingItems,
     support: supportItems,
     affiliateSystem: affiliateItems,
+    adsManager: adsManagerItems,
     clubPoint: clubPointItems,
     blogSystem: blogItems,
     refunds: refundItems,
