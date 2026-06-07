@@ -426,6 +426,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('marketing', 'admin.marketing.section', Megaphone, marketingItems)}
         {renderCollapsible('support', 'Support', LifeBuoy, supportItems)}
         {renderCollapsible('affiliateSystem', 'Affiliate System', Link2, affiliateItems)}
+        {renderCollapsible('adsManager', 'Ads Manager', Megaphone, adsManagerItems)}
         {renderCollapsible('clubPoint', 'Club Point System', Award, clubPointItems)}
         {renderCollapsible('blogSystem', 'Blog System', BookOpen, blogItems)}
         {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
