@@ -435,6 +435,7 @@ export function AdminSidebar({ hasAccess }: AdminSidebarProps) {
         {renderCollapsible('blogSystem', 'Blog System', BookOpen, blogItems)}
         {renderCollapsible('refunds', 'Refunds', Undo2, refundItems)}
         {renderCollapsible('accounting', 'Accounting Management', Calculator, accountingItems)}
+        {renderCollapsible('courierExpenses', 'Courier Expenses', Truck, courierExpensesItems)}
         {canAccess('content') && renderGroup('admin.group.content', contentItems)}
 
         {/* Tracking & Analytics — standalone top-level section */}
