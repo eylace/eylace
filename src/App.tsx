@@ -168,6 +168,7 @@ const AdminMenuManager = lazyWithRetry(() => import("./pages/AdminMenuManager"))
 const AdminIncompleteOrders = lazyWithRetry(() => import("./pages/AdminIncompleteOrders"));
 const AdminPOS = lazyWithRetry(() => import("./pages/AdminPOS"));
 const AdminMarketingAds = lazyWithRetry(() => import("./pages/AdminMarketingAds"));
+const AdminAdsManager = lazyWithRetry(() => import("./pages/AdminAdsManager"));
 const AdminReturnsRefunds = lazyWithRetry(() => import("./pages/AdminReturnsRefunds"));
 const AdminAffiliateProgram = lazyWithRetry(() => import("./pages/AdminAffiliateProgram"));
 const AdminUploadFiles = lazyWithRetry(() => import("./pages/AdminUploadFiles"));
@@ -376,6 +377,7 @@ const App = () => (
                 <Route path="/admin/pos" element={<AdminPOS />} />
                 <Route path="/admin/maps-order-data" element={<AdminMapsOrderData />} />
                 <Route path="/admin/marketing/ads" element={<AdminMarketingAds />} />
+                <Route path="/admin/ads-manager" element={<AdminAdsManager />} />
                 <Route path="/admin/returns" element={<AdminReturnsRefunds />} />
                 <Route path="/admin/affiliate" element={<AdminAffiliateProgram />} />
                 <Route path="/admin/upload-files" element={<AdminUploadFiles />} />
