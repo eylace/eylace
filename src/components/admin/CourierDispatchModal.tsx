@@ -109,15 +109,13 @@ export const CourierDispatchModal = ({
     void loadLogs();
   }, [open, prefill, order?.order_number, loadLogs]);
 
-  // Realtime: live dispatch-log + tracking-event updates for this order
+  // Realtime: live tracking-event updates for this order.
+  // courier_dispatch_log is admin-only and refreshed manually via loadLogs()
+  // after each dispatch action — no realtime channel is opened on it.
   useEffect(() => {
     if (!open || !order?.id) return;
     const ch = supabase
-      .channel(`courier-dispatch-${order.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'courier_dispatch_log',
-        filter: `order_id=eq.${order.id}`,
-      }, () => { void loadLogs(); })
+      .channel(`courier-tracking-${order.id}`)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'order_tracking_events',
         filter: `order_id=eq.${order.id}`,
@@ -127,7 +125,7 @@ export const CourierDispatchModal = ({
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [open, order?.id, loadLogs]);
+  }, [open, order?.id]);
 
   const handleSend = async () => {
     if (!order) return;
