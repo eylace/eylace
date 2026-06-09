@@ -35,7 +35,7 @@ const Categories = () => {
               <Link key={category.id} to={`/category/${category.slug}`} className="group flex flex-col items-center text-center">
                 <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-secondary flex items-center justify-center mb-3 group-hover:bg-accent/10 group-hover:scale-105 transition-all duration-200 shadow-sm overflow-hidden">
                   {category.image ? (
-                    <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
+                    <img src={category.image} alt={`Shop ${category.name} category`} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-3xl md:text-4xl">{category.icon}</span>
                   )}
