@@ -80,7 +80,7 @@ const Index = () => {
 
       <section className="container-main py-8 mb-8">
         <div className="bg-secondary/50 rounded-xl p-8 text-center">
-          <h3 className="text-lg font-semibold text-foreground mb-2">{t('recent.title')}</h3>
+          <h2 className="text-lg font-semibold text-foreground mb-2">{t('recent.title')}</h2>
           <p className="text-muted-foreground text-sm">{t('recent.signIn')}</p>
         </div>
       </section>
