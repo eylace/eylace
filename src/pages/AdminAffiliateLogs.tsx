@@ -14,12 +14,12 @@ export default function AdminAffiliateLogs() {
   const { data: clicks = [] } = useQuery({
     queryKey: ['admin-affiliate-logs'],
     queryFn: async () => {
-      const { data } = await supabase.from('affiliate_clicks').select('*, affiliates(referral_code)').order('created_at', { ascending: false }).limit(200);
-      return data || [];
+      const { data } = await supabase.rpc('admin_list_affiliate_clicks', { _limit: 200, _search: null });
+      return (data as any[]) || [];
     },
   });
 
-  const filtered = clicks.filter(c => !search || (c.affiliates as any)?.referral_code?.toLowerCase().includes(search.toLowerCase()) || c.landing_page?.includes(search));
+  const filtered = clicks.filter((c: any) => !search || c.referral_code?.toLowerCase().includes(search.toLowerCase()) || c.landing_page?.includes(search));
 
   return (
     <AdminLayout>
@@ -44,9 +44,9 @@ export default function AdminAffiliateLogs() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(c => (
+                {filtered.map((c: any) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-mono">{(c.affiliates as any)?.referral_code || 'N/A'}</TableCell>
+                    <TableCell className="font-mono">{c.referral_code || 'N/A'}</TableCell>
                     <TableCell className="max-w-[200px] truncate text-sm">{c.landing_page || '/'}</TableCell>
                     <TableCell className="font-mono text-xs">{c.ip_address || 'N/A'}</TableCell>
                     <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">{c.user_agent || 'N/A'}</TableCell>
