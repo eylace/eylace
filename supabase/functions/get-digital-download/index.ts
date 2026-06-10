@@ -65,8 +65,38 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Harden against permanent-link leakage: if the stored value points to a
+    // Supabase storage object (either a bare path "bucket/key" or a public
+    // storage URL), reissue a short-lived signed URL (60s) so the link cannot
+    // be reused/shared indefinitely.
+    let finalUrl: string = row.download_url
+    try {
+      const serviceClient = createClient(
+        supabaseUrl,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      )
+      let bucket: string | null = null
+      let objectPath: string | null = null
+      const publicMatch = finalUrl.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/)
+      if (publicMatch) {
+        bucket = publicMatch[1]
+        objectPath = decodeURIComponent(publicMatch[2])
+      } else if (!/^https?:\/\//i.test(finalUrl) && finalUrl.includes('/')) {
+        const slash = finalUrl.indexOf('/')
+        bucket = finalUrl.slice(0, slash)
+        objectPath = finalUrl.slice(slash + 1)
+      }
+      if (bucket && objectPath) {
+        const { data: signed } = await serviceClient
+          .storage.from(bucket).createSignedUrl(objectPath, 60)
+        if (signed?.signedUrl) finalUrl = signed.signedUrl
+      }
+    } catch (e) {
+      console.warn('signed url generation failed, falling back to stored url', e)
+    }
+
     return new Response(JSON.stringify({
-      download_url: row.download_url,
+      download_url: finalUrl,
       product_name: row.product_name,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
