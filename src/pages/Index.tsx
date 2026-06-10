@@ -5,7 +5,6 @@ import { FlashSaleSection } from '@/components/home/FlashSaleSection';
 import { FeaturedProducts } from '@/components/home/FeaturedProducts';
 import { DealsSection } from '@/components/home/DealsSection';
 import { PromoBanners } from '@/components/home/PromoBanners';
-import { SmartBar } from '@/components/home/SmartBar';
 import { BannerAdsSection } from '@/components/home/BannerAdsSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
@@ -24,7 +23,6 @@ const Index = () => {
         path="/"
       />
       <h1 className="sr-only">Eylace — Quality Online Shopping in Bangladesh</h1>
-      <SmartBar />
       {setup.homepageBannerEnabled && <HeroSection />}
       {setup.homepageFeaturedCategories && <CategoriesSection />}
       {setup.homepageFlashSale && (
