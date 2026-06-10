@@ -3901,6 +3901,18 @@ export type Database = {
         Args: { _gateway_id: string }
         Returns: Json
       }
+      admin_list_affiliate_clicks: {
+        Args: { _limit?: number; _search?: string }
+        Returns: {
+          affiliate_id: string
+          created_at: string
+          id: string
+          ip_address: string
+          landing_page: string
+          referral_code: string
+          user_agent: string
+        }[]
+      }
       admin_list_courier_expense_audit: {
         Args: { _expense?: string; _limit?: number }
         Returns: {
