@@ -5,10 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import { SeoHead } from '@/components/seo/SeoHead';
+import { Link } from 'react-router-dom';
 
 const categories = ['All', 'Shopping Tips', 'Tech', 'Fashion', 'Home', 'News'];
 
 const posts = [
+  { id: 0, title: "The Ultimate Guide to Men's Ties and Formal Accessories in Bangladesh", cat: 'Fashion', date: 'Jun 12, 2026', author: 'Team Eylace', excerpt: "Styles, fabrics, knots and tie price in BD — plus the cufflinks, pocket squares and tie clips every man should own.", img: '👔', href: '/blog/mens-fashion-tie-guide' },
   { id: 1, title: 'Top 10 Smartphones Under ৳20,000 in 2026', cat: 'Tech', date: 'Mar 15, 2026', author: 'Rafiq Ahmed', excerpt: 'Looking for the best budget smartphones? We have reviewed the top options available on Eylace right now.', img: '📱' },
   { id: 2, title: 'Summer Fashion Trends You Cannot Miss', cat: 'Fashion', date: 'Mar 12, 2026', author: 'Tasnim Akter', excerpt: 'From bold prints to pastel palettes — discover what is trending this summer season.', img: '👗' },
   { id: 3, title: 'How to Save Big on Online Shopping', cat: 'Shopping Tips', date: 'Mar 10, 2026', author: 'Nusrat Jahan', excerpt: 'Smart strategies to make the most of flash sales, coupons, and cashback offers.', img: '🛒' },
@@ -55,6 +57,11 @@ const Blog = () => {
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{post.date}</span>
                 </div>
                 <Button variant="link" className="px-0 mt-2 text-sm">Read More <ArrowRight className="h-3 w-3 ml-1" /></Button>
+                {post.href && (
+                  <Button asChild variant="link" className="px-0 mt-2 text-sm">
+                    <Link to={post.href}>Read full guide <ArrowRight className="h-3 w-3 ml-1" /></Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))}
