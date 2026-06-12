@@ -78,6 +78,7 @@ const ContactUs = lazyWithRetry(() => import("./pages/ContactUs"));
 const Careers = lazyWithRetry(() => import("./pages/Careers"));
 const Blog = lazyWithRetry(() => import("./pages/Blog"));
 const BlogEylaceVsDaraz = lazyWithRetry(() => import("./pages/BlogEylaceVsDaraz"));
+const BlogMensTieGuide = lazyWithRetry(() => import("./pages/BlogMensTieGuide"));
 const Sitemap = lazyWithRetry(() => import("./pages/Sitemap"));
 const DeliveryPartner = lazyWithRetry(() => import("./pages/DeliveryPartner"));
 const AffiliateProgram = lazyWithRetry(() => import("./pages/AffiliateProgram"));
@@ -428,6 +429,7 @@ const App = () => (
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/online-shopping-comparison-bangladesh" element={<BlogEylaceVsDaraz />} />
+                <Route path="/blog/mens-fashion-tie-guide" element={<BlogMensTieGuide />} />
                 <Route path="/track-order" element={<TrackOrder />} />
                 <Route path="/seller-center" element={<SellerCenter />} />
                 <Route path="/seller-policies" element={<SellerPolicies />} />
