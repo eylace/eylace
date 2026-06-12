@@ -42,7 +42,10 @@ Deno.serve(async (req) => {
     const isBlocked = data && data.length > 0;
 
     return new Response(
-      JSON.stringify({ isBlocked, reason: isBlocked ? data[0].reason : null }),
+      // Do NOT expose admin-written `reason` to unauthenticated callers — it
+      // leaks internal security intelligence. Authoritative blocking still
+      // happens inside `checkout-create-order`.
+      JSON.stringify({ isBlocked }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (error) {
