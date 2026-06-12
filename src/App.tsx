@@ -429,6 +429,7 @@ const App = () => (
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/online-shopping-comparison-bangladesh" element={<BlogEylaceVsDaraz />} />
+                <Route path="/blog/mens-fashion-tie-guide" element={<BlogMensTieGuide />} />
                 <Route path="/track-order" element={<TrackOrder />} />
                 <Route path="/seller-center" element={<SellerCenter />} />
                 <Route path="/seller-policies" element={<SellerPolicies />} />
