@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Product, CartItem } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -196,7 +196,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const addItem = (product: Product, quantity = 1, selectedVariations?: Record<string, string>) => {
+  const addItem = useCallback((product: Product, quantity = 1, selectedVariations?: Record<string, string>) => {
     setItems((prev) => {
       const existingIndex = findItemIndex(product.id, selectedVariations);
       
@@ -211,9 +211,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       return [...prev, { product, quantity, selectedVariations }];
     });
-  };
+  }, [items]);
 
-  const removeItem = (productId: string, selectedVariations?: Record<string, string>) => {
+  const removeItem = useCallback((productId: string, selectedVariations?: Record<string, string>) => {
     setItems((prev) => {
       const index = findItemIndex(productId, selectedVariations);
       if (index >= 0) {
@@ -223,9 +223,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       return prev;
     });
-  };
+  }, [items]);
 
-  const updateQuantity = (productId: string, quantity: number, selectedVariations?: Record<string, string>) => {
+  const updateQuantity = useCallback((productId: string, quantity: number, selectedVariations?: Record<string, string>) => {
     if (quantity <= 0) {
       removeItem(productId, selectedVariations);
       return;
@@ -240,10 +240,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       }
       return prev;
     });
-  };
+  }, [items, removeItem]);
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     setItems([]);
+    lastSyncedRef.current = JSON.stringify([]);
     
     // Also clear from database if authenticated
     if (user) {
@@ -256,53 +257,50 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error clearing cart from database:', err);
       }
     }
-  };
+  }, [user]);
 
-  const getItemCount = () => {
-    return items.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const getSubtotal = () => {
-    return items.reduce((total, item) => total + item.product.price * item.quantity, 0);
-  };
-
-  const getShipping = () => {
-    const subtotal = getSubtotal();
-    // Free shipping over $50
-    if (subtotal >= 50 || items.some(item => item.product.isFreeShipping)) {
-      return 0;
-    }
-    return 5.99;
-  };
-
-  const getTax = () => {
-    // 8% tax rate
-    return getSubtotal() * 0.08;
-  };
-
-  const getTotal = () => {
-    return getSubtotal() + getShipping() + getTax();
-  };
-
-  return (
-    <CartContext.Provider
-      value={{
-        items,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        getItemCount,
-        getSubtotal,
-        getShipping,
-        getTax,
-        getTotal,
-        isLoading,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
+  // Memoize derived totals so consumers that only read totals don't recompute
+  // on unrelated context changes.
+  const subtotal = useMemo(
+    () => items.reduce((total, item) => total + item.product.price * item.quantity, 0),
+    [items]
   );
+  const itemCount = useMemo(
+    () => items.reduce((total, item) => total + item.quantity, 0),
+    [items]
+  );
+  const shipping = useMemo(() => {
+    if (subtotal >= 50 || items.some(item => item.product.isFreeShipping)) return 0;
+    return 5.99;
+  }, [subtotal, items]);
+  const tax = useMemo(() => subtotal * 0.08, [subtotal]);
+  const total = useMemo(() => subtotal + shipping + tax, [subtotal, shipping, tax]);
+
+  const getItemCount = useCallback(() => itemCount, [itemCount]);
+  const getSubtotal = useCallback(() => subtotal, [subtotal]);
+  const getShipping = useCallback(() => shipping, [shipping]);
+  const getTax = useCallback(() => tax, [tax]);
+  const getTotal = useCallback(() => total, [total]);
+
+  const value = useMemo(
+    () => ({
+      items,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      getItemCount,
+      getSubtotal,
+      getShipping,
+      getTax,
+      getTotal,
+      isLoading,
+    }),
+    [items, addItem, removeItem, updateQuantity, clearCart,
+     getItemCount, getSubtotal, getShipping, getTax, getTotal, isLoading]
+  );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
 export const useCart = () => {
