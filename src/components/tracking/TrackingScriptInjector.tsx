@@ -15,7 +15,8 @@ interface TrackingSettings {
 }
 
 const injectScript = (id: string, content: string, type: 'inline' | 'src' = 'inline') => {
-  if (document.getElementById(id)) return;
+  // Remove any prior version so updated IDs/tokens take effect in real time
+  document.getElementById(id)?.remove();
   const script = document.createElement('script');
   script.id = id;
   if (type === 'src') script.src = content;
@@ -25,7 +26,7 @@ const injectScript = (id: string, content: string, type: 'inline' | 'src' = 'inl
 };
 
 const injectMeta = (id: string, name: string, content: string) => {
-  if (document.getElementById(id)) return;
+  document.getElementById(id)?.remove();
   const meta = document.createElement('meta');
   meta.id = id;
   meta.name = name;
@@ -37,25 +38,104 @@ const removeElement = (id: string) => {
   document.getElementById(id)?.remove();
 };
 
+const ALL_TRACKING_IDS = [
+  'tracking-gtm', 'tracking-gtm-noscript', 'tracking-gtm-dl',
+  'tracking-ga4', 'tracking-ga4-config',
+  'tracking-fb', 'tracking-fb-noscript',
+  'tracking-meta-pixel',
+  'tracking-tiktok',
+  'tracking-clarity',
+  'tracking-sc-meta',
+  'tracking-custom-head', 'tracking-custom-body',
+];
+
+const cleanupAll = () => ALL_TRACKING_IDS.forEach(removeElement);
+// Also wipe the resident pixel globals so a new ID re-initialises cleanly
+const resetGlobals = () => {
+  try {
+    delete (window as any).fbq;
+    delete (window as any)._fbq;
+    delete (window as any).ttq;
+    delete (window as any).clarity;
+    // Keep dataLayer history; just clear gtag bootstrap reference
+    delete (window as any).google_tag_manager;
+  } catch { /* noop */ }
+};
+
 export function TrackingScriptInjector() {
   const [settings, setSettings] = useState<TrackingSettings | null>(null);
 
   useEffect(() => {
-    (async () => {
-      // Use sanitized RPC that strips server-side secrets (CAPI access token, GA4 API secret)
+    let cancelled = false;
+
+    const load = async () => {
+      // Sanitized RPC strips server-side secrets (CAPI token, GA4 API secret)
       const { data, error } = await supabase.rpc('get_public_tracking_settings');
+      if (cancelled) return;
       if (!error && data && typeof data === 'object') {
-        setSettings(data as any);
+        setSettings((prev) => {
+          const next = data as any;
+          // Only reset globals when the actual config payload changed
+          if (prev && JSON.stringify(prev) !== JSON.stringify(next)) {
+            cleanupAll();
+            resetGlobals();
+          }
+          return next;
+        });
       }
-    })();
+    };
+
+    load();
+
+    // 1. Realtime: react instantly when admin saves new tracking settings
+    const channel = supabase
+      .channel('tracking-settings-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'system_settings', filter: 'key=eq.tracking_analytics_v1' },
+        () => { load(); }
+      )
+      .subscribe();
+
+    // 2. Same-tab signal from admin save()
+    const onLocal = () => load();
+    window.addEventListener('tracking-settings-updated', onLocal);
+
+    // 3. Cross-tab signal via storage event
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'tracking-settings-updated') load();
+    };
+    window.addEventListener('storage', onStorage);
+
+    // 4. Refresh when tab regains focus (covers missed realtime drops)
+    const onVisible = () => { if (document.visibilityState === 'visible') load(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+      window.removeEventListener('tracking-settings-updated', onLocal);
+      window.removeEventListener('storage', onStorage);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   useEffect(() => {
     if (!settings || !settings.globalEnabled) {
       // Clean up all scripts if disabled
-      ['tracking-gtm', 'tracking-gtm-noscript', 'tracking-gtm-dl', 'tracking-ga4', 'tracking-ga4-config', 'tracking-fb', 'tracking-fb-noscript', 'tracking-meta-pixel', 'tracking-tiktok', 'tracking-clarity', 'tracking-sc-meta', 'tracking-custom-head', 'tracking-custom-body'].forEach(removeElement);
+      cleanupAll();
+      resetGlobals();
       return;
     }
+
+    // Always remove disabled-provider scripts first so toggling off takes effect immediately
+    if (!(settings.gtm.enabled && settings.gtm.containerId)) { removeElement('tracking-gtm'); removeElement('tracking-gtm-dl'); }
+    if (!(settings.ga4Client.enabled && settings.ga4Client.measurementId)) { removeElement('tracking-ga4'); removeElement('tracking-ga4-config'); }
+    if (!(settings.facebookCapi.enabled && settings.facebookCapi.pixelId)) { removeElement('tracking-fb'); }
+    if (!(settings.metaPixel?.enabled && settings.metaPixel?.pixelId)) { removeElement('tracking-meta-pixel'); }
+    if (!(settings.tiktok.enabled && settings.tiktok.pixelId)) { removeElement('tracking-tiktok'); }
+    if (!(settings.clarity.enabled && settings.clarity.projectId)) { removeElement('tracking-clarity'); }
+    if (!settings.searchConsole.enabled) { removeElement('tracking-sc-meta'); }
 
     // GTM
     if (settings.gtm.enabled && settings.gtm.containerId) {
