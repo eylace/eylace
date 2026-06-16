@@ -123,9 +123,19 @@ export function TrackingScriptInjector() {
   useEffect(() => {
     if (!settings || !settings.globalEnabled) {
       // Clean up all scripts if disabled
-      ['tracking-gtm', 'tracking-gtm-noscript', 'tracking-gtm-dl', 'tracking-ga4', 'tracking-ga4-config', 'tracking-fb', 'tracking-fb-noscript', 'tracking-meta-pixel', 'tracking-tiktok', 'tracking-clarity', 'tracking-sc-meta', 'tracking-custom-head', 'tracking-custom-body'].forEach(removeElement);
+      cleanupAll();
+      resetGlobals();
       return;
     }
+
+    // Always remove disabled-provider scripts first so toggling off takes effect immediately
+    if (!(settings.gtm.enabled && settings.gtm.containerId)) { removeElement('tracking-gtm'); removeElement('tracking-gtm-dl'); }
+    if (!(settings.ga4Client.enabled && settings.ga4Client.measurementId)) { removeElement('tracking-ga4'); removeElement('tracking-ga4-config'); }
+    if (!(settings.facebookCapi.enabled && settings.facebookCapi.pixelId)) { removeElement('tracking-fb'); }
+    if (!(settings.metaPixel?.enabled && settings.metaPixel?.pixelId)) { removeElement('tracking-meta-pixel'); }
+    if (!(settings.tiktok.enabled && settings.tiktok.pixelId)) { removeElement('tracking-tiktok'); }
+    if (!(settings.clarity.enabled && settings.clarity.projectId)) { removeElement('tracking-clarity'); }
+    if (!settings.searchConsole.enabled) { removeElement('tracking-sc-meta'); }
 
     // GTM
     if (settings.gtm.enabled && settings.gtm.containerId) {
