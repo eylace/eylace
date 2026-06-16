@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { Product, CartItem } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +37,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return [];
   });
   const [isLoading, setIsLoading] = useState(false);
+  // Track the last payload we synced to the database so we can skip no-op
+  // upserts. This prevents the saved_cart upsert from being the hottest
+  // query in the database (it was being called on every render/mount).
+  const lastSyncedRef = useRef<string | null>(null);
+  const hasLoadedFromDbRef = useRef(false);
 
   // Sync cart to database for authenticated users
   const syncCartToDatabase = useCallback(async (cartItems: CartItem[]) => {
@@ -67,6 +72,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         selectedVariations: item.selectedVariations,
       }));
 
+      const serialized = JSON.stringify(itemsJson);
+      if (lastSyncedRef.current === serialized) {
+        return; // no change since last sync
+      }
+
       // Use upsert to handle both insert and update
       const { error } = await supabase
         .from('saved_cart')
@@ -79,6 +89,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('Error syncing cart:', error);
+      } else {
+        lastSyncedRef.current = serialized;
       }
     } catch (err) {
       console.error('Error syncing cart to database:', err);
@@ -108,6 +120,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           const localCart = items;
           // Cast through unknown to handle JSON type
           const dbCart = data.items as unknown as CartItem[];
+          // Record what's already in the DB so we don't immediately re-upsert it.
+          lastSyncedRef.current = JSON.stringify(dbCart.map(item => ({
+            product: item.product,
+            quantity: item.quantity,
+            selectedVariations: item.selectedVariations,
+          })));
           
           // Merge local and database carts (prefer database, add new local items)
           const mergedCart = [...dbCart];
@@ -138,6 +156,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         console.error('Error loading cart from database:', err);
       } finally {
         setIsLoading(false);
+        hasLoadedFromDbRef.current = true;
       }
     };
 
@@ -148,12 +167,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     
-    // Debounce database sync
+    // Debounce database sync. Wait until the initial DB load has completed
+    // for the signed-in user so we don't race the loader and upsert an
+    // empty/local cart over the persisted one.
+    if (!user) return;
     const timeoutId = setTimeout(() => {
-      if (user) {
-        syncCartToDatabase(items);
-      }
-    }, 500);
+      if (!hasLoadedFromDbRef.current) return;
+      syncCartToDatabase(items);
+    }, 1500);
 
     return () => clearTimeout(timeoutId);
   }, [items, user, syncCartToDatabase]);
