@@ -472,29 +472,44 @@ const ProductDetail = () => {
 
               {/* Call & WhatsApp CTA Buttons */}
               {(websiteSetup.ctaCallEnabled || websiteSetup.ctaWhatsappEnabled) && (
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <div
+                  data-testid="cta-buttons"
+                  className="grid grid-cols-2 gap-2 sm:gap-3 min-h-[3rem]"
+                >
                   {websiteSetup.ctaCallEnabled && websiteSetup.ctaCallNumber && (
                     <Button
+                      type="button"
                       variant="outline"
                       size="xl"
-                      className="w-full min-w-0 px-2 sm:px-4 bg-primary/10 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                      data-testid="cta-call"
+                      aria-label={`${t('product.callNow')} ${websiteSetup.ctaCallNumber}`}
+                      className="w-full min-w-0 min-h-12 px-2 sm:px-4 bg-primary/10 border-primary text-primary hover:bg-primary hover:text-primary-foreground touch-manipulation select-none"
                       onClick={() => window.open(`tel:${websiteSetup.ctaCallNumber}`, '_self')}
                     >
-                      <Phone className="h-5 w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
+                      <Phone className="h-5 w-5 mr-1.5 sm:mr-2 flex-shrink-0" aria-hidden="true" />
                       <span className="truncate">{t('product.callNow')}</span>
                     </Button>
                   )}
                   {websiteSetup.ctaWhatsappEnabled && websiteSetup.ctaWhatsappNumber && (
                     <Button
+                      type="button"
                       variant="outline"
                       size="xl"
-                      className="w-full min-w-0 px-2 sm:px-4 bg-success/10 border-success text-success hover:bg-success hover:text-success-foreground"
-                      onClick={() => {
+                      data-testid="cta-whatsapp"
+                      aria-label={t('product.whatsapp')}
+                      className="w-full min-w-0 min-h-12 px-2 sm:px-4 bg-success/10 border-success text-success hover:bg-success hover:text-success-foreground touch-manipulation select-none"
+                      onClick={(e) => {
+                        const btn = e.currentTarget;
+                        if (btn.dataset.busy === '1') return;
+                        btn.dataset.busy = '1';
                         const num = websiteSetup.ctaWhatsappNumber.replace(/^0/, '88');
-                        window.open(`https://wa.me/${num}?text=${encodeURIComponent(`${t('product.whatsappInquiry')}: ${product.name}`)}`, '_blank');
+                        const msg = `${t('product.whatsappInquiry')}: ${product.name}`;
+                        const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                        setTimeout(() => { btn.dataset.busy = '0'; }, 800);
                       }}
                     >
-                      <MessageCircle className="h-5 w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
+                      <MessageCircle className="h-5 w-5 mr-1.5 sm:mr-2 flex-shrink-0" aria-hidden="true" />
                       <span className="truncate">{t('product.whatsapp')}</span>
                     </Button>
                   )}
