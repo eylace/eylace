@@ -12,9 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { phone } = await req.json();
-    if (!phone || phone.length < 10) {
-      return new Response(JSON.stringify({ error: "Valid phone number required" }), {
+    const { phone: rawPhone } = await req.json();
+    const phone = typeof rawPhone === "string" ? rawPhone.trim() : "";
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    if (!phone || phone.length > 16 || !phoneRegex.test(phone)) {
+      return new Response(JSON.stringify({ error: "Valid phone number required (10-15 digits, optional leading +)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
