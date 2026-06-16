@@ -102,7 +102,12 @@ export default function AdminTrackingAnalytics() {
       .upsert({ key: 'tracking_analytics_v1', value: settings as any }, { onConflict: 'key' });
     setSaving(false);
     if (error) { toast.error('Failed to save settings'); return; }
-    toast.success('Tracking settings saved! Scripts will be injected automatically.');
+    // Live-sync: notify storefront tabs (same tab + other tabs) to re-inject scripts immediately
+    try {
+      window.dispatchEvent(new Event('tracking-settings-updated'));
+      localStorage.setItem('tracking-settings-updated', String(Date.now()));
+    } catch { /* noop */ }
+    toast.success('Tracking settings saved! Live on storefront in real time.');
   };
 
   const update = <K extends keyof TrackingSettings>(key: K, val: TrackingSettings[K]) => {
