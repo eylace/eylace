@@ -11,9 +11,22 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Require an Authorization header (anon JWT from the storefront session is sufficient).
+    // This prevents the endpoint from being used as an unauthenticated oracle to probe
+    // the block list at scale.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ isBlocked: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const { ip } = await req.json();
-    
-    if (!ip || ip === 'unknown') {
+
+    // Basic input validation: must be a plausible IPv4/IPv6 string.
+    const ipRegex = /^[0-9a-fA-F:.]{3,45}$/;
+    if (!ip || typeof ip !== 'string' || ip === 'unknown' || !ipRegex.test(ip)) {
       return new Response(
         JSON.stringify({ isBlocked: false }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
