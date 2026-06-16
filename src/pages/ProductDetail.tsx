@@ -472,30 +472,30 @@ const ProductDetail = () => {
 
               {/* Call & WhatsApp CTA Buttons */}
               {(websiteSetup.ctaCallEnabled || websiteSetup.ctaWhatsappEnabled) && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   {websiteSetup.ctaCallEnabled && websiteSetup.ctaCallNumber && (
                     <Button
                       variant="outline"
                       size="xl"
-                      className="w-full bg-primary/10 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                      className="w-full min-w-0 px-2 sm:px-4 bg-primary/10 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                       onClick={() => window.open(`tel:${websiteSetup.ctaCallNumber}`, '_self')}
                     >
-                      <Phone className="h-5 w-5 mr-2" />
-                      কল করুন 📞 {websiteSetup.ctaCallNumber}
+                      <Phone className="h-5 w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
+                      <span className="truncate">{t('product.callNow')}</span>
                     </Button>
                   )}
                   {websiteSetup.ctaWhatsappEnabled && websiteSetup.ctaWhatsappNumber && (
                     <Button
                       variant="outline"
                       size="xl"
-                      className="w-full bg-success/10 border-success text-success hover:bg-success hover:text-success-foreground"
+                      className="w-full min-w-0 px-2 sm:px-4 bg-success/10 border-success text-success hover:bg-success hover:text-success-foreground"
                       onClick={() => {
                         const num = websiteSetup.ctaWhatsappNumber.replace(/^0/, '88');
-                        window.open(`https://wa.me/${num}?text=Hi, I'm interested in: ${product.name}`, '_blank');
+                        window.open(`https://wa.me/${num}?text=${encodeURIComponent(`${t('product.whatsappInquiry')}: ${product.name}`)}`, '_blank');
                       }}
                     >
-                      <MessageCircle className="h-5 w-5 mr-2" />
-                      Whatsapp © {websiteSetup.ctaWhatsappNumber}
+                      <MessageCircle className="h-5 w-5 mr-1.5 sm:mr-2 flex-shrink-0" />
+                      <span className="truncate">{t('product.whatsapp')}</span>
                     </Button>
                   )}
                 </div>
