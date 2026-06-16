@@ -378,7 +378,7 @@ const Checkout = () => {
       // Pre-checkout stock validation
       const productIds = checkoutItems.map(i => i.product.id);
       const { data: stockData } = await supabase
-        .from('products')
+        .from('products_public')
         .select('id, name, stock')
         .in('id', productIds);
       if (stockData) {
