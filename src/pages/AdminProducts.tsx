@@ -253,7 +253,8 @@ const AdminProducts = () => {
       {!loading && !loadError && scrollWidth > 0 && (
         <div
           ref={topScrollRef}
-          className="overflow-x-auto overflow-y-hidden mb-3 rounded border border-border bg-muted/20"
+          className="overflow-x-scroll overflow-y-hidden mb-3 rounded border border-border bg-muted/30"
+          style={{ height: 18 }}
           onScroll={() => {
             if (tableScrollRef.current && topScrollRef.current) {
               tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
