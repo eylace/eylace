@@ -249,6 +249,21 @@ const AdminProducts = () => {
         </TabsList>
       </Tabs>
 
+      {/* Top horizontal scrollbar (mirrors the table scroll) */}
+      {!loading && !loadError && scrollWidth > 0 && (
+        <div
+          ref={topScrollRef}
+          className="overflow-x-auto overflow-y-hidden mb-3 rounded border border-border bg-muted/20"
+          onScroll={() => {
+            if (tableScrollRef.current && topScrollRef.current) {
+              tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+            }
+          }}
+        >
+          <div style={{ width: scrollWidth, height: 1 }} />
+        </div>
+      )}
+
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2 flex-wrap">
@@ -350,17 +365,6 @@ const AdminProducts = () => {
             </div>
           ) : (
             <>
-              <div
-                ref={topScrollRef}
-                className="overflow-x-auto overflow-y-hidden"
-                onScroll={() => {
-                  if (tableScrollRef.current && topScrollRef.current) {
-                    tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
-                  }
-                }}
-              >
-                <div style={{ width: scrollWidth, height: 1 }} />
-              </div>
               <div
                 ref={tableScrollRef}
                 className="overflow-x-auto"
