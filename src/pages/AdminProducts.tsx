@@ -544,7 +544,8 @@ const AdminProducts = () => {
                   )}
                 </TableBody>
               </Table>
-            </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
