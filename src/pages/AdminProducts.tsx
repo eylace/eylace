@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -38,6 +38,24 @@ type TabKey = 'all' | 'inhouse' | 'seller' | 'digital' | 'physical' | 'inactive'
 const AdminProducts = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const [scrollWidth, setScrollWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = tableScrollRef.current;
+    if (!el) return;
+    const update = () => setScrollWidth(el.scrollWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild as Element);
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  });
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [sellers, setSellers] = useState<any[]>([]);
@@ -331,8 +349,28 @@ const AdminProducts = () => {
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div
+                ref={topScrollRef}
+                className="overflow-x-auto overflow-y-hidden"
+                onScroll={() => {
+                  if (tableScrollRef.current && topScrollRef.current) {
+                    tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+                  }
+                }}
+              >
+                <div style={{ width: scrollWidth, height: 1 }} />
+              </div>
+              <div
+                ref={tableScrollRef}
+                className="overflow-x-auto"
+                onScroll={() => {
+                  if (tableScrollRef.current && topScrollRef.current) {
+                    topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+                  }
+                }}
+              >
+                <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="w-10">
@@ -521,7 +559,8 @@ const AdminProducts = () => {
                   )}
                 </TableBody>
               </Table>
-            </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
