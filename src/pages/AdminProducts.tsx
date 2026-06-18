@@ -334,8 +334,28 @@ const AdminProducts = () => {
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <>
+              <div
+                ref={topScrollRef}
+                className="overflow-x-auto overflow-y-hidden"
+                onScroll={() => {
+                  if (tableScrollRef.current && topScrollRef.current) {
+                    tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft;
+                  }
+                }}
+              >
+                <div style={{ width: scrollWidth, height: 1 }} />
+              </div>
+              <div
+                ref={tableScrollRef}
+                className="overflow-x-auto"
+                onScroll={() => {
+                  if (tableScrollRef.current && topScrollRef.current) {
+                    topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+                  }
+                }}
+              >
+                <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="w-10">
