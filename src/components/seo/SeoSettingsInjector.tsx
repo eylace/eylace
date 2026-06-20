@@ -67,12 +67,8 @@ export default function SeoSettingsInjector() {
       seo.indexable ? 'index,follow' : 'noindex,nofollow'
     );
 
-    if (seo.googleSiteVerification) {
-      setMeta('meta[name="google-site-verification"]', 'name', 'google-site-verification', seo.googleSiteVerification);
-    }
-    if (seo.bingSiteVerification) {
-      setMeta('meta[name="msvalidate.01"]', 'name', 'msvalidate.01', seo.bingSiteVerification);
-    }
+    setMeta('meta[name="google-site-verification"]', 'name', 'google-site-verification', seo.googleSiteVerification || '');
+    setMeta('meta[name="msvalidate.01"]', 'name', 'msvalidate.01', seo.bingSiteVerification || '');
 
     if (seo.enableOpenGraph) {
       setMeta('meta[property="og:title"]', 'property', 'og:title', seo.ogTitle || seo.siteTitle || '');
@@ -89,9 +85,7 @@ export default function SeoSettingsInjector() {
       setMeta('meta[name="twitter:site"]', 'name', 'twitter:site', seo.twitterHandle || '');
     }
 
-    if (seo.canonicalUrl) {
-      setLink('canonical', seo.canonicalUrl);
-    }
+    setLink('canonical', seo.canonicalUrl || '');
 
     if (seo.enableJsonLd) {
       setJsonLd('seo-jsonld-organization', seo.jsonLdOrganization || '');
