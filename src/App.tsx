@@ -201,6 +201,7 @@ const AdminCourierExpenses = lazyWithRetry(() => import("./pages/AdminCourierExp
 const AIChatWidget = lazyWithRetry(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
 const TrackingScriptInjector = lazyWithRetry(() => import("./components/tracking/TrackingScriptInjector").then(m => ({ default: m.TrackingScriptInjector })));
 const SourceCodeProtection = lazyWithRetry(() => import("./components/security/SourceCodeProtection").then(m => ({ default: m.SourceCodeProtection })));
+const SeoSettingsInjector = lazyWithRetry(() => import("./components/seo/SeoSettingsInjector"));
 
 // Defer rendering of non-critical widgets until the browser is idle / user
 // interacts. This keeps them out of the initial render path so LCP/TBT
@@ -449,6 +450,7 @@ const App = () => (
                   <AIChatWidget />
                   <TrackingScriptInjector />
                   <SourceCodeProtection />
+                  <SeoSettingsInjector />
                 </Suspense>
               </DeferredMount>
             </BrowserRouter>
