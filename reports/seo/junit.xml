@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="4" failures="0" errors="0" time="0.103472054">
+    <testsuite name="src/hooks/__tests__/useSeoSettings.test.tsx" timestamp="2026-06-21T22:55:49.550Z" hostname="sandbox-pool-66fb779f9b-ss9bn" tests="4" failures="0" errors="0" skipped="0" time="0.103472054">
+        <testcase classname="src/hooks/__tests__/useSeoSettings.test.tsx" name="Global SEO end-to-end flow &gt; save → hook receives update → &lt;head&gt; reflects new tags without refresh" time="0.060973939">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/useSeoSettings.test.tsx" name="Global SEO end-to-end flow &gt; edit → re-save updates the same head tags in place" time="0.017254113">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/useSeoSettings.test.tsx" name="Global SEO end-to-end flow &gt; reset to defaults → optional tags are removed from &lt;head&gt;" time="0.012953921">
+        </testcase>
+        <testcase classname="src/hooks/__tests__/useSeoSettings.test.tsx" name="Global SEO end-to-end flow &gt; JSON-LD: enabling injects script, disabling removes it" time="0.009206317">
+        </testcase>
+    </testsuite>
+</testsuites>
