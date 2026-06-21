@@ -14,7 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:update": "playwright test --update-snapshots"
+    "test:e2e:update": "playwright test --update-snapshots",
+    "test:seo": "node scripts/run-seo-tests.mjs",
+    "test:seo:ci": "node scripts/run-seo-tests.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
