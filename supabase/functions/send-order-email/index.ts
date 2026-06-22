@@ -34,6 +34,13 @@ const statusMessages: Record<string, { subject: string; heading: string; message
 };
 
 serve(async (req) => {
+  const esc = (s: unknown) =>
+    String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -136,8 +143,8 @@ serve(async (req) => {
         (item: any) => `
         <tr>
           <td style="padding:8px 12px;border-bottom:1px solid #eee;">
-            <strong>${item.product_name}</strong><br/>
-            <span style="color:#666;font-size:13px;">Qty: ${item.quantity}</span>
+            <strong>${esc(item.product_name)}</strong><br/>
+            <span style="color:#666;font-size:13px;">Qty: ${esc(item.quantity)}</span>
           </td>
           <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;">
             ৳${Number(item.price).toFixed(2)}
@@ -149,8 +156,8 @@ serve(async (req) => {
     const trackingHtml =
       new_status === "shipped" && order.tracking_number
         ? `<div style="background:#f0f7ff;padding:16px;border-radius:8px;margin:16px 0;">
-            <p style="margin:0;font-size:14px;color:#333;"><strong>Tracking Number:</strong> ${order.tracking_number}</p>
-            ${order.carrier ? `<p style="margin:4px 0 0;font-size:14px;color:#333;"><strong>Carrier:</strong> ${order.carrier}</p>` : ""}
+            <p style="margin:0;font-size:14px;color:#333;"><strong>Tracking Number:</strong> ${esc(order.tracking_number)}</p>
+            ${order.carrier ? `<p style="margin:4px 0 0;font-size:14px;color:#333;"><strong>Carrier:</strong> ${esc(order.carrier)}</p>` : ""}
            </div>`
         : "";
 
@@ -166,12 +173,12 @@ serve(async (req) => {
         <div style="padding:32px;">
           <h2 style="color:#1a2d47;margin:0 0 8px;">${statusInfo.heading}</h2>
           <p style="color:#666;font-size:15px;line-height:1.6;">
-            Hi ${customerName},<br/><br/>
+            Hi ${esc(customerName)},<br/><br/>
             ${statusInfo.message}
           </p>
           ${trackingHtml}
           <div style="background:#fafafa;border-radius:8px;padding:16px;margin:20px 0;">
-            <h3 style="margin:0 0 12px;color:#1a2d47;font-size:16px;">Order #${order.order_number}</h3>
+            <h3 style="margin:0 0 12px;color:#1a2d47;font-size:16px;">Order #${esc(order.order_number)}</h3>
             <table style="width:100%;border-collapse:collapse;">
               ${itemsHtml}
               <tr>
@@ -203,7 +210,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "Eylace <onboarding@resend.dev>",
         to: [userEmail],
-        subject: `${statusInfo.subject} - Order #${order.order_number}`,
+        subject: `${statusInfo.subject} - Order #${String(order.order_number).replace(/[\r\n]/g,'')}`,
         html: emailHtml,
       }),
     });
