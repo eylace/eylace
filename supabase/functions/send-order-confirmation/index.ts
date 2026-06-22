@@ -6,6 +6,13 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const esc = (s: unknown) =>
+    String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -86,8 +93,8 @@ Deno.serve(async (req) => {
       .map((item: any) => `
         <tr>
           <td style="padding:10px 12px;border-bottom:1px solid #eee;">
-            <strong>${item.product_name}</strong><br/>
-            <span style="color:#666;font-size:13px;">Qty: ${item.quantity}</span>
+            <strong>${esc(item.product_name)}</strong><br/>
+            <span style="color:#666;font-size:13px;">Qty: ${esc(item.quantity)}</span>
           </td>
           <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:right;">
             ৳${Number(item.price * item.quantity).toFixed(2)}
@@ -114,12 +121,12 @@ Deno.serve(async (req) => {
             <h2 style="color:#1a2d47;margin:0;">Order Confirmed!</h2>
           </div>
           <p style="color:#666;font-size:15px;line-height:1.6;">
-            Hi ${customerName},<br/><br/>
+            Hi ${esc(customerName)},<br/><br/>
             Thank you for your order! We've received your order and will begin processing it shortly.
             You'll receive updates as your order progresses.
           </p>
           <div style="background:#fafafa;border-radius:8px;padding:16px;margin:20px 0;">
-            <h3 style="margin:0 0 4px;color:#1a2d47;font-size:16px;">Order #${order.order_number}</h3>
+            <h3 style="margin:0 0 4px;color:#1a2d47;font-size:16px;">Order #${esc(order.order_number)}</h3>
             <p style="margin:0 0 12px;color:#999;font-size:13px;">Placed on ${new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             <table style="width:100%;border-collapse:collapse;">
               ${itemsHtml}
@@ -137,12 +144,12 @@ Deno.serve(async (req) => {
           ${addr.address ? `
           <div style="background:#f0f7ff;padding:16px;border-radius:8px;margin:16px 0;">
             <p style="margin:0;font-size:14px;color:#333;"><strong>📦 Shipping To:</strong></p>
-            <p style="margin:4px 0 0;font-size:14px;color:#666;">${addr.firstName || ''} ${addr.lastName || ''}</p>
-            <p style="margin:2px 0 0;font-size:14px;color:#666;">${addr.address}${addr.apartment ? ', ' + addr.apartment : ''}</p>
-            <p style="margin:2px 0 0;font-size:14px;color:#666;">${addr.city || ''}${addr.state ? ', ' + addr.state : ''} ${addr.zipCode || ''}</p>
+            <p style="margin:4px 0 0;font-size:14px;color:#666;">${esc(addr.firstName || '')} ${esc(addr.lastName || '')}</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#666;">${esc(addr.address)}${addr.apartment ? ', ' + esc(addr.apartment) : ''}</p>
+            <p style="margin:2px 0 0;font-size:14px;color:#666;">${esc(addr.city || '')}${addr.state ? ', ' + esc(addr.state) : ''} ${esc(addr.zipCode || '')}</p>
           </div>` : ''}
           <div style="background:#fff8e1;padding:16px;border-radius:8px;margin:16px 0;">
-            <p style="margin:0;font-size:14px;color:#333;"><strong>💳 Payment:</strong> ${order.payment_method === 'cod' ? 'Cash on Delivery' : order.payment_method?.toUpperCase()}</p>
+            <p style="margin:0;font-size:14px;color:#333;"><strong>💳 Payment:</strong> ${order.payment_method === 'cod' ? 'Cash on Delivery' : esc(order.payment_method?.toUpperCase())}</p>
           </div>
           <div style="text-align:center;margin-top:24px;">
             <a href="https://grand-mall-emporium.lovable.app/orders" style="display:inline-block;padding:14px 36px;background:#ff8c00;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;">Track Your Order</a>
@@ -167,7 +174,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'Eylace <onboarding@resend.dev>',
         to: [customerEmail],
-        subject: `Order Confirmed! ✅ - Order #${order.order_number}`,
+        subject: `Order Confirmed! ✅ - Order #${String(order.order_number).replace(/[\r\n]/g,'')}`,
         html: emailHtml,
       }),
     });
