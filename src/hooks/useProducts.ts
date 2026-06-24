@@ -62,6 +62,23 @@ export interface CategoryDiscount {
   discount_value: number;
 }
 
+// ============================================================================
+// Stale-while-revalidate cache for product lists & details.
+// Returns cached data instantly on revisit, then silently refetches in the
+// background to update. Massively improves perceived load time on the product
+// listing and product detail pages.
+// ============================================================================
+const LIST_TTL = 60 * 1000; // 1 minute background refresh window
+const DETAIL_TTL = 2 * 60 * 1000;
+
+interface CacheEntry<T> {
+  data: T;
+  ts: number;
+}
+const productListCache = new Map<string, CacheEntry<DBProduct[]>>();
+const productDetailCache = new Map<string, CacheEntry<DBProduct>>();
+const inflight = new Map<string, Promise<any>>();
+
 // Singleton cache for category discounts
 let categoryDiscountsCache: CategoryDiscount[] | null = null;
 let categoryDiscountsFetchPromise: Promise<CategoryDiscount[]> | null = null;
@@ -133,19 +150,27 @@ const applyCategoryDiscounts = (products: DBProduct[], discounts: CategoryDiscou
 };
 
 export const useProducts = (options: UseProductsOptions = {}) => {
-  const [products, setProducts] = useState<DBProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
   // Stabilize options to prevent infinite re-renders
   const optKey = `${options.categorySlug || ''}_${options.limit || ''}_${options.flashSaleOnly || ''}_${options.searchQuery || ''}`;
+  const cached = productListCache.get(optKey);
+  const [products, setProducts] = useState<DBProduct[]>(cached?.data || []);
+  const [isLoading, setIsLoading] = useState(!cached);
+  const [error, setError] = useState<Error | null>(null);
   const stableOptions = useRef(options);
   stableOptions.current = options;
 
   const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
     const opts = stableOptions.current;
+    const cachedEntry = productListCache.get(optKey);
+    const fresh = cachedEntry && Date.now() - cachedEntry.ts < LIST_TTL;
+    if (cachedEntry) {
+      setProducts(cachedEntry.data);
+      setIsLoading(false);
+      if (fresh) return; // skip refetch, data is fresh enough
+    } else {
+      setIsLoading(true);
+    }
+    setError(null);
 
     try {
       let query = supabase
@@ -187,13 +212,20 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
       query = query.order('created_at', { ascending: false });
 
-      const [{ data, error: fetchError }, categoryDiscounts] = await Promise.all([
-        query,
-        fetchCategoryDiscountsOnce(),
-      ]);
+      // Deduplicate concurrent identical requests
+      const inflightKey = `list:${optKey}`;
+      let promise = inflight.get(inflightKey);
+      if (!promise) {
+        promise = Promise.all([query, fetchCategoryDiscountsOnce()]).finally(() => {
+          inflight.delete(inflightKey);
+        });
+        inflight.set(inflightKey, promise);
+      }
+      const [{ data, error: fetchError }, categoryDiscounts] = await promise;
 
       if (fetchError) throw fetchError;
       const withDiscounts = applyCategoryDiscounts(data || [], categoryDiscounts);
+      productListCache.set(optKey, { data: withDiscounts, ts: Date.now() });
       setProducts(withDiscounts);
     } catch (err) {
       setError(err as Error);
@@ -212,8 +244,9 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 };
 
 export const useProduct = (slug: string) => {
-  const [product, setProduct] = useState<DBProduct | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const cached = slug ? productDetailCache.get(slug) : null;
+  const [product, setProduct] = useState<DBProduct | null>(cached?.data || null);
+  const [isLoading, setIsLoading] = useState(!cached);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
@@ -221,27 +254,41 @@ export const useProduct = (slug: string) => {
     let cancelled = false;
 
     const fetchProduct = async () => {
-      setIsLoading(true);
+      const c = productDetailCache.get(slug);
+      const fresh = c && Date.now() - c.ts < DETAIL_TTL;
+      if (c) {
+        setProduct(c.data);
+        setIsLoading(false);
+        if (fresh) return;
+      } else {
+        setIsLoading(true);
+      }
       setError(null);
 
       try {
-        const [{ data, error: fetchError }, categoryDiscounts] = await Promise.all([
-          supabase
-            .from('products_public')
-            .select(`
-              *,
-              category:categories(*),
-              seller:sellers(*)
-            `)
-            .eq('slug', slug)
-            .single(),
-          fetchCategoryDiscountsOnce(),
-        ]);
+        const inflightKey = `detail:${slug}`;
+        let promise = inflight.get(inflightKey);
+        if (!promise) {
+          promise = Promise.all([
+            supabase
+              .from('products_public')
+              .select(`*, category:categories(*), seller:sellers(*)`)
+              .eq('slug', slug)
+              .single(),
+            fetchCategoryDiscountsOnce(),
+          ]).finally(() => { inflight.delete(inflightKey); });
+          inflight.set(inflightKey, promise);
+        }
+        const [{ data, error: fetchError }, categoryDiscounts] = await promise;
 
         if (fetchError) throw fetchError;
         if (!cancelled) {
           const [withDiscount] = applyCategoryDiscounts(data ? [data] : [], categoryDiscounts);
-          setProduct(withDiscount || data);
+          const finalProduct = withDiscount || data;
+          if (finalProduct) {
+            productDetailCache.set(slug, { data: finalProduct, ts: Date.now() });
+          }
+          setProduct(finalProduct);
         }
       } catch (err) {
         if (!cancelled) {
