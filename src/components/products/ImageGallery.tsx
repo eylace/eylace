@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, Play, RotateCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface ImageGalleryProps {
   images: string[];
