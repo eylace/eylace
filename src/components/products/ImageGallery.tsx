@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, Play, RotateCw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface ImageGalleryProps {
   images: string[];
@@ -81,9 +82,11 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleMouseUp}
       >
-        <img
+        <OptimizedImage
           src={images[currentIndex]}
           alt={`${productName} - Image ${currentIndex + 1}`}
+          variant="detail"
+          priority={currentIndex === 0}
           className={cn(
             "w-full h-full object-cover transition-transform duration-200 select-none",
             isZoomed && "scale-[4]"

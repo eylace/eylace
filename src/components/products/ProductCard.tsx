@@ -11,6 +11,8 @@ import { useCompare } from '@/contexts/CompareContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
 import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { prefetchProduct } from '@/hooks/useProducts';
 import { toast } from 'sonner';
 
 interface ProductCardProps {
@@ -55,16 +57,25 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
     navigate('/checkout?source=buy-now');
   };
 
+  // Warm the product detail cache when the user signals intent (hover, focus,
+  // touch) so the detail page renders instantly after click.
+  const handlePrefetch = () => prefetchProduct(product.slug);
+
   if (variant === 'horizontal') {
     return (
       <div className="card-product flex gap-4 p-4">
-        <Link to={`/product/${product.slug}`} className="shrink-0">
+        <Link
+          to={`/product/${product.slug}`}
+          className="shrink-0"
+          onMouseEnter={handlePrefetch}
+          onFocus={handlePrefetch}
+          onTouchStart={handlePrefetch}
+        >
           <div className="relative w-32 h-32 bg-secondary rounded-lg overflow-hidden">
-            <img 
-              src={product.images[0]} 
+            <OptimizedImage
+              src={product.images[0]}
               alt={product.name}
-              loading="lazy"
-              decoding="async"
+              variant="card"
               className="w-full h-full object-cover"
             />
             {hasDiscount && (
@@ -136,13 +147,17 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
       </div>
 
       {/* Image */}
-      <Link to={`/product/${product.slug}`}>
+      <Link
+        to={`/product/${product.slug}`}
+        onMouseEnter={handlePrefetch}
+        onFocus={handlePrefetch}
+        onTouchStart={handlePrefetch}
+      >
         <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-2 sm:mb-3">
-          <img 
-            src={product.images[0]} 
+          <OptimizedImage
+            src={product.images[0]}
             alt={product.name}
-            loading="lazy"
-            decoding="async"
+            variant="card"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           
@@ -185,7 +200,11 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
         </p>
 
         {/* Title */}
-        <Link to={`/product/${product.slug}`}>
+        <Link
+          to={`/product/${product.slug}`}
+          onMouseEnter={handlePrefetch}
+          onFocus={handlePrefetch}
+        >
           <h3 className={cn(
             "font-medium text-foreground hover:text-accent transition-colors",
             variant === 'compact' ? 'text-sm line-clamp-1' : 'line-clamp-2'

@@ -1,0 +1,20 @@
+# Cache rules consumed by Netlify / Cloudflare Pages / compatible CDNs.
+# Vite emits hashed filenames under /assets, so they are safe to cache for a year.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Static images shipped with the build.
+*.svg
+  Cache-Control: public, max-age=2592000
+*.png
+  Cache-Control: public, max-age=2592000
+*.jpg
+  Cache-Control: public, max-age=2592000
+*.webp
+  Cache-Control: public, max-age=2592000
+*.avif
+  Cache-Control: public, max-age=2592000
+
+# HTML shell should always be revalidated so deploys take effect immediately.
+/*
+  Cache-Control: public, max-age=0, must-revalidate

@@ -79,6 +79,39 @@ const productListCache = new Map<string, CacheEntry<DBProduct[]>>();
 const productDetailCache = new Map<string, CacheEntry<DBProduct>>();
 const inflight = new Map<string, Promise<any>>();
 
+/**
+ * Warm productDetailCache for a slug so subsequent navigation renders the
+ * product page instantly. Safe to call repeatedly — dedupes via inflight
+ * map and skips refetch when the cached entry is still fresh.
+ */
+export function prefetchProduct(slug: string): void {
+  if (!slug) return;
+  const c = productDetailCache.get(slug);
+  if (c && Date.now() - c.ts < DETAIL_TTL) return;
+  const inflightKey = `detail:${slug}`;
+  if (inflight.has(inflightKey)) return;
+  const promise = Promise.all([
+    supabase
+      .from('products_public')
+      .select(`*, category:categories(*), seller:sellers(*)`)
+      .eq('slug', slug)
+      .single(),
+    fetchCategoryDiscountsOnce(),
+  ])
+    .then(([{ data }, discounts]) => {
+      if (!data) return;
+      const [withDiscount] = applyCategoryDiscounts([data], discounts);
+      productDetailCache.set(slug, { data: withDiscount || data, ts: Date.now() });
+    })
+    .catch(() => {
+      /* swallow — prefetch is best-effort */
+    })
+    .finally(() => {
+      inflight.delete(inflightKey);
+    });
+  inflight.set(inflightKey, promise);
+}
+
 // Singleton cache for category discounts
 let categoryDiscountsCache: CategoryDiscount[] | null = null;
 let categoryDiscountsFetchPromise: Promise<CategoryDiscount[]> | null = null;
