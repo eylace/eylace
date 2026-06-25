@@ -81,9 +81,11 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleMouseUp}
       >
-        <img
+        <OptimizedImage
           src={images[currentIndex]}
           alt={`${productName} - Image ${currentIndex + 1}`}
+          variant="detail"
+          priority={currentIndex === 0}
           className={cn(
             "w-full h-full object-cover transition-transform duration-200 select-none",
             isZoomed && "scale-[4]"
