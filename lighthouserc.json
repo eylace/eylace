@@ -1,11 +1,12 @@
 {
   "ci": {
     "collect": {
-      "staticDistDir": "./dist",
+      "startServerCommand": "npx serve -s dist -l 4173",
+      "startServerReadyPattern": "Accepting connections|Local:",
       "url": [
-        "http://localhost/index.html",
-        "http://localhost/products/index.html",
-        "http://localhost/product/sample/index.html"
+        "http://localhost:4173/search",
+        "http://localhost:4173/new-arrivals",
+        "http://localhost:4173/product/sample-product"
       ],
       "numberOfRuns": 3,
       "settings": {
