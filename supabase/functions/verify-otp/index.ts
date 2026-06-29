@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       .eq("phone", phone)
       .gte("created_at", windowStart);
 
-    if ((recentCount ?? 0) > VERIFY_RATE_MAX) {
+    if ((recentCount ?? 0) >= VERIFY_RATE_MAX) {
       return new Response(JSON.stringify({ error: "Too many attempts. Try again later." }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
