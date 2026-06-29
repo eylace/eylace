@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout';
+import SeoHead from '@/components/seo/SeoHead';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link2, TrendingUp, DollarSign, Users, Share2, BarChart3, Loader2 } from 'lucide-react';
@@ -188,6 +189,29 @@ const AffiliateProgram = () => {
 
   return (
     <Layout>
+      <SeoHead
+        title="Eylace Affiliate Program — Earn up to 12% Commission"
+        description="Join the Eylace Affiliate Program. Share product links, track clicks and conversions in real time, and earn monthly payouts via bKash, Nagad, or bank transfer."
+        path="/affiliate"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            name: "Eylace Affiliate Program",
+            url: "https://eylace.lovable.app/affiliate",
+            description:
+              "Earn up to 12% commission by promoting Eylace products with unique referral links.",
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://eylace.lovable.app/" },
+              { "@type": "ListItem", position: 2, name: "Affiliate Program", item: "https://eylace.lovable.app/affiliate" },
+            ],
+          },
+        ]}
+      />
       <section className="bg-primary text-primary-foreground py-16">
         <div className="container-main text-center">
           <Link2 className="h-12 w-12 mx-auto mb-4 text-accent" />
