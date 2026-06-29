@@ -80,10 +80,10 @@ const Auth = () => {
     try { localStorage.setItem('signup_intent_role', signupRole); } catch {}
     if (signupRole === 'seller') {
       toast.success('Account created! Complete your seller registration.');
-      navigate('/seller/register');
+      navigate('/sell');
     } else if (signupRole === 'affiliate') {
       toast.success('Account created! Complete your affiliate application.');
-      navigate('/affiliate-program');
+      navigate('/affiliate');
     } else {
       toast.success('Account created! Please check your email to verify your account.');
       setActiveView('login');
