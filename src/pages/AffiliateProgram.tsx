@@ -194,10 +194,148 @@ const AffiliateProgram = () => {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Affiliate Program</h1>
           <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto">Earn money by sharing products you love. Join thousands of affiliates earning with Eylace.</p>
           <Button size="lg" variant="accent" className="mt-6" onClick={handleJoin} disabled={joining}>
-            {joining ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Joining...</> : "Join Now — It's Free"}
+            {joining ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Submitting...</> : showForm ? 'Submit Application' : "Apply Now — It's Free"}
           </Button>
         </div>
       </section>
+
+      {user && showForm && (
+        <section className="container-main py-10">
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="pt-6 space-y-5">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Affiliate Application</h2>
+                <p className="text-sm text-muted-foreground">Tell us about you so we can approve your account.</p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Full Name *</Label>
+                  <Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} placeholder="Your full name" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Phone Number *</Label>
+                  <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="01XXXXXXXXX" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Address</Label>
+                <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="City, country" />
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Website / Blog</Label>
+                  <Input value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} placeholder="https://..." />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Estimated Audience Size</Label>
+                  <Select value={form.audience_size} onValueChange={v => setForm({ ...form, audience_size: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select range" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="<1k">Less than 1,000</SelectItem>
+                      <SelectItem value="1k-10k">1,000 – 10,000</SelectItem>
+                      <SelectItem value="10k-50k">10,000 – 50,000</SelectItem>
+                      <SelectItem value="50k-200k">50,000 – 200,000</SelectItem>
+                      <SelectItem value=">200k">More than 200,000</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Facebook</Label>
+                  <Input value={form.facebook} onChange={e => setForm({ ...form, facebook: e.target.value })} placeholder="@handle or URL" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Instagram</Label>
+                  <Input value={form.instagram} onChange={e => setForm({ ...form, instagram: e.target.value })} placeholder="@handle" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>YouTube</Label>
+                  <Input value={form.youtube} onChange={e => setForm({ ...form, youtube: e.target.value })} placeholder="Channel URL" />
+                </div>
+              </div>
+
+              <div>
+                <Label>Primary Marketing Channels</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {CHANNEL_OPTIONS.map(c => {
+                    const active = form.marketing_channels.includes(c);
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => toggleChannel(c)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+                          active ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted-foreground hover:border-accent/50'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Tell us about your promotion strategy</Label>
+                <Textarea
+                  rows={3}
+                  value={form.bio}
+                  onChange={e => setForm({ ...form, bio: e.target.value })}
+                  placeholder="How will you promote Eylace products?"
+                />
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <p className="text-sm font-semibold text-foreground">Payout Details</p>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Method</Label>
+                    <Select value={form.payment_method} onValueChange={v => setForm({ ...form, payment_method: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bkash">bKash</SelectItem>
+                        <SelectItem value="nagad">Nagad</SelectItem>
+                        <SelectItem value="rocket">Rocket</SelectItem>
+                        <SelectItem value="bank">Bank Transfer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{form.payment_method === 'bank' ? 'Account Number' : 'Mobile Number'}</Label>
+                    <Input value={form.account_number} onChange={e => setForm({ ...form, account_number: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Account Holder Name</Label>
+                    <Input value={form.account_name} onChange={e => setForm({ ...form, account_name: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2 cursor-pointer">
+                <Checkbox
+                  checked={form.terms_accepted}
+                  onCheckedChange={(v) => setForm({ ...form, terms_accepted: !!v })}
+                />
+                <span className="text-xs text-muted-foreground">
+                  I accept the affiliate program terms. I will not use spam, misleading ads, or self-referrals. Eylace may revoke my account for violations.
+                </span>
+              </label>
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setShowForm(false)} disabled={joining}>Cancel</Button>
+                <Button variant="accent" onClick={handleJoin} disabled={joining} className="flex-1">
+                  {joining ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Submitting...</> : 'Submit Application'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       <section className="container-main py-12">
         <h2 className="text-2xl font-bold text-foreground text-center mb-8">Why Join?</h2>
