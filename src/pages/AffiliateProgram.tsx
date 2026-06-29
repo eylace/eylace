@@ -3,6 +3,11 @@ import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link2, TrendingUp, DollarSign, Users, Share2, BarChart3, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -29,6 +34,32 @@ const AffiliateProgram = () => {
   const [affiliateData, setAffiliateData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const CHANNEL_OPTIONS = ['Facebook', 'Instagram', 'YouTube', 'TikTok', 'Blog', 'Email', 'WhatsApp', 'Telegram', 'Other'];
+  const [form, setForm] = useState({
+    full_name: '',
+    phone: '',
+    address: '',
+    website: '',
+    facebook: '',
+    instagram: '',
+    youtube: '',
+    audience_size: '',
+    marketing_channels: [] as string[],
+    bio: '',
+    payment_method: 'bkash',
+    account_number: '',
+    account_name: '',
+    terms_accepted: false,
+  });
+
+  const toggleChannel = (c: string) =>
+    setForm(f => ({
+      ...f,
+      marketing_channels: f.marketing_channels.includes(c)
+        ? f.marketing_channels.filter(x => x !== c)
+        : [...f.marketing_channels, c],
+    }));
 
   const fetchStats = useCallback(async () => {
     if (!user) { setLoading(false); return; }
@@ -46,10 +77,40 @@ const AffiliateProgram = () => {
 
   const handleJoin = async () => {
     if (!user) { navigate('/auth'); return; }
+    if (!showForm) { setShowForm(true); return; }
+    if (!form.full_name || form.full_name.trim().length < 2) {
+      toast.error('Please enter your full name'); return;
+    }
+    if (!form.phone || form.phone.trim().length < 6) {
+      toast.error('Please enter a valid phone number'); return;
+    }
+    if (!form.terms_accepted) {
+      toast.error('Please accept the affiliate terms'); return;
+    }
     setJoining(true);
     try {
       const { data, error } = await supabase.functions.invoke('affiliate-manage', {
-        body: { action: 'join' },
+        body: {
+          action: 'join',
+          full_name: form.full_name.trim(),
+          phone: form.phone.trim(),
+          address: form.address.trim(),
+          website: form.website.trim(),
+          audience_size: form.audience_size,
+          marketing_channels: form.marketing_channels,
+          bio: form.bio.trim(),
+          social_handles: {
+            facebook: form.facebook.trim(),
+            instagram: form.instagram.trim(),
+            youtube: form.youtube.trim(),
+          },
+          payment_method: form.payment_method,
+          payment_details: {
+            account_number: form.account_number.trim(),
+            account_name: form.account_name.trim(),
+          },
+          terms_accepted: form.terms_accepted,
+        },
       });
       if (error) {
         let msg = 'Failed to join';
@@ -58,6 +119,7 @@ const AffiliateProgram = () => {
       }
       if (data?.error) throw new Error(data.error);
       toast.success('Application submitted! You will be notified once approved.');
+      setShowForm(false);
       fetchStats();
     } catch (err: any) {
       toast.error(err.message || 'Failed to join');
