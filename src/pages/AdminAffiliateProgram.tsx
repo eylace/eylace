@@ -474,6 +474,38 @@ const AdminAffiliateProgram = () => {
                   </div>
                 )}
 
+                {/* Application details */}
+                <div className="p-3 border rounded-lg space-y-2">
+                  <p className="text-sm font-semibold text-foreground">Application Details</p>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div><span className="text-muted-foreground">Full name:</span> <span className="text-foreground">{detailModal.affiliate?.full_name || '-'}</span></div>
+                    <div><span className="text-muted-foreground">Phone:</span> <span className="text-foreground">{detailModal.affiliate?.phone || '-'}</span></div>
+                    <div className="col-span-2"><span className="text-muted-foreground">Address:</span> <span className="text-foreground">{detailModal.affiliate?.address || '-'}</span></div>
+                    <div className="col-span-2"><span className="text-muted-foreground">Website:</span>{' '}
+                      {detailModal.affiliate?.website
+                        ? <a href={detailModal.affiliate.website} target="_blank" rel="noopener noreferrer" className="text-accent underline">{detailModal.affiliate.website}</a>
+                        : <span className="text-foreground">-</span>}
+                    </div>
+                    <div><span className="text-muted-foreground">Audience size:</span> <span className="text-foreground">{detailModal.affiliate?.audience_size || '-'}</span></div>
+                    <div><span className="text-muted-foreground">Terms accepted:</span> <span className="text-foreground">{detailModal.affiliate?.terms_accepted ? 'Yes' : 'No'}</span></div>
+                    <div className="col-span-2"><span className="text-muted-foreground">Channels:</span> <span className="text-foreground">{(detailModal.affiliate?.marketing_channels || []).join(', ') || '-'}</span></div>
+                    {detailModal.affiliate?.social_handles && Object.values(detailModal.affiliate.social_handles).some(Boolean) && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Social:</span>{' '}
+                        <span className="text-foreground">
+                          {Object.entries(detailModal.affiliate.social_handles)
+                            .filter(([, v]) => !!v)
+                            .map(([k, v]) => `${k}: ${v}`)
+                            .join(' · ')}
+                        </span>
+                      </div>
+                    )}
+                    {detailModal.affiliate?.bio && (
+                      <div className="col-span-2"><span className="text-muted-foreground">Bio:</span> <span className="text-foreground">{detailModal.affiliate.bio}</span></div>
+                    )}
+                  </div>
+                </div>
+
                 {detailModal.clicks?.length > 0 && (
                   <div>
                     <h4 className="text-sm font-semibold mb-2 text-foreground">Recent Clicks ({detailModal.clicks.length})</h4>

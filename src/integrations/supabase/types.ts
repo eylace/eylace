@@ -435,52 +435,79 @@ export type Database = {
       }
       affiliates: {
         Row: {
+          address: string | null
           admin_notes: string | null
+          audience_size: string | null
+          bio: string | null
           commission_rate: number
           created_at: string
+          full_name: string | null
           id: string
+          marketing_channels: string[] | null
           payment_details: Json | null
           payment_method: string | null
+          phone: string | null
           referral_code: string
+          social_handles: Json | null
           status: string
+          terms_accepted: boolean | null
           total_clicks: number | null
           total_conversions: number | null
           total_earnings: number | null
           total_paid: number | null
           updated_at: string
           user_id: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
           admin_notes?: string | null
+          audience_size?: string | null
+          bio?: string | null
           commission_rate?: number
           created_at?: string
+          full_name?: string | null
           id?: string
+          marketing_channels?: string[] | null
           payment_details?: Json | null
           payment_method?: string | null
+          phone?: string | null
           referral_code: string
+          social_handles?: Json | null
           status?: string
+          terms_accepted?: boolean | null
           total_clicks?: number | null
           total_conversions?: number | null
           total_earnings?: number | null
           total_paid?: number | null
           updated_at?: string
           user_id: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
           admin_notes?: string | null
+          audience_size?: string | null
+          bio?: string | null
           commission_rate?: number
           created_at?: string
+          full_name?: string | null
           id?: string
+          marketing_channels?: string[] | null
           payment_details?: Json | null
           payment_method?: string | null
+          phone?: string | null
           referral_code?: string
+          social_handles?: Json | null
           status?: string
+          terms_accepted?: boolean | null
           total_clicks?: number | null
           total_conversions?: number | null
           total_earnings?: number | null
           total_paid?: number | null
           updated_at?: string
           user_id?: string
+          website?: string | null
         }
         Relationships: []
       }

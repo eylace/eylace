@@ -73,12 +73,49 @@ Deno.serve(async (req) => {
 
       const code = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase()
 
+      // Sanitize & validate registration fields
+      const trim = (v: unknown, max = 500) =>
+        typeof v === 'string' ? v.trim().slice(0, max) : ''
+      const full_name = trim(body.full_name, 120)
+      const phone = trim(body.phone, 30)
+      const address = trim(body.address, 300)
+      const website = trim(body.website, 200)
+      const audience_size = trim(body.audience_size, 50)
+      const bio = trim(body.bio, 1000)
+      const social_handles =
+        body.social_handles && typeof body.social_handles === 'object'
+          ? body.social_handles
+          : {}
+      const marketing_channels = Array.isArray(body.marketing_channels)
+        ? body.marketing_channels.filter((c: unknown) => typeof c === 'string').slice(0, 20)
+        : []
+      const terms_accepted = body.terms_accepted === true
+
+      if (!full_name || full_name.length < 2) {
+        return json({ error: 'Full name is required' }, 400)
+      }
+      if (!phone || phone.length < 6) {
+        return json({ error: 'Phone number is required' }, 400)
+      }
+      if (!terms_accepted) {
+        return json({ error: 'You must accept the affiliate terms' }, 400)
+      }
+
       const { data, error } = await adminClient.from('affiliates').insert({
         user_id: userId,
         referral_code: code,
         status: 'pending',
         payment_method: body.payment_method || 'bkash',
         payment_details: body.payment_details || {},
+        full_name,
+        phone,
+        address,
+        website,
+        social_handles,
+        audience_size,
+        marketing_channels,
+        bio,
+        terms_accepted,
       }).select().single()
 
       if (error) return json({ error: error.message }, 500)
@@ -185,10 +222,16 @@ Deno.serve(async (req) => {
     // ========== UPDATE SETTINGS ==========
     if (action === 'update-settings') {
       if (!userId) return json({ error: 'Unauthorized' }, 401)
-      const { payment_method, payment_details } = body
-      const { error } = await adminClient.from('affiliates').update({
-        payment_method, payment_details, updated_at: new Date().toISOString(),
-      }).eq('user_id', userId)
+      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+      const allow = [
+        'payment_method', 'payment_details',
+        'full_name', 'phone', 'address', 'website',
+        'social_handles', 'audience_size', 'marketing_channels', 'bio',
+      ]
+      for (const key of allow) {
+        if (body[key] !== undefined) updates[key] = body[key]
+      }
+      const { error } = await adminClient.from('affiliates').update(updates).eq('user_id', userId)
       if (error) return json({ error: error.message }, 500)
       return json({ success: true })
     }
