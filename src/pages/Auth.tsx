@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, ShoppingBag, Phone, Shield, User, ChevronLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, ShoppingBag, Phone, Shield, User, ChevronLeft, Store, Link2 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,7 @@ const Auth = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
+  const [signupRole, setSignupRole] = useState<'customer' | 'seller' | 'affiliate'>('customer');
   const { t } = useLanguage();
 
   const loginForm = useForm<LoginFormData>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } });
@@ -75,8 +76,18 @@ const Auth = () => {
       else toast.error(error.message);
       return;
     }
-    toast.success('Account created! Please check your email to verify your account.');
-    setActiveView('login');
+    // Remember role so post-verification we route the user correctly
+    try { localStorage.setItem('signup_intent_role', signupRole); } catch {}
+    if (signupRole === 'seller') {
+      toast.success('Account created! Complete your seller registration.');
+      navigate('/seller/register');
+    } else if (signupRole === 'affiliate') {
+      toast.success('Account created! Complete your affiliate application.');
+      navigate('/affiliate-program');
+    } else {
+      toast.success('Account created! Please check your email to verify your account.');
+      setActiveView('login');
+    }
   };
 
   const handleGoogleSignIn = async () => {
