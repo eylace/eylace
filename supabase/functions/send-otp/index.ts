@@ -108,6 +108,7 @@ serve(async (req) => {
       code: otp,
       expires_at: expiresAt,
       max_attempts: maxAttempts,
+      ip_address: ip,
     });
 
     // Send OTP via configured provider (skip in test mode)
