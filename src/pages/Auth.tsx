@@ -400,6 +400,43 @@ const Auth = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* Role selector */}
+                  <div>
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                      I want to sign up as
+                    </Label>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {([
+                        { id: 'customer', label: 'Customer', Icon: User },
+                        { id: 'seller', label: 'Seller', Icon: Store },
+                        { id: 'affiliate', label: 'Affiliate', Icon: Link2 },
+                      ] as const).map(({ id, label, Icon }) => {
+                        const active = signupRole === id;
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => setSignupRole(id)}
+                            className={cn(
+                              'flex flex-col items-center gap-1 rounded-lg border p-3 text-xs font-medium transition-all',
+                              active
+                                ? 'border-accent bg-accent/10 text-accent shadow-sm'
+                                : 'border-border text-muted-foreground hover:border-accent/50 hover:text-foreground',
+                            )}
+                            aria-pressed={active}
+                          >
+                            <Icon className="h-5 w-5" />
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground">
+                      {signupRole === 'seller' && 'Sell your products on Eylace. You will complete a seller profile after signup.'}
+                      {signupRole === 'affiliate' && 'Earn commission by promoting products. Application requires admin approval.'}
+                      {signupRole === 'customer' && 'Shop, track orders, save your wishlist.'}
+                    </p>
+                  </div>
                   <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
