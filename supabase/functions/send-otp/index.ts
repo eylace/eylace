@@ -27,6 +27,24 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Per-IP rate limit: max 8 OTP sends in 15 min from a single IP.
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+    const ipWindowStart = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { count: ipRecent } = await supabase
+      .from("otp_codes")
+      .select("id", { count: "exact", head: true })
+      .eq("ip_address", ip)
+      .gte("created_at", ipWindowStart);
+    if ((ipRecent ?? 0) >= 8) {
+      return new Response(
+        JSON.stringify({ error: "Too many OTP requests from this network. Try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // Load OTP provider config
     const { data: providerRow } = await supabase
       .from("system_settings")
@@ -90,6 +108,7 @@ serve(async (req) => {
       code: otp,
       expires_at: expiresAt,
       max_attempts: maxAttempts,
+      ip_address: ip,
     });
 
     // Send OTP via configured provider (skip in test mode)
