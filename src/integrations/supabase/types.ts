@@ -1869,6 +1869,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          ip_address: string | null
           is_used: boolean
           max_attempts: number
           phone: string
@@ -1879,6 +1880,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
+          ip_address?: string | null
           is_used?: boolean
           max_attempts?: number
           phone: string
@@ -1889,6 +1891,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          ip_address?: string | null
           is_used?: boolean
           max_attempts?: number
           phone?: string
