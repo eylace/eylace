@@ -4,6 +4,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { adaptDBProducts } from '@/lib/productAdapter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 export const DealsSection = () => {
   const { products: dbProducts, isLoading } = useProducts({ limit: 8 });
@@ -36,10 +37,17 @@ export const DealsSection = () => {
           </Link>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border">
-          {dealsProducts.map((product) => (
+          {dealsProducts.map((product) => {
+            const featureImage = product.thumbnail || product.images?.[0] || '/placeholder.svg';
+            return (
             <Link key={product.id} to={`/product/${product.slug}`} className="group p-4 md:p-6 hover:bg-secondary/50 transition-colors">
-              <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-4 p-3">
-                <img src={product.images[0]} alt={product.name} loading="lazy" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300" />
+              <div className="relative aspect-square bg-card rounded-lg overflow-hidden border border-border/60 mb-4 p-3">
+                <OptimizedImage
+                  src={featureImage}
+                  alt={product.name}
+                  variant="card"
+                  className="w-full h-full object-contain transition-transform duration-300 motion-safe:group-hover:scale-105"
+                />
                 <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded">
                   {product.discount}% {t('common.off')}
                 </div>
@@ -61,7 +69,7 @@ export const DealsSection = () => {
                 </div>
               </div>
             </Link>
-          ))}
+          );})}
         </div>
       </div>
     </section>

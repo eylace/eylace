@@ -6,6 +6,7 @@ export interface Product {
   price: number;
   originalPrice?: number;
   discount?: number;
+  thumbnail?: string;
   images: string[];
   category: Category;
   subcategory?: string;

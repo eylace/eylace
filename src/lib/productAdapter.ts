@@ -86,6 +86,10 @@ const normalizeVariations = (variations: unknown): ProductVariation[] | undefine
 };
 
 export const adaptDBProduct = (dbProduct: DBProduct): Product => {
+  const rawAttributes = dbProduct.attributes && typeof dbProduct.attributes === 'object' && !Array.isArray(dbProduct.attributes)
+    ? dbProduct.attributes as Record<string, any>
+    : null;
+
   const category: Category = dbProduct.category ? {
     id: dbProduct.category.id,
     name: dbProduct.category.name,
@@ -123,6 +127,7 @@ export const adaptDBProduct = (dbProduct: DBProduct): Product => {
     price: Number(dbProduct.price),
     originalPrice: dbProduct.original_price ? Number(dbProduct.original_price) : undefined,
     discount: dbProduct.discount || undefined,
+    thumbnail: typeof rawAttributes?.thumbnail === 'string' && rawAttributes.thumbnail.trim() ? rawAttributes.thumbnail : undefined,
     images: dbProduct.images || ['/placeholder.svg'],
     category,
     seller,
@@ -135,7 +140,7 @@ export const adaptDBProduct = (dbProduct: DBProduct): Product => {
     // detail page can show per-variant image/price/stock when a customer
     // picks a specific Color/Size combination.
     variantRows: (() => {
-      const a = dbProduct.attributes as any;
+      const a = rawAttributes;
       if (!a || typeof a !== 'object' || Array.isArray(a)) return undefined;
       const rows = a.variant_rows;
       return Array.isArray(rows) ? rows : undefined;
