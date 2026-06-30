@@ -159,8 +159,7 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
           alt={product.name}
           hoverZoom
           className="mb-2 sm:mb-3"
-        />
-          
+        >
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
             {product.isFlashSale && (
@@ -189,7 +188,7 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
               </span>
             </div>
           )}
-        </div>
+        </ProductImageFrame>
       </Link>
 
       {/* Content */}
