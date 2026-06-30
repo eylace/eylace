@@ -3536,6 +3536,30 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_idempotency: {
+        Row: {
+          external_event_id: string
+          gateway: string
+          id: string
+          payload_hash: string | null
+          processed_at: string
+        }
+        Insert: {
+          external_event_id: string
+          gateway: string
+          id?: string
+          payload_hash?: string | null
+          processed_at?: string
+        }
+        Update: {
+          external_event_id?: string
+          gateway?: string
+          id?: string
+          payload_hash?: string | null
+          processed_at?: string
+        }
+        Relationships: []
+      }
       wishlist: {
         Row: {
           created_at: string
