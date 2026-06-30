@@ -38,8 +38,8 @@ export const DealsSection = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border">
           {dealsProducts.map((product) => (
             <Link key={product.id} to={`/product/${product.slug}`} className="group p-4 md:p-6 hover:bg-secondary/50 transition-colors">
-              <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-4">
-                <img src={product.images[0]} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-4 p-3">
+                <img src={product.images[0]} alt={product.name} loading="lazy" className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300" />
                 <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded">
                   {product.discount}% {t('common.off')}
                 </div>
