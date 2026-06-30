@@ -34,9 +34,27 @@ export interface ProductImageSources {
   sizes?: string;
   avifSrcSet?: string;
   webpSrcSet?: string;
+  width: number;
+  height: number;
 }
 
 export type ProductImageVariant = 'card' | 'detail';
+
+export const PRODUCT_IMAGE_DIMENSIONS: Record<ProductImageVariant, { width: number; height: number }> = {
+  card: { width: 480, height: 480 },
+  detail: { width: 960, height: 960 },
+};
+
+export function getProductFeatureImage(
+  product: { thumbnail?: string; images?: string[] } | null | undefined,
+  fallback = '/placeholder.svg'
+): string {
+  const thumbnail = product?.thumbnail?.trim();
+  if (thumbnail) return thumbnail;
+
+  const firstImage = product?.images?.find((image) => typeof image === 'string' && image.trim().length > 0)?.trim();
+  return firstImage || fallback;
+}
 
 export function buildProductImageSources(
   url: string | undefined,
@@ -44,8 +62,10 @@ export function buildProductImageSources(
 ): ProductImageSources | null {
   if (!url) return null;
 
+  const dimensions = PRODUCT_IMAGE_DIMENSIONS[variant];
+
   if (!isSupabaseObjectUrl(url)) {
-    return { src: url };
+    return { src: url, ...dimensions };
   }
 
   const widths = variant === 'detail' ? DETAIL_WIDTHS : CARD_WIDTHS;
@@ -55,7 +75,7 @@ export function buildProductImageSources(
       : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 240px';
 
   const base = toRenderBase(url);
-  const defaultWidth = variant === 'detail' ? 960 : 480;
+  const defaultWidth = dimensions.width;
 
   const srcSet = widths
     .map((w) => `${withParams(base, { width: w, quality: 75 })} ${w}w`)
@@ -73,5 +93,6 @@ export function buildProductImageSources(
     sizes,
     avifSrcSet,
     webpSrcSet,
+    ...dimensions,
   };
 }

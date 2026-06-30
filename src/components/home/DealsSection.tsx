@@ -5,6 +5,7 @@ import { adaptDBProducts } from '@/lib/productAdapter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { getProductFeatureImage } from '@/lib/productImage';
 
 export const DealsSection = () => {
   const { products: dbProducts, isLoading } = useProducts({ limit: 8 });
@@ -38,7 +39,7 @@ export const DealsSection = () => {
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-border">
           {dealsProducts.map((product) => {
-            const featureImage = product.thumbnail || product.images?.[0] || '/placeholder.svg';
+            const featureImage = getProductFeatureImage(product);
             return (
             <Link key={product.id} to={`/product/${product.slug}`} className="group p-4 md:p-6 hover:bg-secondary/50 transition-colors">
               <div className="relative aspect-square bg-card rounded-lg overflow-hidden border border-border/60 mb-4 p-3">
