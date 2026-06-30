@@ -5,6 +5,7 @@ import { adaptDBProducts } from '@/lib/productAdapter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { ProductImageFrame } from '@/components/products/ProductImageFrame';
 import { getProductFeatureImage } from '@/lib/productImage';
 
 export const DealsSection = () => {
