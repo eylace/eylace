@@ -41,7 +41,7 @@ const OptimizedImageInner = ({
   }
 
   return (
-    <picture>
+    <picture className="contents">
       {sources.avifSrcSet && (
         <source type="image/avif" srcSet={sources.avifSrcSet} sizes={sources.sizes} />
       )}

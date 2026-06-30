@@ -88,7 +88,7 @@ export const ImageGallery = ({ images, productName }: ImageGalleryProps) => {
           variant="detail"
           priority={currentIndex === 0}
           className={cn(
-            "w-full h-full object-cover transition-transform duration-200 select-none",
+            "w-full h-full object-contain transition-transform duration-200 select-none",
             isZoomed && "scale-[4]"
           )}
           style={isZoomed ? { transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%` } : undefined}

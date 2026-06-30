@@ -32,6 +32,7 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
   const isWishlisted = isInWishlist(product.id);
+  const featureImage = product.thumbnail || product.images?.[0] || '/placeholder.svg';
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -71,9 +72,9 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
           onFocus={handlePrefetch}
           onTouchStart={handlePrefetch}
         >
-          <div className="relative w-32 h-32 bg-secondary rounded-lg overflow-hidden p-2">
+          <div className="relative w-32 h-32 bg-card rounded-lg overflow-hidden border border-border/60 p-2">
             <OptimizedImage
-              src={product.images[0]}
+              src={featureImage}
               alt={product.name}
               variant="card"
               className="w-full h-full object-contain"
@@ -153,12 +154,12 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
         onFocus={handlePrefetch}
         onTouchStart={handlePrefetch}
       >
-        <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-2 sm:mb-3 p-2 sm:p-3">
+        <div className="relative aspect-square bg-card rounded-lg overflow-hidden border border-border/60 mb-2 sm:mb-3 p-2 sm:p-3">
           <OptimizedImage
-            src={product.images[0]}
+            src={featureImage}
             alt={product.name}
             variant="card"
-            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
+            className="w-full h-full object-contain transition-transform duration-300 motion-safe:group-hover:scale-105"
           />
           
           {/* Badges */}
