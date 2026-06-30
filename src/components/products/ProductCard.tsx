@@ -337,6 +337,8 @@ export const ProductCard = memo(ProductCardComponent, (a, b) =>
   a.product.price === b.product.price &&
   a.product.stock === b.product.stock &&
   a.product.discount === b.product.discount &&
+  a.product.thumbnail === b.product.thumbnail &&
+  a.product.images?.[0] === b.product.images?.[0] &&
   a.product.rating === b.product.rating &&
   a.product.reviewCount === b.product.reviewCount
 ) as typeof ProductCardComponent;
