@@ -16,7 +16,10 @@
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
     "test:seo": "node scripts/run-seo-tests.mjs",
-    "test:seo:ci": "node scripts/run-seo-tests.mjs"
+    "test:seo:ci": "node scripts/run-seo-tests.mjs",
+    "test:rbac": "vitest run src/hooks/__tests__/rbacGuards.test.tsx",
+    "validate:seo": "node scripts/validate-seo.mjs",
+    "test:otp": "deno test --allow-net --allow-env --allow-read supabase/functions/send-otp/index_test.ts supabase/functions/verify-otp/index_test.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
