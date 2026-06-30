@@ -5,6 +5,7 @@ import { adaptDBProducts } from '@/lib/productAdapter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { ProductImageFrame } from '@/components/products/ProductImageFrame';
 import { getProductFeatureImage } from '@/lib/productImage';
 
 export const DealsSection = () => {
@@ -42,17 +43,16 @@ export const DealsSection = () => {
             const featureImage = getProductFeatureImage(product);
             return (
             <Link key={product.id} to={`/product/${product.slug}`} className="group p-4 md:p-6 hover:bg-secondary/50 transition-colors">
-              <div className="relative aspect-square bg-card rounded-lg overflow-hidden border border-border/60 mb-4 p-3">
-                <OptimizedImage
-                  src={featureImage}
-                  alt={product.name}
-                  variant="card"
-                  className="w-full h-full object-contain transition-transform duration-300 motion-safe:group-hover:scale-105"
-                />
+              <ProductImageFrame
+                src={featureImage}
+                alt={product.name}
+                hoverZoom
+                className="mb-4"
+              >
                 <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded">
                   {product.discount}% {t('common.off')}
                 </div>
-              </div>
+              </ProductImageFrame>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">{product.category.name}</p>
                 <h3 className="font-medium text-foreground line-clamp-2 group-hover:text-accent transition-colors">{product.name}</h3>

@@ -12,6 +12,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
 import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { ProductImageFrame } from '@/components/products/ProductImageFrame';
 import { prefetchProduct } from '@/hooks/useProducts';
 import { getProductFeatureImage } from '@/lib/productImage';
 import { toast } from 'sonner';
@@ -73,19 +74,18 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
           onFocus={handlePrefetch}
           onTouchStart={handlePrefetch}
         >
-          <div className="relative w-32 h-32 bg-card rounded-lg overflow-hidden border border-border/60 p-2">
-            <OptimizedImage
-              src={featureImage}
-              alt={product.name}
-              variant="card"
-              className="w-full h-full object-contain"
-            />
+          <ProductImageFrame
+            src={featureImage}
+            alt={product.name}
+            sizeClassName="w-32 h-32"
+            paddingClassName="p-2"
+          >
             {hasDiscount && (
               <Badge className="badge-flash absolute top-2 left-2">
                 -{product.discount}%
               </Badge>
             )}
-          </div>
+          </ProductImageFrame>
         </Link>
         <div className="flex-1 min-w-0">
           <Link to={`/product/${product.slug}`}>
@@ -155,14 +155,12 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
         onFocus={handlePrefetch}
         onTouchStart={handlePrefetch}
       >
-        <div className="relative aspect-square bg-card rounded-lg overflow-hidden border border-border/60 mb-2 sm:mb-3 p-2 sm:p-3">
-          <OptimizedImage
-            src={featureImage}
-            alt={product.name}
-            variant="card"
-            className="w-full h-full object-contain transition-transform duration-300 motion-safe:group-hover:scale-105"
-          />
-          
+        <ProductImageFrame
+          src={featureImage}
+          alt={product.name}
+          hoverZoom
+          className="mb-2 sm:mb-3"
+        >
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
             {product.isFlashSale && (
@@ -191,7 +189,7 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
               </span>
             </div>
           )}
-        </div>
+        </ProductImageFrame>
       </Link>
 
       {/* Content */}
