@@ -71,7 +71,8 @@ if (existsSync(affPath)) {
 const prodPath = resolve(rootDir, 'src/pages/ProductDetail.tsx');
 if (existsSync(prodPath)) {
   const src = readFileSync(prodPath, 'utf8');
-  if (!/"Product"|schema\.org\/Product/.test(src)) fail('ProductDetail missing Product JSON-LD');
+  if (!/'@type':\s*'Product'|"@type":\s*"Product"|schema\.org\/Product/.test(src))
+    fail('ProductDetail missing Product JSON-LD');
   else ok('ProductDetail injects Product JSON-LD');
 }
 
