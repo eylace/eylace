@@ -33,11 +33,6 @@ const OptimizedImageInner = ({
     ...rest,
     width,
     height,
-    style: {
-      maxWidth: '100%',
-      height: 'auto',
-      ...rest.style,
-    },
   };
 
   if (!sources) {
