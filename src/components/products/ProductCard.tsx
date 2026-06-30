@@ -12,6 +12,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
 import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { ProductImageFrame } from '@/components/products/ProductImageFrame';
 import { prefetchProduct } from '@/hooks/useProducts';
 import { getProductFeatureImage } from '@/lib/productImage';
 import { toast } from 'sonner';
