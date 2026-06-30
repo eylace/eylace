@@ -71,12 +71,12 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
           onFocus={handlePrefetch}
           onTouchStart={handlePrefetch}
         >
-          <div className="relative w-32 h-32 bg-secondary rounded-lg overflow-hidden">
+          <div className="relative w-32 h-32 bg-secondary rounded-lg overflow-hidden p-2">
             <OptimizedImage
               src={product.images[0]}
               alt={product.name}
               variant="card"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
             {hasDiscount && (
               <Badge className="badge-flash absolute top-2 left-2">
@@ -153,12 +153,12 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
         onFocus={handlePrefetch}
         onTouchStart={handlePrefetch}
       >
-        <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-2 sm:mb-3">
+        <div className="relative aspect-square bg-secondary rounded-lg overflow-hidden mb-2 sm:mb-3 p-2 sm:p-3">
           <OptimizedImage
             src={product.images[0]}
             alt={product.name}
             variant="card"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300"
           />
           
           {/* Badges */}
