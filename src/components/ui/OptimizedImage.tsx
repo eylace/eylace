@@ -1,5 +1,5 @@
 import { ImgHTMLAttributes, memo } from 'react';
-import { buildProductImageSources, ProductImageVariant } from '@/lib/productImage';
+import { buildProductImageSources, ProductImageVariant, PRODUCT_IMAGE_DIMENSIONS } from '@/lib/productImage';
 
 interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'srcSet' | 'sizes'> {
   src?: string;
@@ -26,6 +26,14 @@ const OptimizedImageInner = ({
   const sources = buildProductImageSources(src, variant);
   const finalLoading = loading ?? (priority ? 'eager' : 'lazy');
   const fetchPriority = priority ? 'high' : 'auto';
+  const fallbackDimensions = PRODUCT_IMAGE_DIMENSIONS[variant];
+  const width = rest.width ?? sources?.width ?? fallbackDimensions.width;
+  const height = rest.height ?? sources?.height ?? fallbackDimensions.height;
+  const imgProps = {
+    ...rest,
+    width,
+    height,
+  };
 
   if (!sources) {
     return (
@@ -35,7 +43,7 @@ const OptimizedImageInner = ({
         decoding={decoding}
         // @ts-expect-error fetchpriority is a valid HTML attribute
         fetchpriority={fetchPriority}
-        {...rest}
+        {...imgProps}
       />
     );
   }
@@ -57,7 +65,7 @@ const OptimizedImageInner = ({
         decoding={decoding}
         // @ts-expect-error fetchpriority is a valid HTML attribute
         fetchpriority={fetchPriority}
-        {...rest}
+        {...imgProps}
       />
     </picture>
   );

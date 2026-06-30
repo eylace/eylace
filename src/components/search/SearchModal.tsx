@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { useCategories, useProducts } from '@/hooks/useProducts';
 import { adaptDBProducts } from '@/lib/productAdapter';
 import { useAISearch } from '@/hooks/useAISearch';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
+import { getProductFeatureImage } from '@/lib/productImage';
 
 interface SearchModalProps {
   open: boolean;
@@ -196,11 +198,12 @@ export const SearchModal = ({ open, onOpenChange }: SearchModalProps) => {
                     onClick={() => handleProductClick(product.slug)}
                     className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-secondary transition-colors text-left"
                   >
-                    <div className="w-12 h-12 bg-secondary rounded-lg overflow-hidden shrink-0">
-                      <img
-                        src={product.images[0]}
+                    <div className="w-12 h-12 bg-card rounded-lg overflow-hidden shrink-0 border border-border/60 p-1">
+                      <OptimizedImage
+                        src={getProductFeatureImage(product)}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        variant="card"
+                        className="w-full h-full object-contain"
                       />
                     </div>
                     <div className="flex-1 min-w-0">

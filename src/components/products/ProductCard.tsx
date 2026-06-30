@@ -13,6 +13,7 @@ import { useCart } from '@/contexts/CartContext';
 import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { prefetchProduct } from '@/hooks/useProducts';
+import { getProductFeatureImage } from '@/lib/productImage';
 import { toast } from 'sonner';
 
 interface ProductCardProps {
@@ -32,7 +33,7 @@ const ProductCardComponent = forwardRef<HTMLDivElement, ProductCardProps>(({ pro
   const hasDiscount = product.discount && product.discount > 0;
   const isOutOfStock = product.stock === 0;
   const isWishlisted = isInWishlist(product.id);
-  const featureImage = product.thumbnail || product.images?.[0] || '/placeholder.svg';
+  const featureImage = getProductFeatureImage(product);
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();

@@ -28,6 +28,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWebsiteSetup } from '@/hooks/useWebsiteSetup';
 import { setBuyNowCheckoutItem } from '@/lib/checkoutSession';
+import { getProductFeatureImage } from '@/lib/productImage';
 import { Loader2 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 
@@ -91,7 +92,7 @@ const ProductDetail = () => {
       // Put the variant's hero image first, keep the rest as fallbacks
       return Array.from(new Set([matchedVariant.image, ...(product.images || [])]));
     }
-    return product.images || [];
+    return Array.from(new Set([getProductFeatureImage(product), ...(product.images || [])]));
   })();
 
   const displayRating = liveReviewStats?.averageRating ?? product?.rating ?? 0;
@@ -113,7 +114,7 @@ const ProductDetail = () => {
     const keywords = product.metaKeywords || (product.tags || []).join(', ') || product.name;
     // Best-available image: explicit meta image → first product image → first video thumbnail (if exposed via attributes)
     const fallbackVideoThumb = (product as any)?.attributes?.video_thumbnails?.[0] || '';
-    const image = product.metaImage || product.images?.[0] || fallbackVideoThumb || '';
+    const image = product.metaImage || getProductFeatureImage(product, '') || fallbackVideoThumb || '';
     const url = product.canonicalUrl || `${window.location.origin}/product/${product.slug}`;
 
     document.title = title;

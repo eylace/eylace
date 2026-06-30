@@ -848,11 +848,11 @@ const AdminAddProduct = () => {
           <Card>
             <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Thumbnail Image</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-xs text-muted-foreground">This image is visible in all product box. Minimum dimensions required: 195px width X 195px height. Keep some blank space around main object of your image as we had to crop some edge in different devices to make it responsive. If no thumbnail is uploaded, the product's first gallery image will be used as the thumbnail image.</p>
+              <p className="text-xs text-muted-foreground">This image is visible in all product boxes. Minimum dimensions required: 195px width X 195px height. Upload a clear square or centered product image; the storefront will show it fully without cropping or stretching. If no thumbnail is uploaded, the product's first gallery image will be used.</p>
               <div className="flex items-center gap-3">
                 {form.thumbnail && (
                   <div className="relative h-24 w-24 rounded-lg border border-border overflow-hidden group">
-                    <img src={form.thumbnail} alt="Thumbnail" className="h-full w-full object-cover" />
+                    <img src={form.thumbnail} alt="Thumbnail" className="h-full w-full object-contain bg-card p-1" />
                     <button onClick={() => setForm(f => ({ ...f, thumbnail: '' }))} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="h-3 w-3" /></button>
                   </div>
                 )}
