@@ -336,7 +336,7 @@ export const paymentMethods = [
 
 export const SSLCommerzBadge = ({ className = "h-8" }: { className?: string }) => (
   <div className="flex flex-col items-center gap-1">
-    <span className="text-xs text-primary-foreground/60">Verified By</span>
+    <span className="text-xs text-primary-foreground/90">Verified By</span>
     <SSLCommerzIcon className={className} />
   </div>
 );
