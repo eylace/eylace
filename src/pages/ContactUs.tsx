@@ -63,6 +63,7 @@ const ContactUs = () => {
       </section>
 
       <section className="container-main py-12">
+        <h2 className="text-2xl font-bold text-foreground mb-6">Get in Touch</h2>
         <div className="grid md:grid-cols-2 gap-6 mb-12">
           {contactInfo.map(({ icon: Icon, title, value, sub }) => (
             <Card key={title}>
