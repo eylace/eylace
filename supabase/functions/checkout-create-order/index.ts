@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     const {
       order_number,
       shipping: _clientShippingIgnored,
-      tax: clientTax,
+      tax: _clientTaxIgnored,
       coupon_code,
       total,
       payment_method,
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       guest_phone,
       items,
       advance_courier_payment_ref,
-      advance_courier_amount,
+      advance_courier_amount: _clientAdvanceAmountIgnored,
       carrier: clientCarrier,
     } = body;
 
@@ -149,10 +149,32 @@ Deno.serve(async (req) => {
       user_id: userId,
     };
 
-    // Optional: advance courier-charge prepaid online (COD orders)
+    // Optional: advance courier-charge prepaid online (COD orders).
+    // Verify the referenced payment actually completed successfully and
+    // read the trusted amount from the DB — never from the client body.
+    let verifiedAdvanceAmount = 0;
     if (advance_courier_payment_ref) {
-      orderPayload.advance_courier_payment_ref = String(advance_courier_payment_ref);
-      orderPayload.advance_courier_amount = Math.max(0, Number(advance_courier_amount) || 0);
+      const ref = String(advance_courier_payment_ref);
+      const { data: advPayment, error: advErr } = await supabaseAdmin
+        .from('courier_advance_payments')
+        .select('id, amount, status, order_id')
+        .eq('txn_ref', ref)
+        .maybeSingle();
+      if (advErr || !advPayment || advPayment.status !== 'success') {
+        return new Response(
+          JSON.stringify({ error: 'Advance courier payment not verified' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      if (advPayment.order_id) {
+        return new Response(
+          JSON.stringify({ error: 'Advance courier payment already used' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      verifiedAdvanceAmount = Math.max(0, Number(advPayment.amount) || 0);
+      orderPayload.advance_courier_payment_ref = ref;
+      orderPayload.advance_courier_amount = verifiedAdvanceAmount;
     }
 
     // For guest orders, set contact fields
@@ -267,7 +289,9 @@ Deno.serve(async (req) => {
       console.error('compute_shipping_amount failed:', e);
       safeShipping = 0;
     }
-    const safeTax = Math.max(0, Number(clientTax) || 0);
+    // Tax is not client-supplied. If a future config introduces tax, compute it
+    // server-side from system_settings here.
+    const safeTax = 0;
 
     // Server-side coupon validation — never trust client-supplied discount
     let safeDiscount = 0;
@@ -326,11 +350,22 @@ Deno.serve(async (req) => {
 
     if (itemsError) {
       console.error('Order items insert error:', itemsError);
-      // Still return order since it was created
+      // Roll back the order shell and return a generic error — do not leak
+      // internal database error messages to the client.
+      await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
       return new Response(
-        JSON.stringify({ order: finalOrder, items_error: itemsError.message }),
-        { status: 207, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        JSON.stringify({ error: 'Failed to save order items. Please try again or contact support.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
+    }
+
+    // Link the verified advance payment to the created order so it cannot be reused.
+    if (advance_courier_payment_ref) {
+      await supabaseAdmin
+        .from('courier_advance_payments')
+        .update({ order_id: orderData.id })
+        .eq('txn_ref', String(advance_courier_payment_ref))
+        .is('order_id', null);
     }
 
     return new Response(
