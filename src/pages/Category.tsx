@@ -164,6 +164,7 @@ const Category = () => {
         <div className="flex gap-8">
           {/* Desktop Filters Sidebar */}
           <aside className="hidden lg:block w-64 shrink-0">
+            <h2 className="sr-only">Product Filters</h2>
             <SearchFiltersPanel
               filters={{ ...filters, category: slug || null }}
               updateFilter={updateFilter}
@@ -175,6 +176,7 @@ const Category = () => {
 
           {/* Main Content */}
           <div className="flex-1">
+            <h2 className="sr-only">Products in {category.name}</h2>
             {/* Toolbar */}
             <div className="flex items-center justify-between gap-4 mb-6 p-4 bg-card rounded-lg border border-border py-[5px]">
               {/* Mobile Filter Button */}
