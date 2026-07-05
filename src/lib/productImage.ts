@@ -78,17 +78,17 @@ export function buildProductImageSources(
   const defaultWidth = dimensions.width;
 
   const srcSet = widths
-    .map((w) => `${withParams(base, { width: w, quality: 75 })} ${w}w`)
+    .map((w) => `${withParams(base, { width: w, height: w, resize: 'contain', quality: 75 })} ${w}w`)
     .join(', ');
   const avifSrcSet = widths
-    .map((w) => `${withParams(base, { width: w, quality: 65, format: 'avif' })} ${w}w`)
+    .map((w) => `${withParams(base, { width: w, height: w, resize: 'contain', quality: 65, format: 'avif' })} ${w}w`)
     .join(', ');
   const webpSrcSet = widths
-    .map((w) => `${withParams(base, { width: w, quality: 72, format: 'webp' })} ${w}w`)
+    .map((w) => `${withParams(base, { width: w, height: w, resize: 'contain', quality: 72, format: 'webp' })} ${w}w`)
     .join(', ');
 
   return {
-    src: withParams(base, { width: defaultWidth, quality: 75 }),
+    src: withParams(base, { width: defaultWidth, height: defaultWidth, resize: 'contain', quality: 75 }),
     srcSet,
     sizes,
     avifSrcSet,
