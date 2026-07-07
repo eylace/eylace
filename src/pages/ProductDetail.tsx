@@ -15,6 +15,7 @@ import { QuantitySelector } from '@/components/products/QuantitySelector';
 import { ReviewsSection } from '@/components/products/ReviewsSection';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ProductGrid } from '@/components/products/ProductGrid';
+import { RecommendedSidebar } from '@/components/products/RecommendedSidebar';
 import { useProduct, useProducts } from '@/hooks/useProducts';
 import { adaptDBProduct, adaptDBProducts } from '@/lib/productAdapter';
 import { supabase } from '@/integrations/supabase/client';
@@ -62,10 +63,12 @@ const ProductDetail = () => {
   const [liveReviewStats, setLiveReviewStats] = useState<{ averageRating: number; totalReviews: number } | null>(null);
    
   const { product: dbProduct, isLoading, error } = useProduct(slug || '');
-  const { products: relatedDbProducts, isLoading: relatedLoading } = useProducts({ limit: 5 });
-   
   const product = dbProduct ? adaptDBProduct(dbProduct) : null;
-  const relatedProducts = adaptDBProducts(relatedDbProducts);
+  const { products: relatedDbProducts } = useProducts({
+    categorySlug: product?.category?.slug,
+    limit: 10,
+  });
+  const relatedProducts = adaptDBProducts(relatedDbProducts).filter((p) => p.id !== product?.id);
 
   // === Variant resolution ====================================================
   // When the customer picks a Color/Size combination, look up the matching
@@ -284,12 +287,12 @@ const ProductDetail = () => {
         </nav>
 
         {/* Main Product Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_340px] gap-8 mb-12">
           <div className="lg:sticky lg:top-24 lg:self-start">
             <ImageGallery images={galleryImages} productName={product.name} />
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Badges */}
             <div className="flex flex-wrap gap-2">
               {product.isFlashSale && (
@@ -599,6 +602,14 @@ const ProductDetail = () => {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Recommended Sidebar (same-category picks) */}
+          <div className="hidden xl:block">
+            <RecommendedSidebar
+              categorySlug={product.category?.slug}
+              excludeProductId={product.id}
+            />
           </div>
         </div>
 
