@@ -613,6 +613,15 @@ const ProductDetail = () => {
           </div>
         </div>
 
+        {/* Mobile / tablet recommended (collapsible horizontal scroller) */}
+        <div className="xl:hidden mb-8">
+          <RecommendedSidebar
+            variant="mobile"
+            categorySlug={product.category?.slug}
+            excludeProductId={product.id}
+          />
+        </div>
+
         {/* Tabs Section */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-12">
           <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent" ref={reviewsRef}>
