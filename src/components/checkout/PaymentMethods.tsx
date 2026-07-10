@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { CreditCard, Banknote, Globe, Tag, Truck, CheckCircle2 } from 'lucide-react';
+import { CreditCard, Banknote, Globe, Tag, Truck, CheckCircle2, Percent } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -53,11 +52,12 @@ interface GatewayOption {
 }
 
 export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps) => {
-  const [selectedMethod, setSelectedMethod] = useState('');
   const [gateways, setGateways] = useState<GatewayOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [advanceModalOpen, setAdvanceModalOpen] = useState(false);
-  const { register, formState: { errors }, setValue } = form;
+  const [topChoice, setTopChoice] = useState<'cod' | 'online'>('cod');
+  const [onlineGatewayId, setOnlineGatewayId] = useState<string>('');
+  const { setValue } = form;
   const { t } = useLanguage();
   const setup = useWebsiteSetup();
   const { formatPrice } = useCurrency();
@@ -84,19 +84,14 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
           isCOD: ['cash', 'cod'].includes(g.gateway_key),
         }));
         setGateways(options);
-        setSelectedMethod(options[0]?.id || '');
-        setValue('paymentMethod', options[0]?.id || '');
       } else {
         const fallback: GatewayOption[] = [
           { id: 'cod', name: 'Cash on Delivery (COD)', description: 'ডেলিভারির সময় পেমেন্ট করুন', fallbackIcon: Banknote, needsCard: false, needsRedirect: false, isCOD: true },
           { id: 'bkash', name: 'bKash', description: 'bKash মোবাইল ব্যাংকিং', logo: bkashLogo, needsCard: false, needsRedirect: true, isCOD: false },
           { id: 'nagad', name: 'Nagad', description: 'Nagad ডিজিটাল পেমেন্ট', logo: nagadLogo, needsCard: false, needsRedirect: true, isCOD: false },
           { id: 'rocket', name: 'Rocket', description: 'DBBL Rocket', logo: rocketLogo, needsCard: false, needsRedirect: true, isCOD: false },
-          { id: 'card', name: 'Credit/Debit Card', description: t('payment.creditDebitDesc'), fallbackIcon: CreditCard, needsCard: true, needsRedirect: false, isCOD: false },
         ];
         setGateways(fallback);
-        setSelectedMethod('cod');
-        setValue('paymentMethod', 'cod');
       }
       setLoading(false);
     };
@@ -122,54 +117,96 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
 
   if (loading) return <div className="animate-pulse h-40 bg-muted rounded-lg" />;
 
-  const codGateways = gateways.filter(g => g.isCOD);
-  const onlineGateways = gateways.filter(g => !g.isCOD);
+  const onlineGateways = useMemo(
+    () => gateways.filter(g => !g.isCOD && !g.needsCard),
+    [gateways],
+  );
 
-  const handleSelect = (value: string) => {
-    setSelectedMethod(value);
-    setValue('paymentMethod', value);
-  };
+  // Keep form's paymentMethod in sync with top-level choice + online gateway selection.
+  useEffect(() => {
+    if (topChoice === 'cod') {
+      setValue('paymentMethod', 'cod', { shouldDirty: true });
+      // clear stale card fields
+      setValue('cardNumber', '');
+      setValue('cardName', '');
+      setValue('cardExpiry', '');
+      setValue('cardCvv', '');
+    } else {
+      const first = onlineGatewayId || onlineGateways[0]?.id || '';
+      if (!onlineGatewayId && first) setOnlineGatewayId(first);
+      setValue('paymentMethod', first, { shouldDirty: true });
+      // clear any advance-courier state if user switches away from COD
+      setValue('advanceCourierPaymentRef', '');
+      setValue('advanceCourierAmount', 0);
+      setValue('advanceCourierGateway', '');
+    }
+  }, [topChoice, onlineGatewayId, onlineGateways, setValue]);
 
-  const renderGateway = (method: GatewayOption) => (
-    <div key={method.id}>
-      <label htmlFor={method.id} className={cn(
-        "flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all",
-        selectedMethod === method.id ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
-      )}>
-        <RadioGroupItem value={method.id} id={method.id} />
-        {method.logo ? (
-          <img src={method.logo} alt={method.name} className="h-7 w-7 object-contain shrink-0 rounded" loading="lazy" />
-        ) : method.fallbackIcon ? (
-          <method.fallbackIcon className="h-5 w-5 text-muted-foreground shrink-0" />
-        ) : (
-          <Globe className="h-5 w-5 text-muted-foreground shrink-0" />
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm text-foreground">{method.name}</p>
-          <p className="text-xs text-muted-foreground truncate">{method.description}</p>
-        </div>
-      </label>
-      {selectedMethod === method.id && method.needsCard && (
-        <div className="mt-3 ml-10 space-y-3 p-3 bg-secondary/50 rounded-lg">
-          <div className="space-y-1"><Label htmlFor="cardNumber" className="text-xs">{t('payment.cardNumber')} *</Label><Input id="cardNumber" placeholder="1234 5678 9012 3456" {...register('cardNumber', { required: selectedMethod === method.id })} className={cn("h-8 text-sm", errors.cardNumber && 'border-destructive')} /></div>
-          <div className="space-y-1"><Label htmlFor="cardName" className="text-xs">{t('payment.nameOnCard')} *</Label><Input id="cardName" {...register('cardName', { required: selectedMethod === method.id })} className={cn("h-8 text-sm", errors.cardName && 'border-destructive')} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1"><Label htmlFor="cardExpiry" className="text-xs">{t('payment.expiryDate')} *</Label><Input id="cardExpiry" placeholder="MM/YY" {...register('cardExpiry', { required: selectedMethod === method.id })} className={cn("h-8 text-sm", errors.cardExpiry && 'border-destructive')} /></div>
-            <div className="space-y-1"><Label htmlFor="cardCvv" className="text-xs">{t('payment.cvv')} *</Label><Input id="cardCvv" type="password" placeholder="123" maxLength={4} {...register('cardCvv', { required: selectedMethod === method.id })} className={cn("h-8 text-sm", errors.cardCvv && 'border-destructive')} /></div>
+  const offerPct = Number(setup.prepaymentOfferPercent) || 0;
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-bold text-foreground">{t('payment.title')}</h2>
+
+      <RadioGroup
+        value={topChoice}
+        onValueChange={(v) => setTopChoice(v as 'cod' | 'online')}
+        className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+      >
+        {/* COD top-level */}
+        <label
+          htmlFor="top-cod"
+          className={cn(
+            'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all',
+            topChoice === 'cod' ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/50',
+          )}
+        >
+          <RadioGroupItem value="cod" id="top-cod" className="mt-1" />
+          <Banknote className="h-6 w-6 text-accent shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <p className="font-semibold text-sm text-foreground">Cash on Delivery</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              ডেলিভারির সময় পণ্যের মূল্য পরিশোধ করুন। ডেলিভারি চার্জ অগ্রিম দিতে হবে।
+            </p>
           </div>
-        </div>
-      )}
-      {selectedMethod === method.id && method.needsRedirect && (
-        <div className="mt-3 ml-10 p-3 bg-secondary/50 rounded-lg"><p className="text-xs text-muted-foreground">{t('payment.redirectMsg')}</p></div>
-      )}
-      {selectedMethod === method.id && method.isCOD && (
-        <div className="mt-3 ml-10 p-3 bg-accent/5 border border-accent/30 rounded-lg space-y-2">
+        </label>
+
+        {/* Online top-level */}
+        <label
+          htmlFor="top-online"
+          className={cn(
+            'relative flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all',
+            topChoice === 'online' ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/50',
+          )}
+        >
+          <RadioGroupItem value="online" id="top-online" className="mt-1" />
+          <CreditCard className="h-6 w-6 text-accent shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <p className="font-semibold text-sm text-foreground">Online Payment</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              bKash, Nagad ও অন্যান্য অনলাইন পেমেন্টে সম্পূর্ণ পরিশোধ করুন।
+            </p>
+            {setup.prepaymentOfferEnabled && offerPct > 0 && (
+              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                <Percent className="h-3 w-3" /> {offerPct}% OFF
+              </span>
+            )}
+          </div>
+        </label>
+      </RadioGroup>
+
+      {/* COD panel: advance courier charge */}
+      {topChoice === 'cod' && (
+        <div className="p-4 rounded-lg border-2 border-accent/30 bg-accent/5 space-y-3">
           <div className="flex items-center gap-2">
             <Truck className="h-4 w-4 text-accent shrink-0" />
             <span className="text-sm font-semibold text-foreground">
               {t('payment.advanceCourierTitle') || 'Pay Courier Charge in Advance'}
             </span>
           </div>
+          <p className="text-xs text-muted-foreground">
+            COD অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ অনলাইনে পরিশোধ করতে হবে। পণ্যের মূল্য পরে ডেলিভারিম্যানকে দেবেন।
+          </p>
           {advancePaidRef ? (
             <div className="flex items-center gap-2 text-xs text-success">
               <CheckCircle2 className="h-4 w-4" />
@@ -182,10 +219,9 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
             <Button
               type="button"
               size="sm"
-              variant="outline"
-              className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+              className="w-full"
               onClick={() => setAdvanceModalOpen(true)}
-              disabled={courierAmount <= 0}
+              disabled={courierAmount <= 0 || onlineGateways.length === 0}
             >
               {courierAmount > 0
                 ? `${t('payment.payCourierBtn') || 'Pay Courier Charge'} — ${formatPrice(courierAmount)}`
@@ -194,54 +230,66 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
           )}
         </div>
       )}
-    </div>
-  );
 
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-foreground">{t('payment.title')}</h2>
-
-      <RadioGroup value={selectedMethod} onValueChange={handleSelect} className="space-y-2">
-        {/* COD Section */}
-        {codGateways.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Banknote className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cash on Delivery</span>
+      {/* Online panel: gateway sub-selection + discount info */}
+      {topChoice === 'online' && (
+        <div className="p-4 rounded-lg border-2 border-accent/30 bg-accent/5 space-y-3">
+          {setup.prepaymentOfferEnabled && offerPct > 0 && (
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent/10 border border-accent/30">
+              <Tag className="h-4 w-4 text-accent shrink-0" />
+              <p className="text-xs font-semibold text-accent">
+                {setup.prepaymentOfferText || `অনলাইনে পেমেন্ট করলে ${offerPct}% ছাড় স্বয়ংক্রিয়ভাবে প্রয়োগ হবে।`}
+              </p>
             </div>
-            {codGateways.map(renderGateway)}
-          </div>
-        )}
+          )}
 
-        {/* Offer Banner */}
-        {setup.prepaymentOfferEnabled && onlineGateways.length > 0 && (
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-accent/10 border border-accent/30">
-            <Tag className="h-4 w-4 text-accent shrink-0" />
-            <p className="text-xs font-semibold text-accent">
-              {setup.prepaymentOfferText || `পেমেন্ট করে অর্ডার করলেই ${setup.prepaymentOfferPercent}% ছাড়!`}
+          {onlineGateways.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-2">
+              No online payment methods are enabled right now.
             </p>
-          </div>
-        )}
-
-        {/* Online Payment Section */}
-        {onlineGateways.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Online Payment</span>
-            </div>
-            {onlineGateways.map(renderGateway)}
-          </div>
-        )}
-      </RadioGroup>
+          ) : (
+            <RadioGroup
+              value={onlineGatewayId}
+              onValueChange={setOnlineGatewayId}
+              className="space-y-2"
+            >
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Select payment method
+              </p>
+              {onlineGateways.map((g) => (
+                <label
+                  key={g.id}
+                  htmlFor={`og-${g.id}`}
+                  className={cn(
+                    'flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all bg-background',
+                    onlineGatewayId === g.id ? 'border-accent' : 'border-border hover:border-accent/50',
+                  )}
+                >
+                  <RadioGroupItem value={g.id} id={`og-${g.id}`} />
+                  {g.logo ? (
+                    <img src={g.logo} alt={g.name} className="h-7 w-7 object-contain shrink-0 rounded" loading="lazy" />
+                  ) : (
+                    <Globe className="h-5 w-5 text-muted-foreground shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-foreground">{g.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{g.description}</p>
+                  </div>
+                </label>
+              ))}
+              <p className="text-xs text-muted-foreground pt-1">
+                {t('payment.redirectMsg') || 'You will be redirected to the payment gateway to complete your payment.'}
+              </p>
+            </RadioGroup>
+          )}
+        </div>
+      )}
 
       <AdvanceCourierChargeModal
         open={advanceModalOpen}
         onClose={() => setAdvanceModalOpen(false)}
         amount={courierAmount}
-        gateways={onlineGateways
-          .filter((g) => !g.needsCard)
-          .map<AdvanceGatewayOption>((g) => ({ id: g.id, name: g.name, logo: g.logo }))}
+        gateways={onlineGateways.map<AdvanceGatewayOption>((g) => ({ id: g.id, name: g.name, logo: g.logo }))}
         onConfirmed={(ref, gatewayId) => {
           setValue('advanceCourierPaymentRef', ref, { shouldDirty: true });
           setValue('advanceCourierAmount', courierAmount, { shouldDirty: true });

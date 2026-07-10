@@ -604,6 +604,11 @@ const Checkout = () => {
         toast.error('COD অর্ডারের জন্য ফোন নম্বর দিন');
         return;
       }
+      const advRef = (data as any).advanceCourierPaymentRef;
+      if (!advRef) {
+        toast.error('COD অর্ডার নিশ্চিত করার আগে ডেলিভারি চার্জ অগ্রিম পরিশোধ করুন।');
+        return;
+      }
       setPendingCodData(data);
       pendingCodDataRef.current = data;
       setShowCodOtp(true);
