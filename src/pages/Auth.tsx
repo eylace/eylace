@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -36,6 +36,10 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rawNext = searchParams.get('next') || '';
+  // Only accept same-origin relative paths starting with a single '/'.
+  const nextPath = /^\/(?!\/)/.test(rawNext) ? rawNext : '/';
   const { user, signIn, signUp, loading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,7 +55,7 @@ const Auth = () => {
 
   const [resetEmail, setResetEmail] = useState('');
 
-  useEffect(() => { if (user && !loading) navigate('/'); }, [user, loading, navigate]);
+  useEffect(() => { if (user && !loading) navigate(nextPath); }, [user, loading, navigate, nextPath]);
 
   const handleLogin = async (data: LoginFormData) => {
     setIsSubmitting(true);
@@ -64,7 +68,7 @@ const Auth = () => {
       return;
     }
     toast.success('Welcome back!');
-    navigate('/');
+    navigate(nextPath);
   };
 
   const handleSignup = async (data: SignupFormData) => {
