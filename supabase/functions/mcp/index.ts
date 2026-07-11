@@ -3,7 +3,7 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/search-products.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
@@ -93,11 +93,16 @@ var list_categories_default = defineTool3({
 });
 
 // src/lib/mcp/index.ts
+var projectRef = "jmowninkqcfgwldyjeqo";
 var mcp_default = defineMcp({
   name: "eylace-mcp",
   title: "Eylace Storefront MCP",
   version: "0.1.0",
   instructions: "Tools for the Eylace multi-vendor storefront. Use `search_products` to find items by keyword, `get_product` for full details by slug, and `list_categories` to browse the catalog structure.",
+  auth: auth.oauth.issuer({
+    issuer: `https://${projectRef}.supabase.co/auth/v1`,
+    acceptedAudiences: "authenticated"
+  }),
   tools: [search_products_default, get_product_default, list_categories_default]
 });
 
