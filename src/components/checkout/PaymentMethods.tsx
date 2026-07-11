@@ -115,8 +115,6 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
     return map[key] || 'Online Payment';
   };
 
-  if (loading) return <div className="animate-pulse h-40 bg-muted rounded-lg" />;
-
   const onlineGateways = useMemo(
     () => gateways.filter(g => !g.isCOD && !g.needsCard),
     [gateways],
@@ -143,6 +141,8 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
   }, [topChoice, onlineGatewayId, onlineGateways, setValue]);
 
   const offerPct = Number(setup.prepaymentOfferPercent) || 0;
+
+  if (loading) return <div className="animate-pulse h-40 bg-muted rounded-lg" />;
 
   return (
     <div className="space-y-4">
