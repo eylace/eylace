@@ -197,6 +197,7 @@ const AdminStockManagement = lazyWithRetry(() => import("./pages/AdminStockManag
 const CmsPage = lazyWithRetry(() => import("./pages/CmsPage"));
 const AdminAccounting = lazyWithRetry(() => import("./pages/AdminAccounting"));
 const AdminCourierExpenses = lazyWithRetry(() => import("./pages/AdminCourierExpenses"));
+const OAuthConsent = lazyWithRetry(() => import("./pages/OAuthConsent"));
 
 const AIChatWidget = lazyWithRetry(() => import("./components/chat/AIChatWidget").then(m => ({ default: m.AIChatWidget })));
 const TrackingScriptInjector = lazyWithRetry(() => import("./components/tracking/TrackingScriptInjector").then(m => ({ default: m.TrackingScriptInjector })));
@@ -291,6 +292,7 @@ const App = () => (
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/category/:slug" element={<Category />} />
                 <Route path="/categories" element={<Categories />} />
