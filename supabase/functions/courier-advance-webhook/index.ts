@@ -102,6 +102,42 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = JSON.parse(raw); } catch { return json(400, { error: 'Invalid JSON' }); }
 
+  // ── Replay protection: reject stale events and record event id ──
+  // Timestamp freshness (accept ±5 min skew). Providers send an epoch/ISO ts.
+  const tsRaw = body.timestamp ?? body.event_time ?? body.paymentExecuteTime ?? body.datetime ?? null;
+  if (tsRaw != null) {
+    const t = typeof tsRaw === 'number' ? tsRaw : Date.parse(String(tsRaw));
+    const ms = t < 1e12 ? t * 1000 : t; // seconds → ms if needed
+    if (Number.isFinite(ms) && Math.abs(Date.now() - ms) > 5 * 60 * 1000) {
+      return json(401, { error: 'Stale webhook event' });
+    }
+  }
+
+  // Derive a stable external event id per gateway. Fallback to sha256(raw).
+  const eventId: string = String(
+    body.event_id ?? body.eventId ?? body.webhookId ?? body.notification_id ?? body.paymentID ??
+    body.trxID ?? body.payment_ref_id ?? body.order_id ?? '',
+  ) || (await (async () => {
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+    return Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  })());
+
+  const payloadHash = await (async () => {
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+    return Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  })();
+
+  const { error: dupErr } = await supabase
+    .from('webhook_idempotency')
+    .insert({ gateway, external_event_id: eventId, payload_hash: payloadHash });
+  if (dupErr) {
+    if ((dupErr as any).code === '23505') {
+      return json(200, { ok: true, duplicate: true });
+    }
+    console.error('[webhook_idempotency insert]', dupErr);
+    return json(500, { error: 'Idempotency store failure' });
+  }
+
   // Normalize per gateway
   let txnRef = '', status = '', gatewayPaymentId: string | null = null, amount: number | null = null;
   if (gateway === 'bkash') {
