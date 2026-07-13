@@ -62,6 +62,41 @@ Deno.serve(async (req) => {
     let body: any;
     try { body = JSON.parse(raw); } catch { return json(400, { ok: false, error: 'Invalid JSON' }); }
 
+    // ── Replay protection ─────────────────────────────────────
+    const tsRaw = body?.timestamp ?? body?.event_time ?? body?.updated_at ?? body?.datetime ?? null;
+    if (tsRaw != null) {
+      const t = typeof tsRaw === 'number' ? tsRaw : Date.parse(String(tsRaw));
+      const ms = t < 1e12 ? t * 1000 : t;
+      if (Number.isFinite(ms) && Math.abs(Date.now() - ms) > 10 * 60 * 1000) {
+        return json(401, { ok: false, error: 'Stale webhook event' });
+      }
+    }
+    const sha256Hex = async (s: string) => {
+      const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+      return Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2, '0')).join('');
+    };
+    const payloadHash = await sha256Hex(raw);
+    const eventId: string = String(
+      body?.event_id ?? body?.eventId ?? body?.webhook_id ?? body?.notification_id ??
+      body?.id ?? body?.consignment_id ?? body?.awb ?? body?.tracking_code ?? '',
+    ) || payloadHash;
+
+    const supabaseIdem = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      { auth: { persistSession: false } },
+    );
+    const { error: dupErr } = await supabaseIdem
+      .from('webhook_idempotency')
+      .insert({ gateway: provider, external_event_id: `${eventId}:${payloadHash.slice(0, 16)}`, payload_hash: payloadHash });
+    if (dupErr) {
+      if ((dupErr as any).code === '23505') {
+        return json(200, { ok: true, duplicate: true });
+      }
+      console.error('[webhook_idempotency insert]', dupErr);
+      return json(500, { ok: false, error: 'Idempotency store failure' });
+    }
+
     // ─── Normalize event payload across providers ──────────────
     let tracking = '', status = '', location: string | undefined, description: string | undefined;
     if (provider === 'pathao') {
