@@ -17,11 +17,19 @@ export default defineTool({
       process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY!,
     );
     const max = limit ?? 10;
+    // Escape PostgREST-significant characters to prevent filter injection via .or()
+    const safeQuery = query.replace(/[,()*.\\]/g, " ").replace(/%/g, "").trim().slice(0, 100);
+    if (!safeQuery) {
+      return {
+        content: [{ type: "text", text: JSON.stringify([], null, 2) }],
+        structuredContent: { products: [] },
+      };
+    }
     const { data, error } = await supabase
       .from("products")
       .select("name, price, stock, slug, description")
       .eq("is_active", true)
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+      .or(`name.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%`)
       .limit(max);
     if (error) {
       return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
