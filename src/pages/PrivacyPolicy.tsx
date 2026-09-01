@@ -16,7 +16,13 @@ const sections = [
 
 const PrivacyPolicy = () => (
   <Layout>
+    <SeoHead
+      title="Privacy Policy — Eylace"
+      description="How Eylace collects, uses, shares and protects your personal data, plus your rights over your information and how to exercise them."
+      path="/privacy"
+    />
     <section className="bg-primary text-primary-foreground py-16">
+
       <div className="container-main text-center">
         <Shield className="h-12 w-12 mx-auto mb-4 text-accent" />
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Privacy Policy</h1>

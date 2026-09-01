@@ -18,7 +18,13 @@ const sections = [
 
 const TermsConditions = () => (
   <Layout>
+    <SeoHead
+      title="Terms & Conditions — Eylace"
+      description="The terms governing your use of Eylace: accounts, orders and payments, shipping, returns, seller duties, liability and dispute resolution."
+      path="/terms"
+    />
     <section className="bg-primary text-primary-foreground py-16">
+
       <div className="container-main text-center">
         <FileText className="h-12 w-12 mx-auto mb-4 text-accent" />
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Terms & Conditions</h1>
