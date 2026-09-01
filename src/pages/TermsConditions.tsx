@@ -1,5 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { FileText } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
+
 
 const sections = [
   { title: '1. Acceptance of Terms', content: 'By accessing or using Eylace, you agree to be bound by these Terms and Conditions. If you do not agree, please do not use our platform. These terms apply to all users, including browsers, customers, sellers, and contributors.' },

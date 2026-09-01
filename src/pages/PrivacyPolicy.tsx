@@ -1,5 +1,7 @@
 import { Layout } from '@/components/layout/Layout';
 import { Shield } from 'lucide-react';
+import { SeoHead } from '@/components/seo/SeoHead';
+
 
 const sections = [
   { title: '1. Information We Collect', content: 'We collect personal information you provide when creating an account, placing orders, or contacting support. This includes your name, email address, phone number, shipping address, and payment details. We also automatically collect usage data such as IP address, browser type, pages visited, and device information.' },
