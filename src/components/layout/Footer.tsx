@@ -136,18 +136,23 @@ export const Footer = () => {
                   <img src={paymentMethodsImg} alt="Accepted payment methods" className="h-8 w-auto object-contain" />
                 </div>
               )}
-              {setup.footerShowDownloadApp !== false && (
+              {setup.footerShowDownloadApp !== false && (setup.footerAppStoreUrl || setup.footerGooglePlayUrl) && (
                 <div className="text-right">
                   <p className="text-sm text-primary-foreground/90">{t('footer.downloadApp')}</p>
                   <div className="flex gap-2 mt-2">
-                    <a href={setup.footerAppStoreUrl || '#'} className="block hover:opacity-80 transition-opacity">
-                      <img src={appStoreBadge} alt="Download on App Store" className="h-12 w-[135px] object-contain" />
-                    </a>
-                    <a href={setup.footerGooglePlayUrl || '#'} className="block hover:opacity-80 transition-opacity">
-                      <img src={googlePlayBadge} alt="Get it on Google Play" className="h-12 w-[135px] object-contain" />
-                    </a>
+                    {setup.footerAppStoreUrl && (
+                      <a href={setup.footerAppStoreUrl} target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+                        <img src={appStoreBadge} alt="Download Eylace on the App Store" className="h-12 w-[135px] object-contain" />
+                      </a>
+                    )}
+                    {setup.footerGooglePlayUrl && (
+                      <a href={setup.footerGooglePlayUrl} target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+                        <img src={googlePlayBadge} alt="Get Eylace on Google Play" className="h-12 w-[135px] object-contain" />
+                      </a>
+                    )}
                   </div>
                 </div>
+
               )}
             </div>
           </div>
