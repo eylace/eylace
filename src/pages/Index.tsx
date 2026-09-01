@@ -22,7 +22,15 @@ const Index = () => {
         description="Shop electronics, fashion, home essentials and more on Eylace. Nationwide delivery, secure payment with bKash, Nagad & cards."
         path="/"
       />
-      <h1 className="sr-only">Eylace — Quality Online Shopping in Bangladesh</h1>
+      <section className="container-main pt-6 pb-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+          Eylace — Quality Online Shopping in Bangladesh
+        </h1>
+        <p className="mt-1 text-sm md:text-base text-muted-foreground max-w-2xl">
+          Electronics, fashion, home essentials and more with nationwide delivery and secure payment via bKash, Nagad and cards.
+        </p>
+      </section>
+
       {setup.homepageBannerEnabled && <HeroSection />}
       {setup.homepageFeaturedCategories && <CategoriesSection />}
       {setup.homepageFlashSale && (

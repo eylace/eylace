@@ -94,14 +94,15 @@ export const Footer = () => {
             <p className="text-sm text-primary-foreground/90 mb-4">{setup.footerAboutText || t('footer.aboutText')}</p>
             {setup.footerShowSocialLinks !== false && (
               <div className="flex gap-3">
-                {socialLinks.map((sl, i) => {
+                {socialLinks.filter((sl) => sl.url && sl.url !== '#').map((sl, i) => {
                   const Icon = socialIconMap[sl.platform] || Facebook;
                   return (
-                    <a key={i} href={sl.url || '#'} aria-label={`Eylace on ${sl.platform}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-primary-foreground/10 rounded-lg hover:bg-accent transition-colors">
+                    <a key={i} href={sl.url} aria-label={`Eylace on ${sl.platform}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-primary-foreground/10 rounded-lg hover:bg-accent transition-colors">
                       <Icon className="h-5 w-5" />
                     </a>
                   );
                 })}
+
               </div>
             )}
           </div>
