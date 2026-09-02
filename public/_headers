@@ -3,6 +3,19 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Ensure ES module chunks are always served with a valid JS MIME type.
+/assets/*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*.mjs
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*.css
+  Content-Type: text/css; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
 # Static images shipped with the build.
 *.svg
   Cache-Control: public, max-age=2592000
@@ -20,7 +33,6 @@
   Cache-Control: public, max-age=0, must-revalidate
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Content-Type-Options: nosniff
-  X-Frame-Options: ALLOW-FROM https://lovable.dev
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(self), interest-cohort=()
   Cross-Origin-Opener-Policy: same-origin
