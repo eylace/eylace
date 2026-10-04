@@ -597,7 +597,7 @@ const Checkout = () => {
     onRemovePromo: () => { setPromoDiscount(0); setAppliedCode(null); setAppliedCouponId(null); },
   };
 
-  const onSubmit = (data: CheckoutFormData) => {
+  const onSubmit = async (data: CheckoutFormData) => {
     const pm = (data.paymentMethod || '').toLowerCase();
     if (pm === 'cod' || pm === 'cash') {
       if (!data.phone) {
@@ -606,8 +606,16 @@ const Checkout = () => {
       }
       const advRef = (data as any).advanceCourierPaymentRef;
       if (!advRef) {
-        toast.error('COD অর্ডার নিশ্চিত করার আগে ডেলিভারি চার্জ অগ্রিম পরিশোধ করুন।');
-        return;
+        // Only require advance payment when an online gateway is actually configured.
+        let available = true;
+        try {
+          const { data: cfg } = await supabase.functions.invoke('courier-advance-initiate', { body: { action: 'config' } });
+          available = cfg?.available !== false;
+        } catch { available = true; }
+        if (available) {
+          toast.error('COD অর্ডার নিশ্চিত করার আগে ডেলিভারি চার্জ অগ্রিম পরিশোধ করুন।');
+          return;
+        }
       }
       setPendingCodData(data);
       pendingCodDataRef.current = data;

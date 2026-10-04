@@ -50,22 +50,25 @@ export const AdvanceCourierChargeModal = ({ open, onClose, amount, gateways, onC
       const { data, error } = await supabase.functions.invoke('courier-advance-initiate', {
         body: { gateway: selected, shipping: amount },
       });
+      if (data?.available === false) {
+        toast.info('অনলাইন অগ্রিম পেমেন্ট এখন চালু নেই — আপনি সরাসরি COD অর্ডার করতে পারবেন।');
+        onClose();
+        return;
+      }
       if (error || !data?.txn_ref) throw new Error(error?.message || 'Failed to initiate');
 
       // Open gateway (or mock) redirect in a popup
       const popup = window.open(data.redirect_url, 'advance_pay', 'width=480,height=640');
 
-      // Poll DB for terminal status
+      // Poll server for terminal status (works for guests too)
       const start = Date.now();
       const poll = async (): Promise<'success' | 'failed' | 'cancelled' | 'timeout'> => {
         while (Date.now() - start < 5 * 60 * 1000) {
           await new Promise((r) => setTimeout(r, 2000));
-          const { data: row } = await supabase
-            .from('courier_advance_payments')
-            .select('status')
-            .eq('txn_ref', data.txn_ref)
-            .limit(1);
-          const st = row?.[0]?.status;
+          const { data: st0 } = await supabase.functions.invoke('courier-advance-initiate', {
+            body: { action: 'status', txn_ref: data.txn_ref },
+          });
+          const st = st0?.status;
           if (st === 'success' || st === 'failed' || st === 'cancelled') return st;
           if (popup && popup.closed && Date.now() - start > 5000) return 'cancelled';
         }

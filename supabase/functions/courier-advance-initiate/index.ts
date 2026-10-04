@@ -22,8 +22,6 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const gateway = String(body.gateway || '').toLowerCase();
-    if (!['bkash', 'nagad'].includes(gateway)) return json(400, { error: 'gateway must be bkash|nagad' });
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -31,7 +29,30 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
-    // Resolve user from JWT (optional — guests allowed)
+    const liveAvailable = (gw: string) =>
+      !!(gw === 'bkash' ? Deno.env.get('BKASH_APP_KEY') : Deno.env.get('NAGAD_MERCHANT_ID'));
+    const mockEnabled = Deno.env.get('MOCK_PAYMENTS_ENABLED') === 'true';
+
+    // Is advance courier payment actually usable right now?
+    if (body.action === 'config') {
+      return json(200, { available: mockEnabled || liveAvailable('bkash') || liveAvailable('nagad') });
+    }
+
+    // Status polling (works for guests too — only returns status for a known random ref)
+    if (body.action === 'status') {
+      const ref = String(body.txn_ref || '').slice(0, 100);
+      if (!ref) return json(400, { error: 'txn_ref required' });
+      const { data: row } = await supabase
+        .from('courier_advance_payments').select('status').eq('txn_ref', ref).limit(1);
+      return json(200, { status: row?.[0]?.status ?? null });
+    }
+
+    const gateway = String(body.gateway || '').toLowerCase();
+    if (!['bkash', 'nagad'].includes(gateway)) return json(400, { error: 'gateway must be bkash|nagad' });
+    if (!mockEnabled && !liveAvailable(gateway)) {
+      return json(200, { available: false });
+    }
+
     let userId: string | null = null;
     const auth = req.headers.get('authorization');
     if (auth?.startsWith('Bearer ')) {
