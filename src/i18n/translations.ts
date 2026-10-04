@@ -748,6 +748,12 @@ export const translations = {
 
   // ========== Payment Methods ==========
   'payment.title': { en: 'Payment Method', bn: 'পেমেন্ট পদ্ধতি' },
+  'payment.advanceCourierTitle': { en: 'Pay Courier Charge in Advance', bn: 'ডেলিভারি চার্জ অগ্রিম পরিশোধ করুন' },
+  'payment.advanceCourierDesc': { en: 'Pay only the courier delivery charge online now. The product amount will be collected on delivery.', bn: 'এখন শুধু ডেলিভারি চার্জ অনলাইনে দিন। পণ্যের মূল্য ডেলিভারির সময় দেবেন।' },
+  'payment.courierCharge': { en: 'Courier charge', bn: 'ডেলিভারি চার্জ' },
+  'payment.courierPrepaid': { en: 'Courier charge paid online ✓', bn: 'ডেলিভারি চার্জ পরিশোধ হয়েছে ✓' },
+  'payment.payCourierBtn': { en: 'Pay Courier Charge', bn: 'ডেলিভারি চার্জ পরিশোধ করুন' },
+  'payment.selectGateway': { en: 'Please select a payment method', bn: 'একটি পেমেন্ট পদ্ধতি নির্বাচন করুন' },
   'payment.creditDebit': { en: 'Credit/Debit Card', bn: 'ক্রেডিট/ডেবিট কার্ড' },
   'payment.creditDebitDesc': { en: 'Visa, Mastercard, American Express', bn: 'ভিসা, মাস্টারকার্ড, আমেরিকান এক্সপ্রেস' },
   'payment.mobileBanking': { en: 'Mobile banking payment', bn: 'মোবাইল ব্যাংকিং পেমেন্ট' },
