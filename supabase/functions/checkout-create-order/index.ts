@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
       advance_courier_payment_ref,
       advance_courier_amount: _clientAdvanceAmountIgnored,
       carrier: clientCarrier,
+      delivery_zone: clientZone,
     } = body;
 
     // Validate required fields
@@ -278,17 +279,13 @@ Deno.serve(async (req) => {
 
     // Recompute totals server-side from authenticated prices
     // Shipping is authoritative server-side via courier_expense_settings
-    let safeShipping = 0;
-    try {
-      const { data: shipAmt } = await supabaseAdmin.rpc('compute_shipping_amount', {
-        _carrier: clientCarrier ?? null,
-        _shipping_address: shipping_address ?? {},
-      });
-      safeShipping = Math.max(0, Number(shipAmt) || 0);
-    } catch (e) {
-      console.error('compute_shipping_amount failed:', e);
-      safeShipping = 0;
-    }
+    // Customer delivery charge (same rule the checkout page shows): inside Dhaka 80, else 150.
+    const cityRaw = String(shipping_address?.city ?? shipping_address?.district ?? '').trim().toLowerCase();
+    const zone = clientZone === 'inside_dhaka' || clientZone === 'outside_dhaka'
+      ? clientZone
+      : (cityRaw === 'dhaka' ? 'inside_dhaka' : 'outside_dhaka');
+    const safeShipping = zone === 'inside_dhaka' ? 80 : 150;
+    void clientCarrier;
     // Tax is not client-supplied. If a future config introduces tax, compute it
     // server-side from system_settings here.
     const safeTax = 0;

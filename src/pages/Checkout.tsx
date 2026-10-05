@@ -165,10 +165,12 @@ const Checkout = () => {
     const normalizedPaymentMethod = (selectedPaymentMethod || '').toLowerCase();
     const isCashOnDelivery = normalizedPaymentMethod === 'cod' || normalizedPaymentMethod === 'cash';
     const expressShippingCharge = Number(shippingChargeOverride ?? watchedShippingCharge);
-    const shipping = variantId === 'express' && Number.isFinite(expressShippingCharge)
+    // Must match server rule in checkout-create-order (inside Dhaka 80, else 150)
+    const zone = form.getValues('deliveryZone' as any) || (String(form.getValues('city') || '').trim().toLowerCase() === 'dhaka' ? 'inside_dhaka' : 'outside_dhaka');
+    const shipping = variantId === 'express' && Number.isFinite(expressShippingCharge) && expressShippingCharge > 0
       ? expressShippingCharge
-      : defaultShipping;
-    const tax = variantId === 'express' ? 0 : taxAmount;
+      : (zone === 'inside_dhaka' ? 80 : 150);
+    const tax = 0;
     const codFee = 0;
     const baseTotal = Math.max(0, subtotal + shipping + tax - couponDiscount);
     const onlinePaymentDiscount = !isCashOnDelivery && websiteSetup.prepaymentOfferEnabled
@@ -446,6 +448,7 @@ const Checkout = () => {
           guest_email: normalizedGuestEmail,
           guest_phone: normalizedGuestPhone,
           items: orderItems,
+          delivery_zone: (data as any).deliveryZone || null,
           advance_courier_payment_ref: (data as any).advanceCourierPaymentRef || null,
           advance_courier_amount: Number((data as any).advanceCourierAmount) || 0,
         },
