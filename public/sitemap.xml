@@ -141,6 +141,12 @@
     <priority>0.4</priority>
   </url>
   <url>
+    <loc>https://eylace.lovable.app/product/ac-dc</loc>
+    <lastmod>2026-11-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://eylace.lovable.app/product/premium-panjabi-collection</loc>
     <lastmod>2026-06-18</lastmod>
     <changefreq>weekly</changefreq>
@@ -171,13 +177,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://eylace.lovable.app/product/ceramic-plant-pot-set</loc>
-    <lastmod>2026-06-18</lastmod>
+    <loc>https://eylace.lovable.app/product/rechargeable-mini-smart-turbo-fans</loc>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://eylace.lovable.app/product/rechargeable-mini-smart-turbo-fans</loc>
+    <loc>https://eylace.lovable.app/product/ceramic-plant-pot-set</loc>
     <lastmod>2026-06-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -202,12 +208,6 @@
   </url>
   <url>
     <loc>https://eylace.lovable.app/product/premium-leather-sneakers</loc>
-    <lastmod>2026-06-18</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://eylace.lovable.app/product/ac-dc</loc>
     <lastmod>2026-06-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
