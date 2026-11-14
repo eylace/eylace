@@ -51,8 +51,8 @@ export const useProductReviews = ({
 
     try {
       let query = supabase
-        .from('product_reviews')
-        .select('*')
+        .from('product_reviews_public')
+        .select('id, product_id, rating, title, content, images, helpful_count, verified_purchase, created_at, updated_at')
         .eq('product_id', productId);
 
       if (filterRating) {
@@ -72,26 +72,9 @@ export const useProductReviews = ({
         return;
       }
 
-      // Fetch profile names for all review authors
-      const userIds = [...new Set((data || []).map((r) => r.user_id))];
-      let profileMap: Record<string, { first_name: string | null; last_name: string | null }> = {};
-
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, first_name, last_name')
-          .in('user_id', userIds);
-
-        if (profiles) {
-          profiles.forEach((p) => {
-            profileMap[p.user_id] = { first_name: p.first_name, last_name: p.last_name };
-          });
-        }
-      }
-
       // Calculate stats from all reviews (not filtered)
       const { data: allReviews } = await supabase
-        .from('product_reviews')
+        .from('product_reviews_public')
         .select('rating')
         .eq('product_id', productId);
 
@@ -117,19 +100,14 @@ export const useProductReviews = ({
       }
 
       const enrichedReviews: Review[] = (data || []).map((r) => {
-        const profile = profileMap[r.user_id];
-        const firstName = profile?.first_name || '';
-        const lastName = profile?.last_name || '';
-        const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Anonymous';
-        const initials = [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || 'A';
-
         return {
           ...r,
+          user_id: '',
           images: r.images || [],
           verified_purchase: r.verified_purchase ?? false,
           helpful_count: r.helpful_count ?? 0,
-          user_name: fullName,
-          user_initials: initials,
+          user_name: 'Anonymous',
+          user_initials: 'A',
         };
       });
 
@@ -137,8 +115,13 @@ export const useProductReviews = ({
 
       // Check if current user already reviewed
       if (user) {
-        const alreadyReviewed = enrichedReviews.some((r) => r.user_id === user.id);
-        setUserHasReviewed(alreadyReviewed);
+        const { data: ownReview } = await supabase
+          .from('product_reviews')
+          .select('id')
+          .eq('product_id', productId)
+          .eq('user_id', user.id)
+          .limit(1);
+        setUserHasReviewed((ownReview?.length ?? 0) > 0);
       } else {
         setUserHasReviewed(false);
       }
