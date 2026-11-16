@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
 
     // Auto-track who is performing this action (Assigned To)
     try {
-      const { data: roleInfo } = await supabaseAdmin
+      const { data: roleInfo } = await supabaseClient
         .rpc('get_user_role_and_name', { _user_id: user.id });
       const info = Array.isArray(roleInfo) ? roleInfo[0] : roleInfo;
       if (info) {

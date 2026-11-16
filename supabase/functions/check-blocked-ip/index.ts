@@ -43,6 +43,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Do not reveal block-list membership to ordinary authenticated visitors.
+    // The checkout function independently enforces the block for every order.
+    const roleClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false },
+    });
+    const { data: roleRows, error: roleError } = await roleClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'super_admin'])
+      .limit(1);
+    if (roleError || !roleRows?.length) {
+      return new Response(
+        JSON.stringify({ isBlocked: false }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const supabaseAdmin = createClient(
       supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',

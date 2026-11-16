@@ -322,6 +322,7 @@ export type Database = {
       affiliate_clicks: {
         Row: {
           affiliate_id: string
+          click_day: string
           created_at: string
           id: string
           ip_address: string | null
@@ -330,6 +331,7 @@ export type Database = {
         }
         Insert: {
           affiliate_id: string
+          click_day?: string
           created_at?: string
           id?: string
           ip_address?: string | null
@@ -338,6 +340,7 @@ export type Database = {
         }
         Update: {
           affiliate_id?: string
+          click_day?: string
           created_at?: string
           id?: string
           ip_address?: string | null
@@ -866,6 +869,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           currency: string
+          customer_phone: string | null
           gateway: string
           gateway_payment_id: string | null
           id: string
@@ -882,6 +886,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           currency?: string
+          customer_phone?: string | null
           gateway: string
           gateway_payment_id?: string | null
           id?: string
@@ -898,6 +903,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           currency?: string
+          customer_phone?: string | null
           gateway?: string
           gateway_payment_id?: string | null
           id?: string
@@ -1776,6 +1782,7 @@ export type Database = {
         Row: {
           advance_courier_amount: number | null
           advance_courier_payment_ref: string | null
+          affiliate_referral_code: string | null
           assigned_at: string | null
           assigned_role: string | null
           assigned_user_id: string | null
@@ -1805,6 +1812,7 @@ export type Database = {
         Insert: {
           advance_courier_amount?: number | null
           advance_courier_payment_ref?: string | null
+          affiliate_referral_code?: string | null
           assigned_at?: string | null
           assigned_role?: string | null
           assigned_user_id?: string | null
@@ -1834,6 +1842,7 @@ export type Database = {
         Update: {
           advance_courier_amount?: number | null
           advance_courier_payment_ref?: string | null
+          affiliate_referral_code?: string | null
           assigned_at?: string | null
           assigned_role?: string | null
           assigned_user_id?: string | null
@@ -4041,6 +4050,15 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      claim_courier_advance_payment: {
+        Args: {
+          _customer_phone: string
+          _order_id: string
+          _txn_ref: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       cleanup_expired_otp_codes: { Args: never; Returns: number }
       compute_courier_advance_amount: {
         Args: { _shipping: number; _zone: string }
@@ -4072,16 +4090,28 @@ export type Database = {
         }
         Returns: string
       }
-      create_courier_advance_payment: {
-        Args: {
-          _amount: number
-          _gateway: string
-          _order_id: string
-          _txn_ref: string
-          _user_id: string
-        }
-        Returns: string
-      }
+      create_courier_advance_payment:
+        | {
+            Args: {
+              _amount: number
+              _gateway: string
+              _order_id: string
+              _txn_ref: string
+              _user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _amount: number
+              _customer_phone: string
+              _gateway: string
+              _order_id: string
+              _txn_ref: string
+              _user_id: string
+            }
+            Returns: string
+          }
       find_seo_duplicates: {
         Args: {
           _canonical_url: string
@@ -4215,6 +4245,15 @@ export type Database = {
           _tracking_number: string
         }
         Returns: undefined
+      }
+      record_affiliate_click: {
+        Args: {
+          _affiliate_id: string
+          _ip_address: string
+          _landing_page: string
+          _user_agent: string
+        }
+        Returns: boolean
       }
       record_coupon_usage: {
         Args: {

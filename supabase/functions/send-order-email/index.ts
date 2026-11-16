@@ -228,8 +228,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error sending order email:", errorMessage);
+    // Provider errors can echo recipient addresses or message payload details.
+    console.error("Order status email delivery failed");
     return new Response(JSON.stringify({ error: "Failed to send email" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

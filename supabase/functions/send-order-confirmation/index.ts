@@ -181,8 +181,8 @@ Deno.serve(async (req) => {
 
     const resendData = await resendRes.json();
     if (!resendRes.ok) {
-      console.error('Resend error:', resendData);
-      throw new Error(`Resend API error: ${JSON.stringify(resendData)}`);
+      console.error('Order confirmation email delivery failed:', resendRes.status);
+      throw new Error('Email delivery failed');
     }
 
     console.log(`Order confirmation email sent for order ${order.order_number}`);
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Order confirmation email delivery failed');
     return new Response(JSON.stringify({ error: 'Failed to send confirmation email' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -15,6 +15,13 @@
       "when": 1794672651710,
       "tag": "0001_limit_public_discounts_to_current_window",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794853062874,
+      "tag": "0002_harden_selected_checkout_referrals_and_role_access",
+      "breakpoints": true
     }
   ]
 }

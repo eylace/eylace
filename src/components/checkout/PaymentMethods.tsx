@@ -289,6 +289,7 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
         open={advanceModalOpen}
         onClose={() => setAdvanceModalOpen(false)}
         amount={courierAmount}
+        customerPhone={String(form.watch('phone') || '')}
         gateways={onlineGateways.map<AdvanceGatewayOption>((g) => ({ id: g.id, name: g.name, logo: g.logo }))}
         onConfirmed={(ref, gatewayId) => {
           setValue('advanceCourierPaymentRef', ref, { shouldDirty: true });

@@ -60,6 +60,11 @@ Deno.serve(async (req) => {
       userId = user?.id ?? null;
     }
 
+    const customerPhone = String(body.customer_phone || '').replace(/\D/g, '').slice(0, 20);
+    if (!userId && customerPhone.length < 8) {
+      return json(400, { error: 'A valid checkout phone number is required for guest advance payments' });
+    }
+
     // Compute amount
     const { data: amt, error: aErr } = await supabase.rpc('compute_courier_advance_amount', {
       _zone: body.zone ?? null,
@@ -77,6 +82,7 @@ Deno.serve(async (req) => {
       _gateway: gateway,
       _txn_ref: txnRef,
       _amount: amount,
+      _customer_phone: customerPhone || null,
     });
     if (cErr) return json(500, { error: cErr.message });
 

@@ -451,6 +451,12 @@ const Checkout = () => {
           delivery_zone: (data as any).deliveryZone || null,
           advance_courier_payment_ref: (data as any).advanceCourierPaymentRef || null,
           advance_courier_amount: Number((data as any).advanceCourierAmount) || 0,
+          affiliate_referral_code: (() => {
+            try {
+              const ref = JSON.parse(localStorage.getItem('affiliate_ref') || 'null');
+              return ref?.code && ref?.expiry > Date.now() ? String(ref.code).slice(0, 64) : null;
+            } catch { return null; }
+          })(),
         },
       });
 
@@ -501,17 +507,12 @@ const Checkout = () => {
       setOrderComplete(true);
       toast.success(t('checkout.orderSuccess'), { description: `Order ID: ${orderNumber}` });
 
-      // Record affiliate conversion if referral code exists
+      // Commission recording is server-side and happens only after delivery.
       const storedRef = localStorage.getItem('affiliate_ref');
       if (storedRef && createdOrderId) {
         try {
           const refData = JSON.parse(storedRef);
           if (refData.code && refData.expiry > Date.now()) {
-            fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-manage?action=record-conversion`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-              body: JSON.stringify({ referral_code: refData.code, order_id: createdOrderId, order_total: total }),
-            }).catch(() => {});
             localStorage.removeItem('affiliate_ref');
           }
         } catch {}

@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
       coupon_code,
       total,
       payment_method,
+      affiliate_referral_code,
       shipping_address,
       guest_email,
       guest_phone,
@@ -145,6 +146,9 @@ Deno.serve(async (req) => {
       discount: 0,
       total: 0,
       payment_method,
+      affiliate_referral_code: typeof affiliate_referral_code === 'string' && affiliate_referral_code.length <= 64
+        ? affiliate_referral_code
+        : null,
       shipping_address: shipping_address ?? null,
       customer_ip: customerIp,
       user_id: userId,
@@ -158,7 +162,7 @@ Deno.serve(async (req) => {
       const ref = String(advance_courier_payment_ref);
       const { data: advPayment, error: advErr } = await supabaseAdmin
         .from('courier_advance_payments')
-        .select('id, amount, status, order_id')
+      .select('id, amount, status, order_id, user_id, customer_phone')
         .eq('txn_ref', ref)
         .maybeSingle();
       if (advErr || !advPayment || advPayment.status !== 'success') {
@@ -171,6 +175,17 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: 'Advance courier payment already used' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      const digits = (value: unknown) => String(value ?? '').replace(/\D/g, '');
+      const callerPhone = digits(guest_phone || shipping_address?.phone);
+      const paymentPhone = digits(advPayment.customer_phone);
+      const paymentBelongsToCaller = (userId && advPayment.user_id === userId)
+        || (!advPayment.user_id && callerPhone.length >= 8 && paymentPhone.length >= 8 && callerPhone === paymentPhone);
+      if (!paymentBelongsToCaller) {
+        return new Response(
+          JSON.stringify({ error: 'Advance courier payment does not match this customer' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
       }
       verifiedAdvanceAmount = Math.max(0, Number(advPayment.amount) || 0);
@@ -356,13 +371,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Link the verified advance payment to the created order so it cannot be reused.
+    // Atomically bind the advance payment to this order and original payer.
     if (advance_courier_payment_ref) {
-      await supabaseAdmin
-        .from('courier_advance_payments')
-        .update({ order_id: orderData.id })
-        .eq('txn_ref', String(advance_courier_payment_ref))
-        .is('order_id', null);
+      const { data: claimed, error: claimError } = await supabaseAdmin.rpc('claim_courier_advance_payment', {
+        _txn_ref: String(advance_courier_payment_ref),
+        _order_id: orderData.id,
+        _user_id: userId,
+        _customer_phone: guest_phone || shipping_address?.phone || null,
+      });
+      if (claimError || claimed !== true) {
+        await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+        return new Response(
+          JSON.stringify({ error: 'Advance courier payment could not be securely verified. Please contact support before retrying.' }),
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
     }
 
     return new Response(

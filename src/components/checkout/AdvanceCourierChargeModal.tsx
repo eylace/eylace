@@ -20,11 +20,12 @@ interface Props {
   open: boolean;
   onClose: () => void;
   amount: number;
+  customerPhone?: string;
   gateways: AdvanceGatewayOption[];
   onConfirmed: (paymentRef: string, gatewayId: string) => void;
 }
 
-export const AdvanceCourierChargeModal = ({ open, onClose, amount, gateways, onConfirmed }: Props) => {
+export const AdvanceCourierChargeModal = ({ open, onClose, amount, customerPhone, gateways, onConfirmed }: Props) => {
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
   // Only bKash/Nagad supported for real flow; filter to those if present.
@@ -48,7 +49,7 @@ export const AdvanceCourierChargeModal = ({ open, onClose, amount, gateways, onC
     setProcessing(true);
     try {
       const { data, error } = await supabase.functions.invoke('courier-advance-initiate', {
-        body: { gateway: selected, shipping: amount },
+        body: { gateway: selected, shipping: amount, customer_phone: customerPhone || '' },
       });
       if (data?.available === false) {
         toast.info('অনলাইন অগ্রিম পেমেন্ট এখন চালু নেই — আপনি সরাসরি COD অর্ডার করতে পারবেন।');

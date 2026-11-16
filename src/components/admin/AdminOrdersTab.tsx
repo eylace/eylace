@@ -541,6 +541,7 @@ export const AdminOrdersTab = () => {
             action: 'create_order',
             provider: courierCode,
             payload: {
+              order_uuid: order.id,
               order_id: order.order_number, order_number: order.order_number,
               recipient_name: name, customer_name: name,
               recipient_phone: phone, phone,
