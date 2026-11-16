@@ -271,19 +271,24 @@ Deno.serve(async (req) => {
 
       const { payout_id, status, transaction_id, admin_notes } = body
       if (!payout_id) return json({ error: 'Missing payout_id' }, 400)
-      
-      await adminClient.from('affiliate_payouts').update({
+
+      const { data: payout, error: payoutReadError } = await adminClient
+        .from('affiliate_payouts').select('affiliate_id, amount, status').eq('id', payout_id).limit(1)
+      if (payoutReadError || !payout?.length) return json({ error: 'Payout not found' }, 404)
+
+      const { error: payoutUpdateError } = await adminClient.from('affiliate_payouts').update({
         status, transaction_id: transaction_id || null, admin_notes: admin_notes || null,
       }).eq('id', payout_id)
+      if (payoutUpdateError) return json({ error: 'Failed to update payout' }, 500)
 
-      if (status === 'completed') {
-        const { data: payout } = await adminClient.from('affiliate_payouts').select('affiliate_id, amount').eq('id', payout_id).single()
-        if (payout) {
-          const { data: aff } = await adminClient.from('affiliates').select('total_paid').eq('id', payout.affiliate_id).single()
-          if (aff) {
-            await adminClient.from('affiliates').update({ total_paid: (aff.total_paid || 0) + payout.amount }).eq('id', payout.affiliate_id)
-          }
-        }
+      if (status === 'completed' && payout[0].status !== 'completed') {
+        const { data: affRows, error: affError } = await adminClient.from('affiliates')
+          .select('total_paid').eq('id', payout[0].affiliate_id).limit(1)
+        if (affError || !affRows?.length) return json({ error: 'Payout updated but affiliate balance could not be refreshed' }, 500)
+        const { error: paidUpdateError } = await adminClient.from('affiliates')
+          .update({ total_paid: (affRows[0].total_paid || 0) + payout[0].amount })
+          .eq('id', payout[0].affiliate_id)
+        if (paidUpdateError) return json({ error: 'Payout updated but affiliate balance could not be refreshed' }, 500)
       }
 
       return json({ success: true })
@@ -321,7 +326,9 @@ Deno.serve(async (req) => {
       if (!isAdmin) return json({ error: 'Forbidden' }, 403)
       const { conversion_id, status } = body
       if (!conversion_id) return json({ error: 'Missing conversion_id' }, 400)
-      await adminClient.from('affiliate_conversions').update({ status }).eq('id', conversion_id)
+      if (!['approved', 'rejected', 'paid'].includes(status)) return json({ error: 'Invalid conversion status' }, 400)
+      const { error } = await adminClient.from('affiliate_conversions').update({ status }).eq('id', conversion_id)
+      if (error) return json({ error: 'Failed to update conversion' }, 500)
       return json({ success: true })
     }
 

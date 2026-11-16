@@ -435,6 +435,12 @@ const Checkout = () => {
       }
 
       // Use server-side order creation for reliable IP detection + user attribution
+      const storedReferral = (() => {
+        try {
+          const ref = JSON.parse(localStorage.getItem('affiliate_ref') || 'null');
+          return ref?.code && ref?.expiry > Date.now() ? String(ref.code).slice(0, 64) : null;
+        } catch { return null; }
+      })();
       const { data: result, error: fnError } = await supabase.functions.invoke('checkout-create-order', {
         body: {
           order_number: orderNumber,
@@ -444,6 +450,7 @@ const Checkout = () => {
           coupon_code: resolvedCouponCode,
           total,
           payment_method: data.paymentMethod,
+          affiliate_referral_code: storedReferral,
           shipping_address: shippingAddress,
           guest_email: normalizedGuestEmail,
           guest_phone: normalizedGuestPhone,
@@ -502,15 +509,7 @@ const Checkout = () => {
       toast.success(t('checkout.orderSuccess'), { description: `Order ID: ${orderNumber}` });
 
       // Commission recording is server-side and happens only after delivery.
-      const storedRef = localStorage.getItem('affiliate_ref');
-      if (storedRef && createdOrderId) {
-        try {
-          const refData = JSON.parse(storedRef);
-          if (refData.code && refData.expiry > Date.now()) {
-            localStorage.removeItem('affiliate_ref');
-          }
-        } catch {}
-      }
+      if (storedReferral && createdOrderId) localStorage.removeItem('affiliate_ref');
 
       // Send auto confirmation email (non-blocking)
       if (createdOrderId) {
@@ -519,18 +518,6 @@ const Checkout = () => {
         }).catch(err => console.error('Confirmation email error:', err));
       }
 
-      const storedAffiliateRef = localStorage.getItem('affiliate_ref');
-      if (storedAffiliateRef && createdOrderId) {
-        try {
-          const referral = JSON.parse(storedAffiliateRef);
-          if (referral?.code && referral?.expiry > Date.now()) {
-            await supabase.functions.invoke('checkout-attach-affiliate-referral', {
-              body: { order_id: createdOrderId, referral_code: String(referral.code).slice(0, 64) },
-            });
-            localStorage.removeItem('affiliate_ref');
-          }
-        } catch { /* referral attribution is best-effort and must not block checkout */ }
-      }
     } catch (err) {
       console.error('Checkout error:', err);
       toast.error('An error occurred during checkout. Please try again.');

@@ -14,7 +14,11 @@ const ALLOWED_ROLES = [
   "vendor_order_manager",
   "vendor_staff",
   "warehouse_manager",
+  "finance_manager",
 ] as const;
+
+const DISPATCH_ROLES = ALLOWED_ROLES.filter((role) => role !== "finance_manager");
+const EXPENSE_ROLES = ["admin", "super_admin", "finance_manager"] as const;
 
 // Valid app_role enum values in the database. Roles outside this set will
 // silently match nothing in `user_roles.role IN (...)` — which is what
@@ -76,4 +80,11 @@ Deno.test("shipping-provider: anonymous customer role is rejected", () => {
   const userRole = "customer";
   const matched = (ALLOWED_ROLES as readonly string[]).includes(userRole);
   assertEquals(matched, false, "regular customers must not be able to dispatch couriers");
+});
+
+Deno.test("shipping-provider: finance role can fetch costs but is not an order dispatcher", () => {
+  const financeRole = "finance_manager";
+  assertEquals((ALLOWED_ROLES as readonly string[]).includes(financeRole), true);
+  assertEquals((DISPATCH_ROLES as readonly string[]).includes(financeRole), false);
+  assertEquals((EXPENSE_ROLES as readonly string[]).includes(financeRole), true);
 });

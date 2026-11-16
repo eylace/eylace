@@ -141,6 +141,9 @@ export default function AdminCourierExpenses() {
 
   const fetchActualCost = async () => {
     if (!fetchForm.tracking_number) { toast.error('Tracking number required'); return; }
+    if (fetchForm.order_id && !/^[0-9a-f-]{36}$/i.test(fetchForm.order_id)) {
+      toast.error('Enter a valid saved order ID'); return;
+    }
     setFetchingCost(true);
     try {
       const { data, error } = await supabase.functions.invoke('shipping-provider', {
@@ -373,7 +376,7 @@ export default function AdminCourierExpenses() {
                         </div>
                       </div>
                       <div><Label>Tracking / Consignment #</Label><Input value={fetchForm.tracking_number} onChange={e => setFetchForm({ ...fetchForm, tracking_number: e.target.value })} /></div>
-                      <div><Label>Order ID (UUID, optional — to update existing expense)</Label><Input value={fetchForm.order_id} onChange={e => setFetchForm({ ...fetchForm, order_id: e.target.value })} placeholder="orders.id" /></div>
+                      <div><Label>Order ID (required to record the fetched cost)</Label><Input value={fetchForm.order_id} onChange={e => setFetchForm({ ...fetchForm, order_id: e.target.value })} placeholder="orders.id" /></div>
                     </div>
                     <DialogFooter>
                       <Button onClick={fetchActualCost} disabled={fetchingCost}>

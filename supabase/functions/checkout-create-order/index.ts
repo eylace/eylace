@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
       coupon_code,
       total,
       payment_method,
+      affiliate_referral_code,
       shipping_address,
       guest_email,
       guest_phone,
@@ -116,11 +117,11 @@ Deno.serve(async (req) => {
       const { data: { user } } = await supabaseAdmin.auth.getUser(token);
       if (user) {
         // Check if user has admin/privileged role — if so, treat as guest order
-        const { data: roles } = await supabaseAdmin
+      const { data: roles } = await supabaseAdmin
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
-          .in('role', ADMIN_ROLES)
+        .in('role', [...ADMIN_ROLES, 'delivery_partner', 'delivery_agent'])
           .limit(1);
 
         const isAdmin = roles && roles.length > 0;
@@ -145,10 +146,17 @@ Deno.serve(async (req) => {
       discount: 0,
       total: 0,
       payment_method,
+      affiliate_referral_code: null,
       shipping_address: shipping_address ?? null,
       customer_ip: customerIp,
       user_id: userId,
     };
+
+    if (typeof affiliate_referral_code === 'string' && affiliate_referral_code.length <= 64) {
+      const { data: affiliates } = await supabaseAdmin.from('affiliates')
+        .select('referral_code').eq('referral_code', affiliate_referral_code).eq('status', 'approved').limit(1);
+      if (affiliates?.length) orderPayload.affiliate_referral_code = affiliates[0].referral_code;
+    }
 
     // Optional: advance courier-charge prepaid online (COD orders).
     // Verify the referenced payment actually completed successfully and
@@ -210,9 +218,15 @@ Deno.serve(async (req) => {
       );
     }
 
+    const rollbackOrder = async () => {
+      await supabaseAdmin.from('order_items').delete().eq('order_id', orderData.id);
+      await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+    };
+
     // 5. Fetch cost_per_item from products (for accurate historical profit calc)
     const productIds = Array.from(new Set(items.map((i: any) => i.product_id).filter(Boolean)));
     if (productIds.length === 0) {
+      await rollbackOrder();
       return new Response(
         JSON.stringify({ error: 'Invalid items: missing product_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -252,14 +266,14 @@ Deno.serve(async (req) => {
       const product = priceMap.get(pid);
       if (!product) {
         // Roll back: delete the order shell we just inserted
-        await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+        await rollbackOrder();
         return new Response(
           JSON.stringify({ error: `Product not found: ${pid}` }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
       }
       if (!product.active) {
-        await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+        await rollbackOrder();
         return new Response(
           JSON.stringify({ error: `Product unavailable: ${product.name}` }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -269,7 +283,7 @@ Deno.serve(async (req) => {
       // Stock validation: reject when requested qty exceeds available stock.
       // stock === null means "untracked" (digital/services) — allow.
       if (product.stock !== null && qty > product.stock) {
-        await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+        await rollbackOrder();
         return new Response(
           JSON.stringify({ error: `Insufficient stock for ${product.name} (available: ${product.stock})` }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -329,7 +343,7 @@ Deno.serve(async (req) => {
 
     // Reject if client-submitted total deviates by more than 1 unit (rounding tolerance)
     if (Math.abs(Number(total) - serverTotal) > 1) {
-      await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+      await rollbackOrder();
       console.warn('Price tampering detected', { clientTotal: total, serverTotal });
       return new Response(
         JSON.stringify({ error: 'Order total mismatch — please refresh your cart and try again' }),
@@ -353,22 +367,8 @@ Deno.serve(async (req) => {
 
     const finalOrder = updatedOrder ?? { ...orderData, subtotal: serverSubtotal, shipping: safeShipping, tax: safeTax, discount: safeDiscount, total: serverTotal };
 
-    const { error: itemsError } = await supabaseAdmin
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) {
-      console.error('Order items insert error:', itemsError);
-      // Roll back the order shell and return a generic error — do not leak
-      // internal database error messages to the client.
-      await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
-      return new Response(
-        JSON.stringify({ error: 'Failed to save order items. Please try again or contact support.' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-
-    // Atomically bind the advance payment to this order and original payer.
+    // Atomically bind the advance payment before inserting order items, whose
+    // stock trigger is not reversible on deletion.
     if (advance_courier_payment_ref) {
       const { data: claimed, error: claimError } = await supabaseAdmin.rpc('claim_courier_advance_payment', {
         _txn_ref: String(advance_courier_payment_ref),
@@ -377,12 +377,27 @@ Deno.serve(async (req) => {
         _customer_phone: guest_phone || shipping_address?.phone || null,
       });
       if (claimError || claimed !== true) {
-        await supabaseAdmin.from('orders').delete().eq('id', orderData.id);
+        await rollbackOrder();
         return new Response(
           JSON.stringify({ error: 'Advance courier payment could not be securely verified. Please contact support before retrying.' }),
           { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
       }
+    }
+
+    const { error: itemsError } = await supabaseAdmin
+      .from('order_items')
+      .insert(orderItems);
+
+    if (itemsError) {
+      console.error('Order items insert error:', itemsError);
+      // Roll back the order shell and return a generic error — do not leak
+      // internal database error messages to the client.
+      await rollbackOrder();
+      return new Response(
+        JSON.stringify({ error: 'Failed to save order items. Please try again or contact support.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
     return new Response(

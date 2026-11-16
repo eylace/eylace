@@ -499,8 +499,8 @@ export const AdminOrdersTab = () => {
   // Sync detail modal status when opening
   useEffect(() => {
     if (detailOrder) {
-      const isPaid = detailOrder.payment_method !== 'cod' || detailOrder.status === 'delivered';
-      setDetailPaymentStatus(isPaid ? 'paid' : 'unpaid');
+      const paymentIsUnverified = detailOrder.payment_method !== 'cod';
+      setDetailPaymentStatus(paymentIsUnverified ? 'pending' : (detailOrder.status === 'delivered' || detailOrder.status === 'completed' ? 'paid' : 'unpaid'));
       setDetailFulfillmentStatus(detailOrder.status || 'pending');
     }
   }, [detailOrder]);
@@ -1142,7 +1142,8 @@ export const AdminOrdersTab = () => {
                 const customerName = getOrderCustomerName(order);
                 const customerEmail = getOrderCustomerEmail(order);
                 const isSelected = selectedOrders.has(order.id);
-                const isPaid = order.payment_method !== 'cod' || order.status === 'delivered';
+                const isPaid = order.payment_method === 'cod' && (order.status === 'delivered' || order.status === 'completed');
+                const paymentLabel = order.payment_method !== 'cod' ? 'Pending verification' : (isPaid ? 'Paid' : 'Unpaid');
 
                 return (
                   <TableRow key={order.id} className={cn("hover:bg-muted/30 transition-colors", isSelected && "bg-accent/5")}>
@@ -1302,7 +1303,7 @@ export const AdminOrdersTab = () => {
                     <TableCell>
                       <span className={cn('text-xs font-medium inline-flex items-center gap-1', isPaid ? 'text-emerald-600' : 'text-orange-500')}>
                         <span className={cn('h-1.5 w-1.5 rounded-full', isPaid ? 'bg-emerald-500' : 'bg-orange-500')} />
-                        {isPaid ? 'Paid' : 'Unpaid'}
+                        {paymentLabel}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -1495,7 +1496,8 @@ export const AdminOrdersTab = () => {
             const cEmail = getOrderCustomerEmail(o);
             const cPhone = getOrderCustomerPhone(o);
             const st = statusConfig[o.status] || statusConfig.pending;
-            const isPaidOrder = o.payment_method !== 'cod' || o.status === 'delivered';
+            const isPaidOrder = o.payment_method === 'cod' && (o.status === 'delivered' || o.status === 'completed');
+            const paymentLabel = o.payment_method !== 'cod' ? 'Pending verification' : (isPaidOrder ? 'Paid' : 'Unpaid');
 
             return (
               <div>
@@ -1582,7 +1584,7 @@ export const AdminOrdersTab = () => {
 
                         {/* Payment Status */}
                         <div className="space-y-1.5">
-                          <Label className="text-xs text-muted-foreground">Payment Status</Label>
+                          <Label className="text-xs text-muted-foreground">Payment Status — {paymentLabel}</Label>
                           <Select
                             value={detailPaymentStatus}
                             onValueChange={setDetailPaymentStatus}
@@ -1590,7 +1592,7 @@ export const AdminOrdersTab = () => {
                             <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="unpaid">Unpaid</SelectItem>
-                              <SelectItem value="paid">Paid</SelectItem>
+                              <SelectItem value="paid" disabled={o.payment_method !== 'cod'}>Paid</SelectItem>
                               <SelectItem value="pending">Pending</SelectItem>
                               <SelectItem value="failed">Failed</SelectItem>
                               <SelectItem value="refunded">Refunded</SelectItem>

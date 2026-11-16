@@ -855,11 +855,31 @@ Deno.serve(async (req) => {
     if (roleError) return respond(false, { error: `Role check failed: ${roleError.message}` }, 'check_role');
     if (!roleData || roleData.length === 0) return respond(false, { error: 'Forbidden: admin or seller role required' }, 'check_role');
     const callerRoles = roleData.map((entry: any) => entry.role as string);
+    const validateExpenseOrder = async (orderId: string, trackingNumber: string, provider: string) => {
+      if (!/^[0-9a-f-]{36}$/i.test(orderId) || !trackingNumber) return false;
+      const { data, error } = await supabaseAdmin
+        .from('orders')
+        .select('tracking_number, carrier')
+        .eq('id', orderId)
+        .limit(1);
+      const order = data?.[0];
+      return !error && !!order
+        && order.tracking_number === trackingNumber
+        && String(order.carrier || '').toLowerCase() === provider.toLowerCase();
+    };
 
     stage = 'parse_body';
     const body = await req.json();
     const { action, provider: providerCode, payload } = body || {};
     if (!action || !providerCode) return respond(false, { error: 'Missing action or provider' }, 'parse_body');
+
+    const expenseRoles = ['admin', 'super_admin', 'finance_manager'];
+    const dispatchRoles = ['admin', 'super_admin', 'order_manager', 'support_manager', 'moderator', 'vendor_admin', 'vendor_order_manager', 'vendor_staff', 'warehouse_manager'];
+    if (action === 'fetch_actual_cost'
+      ? !callerRoles.some((role: string) => expenseRoles.includes(role))
+      : !callerRoles.some((role: string) => dispatchRoles.includes(role))) {
+      return respond(false, { error: 'Forbidden for this courier action.' }, 'action_access');
+    }
 
     stage = 'load_config';
     const { data: settingsData } = await supabaseAdmin
@@ -908,6 +928,19 @@ Deno.serve(async (req) => {
         .eq('order_id', orderUuid)
         .limit(500);
       if (itemsError || !savedItems?.length) return respond(false, { error: 'Saved order items could not be verified.' }, 'order_validation');
+
+      const sellerRoles = ['vendor_admin', 'vendor_order_manager', 'vendor_staff'];
+      if (callerRoles.some((role: string) => sellerRoles.includes(role))) {
+        const { data: sellerRows } = await supabaseAdmin.from('sellers').select('id').eq('user_id', user.id).limit(1);
+        const sellerId = sellerRows?.[0]?.id;
+        const productIds = [...new Set(savedItems.map((item: any) => String(item.product_id)))];
+        const { data: productRows } = sellerId
+          ? await supabaseAdmin.from('products').select('id, seller_id').in('id', productIds)
+          : { data: [] as any[] };
+        if (!sellerId || !productRows || productRows.length !== productIds.length || productRows.some((product: any) => product.seller_id !== sellerId)) {
+          return respond(false, { error: 'You can only dispatch orders containing products from your own shop.' }, 'seller_order_scope');
+        }
+      }
 
       if (['delivered', 'completed', 'cancelled', 'returned'].includes(String(savedOrder.status).toLowerCase())) {
         return respond(false, { error: 'This order is already closed and cannot be dispatched.' }, 'order_validation');
@@ -1035,6 +1068,9 @@ Deno.serve(async (req) => {
             if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
               return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
             }
+            if (!await validateExpenseOrder(String(payload.order_id), String(payload.tracking_number || ''), 'steadfast')) {
+              return respond(false, { error: 'The tracking number does not match the selected saved order.' }, 'expense_order_validation');
+            }
             const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
               _order_id: payload.order_id,
               _provider: 'steadfast',
@@ -1084,6 +1120,9 @@ Deno.serve(async (req) => {
               if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
                 return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
               }
+              if (!await validateExpenseOrder(String(payload.order_id), String(payload.tracking_number || ''), 'pathao')) {
+                return respond(false, { error: 'The tracking number does not match the selected saved order.' }, 'expense_order_validation');
+              }
               const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
                 _order_id: payload.order_id,
                 _provider: 'pathao',
@@ -1110,6 +1149,9 @@ Deno.serve(async (req) => {
             if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
               return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
             }
+            if (!await validateExpenseOrder(String(payload.order_id), String(payload.tracking_number || ''), 'redx')) {
+              return respond(false, { error: 'The tracking number does not match the selected saved order.' }, 'expense_order_validation');
+            }
             const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
               _order_id: payload.order_id,
               _provider: 'redx',
@@ -1134,6 +1176,9 @@ Deno.serve(async (req) => {
           if (payload?.order_id && cost.amount && cost.amount > 0) {
             if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
               return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
+            }
+            if (!await validateExpenseOrder(String(payload.order_id), String(payload.tracking_number || ''), 'carrybee')) {
+              return respond(false, { error: 'The tracking number does not match the selected saved order.' }, 'expense_order_validation');
             }
             const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
               _order_id: payload.order_id,

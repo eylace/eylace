@@ -78,7 +78,8 @@ function generateInvoiceHTML(order: InvoiceOrder): string {
   const customerEmail = getEmail(order);
   const customerPhone = getPhone(order);
   const fullAddress = [addr.address, addr.apartment, addr.city, addr.state, addr.zip_code, addr.country].filter(Boolean).join(', ');
-  const isPaid = order.payment_method !== 'cod' || order.status === 'delivered';
+  const paymentPendingVerification = order.payment_method !== 'cod';
+  const isPaid = !paymentPendingVerification && (order.status === 'delivered' || order.status === 'completed');
 
   return `
     <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:780px;margin:0 auto;padding:30px 40px;color:#1a1a1a;">
@@ -92,7 +93,7 @@ function generateInvoiceHTML(order: InvoiceOrder): string {
           <p style="margin:0;font-size:13px;color:#6b7280;">Invoice No.</p>
           <p style="margin:2px 0 0;font-size:15px;font-weight:700;color:#1a1a1a;">#${esc(order.order_number)}</p>
           <p style="margin:6px 0 0;font-size:12px;color:#6b7280;">Date: ${formatDate(order.created_at)}</p>
-          <p style="margin:3px 0 0;font-size:12px;color:#6b7280;">Status: <span style="font-weight:600;color:${isPaid ? '#059669' : '#d97706'};">${isPaid ? 'Paid' : 'Unpaid'}</span></p>
+          <p style="margin:3px 0 0;font-size:12px;color:#6b7280;">Status: <span style="font-weight:600;color:${isPaid ? '#059669' : '#d97706'};">${paymentPendingVerification ? 'Pending verification' : (isPaid ? 'Paid' : 'Unpaid')}</span></p>
         </div>
       </div>
 
