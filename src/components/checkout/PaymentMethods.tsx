@@ -115,7 +115,10 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
     return map[key] || 'Online Payment';
   };
 
-  const onlineGateways = useMemo(() => [], []);
+  const onlineGateways = useMemo(
+    () => gateways.filter(g => !g.isCOD && !g.needsCard),
+    [gateways],
+  );
 
   // Keep form's paymentMethod in sync with top-level choice + online gateway selection.
   useEffect(() => {
@@ -171,15 +174,17 @@ export const PaymentMethods = ({ form, courierAmount = 0 }: PaymentMethodsProps)
         {/* Online top-level */}
         <label
           htmlFor="top-online"
-          aria-disabled="true"
-          className="relative flex items-start gap-3 p-4 rounded-lg border-2 border-border opacity-60 cursor-not-allowed"
+          className={cn(
+            'relative flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all',
+            topChoice === 'online' ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/50',
+          )}
         >
-          <RadioGroupItem value="online" id="top-online" className="mt-1" disabled />
+          <RadioGroupItem value="online" id="top-online" className="mt-1" />
           <CreditCard className="h-6 w-6 text-accent shrink-0 mt-0.5" />
           <div className="min-w-0">
             <p className="font-semibold text-sm text-foreground">Online Payment</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              অনলাইন পেমেন্ট নিশ্চিতকরণ এখনো সেটআপ করা হয়নি। আপাতত Cash on Delivery বেছে নিন।
+              bKash, Nagad ও অন্যান্য অনলাইন পেমেন্টে সম্পূর্ণ পরিশোধ করুন।
             </p>
             {setup.prepaymentOfferEnabled && offerPct > 0 && (
               <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">

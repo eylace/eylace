@@ -17,7 +17,11 @@ const ALLOWED_ROLES = [
   "finance_manager",
 ] as const;
 
-const DISPATCH_ROLES = ALLOWED_ROLES.filter((role) => role !== "finance_manager");
+const DISPATCH_ROLES = [
+  "admin", "super_admin", "order_manager", "support_manager", "moderator",
+  "vendor_admin", "vendor_order_manager", "vendor_staff", "warehouse_manager",
+] as const;
+
 const EXPENSE_ROLES = ["admin", "super_admin", "finance_manager"] as const;
 
 // Valid app_role enum values in the database. Roles outside this set will
@@ -87,4 +91,10 @@ Deno.test("shipping-provider: finance role can fetch costs but is not an order d
   assertEquals((ALLOWED_ROLES as readonly string[]).includes(financeRole), true);
   assertEquals((DISPATCH_ROLES as readonly string[]).includes(financeRole), false);
   assertEquals((EXPENSE_ROLES as readonly string[]).includes(financeRole), true);
+});
+
+Deno.test("shipping-provider: only trusted staff roles can dispatch an order", () => {
+  assertEquals((DISPATCH_ROLES as readonly string[]).includes("vendor_staff"), true);
+  assertEquals((DISPATCH_ROLES as readonly string[]).includes("finance_manager"), false);
+  assertEquals((DISPATCH_ROLES as readonly string[]).includes("customer"), false);
 });
