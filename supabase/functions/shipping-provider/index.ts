@@ -885,15 +885,18 @@ Deno.serve(async (req) => {
 
     // ─── Duplicate-guard + logging for create_order ─────────────
     const isCreateOrder = action === 'create_order';
+    // Pathao dispatches must originate from a saved order. Other courier flows
+    // are intentionally unchanged because their related finding was not selected.
+    const requireSavedOrder = isCreateOrder && providerCode === 'pathao';
     let orderUuid: string | undefined = payload?.order_uuid || payload?.order_id_uuid;
     let trustedPayload = payload;
-    if (isCreateOrder) {
+    if (requireSavedOrder) {
       if (!orderUuid || !/^[0-9a-f-]{36}$/i.test(orderUuid)) {
         return respond(false, { error: 'A valid saved order is required before courier dispatch.' }, 'order_validation');
       }
       const { data: savedOrders, error: orderError } = await supabaseAdmin
         .from('orders')
-        .select('id, order_number, user_id, payment_method, total, subtotal, shipping, shipping_address, guest_email, guest_phone')
+        .select('id, order_number, user_id, payment_method, total, subtotal, shipping, shipping_address, guest_email, guest_phone, status')
         .eq('id', orderUuid)
         .limit(1);
       const savedOrder = savedOrders?.[0];
@@ -906,17 +909,8 @@ Deno.serve(async (req) => {
         .limit(500);
       if (itemsError || !savedItems?.length) return respond(false, { error: 'Saved order items could not be verified.' }, 'order_validation');
 
-      const sellerRoles = ['vendor_admin', 'vendor_order_manager', 'vendor_staff'];
-      if (callerRoles.some((role: string) => sellerRoles.includes(role))) {
-        const { data: sellerRows } = await supabaseAdmin.from('sellers').select('id').eq('user_id', user.id).eq('is_active', true).limit(1);
-        const sellerId = sellerRows?.[0]?.id;
-        const productIds = [...new Set(savedItems.map((item: any) => String(item.product_id)))];
-        const { data: productRows } = sellerId
-          ? await supabaseAdmin.from('products').select('id, seller_id').in('id', productIds)
-          : { data: [] as any[] };
-        if (!sellerId || !productRows || productRows.length !== productIds.length || productRows.some((product: any) => product.seller_id !== sellerId)) {
-          return respond(false, { error: 'You can only dispatch orders containing products from your own shop.' }, 'seller_order_scope');
-        }
+      if (['delivered', 'completed', 'cancelled', 'returned'].includes(String(savedOrder.status).toLowerCase())) {
+        return respond(false, { error: 'This order is already closed and cannot be dispatched.' }, 'order_validation');
       }
 
       const address = (savedOrder.shipping_address && typeof savedOrder.shipping_address === 'object')
@@ -1018,7 +1012,7 @@ Deno.serve(async (req) => {
       return r.result;
     };
 
-    const providerPayload = isCreateOrder ? trustedPayload : payload;
+    const providerPayload = requireSavedOrder ? trustedPayload : payload;
 
     try {
 
@@ -1035,16 +1029,11 @@ Deno.serve(async (req) => {
         if (action === 'create_order') result = await runWithRetry(() => steadfastCreateOrder(config, providerPayload));
         else if (action === 'track') result = { events: await steadfastTrack(config, payload.tracking_number) };
         else if (action === 'fetch_actual_cost') {
-          if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
-            return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
-          }
           const cost = await fetchActualDeliveredCost('steadfast', config, payload?.tracking_number, supabaseAdmin);
           let expenseId: string | null = null;
           if (payload?.order_id && cost.amount && cost.amount > 0) {
-            const { data: expenseOrders } = await supabaseAdmin.from('orders').select('id, tracking_number, carrier').eq('id', payload.order_id).limit(1);
-            const expenseOrder = expenseOrders?.[0];
-            if (!expenseOrder || expenseOrder.tracking_number !== payload?.tracking_number || String(expenseOrder.carrier || '').toLowerCase() !== String(providerCode).toLowerCase()) {
-              return respond(false, { error: 'The tracking number does not match the selected saved order.' }, 'expense_order_validation');
+            if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
+              return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
             }
             const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
               _order_id: payload.order_id,
@@ -1089,16 +1078,11 @@ Deno.serve(async (req) => {
           if (action === 'create_order') result = await runWithRetry(() => pathaoCreateOrder(token, providerPayload, config));
           else if (action === 'track') result = { events: await pathaoTrack(token, payload.tracking_number, config) };
         else if (action === 'fetch_actual_cost') {
-            if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
-              return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
-            }
             const cost = await fetchActualDeliveredCost('pathao', config, payload?.tracking_number, supabaseAdmin);
             let expenseId: string | null = null;
             if (payload?.order_id && cost.amount && cost.amount > 0) {
-              const { data: expenseOrders } = await supabaseAdmin.from('orders').select('id, tracking_number, carrier').eq('id', payload.order_id).limit(1);
-              const expenseOrder = expenseOrders?.[0];
-              if (!expenseOrder || expenseOrder.tracking_number !== payload?.tracking_number || String(expenseOrder.carrier || '').toLowerCase() !== String(providerCode).toLowerCase()) {
-                return respond(false, { error: 'The tracking number does not match the selected saved order.' }, 'expense_order_validation');
+              if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
+                return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
               }
               const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
                 _order_id: payload.order_id,
@@ -1120,16 +1104,11 @@ Deno.serve(async (req) => {
         if (action === 'create_order') result = await runWithRetry(() => redxCreateOrder(config, providerPayload));
         else if (action === 'track') result = { events: await redxTrack(config, payload.tracking_number) };
         else if (action === 'fetch_actual_cost') {
-          if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
-            return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
-          }
           const cost = await fetchActualDeliveredCost('redx', config, payload?.tracking_number, supabaseAdmin);
           let expenseId: string | null = null;
           if (payload?.order_id && cost.amount && cost.amount > 0) {
-            const { data: expenseOrders } = await supabaseAdmin.from('orders').select('id, tracking_number, carrier').eq('id', payload.order_id).limit(1);
-            const expenseOrder = expenseOrders?.[0];
-            if (!expenseOrder || expenseOrder.tracking_number !== payload?.tracking_number || String(expenseOrder.carrier || '').toLowerCase() !== String(providerCode).toLowerCase()) {
-              return respond(false, { error: 'The tracking number does not match the selected saved order.' }, 'expense_order_validation');
+            if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
+              return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
             }
             const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
               _order_id: payload.order_id,
@@ -1150,16 +1129,11 @@ Deno.serve(async (req) => {
         if (action === 'create_order') result = await runWithRetry(() => carrybeeCreateOrder(config, providerPayload));
         else if (action === 'track') result = { events: await carrybeeTrack(config, payload.tracking_number) };
         else if (action === 'fetch_actual_cost') {
-          if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
-            return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
-          }
           const cost = await fetchActualDeliveredCost('carrybee', config, payload?.tracking_number, supabaseAdmin);
           let expenseId: string | null = null;
           if (payload?.order_id && cost.amount && cost.amount > 0) {
-            const { data: expenseOrders } = await supabaseAdmin.from('orders').select('id, tracking_number, carrier').eq('id', payload.order_id).limit(1);
-            const expenseOrder = expenseOrders?.[0];
-            if (!expenseOrder || expenseOrder.tracking_number !== payload?.tracking_number || String(expenseOrder.carrier || '').toLowerCase() !== String(providerCode).toLowerCase()) {
-              return respond(false, { error: 'The tracking number does not match the selected saved order.' }, 'expense_order_validation');
+            if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'finance_manager'].includes(role))) {
+              return respond(false, { error: 'Finance or administrator access is required to record courier costs.' }, 'expense_access');
             }
             const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('apply_courier_api_cost', {
               _order_id: payload.order_id,

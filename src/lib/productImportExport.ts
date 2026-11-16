@@ -298,7 +298,14 @@ export function downloadTemplate(format: 'csv' | 'xlsx') {
 
   const filename = `products-template.${format}`;
   if (format === 'csv') {
-    const csv = XLSX.utils.sheet_to_csv(ws);
+    const formulaPrefix = /^[\u0000-\u0020\uFEFF]*[=+@-]/;
+    const safeSample = sample.map((row) => Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [
+        key,
+        typeof value === 'string' && formulaPrefix.test(value) ? `'${value}` : value,
+      ]),
+    ));
+    const csv = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(safeSample));
     triggerDownload(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }), filename);
   } else {
     const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });

@@ -451,12 +451,6 @@ const Checkout = () => {
           delivery_zone: (data as any).deliveryZone || null,
           advance_courier_payment_ref: (data as any).advanceCourierPaymentRef || null,
           advance_courier_amount: Number((data as any).advanceCourierAmount) || 0,
-          affiliate_referral_code: (() => {
-            try {
-              const ref = JSON.parse(localStorage.getItem('affiliate_ref') || 'null');
-              return ref?.code && ref?.expiry > Date.now() ? String(ref.code).slice(0, 64) : null;
-            } catch { return null; }
-          })(),
         },
       });
 
@@ -523,6 +517,19 @@ const Checkout = () => {
         supabase.functions.invoke('send-order-confirmation', {
           body: { order_id: createdOrderId },
         }).catch(err => console.error('Confirmation email error:', err));
+      }
+
+      const storedAffiliateRef = localStorage.getItem('affiliate_ref');
+      if (storedAffiliateRef && createdOrderId) {
+        try {
+          const referral = JSON.parse(storedAffiliateRef);
+          if (referral?.code && referral?.expiry > Date.now()) {
+            await supabase.functions.invoke('checkout-attach-affiliate-referral', {
+              body: { order_id: createdOrderId, referral_code: String(referral.code).slice(0, 64) },
+            });
+            localStorage.removeItem('affiliate_ref');
+          }
+        } catch { /* referral attribution is best-effort and must not block checkout */ }
       }
     } catch (err) {
       console.error('Checkout error:', err);

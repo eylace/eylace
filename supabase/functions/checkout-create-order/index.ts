@@ -71,7 +71,6 @@ Deno.serve(async (req) => {
       coupon_code,
       total,
       payment_method,
-      affiliate_referral_code,
       shipping_address,
       guest_email,
       guest_phone,
@@ -146,9 +145,6 @@ Deno.serve(async (req) => {
       discount: 0,
       total: 0,
       payment_method,
-      affiliate_referral_code: typeof affiliate_referral_code === 'string' && affiliate_referral_code.length <= 64
-        ? affiliate_referral_code
-        : null,
       shipping_address: shipping_address ?? null,
       customer_ip: customerIp,
       user_id: userId,
@@ -180,7 +176,8 @@ Deno.serve(async (req) => {
       const digits = (value: unknown) => String(value ?? '').replace(/\D/g, '');
       const callerPhone = digits(guest_phone || shipping_address?.phone);
       const paymentPhone = digits(advPayment.customer_phone);
-      const paymentBelongsToCaller = (userId && advPayment.user_id === userId)
+      const paymentBelongsToCaller = (userId && advPayment.user_id === userId
+          && (!paymentPhone || (callerPhone.length >= 8 && callerPhone === paymentPhone)))
         || (!advPayment.user_id && callerPhone.length >= 8 && paymentPhone.length >= 8 && callerPhone === paymentPhone);
       if (!paymentBelongsToCaller) {
         return new Response(

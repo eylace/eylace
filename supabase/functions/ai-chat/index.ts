@@ -32,6 +32,11 @@ serve(async (req) => {
       .filter((m: any) => m && m.role === 'user' && typeof m.content === 'string')
       .slice(-20)
       .map((m: any) => ({ role: 'user', content: m.content.slice(0, 2000) }));
+    if (messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'At least one user message is required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 

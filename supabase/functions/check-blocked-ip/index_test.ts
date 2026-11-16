@@ -35,8 +35,8 @@ Deno.test("check-blocked-ip rejects malformed Authorization header (401)", async
   assertEquals(status, 401);
 });
 
-// With auth present but malformed IP, the function must NOT leak block status
-// (it short-circuits to { isBlocked: false } with 200) and must not query the DB.
+// A publishable key is not a signed-in user session. It must not reveal whether
+// any caller-provided or proxy-derived IP is present in the private block list.
 const INVALID_IPS = [
   ["empty string", ""],
   ["unknown sentinel", "unknown"],
@@ -50,7 +50,7 @@ const INVALID_IPS = [
 for (const [label, ip] of INVALID_IPS) {
   Deno.test(`check-blocked-ip safely handles invalid IP: ${label}`, async () => {
     const { status, json } = await call({ ip });
-    assertEquals(status, 200);
+    assertEquals(status, 401);
     assertEquals(json?.isBlocked, false);
     // Should never expose a `reason` field for invalid inputs.
     assert(json?.reason === undefined);
@@ -60,14 +60,14 @@ for (const [label, ip] of INVALID_IPS) {
 Deno.test("check-blocked-ip allows a valid, non-blocked IPv4 through normally", async () => {
   // 203.0.113.0/24 is TEST-NET-3 — guaranteed not to appear in any real block list.
   const { status, json } = await call({ ip: "203.0.113.42" });
-  assertEquals(status, 200);
+  assertEquals(status, 401);
   assertEquals(json?.isBlocked, false);
-  // Response shape must only contain `isBlocked` for unauthenticated-class callers.
+  // Response shape must only contain `isBlocked` for unprivileged callers.
   assert(json?.reason === undefined, "reason must not leak to caller");
 });
 
 Deno.test("check-blocked-ip accepts a valid IPv6 format", async () => {
   const { status, json } = await call({ ip: "2001:db8::1" });
-  assertEquals(status, 200);
+  assertEquals(status, 401);
   assertEquals(json?.isBlocked, false);
 });

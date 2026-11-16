@@ -218,7 +218,8 @@ serve(async (req) => {
     const resendData = await resendRes.json();
 
     if (!resendRes.ok) {
-      throw new Error(`Resend API error: ${JSON.stringify(resendData)}`);
+      console.error('Order status email delivery failed:', resendRes.status);
+      throw new Error('Email delivery failed');
     }
 
     console.log(`Order status email sent for order ${order.order_number} (${new_status})`);
