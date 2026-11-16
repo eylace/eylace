@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS enforce_verified_checkout_payment_method ON public.orders;

@@ -43,6 +43,34 @@
       "when": 1794856879027,
       "tag": "0005_restrict_seo_duplicate_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794858127173,
+      "tag": "0006_limit_catalog_metadata_and_storage_listing",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794858221174,
+      "tag": "0007_scope_public_catalog_and_media_reads",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794858232447,
+      "tag": "0008_deny_unverified_online_checkout",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794858514609,
+      "tag": "0009_restore_online_checkout_pending_verification",
+      "breakpoints": true
     }
   ]
 }

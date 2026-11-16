@@ -877,7 +877,9 @@ Deno.serve(async (req) => {
     const dispatchRoles = ['admin', 'super_admin', 'order_manager', 'support_manager', 'moderator', 'vendor_admin', 'vendor_order_manager', 'vendor_staff', 'warehouse_manager'];
     if (action === 'fetch_actual_cost'
       ? !callerRoles.some((role: string) => expenseRoles.includes(role))
-      : !callerRoles.some((role: string) => dispatchRoles.includes(role))) {
+      : action === 'create_order'
+        ? !callerRoles.some((role: string) => dispatchRoles.includes(role))
+        : !callerRoles.some((role: string) => [...dispatchRoles, ...expenseRoles].includes(role))) {
       return respond(false, { error: 'Forbidden for this courier action.' }, 'action_access');
     }
 
@@ -905,9 +907,9 @@ Deno.serve(async (req) => {
 
     // ─── Duplicate-guard + logging for create_order ─────────────
     const isCreateOrder = action === 'create_order';
-    // Pathao dispatches must originate from a saved order. Other courier flows
-    // are intentionally unchanged because their related finding was not selected.
-    const requireSavedOrder = isCreateOrder && providerCode === 'pathao';
+    // All courier dispatches must originate from a saved order. Recipient and
+    // item details always come from the database, never from caller-supplied JSON.
+    const requireSavedOrder = isCreateOrder;
     let orderUuid: string | undefined = payload?.order_uuid || payload?.order_id_uuid;
     let trustedPayload = payload;
     if (requireSavedOrder) {
@@ -940,6 +942,8 @@ Deno.serve(async (req) => {
         if (!sellerId || !productRows || productRows.length !== productIds.length || productRows.some((product: any) => product.seller_id !== sellerId)) {
           return respond(false, { error: 'You can only dispatch orders containing products from your own shop.' }, 'seller_order_scope');
         }
+      } else if (!callerRoles.some((role: string) => ['admin', 'super_admin', 'order_manager', 'support_manager', 'moderator', 'warehouse_manager'].includes(role))) {
+        return respond(false, { error: 'You are not allowed to dispatch this order.' }, 'seller_order_scope');
       }
 
       if (['delivered', 'completed', 'cancelled', 'returned'].includes(String(savedOrder.status).toLowerCase())) {
@@ -952,6 +956,8 @@ Deno.serve(async (req) => {
       const phone = String(address.phone || savedOrder.guest_phone || '').trim();
       const street = String(address.address || '').trim();
       if (!phone || !street) return respond(false, { error: 'The saved order is missing a delivery phone or address.' }, 'order_validation');
+      const customerNameParts = customerName.split(/\s+/);
+      const billingLastName = customerNameParts.length > 1 ? customerNameParts.slice(1).join(' ') : '';
       const items = savedItems.map((item: any) => ({
         id: item.product_id, sku: item.product_id, name: item.product_name,
         quantity: item.quantity, units: item.quantity, price: item.price, selling_price: item.price,
@@ -964,10 +970,13 @@ Deno.serve(async (req) => {
         order_number: savedOrder.order_number,
         recipient_name: customerName,
         customer_name: customerName,
+        billing_customer_name: customerNameParts[0] || 'Customer',
+        billing_last_name: billingLastName,
         recipient_phone: phone,
         phone,
         recipient_address: street,
-        address: street,
+        address: [street, address.apartment].filter(Boolean).join(', '),
+        billing_address: [street, address.apartment].filter(Boolean).join(', '),
         city: address.city || address.district || 'Dhaka',
         recipient_city: address.city || address.district || undefined,
         recipient_zone: address.state || undefined,
