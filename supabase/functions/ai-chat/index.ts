@@ -26,11 +26,12 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Sanitize: only allow user/assistant roles, cap length & count
+    // Treat the caller as the source of user messages only. Accepting client-
+    // supplied assistant messages lets callers forge model history.
     const messages = rawMessages
-      .filter((m: any) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .filter((m: any) => m && m.role === 'user' && typeof m.content === 'string')
       .slice(-20)
-      .map((m: any) => ({ role: m.role, content: m.content.slice(0, 2000) }));
+      .map((m: any) => ({ role: 'user', content: m.content.slice(0, 2000) }));
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 

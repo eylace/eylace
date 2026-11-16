@@ -221,7 +221,7 @@ serve(async (req) => {
       throw new Error(`Resend API error: ${JSON.stringify(resendData)}`);
     }
 
-    console.log(`Email sent to ${userEmail} for order ${order.order_number} status: ${new_status}`);
+    console.log(`Order status email sent for order ${order.order_number} (${new_status})`);
 
     return new Response(JSON.stringify({ success: true, emailId: resendData.id }), {
       status: 200,

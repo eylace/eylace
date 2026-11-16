@@ -11,9 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Require an Authorization header (anon JWT from the storefront session is sufficient).
-    // This prevents the endpoint from being used as an unauthenticated oracle to probe
-    // the block list at scale.
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
@@ -22,7 +19,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { ip } = await req.json();
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
+    const { data: { user }, error: authError } = await authClient.auth.getUser(authHeader.slice(7));
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ isBlocked: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Never accept a target IP from the request body. Only check the address
+    // supplied by the trusted edge proxy for this authenticated caller.
+    const ip = req.headers.get('cf-connecting-ip')?.trim() ?? '';
 
     // Basic input validation: must be a plausible IPv4/IPv6 string.
     const ipRegex = /^[0-9a-fA-F:.]{3,45}$/;
@@ -34,7 +44,7 @@ Deno.serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
+      supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 

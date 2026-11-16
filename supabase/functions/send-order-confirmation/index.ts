@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
       throw new Error(`Resend API error: ${JSON.stringify(resendData)}`);
     }
 
-    console.log(`Order confirmation email sent to ${customerEmail} for order ${order.order_number}`);
+    console.log(`Order confirmation email sent for order ${order.order_number}`);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

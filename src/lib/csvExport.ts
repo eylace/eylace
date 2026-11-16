@@ -9,12 +9,16 @@ export function exportToCSV<T extends Record<string, any>>(
 ) {
   if (data.length === 0) return;
 
+  const formulaPrefix = /^[\u0000-\u0020\uFEFF]*[=+@-]/;
+
   const header = columns.map((c) => `"${c.label}"`).join(',');
   const rows = data.map((row) =>
     columns
       .map((c) => {
         const value = c.key.split('.').reduce((obj: any, k) => obj?.[k], row);
-        const str = value == null ? '' : String(value).replace(/"/g, '""');
+        const raw = value == null ? '' : String(value);
+        const safe = typeof value === 'string' && formulaPrefix.test(raw) ? `'${raw}` : raw;
+        const str = safe.replace(/"/g, '""');
         return `"${str}"`;
       })
       .join(',')

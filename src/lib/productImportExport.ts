@@ -252,7 +252,14 @@ export async function exportProducts(format: 'csv' | 'xlsx'): Promise<number> {
   const filename = `products-export-${new Date().toISOString().slice(0, 10)}.${format}`;
 
   if (format === 'csv') {
-    const csv = XLSX.utils.sheet_to_csv(ws);
+    const formulaPrefix = /^[\u0000-\u0020\uFEFF]*[=+@-]/;
+    const csvRows = rows.map((row) => Object.fromEntries(
+      Object.entries(row).map(([key, value]) => [
+        key,
+        typeof value === 'string' && formulaPrefix.test(value) ? `'${value}` : value,
+      ]),
+    ));
+    const csv = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(csvRows));
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     triggerDownload(blob, filename);
   } else {
